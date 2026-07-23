@@ -5,7 +5,7 @@ small changes that improve reproducibility or laboratory safety.
 
 ## Before changing code
 
-1. Search the [issue tracker](https://github.com/guallycanazas/Lain5g-lab/issues)
+1. Search the [issue tracker](https://github.com/guallycanazas/Lain5G/issues)
    for related work.
 2. Open an issue before a large behavioral, dependency, scenario, or metadata
    change so its scope and evidence can be agreed.
@@ -35,7 +35,7 @@ TODO: Confirm maintainers and reviewer ownership before a final release.
 4. Describe limitations and distinguish software-only, dry-run, SDR, and
    commercial-UE evidence.
 5. Submit a pull request against
-   [the repository](https://github.com/guallycanazas/Lain5g-lab).
+   [the repository](https://github.com/guallycanazas/Lain5G).
 
 Participation is subject to [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md). Report
 security issues according to [SECURITY.md](SECURITY.md), not in a public bug

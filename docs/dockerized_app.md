@@ -16,7 +16,7 @@ cp .env.app.example .env.app
 Edita `.env.app` y define `LAIN5G_PROJECT_ROOT` con la ruta absoluta del repositorio en el host:
 
 ```env
-LAIN5G_PROJECT_ROOT=/home/gually/Lain5G-Lab
+LAIN5G_PROJECT_ROOT=/path/to/Lain5G
 ```
 
 La ruta debe ser absoluta. En el modo operativo opcional también debe coincidir con la ruta que ve el daemon Docker del host porque los despliegues contienen bind mounts relativos.

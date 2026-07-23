@@ -81,7 +81,7 @@ def _codemeta(path: Path) -> list[str]:
     if not isinstance(value, Mapping):
         return ["codemeta.json must contain an object"]
     expected_version = (ROOT / "VERSION").read_text(encoding="utf-8").strip()
-    expected_repository = "https://github.com/guallycanazas/Lain5g-lab"
+    expected_repository = "https://github.com/guallycanazas/Lain5G"
     if value.get("version") != expected_version:
         errors.append(f"codemeta.json version does not match VERSION ({expected_version})")
     if value.get("codeRepository") != expected_repository:
@@ -90,7 +90,7 @@ def _codemeta(path: Path) -> list[str]:
         errors.append("codemeta.json does not identify the MIT license")
     authors = value.get("author")
     if not isinstance(authors, list) or not authors:
-        errors.append("codemeta.json must contain a non-empty author placeholder/list")
+        errors.append("codemeta.json must contain a non-empty author list")
     return errors
 
 

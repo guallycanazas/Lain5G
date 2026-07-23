@@ -16,7 +16,7 @@ transitivo de `backend/constraints.txt`.
 Ejemplo en `backend/.env.example`:
 
 ```env
-LAIN5G_PROJECT_ROOT=/home/gually/Lain5G-Lab
+LAIN5G_PROJECT_ROOT=/path/to/Lain5G
 LAIN5G_SCENARIO=5g-sa
 LAIN5G_DRY_RUN=false
 LAIN5G_MUTATING_OPERATIONS_ENABLED=false

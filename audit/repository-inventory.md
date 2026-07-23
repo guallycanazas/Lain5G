@@ -16,7 +16,7 @@ created by this audit.
 | Item | Observed value |
 | --- | --- |
 | Repository | `guallycanazas/Lain5g-lab` |
-| Working directory | `/home/gually/Lain5G-Lab` |
+| Working directory | `/path/to/Lain5G` |
 | Branch | `main` |
 | Audited `HEAD` | `c3247c99b6c969189efe9e57a46f110c88c26f4d` |
 | Last commit | `docs: record final lab validation status` |

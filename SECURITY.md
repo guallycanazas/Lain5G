@@ -13,7 +13,7 @@ information, or RF authorization records in a public issue.
 
 TODO: Enable GitHub private vulnerability reporting or publish a verified
 private security contact before release. Until that channel exists, a public
-[issue](https://github.com/guallycanazas/Lain5g-lab/issues/new) may be used only
+[issue](https://github.com/guallycanazas/Lain5G/issues/new) may be used only
 to request private contact, without vulnerability details or sensitive data.
 The missing private channel is a release blocker, not permission to disclose
 privately held information.

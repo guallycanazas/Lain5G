@@ -7,7 +7,7 @@ support, or RF-operational support.
 ## Getting help
 
 1. Check the root README and the relevant document under `docs/`.
-2. Search existing [issues](https://github.com/guallycanazas/Lain5g-lab/issues).
+2. Search existing [issues](https://github.com/guallycanazas/Lain5G/issues).
 3. For a reproducible, non-sensitive problem, open a new issue with the version
    or commit, host environment, exact non-RF command, expected behavior, actual
    behavior, and sanitized logs.
