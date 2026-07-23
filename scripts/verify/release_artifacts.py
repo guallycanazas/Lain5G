@@ -22,12 +22,8 @@ REQUIRED_RELEASE_FILES = (
     "AUTHORS.md",
     "CHANGELOG.md",
     "CITATION.cff",
-    "CODE_OF_CONDUCT.md",
-    "CONTRIBUTING.md",
     "LICENSE",
-    "Licence.txt",
     "README.md",
-    "SECURITY.md",
     "SUPPORT.md",
     "THIRD_PARTY_NOTICES.md",
     "VERSION",
@@ -181,11 +177,6 @@ def main() -> int:
     for required in REQUIRED_RELEASE_FILES:
         if not (ROOT / required).is_file():
             errors.append(f"required release file is missing: {required}")
-
-    license_path = ROOT / "LICENSE"
-    licence_path = ROOT / "Licence.txt"
-    if license_path.is_file() and licence_path.is_file() and license_path.read_bytes() != licence_path.read_bytes():
-        errors.append("Licence.txt must be byte-identical to LICENSE")
 
     citation = ROOT / "CITATION.cff"
     citation_state = "not present"

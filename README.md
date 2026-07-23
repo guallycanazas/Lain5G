@@ -143,4 +143,4 @@ upstream components retain their own licenses and redistribution terms; see
 
 Use GitHub Issues for reproducible, non-sensitive bugs. Do not publish secrets,
 subscriber identifiers, RF plans, tokens, or private logs. See
-[SUPPORT.md](SUPPORT.md) and [SECURITY.md](SECURITY.md).
+[SUPPORT.md](SUPPORT.md) for support and sensitive-reporting guidance.

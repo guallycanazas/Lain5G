@@ -24,7 +24,7 @@ catalogued inputs for reproducibility, not binaries approved by this assessment.
 
 | Distribution unit | Current status | Basis | Required action before redistribution |
 | --- | --- | --- | --- |
-| Lain5G-Lab first-party source | Ready | `LICENSE` and byte-equivalent `Licence.txt` contain the MIT grant; third-party configuration is separately identified. | Preserve the MIT notice and `THIRD_PARTY_NOTICES.md` in source distributions. |
+| Lain5G-Lab first-party source | Ready | `LICENSE` contains the MIT grant; third-party configuration is separately identified. | Preserve the MIT notice and `THIRD_PARTY_NOTICES.md` in source distributions. |
 | Imported Real-IMS BSD configuration | Ready | Exact upstream commit, per-file hashes, transformations, and full BSD-2-Clause notice are recorded. | Preserve `deployments/ims-real/config-provenance.json` and the complete BSD notice. |
 | Open5GS catalogued image | Blocked for binary publication | A registry digest and current source commit are known, but no attestation or archived build record binds those bytes to that source and recipe. | Rebuild from the immutable commit or recover verifiable build provenance, then provide durable Corresponding Source, modifications, license, notices, digest, and final-image SBOM. |
 | srsRAN 4G catalogued images | Blocked for binary publication | Registry digests and current source commit are known, but their source-to-binary mapping is unverified. The UHD recipe also changes upstream C++ standard flags. | Establish build provenance; provide Corresponding Source including the C++17 modification, UHD sources, notices, digest, and final-image SBOM. |

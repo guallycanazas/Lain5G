@@ -14,8 +14,8 @@ support, or RF-operational support.
 
 Do not include secrets, real subscriber identifiers, private addresses,
 operational RF settings, or authorization records. Do not run RF to gather
-support information. Security-sensitive reports must follow
-[SECURITY.md](SECURITY.md).
+support information. Do not submit security-sensitive details through a public
+issue; request a private contact channel without disclosing the vulnerability.
 
 TODO: Confirm maintainers, support scope, and a public support contact before a
 final release. No support email or institutional help desk is currently

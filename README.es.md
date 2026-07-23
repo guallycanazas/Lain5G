@@ -147,4 +147,5 @@ redistribución; consulte [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
 
 Use GitHub Issues para errores reproducibles y no sensibles. No publique
 secretos, identificadores de suscriptores, planes RF, tokens ni logs privados.
-Consulte [SUPPORT.md](SUPPORT.md) y [SECURITY.md](SECURITY.md).
+Consulte [SUPPORT.md](SUPPORT.md) para soporte y orientación sobre reportes
+sensibles.
