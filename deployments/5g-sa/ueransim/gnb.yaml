@@ -1,0 +1,19 @@
+mcc: '001'
+mnc: '01'
+nci: '0x000000010'
+idLength: 32
+tac: 1
+
+linkIp: 10.20.0.20
+ngapIp: 10.20.0.20
+gtpIp: 10.20.0.20
+
+amfConfigs:
+  - address: 10.20.0.5
+    port: 38412
+
+slices:
+  - sst: 1
+    sd: 000001
+
+ignoreStreamIds: true

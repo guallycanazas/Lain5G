@@ -1,0 +1,33 @@
+supi: 'imsi-__SUBSCRIBER_IMSI__'
+mcc: '001'
+mnc: '01'
+key: '__SUBSCRIBER_KEY__'
+op: '__SUBSCRIBER_OPC__'
+opType: 'OPC'
+amf: '__SUBSCRIBER_AMF__'
+sqn: '__SUBSCRIBER_SQN__'
+gnbSearchList:
+  - 10.50.0.40
+sessions:
+  - type: IPv4
+    apn: internet
+    slice:
+      sst: 1
+      sd: 000001
+configured-nssai:
+  - sst: 1
+    sd: 000001
+default-nssai:
+  - sst: 1
+    sd: 000001
+integrity:
+  IA1: true
+  IA2: true
+  IA3: false
+ciphering:
+  EA1: true
+  EA2: true
+  EA3: false
+integrityMaxRate:
+  uplink: full
+  downlink: full

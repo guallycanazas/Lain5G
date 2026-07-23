@@ -1,0 +1,412 @@
+{
+  "source": "https://github.com/herlesupreeth/docker_open5gs",
+  "source_commit": "3685b58aa0c7c28b2fecc6b9533f128285bf8dda",
+  "license": "BSD-2-Clause",
+  "note": "Vendored and packaged by Lain5G-Lab; preserve upstream notices in imported files. Private key material is excluded and generated at runtime.",
+  "files": [
+    {
+      "path": "images/ims-real-open5gs/roles/amf/amf.yaml",
+      "sha256": "2ebf5da22709410a4655c4ada77f2a095764c0247c6efcb7d1202ff45802ea54",
+      "upstream_sha256": "5a10329d3afc6bdca553f341313ccc7e9b549bba11887a4077d32057b6d51c5f",
+      "transformation": "Trailing newline omitted during vendoring; YAML content is unchanged."
+    },
+    {
+      "path": "images/ims-real-open5gs/roles/amf/amf_init.sh",
+      "sha256": "02163abd3b944e3348cd25f98ac9c98415bc897504dc7e41a664782ff0b891f6"
+    },
+    {
+      "path": "images/ims-real-open5gs/roles/ausf/ausf.yaml",
+      "sha256": "644770e3549b28bf1f67b6a11472ccac883c39d712a18aa38baa104096d33f81"
+    },
+    {
+      "path": "images/ims-real-open5gs/roles/ausf/ausf_init.sh",
+      "sha256": "659cfcb4f766a4b171d8b499a1c0458f348d21a037454bd8d5bb8356620cb42a"
+    },
+    {
+      "path": "images/ims-real-open5gs/roles/bsf/bsf.yaml",
+      "sha256": "6bc67b75bb7a8eaf9b80b450472b5c948fde2fa393ec309cdb59ead845810a5a"
+    },
+    {
+      "path": "images/ims-real-open5gs/roles/bsf/bsf_init.sh",
+      "sha256": "d1659670184fdae9e477b68d60a502e8f5ee54316b12eb1f6411ab91b5608fa1"
+    },
+    {
+      "path": "images/ims-real-open5gs/roles/hss/hss.conf",
+      "sha256": "af53b99ddbe5d05bc2edcbc6f359209cdb73ee31035ead34c8d67ab967f2bd24"
+    },
+    {
+      "path": "images/ims-real-open5gs/roles/hss/hss.yaml",
+      "sha256": "cb32ce7b016814740dd7c0501002aaedf7ae1a91df1aaacaf038924851854672"
+    },
+    {
+      "path": "images/ims-real-open5gs/roles/hss/hss_init.sh",
+      "sha256": "5f007d869794e59448e6ed0765d62718d780212599a260bae8c23513a7ba1ec5"
+    },
+    {
+      "path": "images/ims-real-open5gs/roles/hss/make_certs.sh",
+      "sha256": "1636c198c934456ef42c0b38bc14e8364f87ffae1c9bbee5ee5c88aaa796d4ae"
+    },
+    {
+      "path": "images/ims-real-open5gs/roles/mme/make_certs.sh",
+      "sha256": "cf7d3418dc43e38d361048c02238b69e95ac0a71038be9b63586feade10d163d"
+    },
+    {
+      "path": "images/ims-real-open5gs/roles/mme/mme.conf",
+      "sha256": "85153a4b72337e3121db1ccdc31370a585785e6152dadea5387d0570627d94b8"
+    },
+    {
+      "path": "images/ims-real-open5gs/roles/mme/mme.yaml",
+      "sha256": "60cecad077d595fd55bc4a846019733a2d309217b1d1b8a0ce941b3c89ec83d3"
+    },
+    {
+      "path": "images/ims-real-open5gs/roles/mme/mme_init.sh",
+      "sha256": "6cd05e2f4dcfb2c6e884fea69bc4db0a4a8bc89b7e70f978ffe312cfd987114e"
+    },
+    {
+      "path": "images/ims-real-open5gs/roles/nrf/nrf.yaml",
+      "sha256": "bb543d1d7203d8cf69fe336fc8158d3bb91fd3e25da6953f2f23b57be6b9cb8e"
+    },
+    {
+      "path": "images/ims-real-open5gs/roles/nrf/nrf_init.sh",
+      "sha256": "8d065901ccc3223edfbefed8b2d0074a253cb02d0acdbeab8cccbe792e66db7e"
+    },
+    {
+      "path": "images/ims-real-open5gs/roles/nssf/nssf.yaml",
+      "sha256": "36e1b0b2e2263b3f74c14b13e0aed60226833dee4baffe6f6deb045911797e44"
+    },
+    {
+      "path": "images/ims-real-open5gs/roles/nssf/nssf_init.sh",
+      "sha256": "0f7f813ed07d191504cb1dca55e208f886b9335de2f736103bb14e24885bda7c"
+    },
+    {
+      "path": "images/ims-real-open5gs/roles/pcf/pcf.yaml",
+      "sha256": "52dfc085598cc787dcd52e53e6cccea817af83a5482f6f6d50287f999470959e"
+    },
+    {
+      "path": "images/ims-real-open5gs/roles/pcf/pcf_init.sh",
+      "sha256": "046a0faab9086d46d16be15e88385cc6ef9a28fcda6d115033293b41598ee8a2"
+    },
+    {
+      "path": "images/ims-real-open5gs/roles/pcrf/make_certs.sh",
+      "sha256": "0fdd18939005243f7c2c6c7539e8cb73adbb8752b1591047215374e99a8b0d51"
+    },
+    {
+      "path": "images/ims-real-open5gs/roles/pcrf/pcrf.conf",
+      "sha256": "e1fbd7f2cb725c6a574603ccc53db30a21c6c1f309471452909adb73937d0d1b"
+    },
+    {
+      "path": "images/ims-real-open5gs/roles/pcrf/pcrf.yaml",
+      "sha256": "b6942d881ad0e278eb3092d5334e7b2e9bef8bb81aa61704089464e4ea095be4"
+    },
+    {
+      "path": "images/ims-real-open5gs/roles/pcrf/pcrf_init.sh",
+      "sha256": "347859b52026490778f1a7f44d12cab50ed725dda36d5b3e585b7babea462214"
+    },
+    {
+      "path": "images/ims-real-open5gs/roles/scp/scp.yaml",
+      "sha256": "4db19491d28bb02ccfad0b720126f97eaaa710be857971e539b4217667394791"
+    },
+    {
+      "path": "images/ims-real-open5gs/roles/scp/scp_init.sh",
+      "sha256": "33d5919c706f83ea1b8deac3e678d5d56bfe2c307438d2e50f170e243acfd181"
+    },
+    {
+      "path": "images/ims-real-open5gs/roles/sgwc/sgwc.yaml",
+      "sha256": "b463ae83de44cdd325f693a9aea67c3f846e3479a3a3e8a96fdd0474feb9ecda"
+    },
+    {
+      "path": "images/ims-real-open5gs/roles/sgwc/sgwc_init.sh",
+      "sha256": "0fdac03b3296361964c3f353be43cacb7c09490420824dc74eeda6cf5ef46d73"
+    },
+    {
+      "path": "images/ims-real-open5gs/roles/sgwu/sgwu.yaml",
+      "sha256": "87b46516b802606b90d80667d6cd0d477c3879818262f52c6d0c6c69b1101e92"
+    },
+    {
+      "path": "images/ims-real-open5gs/roles/sgwu/sgwu_init.sh",
+      "sha256": "1edb91b7b4cf4a7cd9b570b333f7220c0788412ea41628d145e191262af69ad2"
+    },
+    {
+      "path": "images/ims-real-open5gs/roles/smf/ip_utils.py",
+      "sha256": "df4b12bcf5854b844e9bd75f5c583203c5178aaa9a8968bfe594e0282a2c2627"
+    },
+    {
+      "path": "images/ims-real-open5gs/roles/smf/make_certs.sh",
+      "sha256": "bc3c6aef1b3fd7ef8ad92dff03e84c20413ccaa5097e33ad08696e607825951c"
+    },
+    {
+      "path": "images/ims-real-open5gs/roles/smf/smf.conf",
+      "sha256": "1ab8a4cfc30227b9d5f2a506e1cc76477622888a2cb3f7ab65583139efba74b4"
+    },
+    {
+      "path": "images/ims-real-open5gs/roles/smf/smf.yaml",
+      "sha256": "dafdf644e77d0a261bd02f5f83ed46a8f64ad8a83eab46fbce9acedb38ae6837"
+    },
+    {
+      "path": "images/ims-real-open5gs/roles/smf/smf_4g.yaml",
+      "sha256": "dffaaa700f0f83cc327da9dc9a22306331f0ce1e73b7817f4f25a4e74377c703"
+    },
+    {
+      "path": "images/ims-real-open5gs/roles/smf/smf_init.sh",
+      "sha256": "f5fbcf134506ad3755447babcf35f3fac87a270c7f88b435b53f8dd7037a4ed8"
+    },
+    {
+      "path": "images/ims-real-open5gs/roles/udm/udm.yaml",
+      "sha256": "293fca4b26f35ae34ba18492f4cdffec5eb1c50fa1e90c2a871faa252faead11"
+    },
+    {
+      "path": "images/ims-real-open5gs/roles/udm/udm_init.sh",
+      "sha256": "652c6831b4579a9b2641f47b4160f47f0d7e21fbe5636947b0e3f6b1b840487f",
+      "upstream_sha256": "01096d309df74a82ca6b9d263be147d3e8f92784c4be3c49fd252d81413b2e71",
+      "transformation": "Replaced vendored private-key copies with first-party runtime generation."
+    },
+    {
+      "path": "images/ims-real-open5gs/roles/udr/udr.yaml",
+      "sha256": "fd81be5cdd64a20a747cf9e456193c9384527812d9abaf087689f69a967fad8c"
+    },
+    {
+      "path": "images/ims-real-open5gs/roles/udr/udr_init.sh",
+      "sha256": "861635d1d517455b2a5870015e10916a22d6c3943510012d97d6d429e4bc018b"
+    },
+    {
+      "path": "images/ims-real-open5gs/roles/upf/ip_utils.py",
+      "sha256": "df4b12bcf5854b844e9bd75f5c583203c5178aaa9a8968bfe594e0282a2c2627"
+    },
+    {
+      "path": "images/ims-real-open5gs/roles/upf/tun_if.py",
+      "sha256": "2d18f357daed4098397059354e3b3fa80d7ea4e4907b9a6436a3bc1a46a0840a"
+    },
+    {
+      "path": "images/ims-real-open5gs/roles/upf/upf.yaml",
+      "sha256": "dc242bc6044aac1a581f49570fc0fe78106baec58d0cc310d83f16fab688eb83"
+    },
+    {
+      "path": "images/ims-real-open5gs/roles/upf/upf_init.sh",
+      "sha256": "6624b2fbf17d9b8ac13a29c3a580e4d9012bfebfac057cfd96718c27dbfa03ad"
+    },
+    {
+      "path": "images/ims-real-open5gs/roles/webui/webui_init.sh",
+      "sha256": "837a9fded3dd039b61338ce02af2514f49d36ebe26da711b34fb073965e0d356"
+    },
+    {
+      "path": "images/ims-real-kamailio/roles/icscf/icscf.cfg",
+      "sha256": "3f3d91af9f1965c878027a768d527783389de6d0a3f7b346529a220fc20899f8"
+    },
+    {
+      "path": "images/ims-real-kamailio/roles/icscf/icscf.xml",
+      "sha256": "3d47282f28e2c838dec8df671bdd305de3c65d8654868d4129b361ed0c6e86da"
+    },
+    {
+      "path": "images/ims-real-kamailio/roles/icscf/icscf_init.sh",
+      "sha256": "09c766693b10a9cf3d676c105a24fac0ed105afa84b13a925631639ba87f04dc"
+    },
+    {
+      "path": "images/ims-real-kamailio/roles/icscf/kamailio_icscf.cfg",
+      "sha256": "0d8916dede40289af2146bbf8e27db7283ea4fcb46aee16248aa20b595e2d285"
+    },
+    {
+      "path": "images/ims-real-kamailio/roles/pcscf/dispatcher.list",
+      "sha256": "bd76285564d3a1f7418e1a6bfc23eb2331175bc5a764c225d23e7ed02aa444ff"
+    },
+    {
+      "path": "images/ims-real-kamailio/roles/pcscf/kamailio_pcscf.cfg",
+      "sha256": "cbba1274e3afb87bc599df973a6fba5b6fd335bcf460a539013ecf6b9ef8bf1b"
+    },
+    {
+      "path": "images/ims-real-kamailio/roles/pcscf/pcscf.cfg",
+      "sha256": "5f4d985e2067ca54c4ca5ba1c6d134f39a98ebfe00bcc9ba500564d620aba7f4"
+    },
+    {
+      "path": "images/ims-real-kamailio/roles/pcscf/pcscf.xml",
+      "sha256": "9ea5ca576df97a7b2343903b6bf86eb55be9b01eb642295e24df0cb5d9ad5ea1"
+    },
+    {
+      "path": "images/ims-real-kamailio/roles/pcscf/pcscf_init.sh",
+      "sha256": "1a7e4fb432ac7251fc2b3f572f59c1989fdeca3b2be273971c4a57706a9a7c52"
+    },
+    {
+      "path": "images/ims-real-kamailio/roles/pcscf/route/mo.cfg",
+      "sha256": "ed3458d98454899a00e1859d1764b0bfdc4b8b83a3ffa08737e518a40bd84d80"
+    },
+    {
+      "path": "images/ims-real-kamailio/roles/pcscf/route/mt.cfg",
+      "sha256": "381db3db1371f2d84718967fced8f8dd8886e20e659468d21dc99fdacc736721"
+    },
+    {
+      "path": "images/ims-real-kamailio/roles/pcscf/route/register.cfg",
+      "sha256": "4f4dfe600636194ca5d1fbb752923b1590a9edee9ed4488826066dcf4b6e44b5"
+    },
+    {
+      "path": "images/ims-real-kamailio/roles/pcscf/route/rtp.cfg",
+      "sha256": "0bce67d3df817e61c0f87d1fdd8ae431c11c8d6969ce60a4a55dfb6ca6b7f7b2"
+    },
+    {
+      "path": "images/ims-real-kamailio/roles/pcscf/route/websocket.cfg",
+      "sha256": "428bf12c21fcc7246280797ff3cb5f912083e5a025ec7c39f5fb60c34d0dcbdf"
+    },
+    {
+      "path": "images/ims-real-kamailio/roles/pcscf/route/xmlrpc.cfg",
+      "sha256": "e44f37bc0a2e318ad3ecd47f19076a3bd48fd50d2b25ab4699c8bfd9295028f5"
+    },
+    {
+      "path": "images/ims-real-kamailio/roles/pcscf/sems/etc/methodmap.conf",
+      "sha256": "2914e64beaa621bc86d7a08c88d79099cc7d110dab0a0d9fe4cb03594fac0959"
+    },
+    {
+      "path": "images/ims-real-kamailio/roles/pcscf/sems/etc/mo.sbcprofile.conf",
+      "sha256": "fbce55fe8a5f15ac44fb0eca3b038ba1c4fac4d26be9bb5b52bae96102d0905b"
+    },
+    {
+      "path": "images/ims-real-kamailio/roles/pcscf/sems/etc/monitoring.conf",
+      "sha256": "e6d67dfba1c7e0bdbe225eee4e924b1181cfc39983e4c4fac4f58bcba55158fa"
+    },
+    {
+      "path": "images/ims-real-kamailio/roles/pcscf/sems/etc/mt.sbcprofile.conf",
+      "sha256": "cc8a32d4e53310a4fb89ed4cd369746dbdcf35e618cef493262c91d5b69f50b4"
+    },
+    {
+      "path": "images/ims-real-kamailio/roles/pcscf/sems/etc/nocache.sbcprofile.conf",
+      "sha256": "23e8240c2a0d72064569a9ac1897375b3c85addbfb627e6b570ec00d7317aee8"
+    },
+    {
+      "path": "images/ims-real-kamailio/roles/pcscf/sems/etc/refuse.sbcprofile.conf",
+      "sha256": "67704b19cb38d9fd200a9c09efdadb3ad95560e6886983c1d569291c1ed5a9f6"
+    },
+    {
+      "path": "images/ims-real-kamailio/roles/pcscf/sems/etc/refuse_with_200.sbcprofile.conf",
+      "sha256": "447c0997369826b0d8e8ecc4d1eff2a60f03ff2fbed0bb5ad3452e3f4d2c0225"
+    },
+    {
+      "path": "images/ims-real-kamailio/roles/pcscf/sems/etc/register.sbcprofile.conf",
+      "sha256": "75f776f3b5926a933a8222afedbd54b8c318806bfad0968d1418c6c680924e3d"
+    },
+    {
+      "path": "images/ims-real-kamailio/roles/pcscf/sems/etc/rurimap.conf",
+      "sha256": "7fb5a7b71b46f93321e927dea0553ac1d5750d3a6ba44ea42aa265ba54c26dc4"
+    },
+    {
+      "path": "images/ims-real-kamailio/roles/pcscf/sems/etc/sbc.conf",
+      "sha256": "60698c25d44331b1c5eb3cdf87f2b354bb2654b03f6c63097c84169e4bc41c26"
+    },
+    {
+      "path": "images/ims-real-kamailio/roles/pcscf/sems/etc/stats.conf",
+      "sha256": "fd42354cd7ae7c29233e8b29e698ed9a0004bb2ab3fd95e6fc15716e79b78cda"
+    },
+    {
+      "path": "images/ims-real-kamailio/roles/pcscf/sems/etc/xmlrpc2di.conf",
+      "sha256": "36dba99fca9039de27b71caa0c23b4b1490b5c641875721dd47ca07795a66256"
+    },
+    {
+      "path": "images/ims-real-kamailio/roles/pcscf/sems/sems.conf",
+      "sha256": "068d2e63e85932ca30018dcee6261079ef35eb0baed43ff258f00a1c64a25229"
+    },
+    {
+      "path": "images/ims-real-kamailio/roles/pcscf/tls.cfg",
+      "sha256": "50c059e4e12f4d2c6195c8738b10fbf2395fa08f33b4da0d79f2849cb9b8bede"
+    },
+    {
+      "path": "images/ims-real-kamailio/roles/scscf/CxDataType_Rel6.xsd",
+      "sha256": "dcff26128bc58fec73e85fba865f814dc47bb18644b5903dc1726788c63a7b24"
+    },
+    {
+      "path": "images/ims-real-kamailio/roles/scscf/CxDataType_Rel7.xsd",
+      "sha256": "d4cafa75e85e9b92328f008090442b10393eb123a5a99c2297cf4fd1be13a150"
+    },
+    {
+      "path": "images/ims-real-kamailio/roles/scscf/CxDataType_Rel8.xsd",
+      "sha256": "e87173dcba598b2098829fedbf4e2bb64d0c15c4fae42ab0f951dbed9bfeca21"
+    },
+    {
+      "path": "images/ims-real-kamailio/roles/scscf/dispatcher.list",
+      "sha256": "510bb29331884a97daec11f78758057029b52d8a5cf0cc702847baa77996c026"
+    },
+    {
+      "path": "images/ims-real-kamailio/roles/scscf/kamailio_scscf.cfg",
+      "sha256": "5019576366c450a5acff11aa026f898ebb2524ad89df233303147aaba31b3e47"
+    },
+    {
+      "path": "images/ims-real-kamailio/roles/scscf/scscf.cfg",
+      "sha256": "ea5b637ef18776a0c050f72883052d06626e35861b1abf1b5cc0cdb51f850fb3"
+    },
+    {
+      "path": "images/ims-real-kamailio/roles/scscf/scscf.xml",
+      "sha256": "9a03b9f2d0a39fcc0238c74f958a33fa8094d1a0761c4ac6256f6baf672e7681"
+    },
+    {
+      "path": "images/ims-real-kamailio/roles/scscf/scscf_init.sh",
+      "sha256": "d358152af22e7507de9e33099fab907ac68055c0db6b6ee1ba50c01b551ee5a0"
+    },
+    {
+      "path": "images/ims-real-dns/runtime/Dockerfile",
+      "sha256": "ca93a731ed09c419b15ba207da33240acf6e9170f6a58682913c921ec9b37f01",
+      "upstream_sha256": "b2385bbf10017b1023695cd00d8a008fcaf25fb82d2540e3c7697a6da73aa2a6",
+      "transformation": "Pinned the Ubuntu base to the verified multi-platform manifest digest."
+    },
+    {
+      "path": "images/ims-real-dns/runtime/dns_init.sh",
+      "sha256": "eb6392e1fd19eac3613350a8f915b51517966629a801685911e326a108601d53"
+    },
+    {
+      "path": "images/ims-real-dns/runtime/e164.arpa",
+      "sha256": "72f6ca8d30f45b80c57b42c06cc00738af42d4f5d62bcc7336700c481eec00a3"
+    },
+    {
+      "path": "images/ims-real-dns/runtime/epc_zone",
+      "sha256": "2c4fb0fa800177b5e04d69588804ffadee7b93d956ceba2c7af54c0d89cd8e8b"
+    },
+    {
+      "path": "images/ims-real-dns/runtime/ims_zone",
+      "sha256": "6df60ca00428a8fc339bd9c216e4882dc5263be1e5624bae00643c33ffe61a8f"
+    },
+    {
+      "path": "images/ims-real-dns/runtime/named.conf",
+      "sha256": "1b5e9d28044ec10fdac7f40e70f1bb509656729bfbb19f450f766c555e64a578"
+    },
+    {
+      "path": "images/ims-real-dns/runtime/pub_3gpp_zone",
+      "sha256": "ec1ec9edd9738b895d3a527bb76ebc5429be2300260679e26535789b2609611f"
+    },
+    {
+      "path": "images/ims-real-rtpengine/runtime/Dockerfile",
+      "sha256": "9521d7e8ac843e225c44d08849b976b7c6b0bb83512cccae43e48cc1e8dcfcbe",
+      "upstream_sha256": "b79590865016f74382e05a27a6b61c13accee6ba0cce0b24270103667cddaad0",
+      "transformation": "Pinned the Debian base digest, replaced the mutable latest URL with release 26.0, and verified the upstream keyring checksum."
+    },
+    {
+      "path": "images/ims-real-rtpengine/runtime/rtpengine_init.sh",
+      "sha256": "fdc3bb2d304082e0c2652eaf5f4a1474e0159b1fc779926d209807512c981d63"
+    },
+    {
+      "path": "images/ims-real-mysql/runtime/Dockerfile",
+      "sha256": "79720e846933217ee2da82992168ce89c75147313902e4bb9cbec8be01e177ef",
+      "upstream_sha256": "5247b34117b29c7034c7128cdffcaa3d875e47626b4afff78df8a7fb68b38432",
+      "transformation": "Pinned the Ubuntu base to the verified multi-platform manifest digest and replaced local-file ADD with COPY."
+    },
+    {
+      "path": "images/ims-real-mysql/runtime/mysql_init.sh",
+      "sha256": "84d284ca31506ace0a1e1d81888b3443151c59e3fa607d4906a2a9e9e1495bf9"
+    },
+    {
+      "path": "images/pyhss-secure/runtime/Dockerfile",
+      "sha256": "31b6904f6a79594f9404d9b6977252e5d0f4b564817924b1b0f53ec01349ab16",
+      "upstream_sha256": "3229716f04dca49ec9f2702604a5ed9bfe7e113e0559e36c73a00740c2216ef0",
+      "transformation": "Pinned the Ubuntu base to the verified multi-platform manifest digest."
+    },
+    {
+      "path": "images/pyhss-secure/runtime/config.yaml",
+      "sha256": "1f121e97df57bc6f380ce8e1c9e3cc55596f80bd31ccde163cee733ac207dea9"
+    },
+    {
+      "path": "images/pyhss-secure/runtime/default_ifc.xml",
+      "sha256": "3da7590313f2c1c0228189f665999628b9e25231b3c09c1732a88e5f78154493"
+    },
+    {
+      "path": "images/pyhss-secure/runtime/default_sh_user_data.xml",
+      "sha256": "be6d738b126afcbcb29b844f0513f1af6b464ed1c2df4f3089a6e80654f7640e"
+    },
+    {
+      "path": "images/pyhss-secure/runtime/pyhss_init.sh",
+      "sha256": "f813958f06bf09c3662d25d6bf7eae2a67d17808c005df2d13ece81a1b381f66"
+    }
+  ]
+}

@@ -1,0 +1,20 @@
+profile: 5g-sa
+
+network:
+  mcc: "001"
+  mnc: "01"
+  tac: 1
+  dnn: internet
+  slice:
+    sst: 1
+    sd: "000001"
+
+core:
+  amf_addr: "10.20.0.5"
+  gnb_addr: "10.20.0.20"
+
+subscriber:
+  imsi: "001011234567895"
+
+safety:
+  rf_allowed: false

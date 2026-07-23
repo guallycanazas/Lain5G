@@ -1,0 +1,20 @@
+db_uri: mongodb://mongo/open5gs
+
+logger:
+  file:
+    path: /var/log/open5gs/nrf.log
+  level: info
+
+global:
+  max:
+    ue: 1024
+
+nrf:
+  serving:
+    - plmn_id:
+        mcc: 001
+        mnc: 01
+  sbi:
+    server:
+      - address: 10.20.0.10
+        port: 7777

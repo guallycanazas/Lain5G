@@ -1,0 +1,25 @@
+profile: 5g-vonr
+
+network:
+  mcc: "001"
+  mnc: "01"
+  tac: 1
+  dnn_internet: internet
+  dnn_ims: ims
+  slice:
+    sst: 1
+    sd: "000001"
+
+core:
+  amf_addr: "10.50.0.5"
+  gnb_addr: "10.50.0.40"
+
+subscriber:
+  imsi: "001011234567895"
+  msisdn: "51999999999"
+
+ims:
+  domain: ims.mnc001.mcc001.3gppnetwork.org
+
+safety:
+  rf_allowed: false

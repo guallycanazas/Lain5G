@@ -1,0 +1,14 @@
+{
+  "imsi": "00101 bad",
+  "security": {
+    "k": "not-a-key",
+    "opc": "********",
+    "amf": "80",
+    "sqn": "xyz"
+  },
+  "slice": {
+    "sst": 999,
+    "sd": "bad"
+  },
+  "dnn": "bad dnn"
+}

@@ -1,0 +1,10 @@
+diff --git a/lib/radio/uhd/radio_uhd_tx_stream.cpp b/lib/radio/uhd/radio_uhd_tx_stream.cpp
+--- a/lib/radio/uhd/radio_uhd_tx_stream.cpp
++++ b/lib/radio/uhd/radio_uhd_tx_stream.cpp
+@@ -25,0 +26 @@
++#include <uhd/version.hpp>
+@@ -74,0 +76,4 @@ void radio_uhd_tx_stream::recv_async_msg()
++#if UHD_VERSION >= 4090000
++    case uhd::async_metadata_t::EVENT_CODE_OK:
++      break;
++#endif // UHD_VERSION >= 4090000

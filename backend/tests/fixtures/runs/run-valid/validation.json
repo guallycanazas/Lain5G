@@ -1,0 +1,21 @@
+{
+  "scenario": "5g-sa",
+  "checked_at": "2026-07-10T02:17:57Z",
+  "checks": [
+    {"id": "mongo", "status": "PASS", "detail": "MongoDB responds to ping"},
+    {"id": "nrf", "status": "PASS", "detail": "container is running"},
+    {"id": "amf", "status": "PASS", "detail": "container is running"},
+    {"id": "smf", "status": "PASS", "detail": "container is running"},
+    {"id": "upf", "status": "PASS", "detail": "container is running"},
+    {"id": "ausf", "status": "PASS", "detail": "container is running"},
+    {"id": "udm", "status": "PASS", "detail": "container is running"},
+    {"id": "udr", "status": "PASS", "detail": "container is running"},
+    {"id": "pcf", "status": "PASS", "detail": "container is running"},
+    {"id": "ng_connection", "status": "PASS", "detail": "gNB reports successful NG setup"},
+    {"id": "ue_registration", "status": "PASS", "detail": "UE registration evidence found"},
+    {"id": "pdu_session", "status": "PASS", "detail": "PDU session evidence found"},
+    {"id": "ue_tun", "status": "PASS", "detail": "uesimtun0 exists"},
+    {"id": "ue_ip", "status": "PASS", "detail": "UE IP assigned: 10.45.0.2"},
+    {"id": "ping", "status": "PASS", "detail": "Ping succeeded"}
+  ]
+}

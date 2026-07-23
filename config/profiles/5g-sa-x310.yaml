@@ -1,0 +1,33 @@
+profile: 5g-sa-x310
+network:
+  mcc: "001"
+  mnc: "01"
+  tac: 1
+  dnn: internet
+  slice:
+    sst: 1
+    sd: "000001"
+core:
+  amf_addr: 10.20.0.5
+  gnb_bind_addr: 0.0.0.0
+  n3_bind_addr: 0.0.0.0
+radio:
+  device: x300
+  usrp_addr: 192.168.10.2
+  band: 78
+  dl_arfcn: 632628
+  bandwidth_mhz: 10
+  tx_gain: 20
+  rx_gain: 30
+  clock_source: internal
+  time_source: internal
+safety:
+  maximum_duration_seconds: 120
+  rf_allowed: false
+  environment: cabled
+  attenuation_db: 60
+  antenna_connected: false
+  shielded_environment: false
+  auto_stop: true
+  authorization_confirmed: false
+  operator_note: ""

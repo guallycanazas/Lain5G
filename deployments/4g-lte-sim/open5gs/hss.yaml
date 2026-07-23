@@ -1,0 +1,7 @@
+logger:
+  file:
+    path: /var/log/open5gs/hss.log
+db_uri: mongodb://mongo/open5gs
+hss:
+  freeDiameter: /usr/local/etc/freeDiameter/hss.conf
+  address: 10.43.0.11

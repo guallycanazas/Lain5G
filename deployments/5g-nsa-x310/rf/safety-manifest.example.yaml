@@ -1,0 +1,10 @@
+authorization_confirmed: false
+auto_stop: true
+capture_logs: true
+maximum_duration_seconds: 120
+lab_mode: cabled
+attenuation_db: 60
+antenna_connected: false
+nr_rf_path_connected: false
+shielded_environment: false
+operator_note: ""

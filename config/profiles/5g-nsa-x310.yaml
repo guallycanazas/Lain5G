@@ -1,0 +1,43 @@
+profile: 5g-nsa-x310
+
+network:
+  mcc: "001"
+  mnc: "01"
+  tac: 7
+  apn_internet: internet
+
+core:
+  mme_addr: 10.42.0.10
+
+ran:
+  enb_bind_addr: 10.42.0.1
+
+radio:
+  device: x300
+  usrp_addr: 192.168.10.2
+  lte_band: 7
+  earfcn: 3150
+  bandwidth_mhz: 10
+  nr_band: 3
+  nr_dl_arfcn: 368500
+  subcarrier_spacing_khz: 15
+  tx_gain: 20
+  rx_gain: 31.5
+  clock_source: internal
+  time_source: internal
+
+subscriber:
+  imsi: "001011234567895"
+
+safety:
+  maximum_duration_seconds: 600
+  rf_allowed: false
+  environment: cabled
+  attenuation_db: 60
+  antenna_connected: false
+  nr_rf_path_connected: false
+  shielded_environment: false
+  auto_stop: true
+  authorization_confirmed: false
+  authorized_lab_frequencies: false
+  operator_note: ""

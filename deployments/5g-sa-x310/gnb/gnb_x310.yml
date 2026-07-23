@@ -1,0 +1,40 @@
+# srsRAN Project gNB template for USRP X310.
+# Rendered with envsubst by docker-compose.yml; RF values must be provided locally in .env.
+cu_cp:
+  amf:
+    addr: ${AMF_ADDR}
+    port: 38412
+    bind_addr: ${GNB_BIND_ADDR}
+    supported_tracking_areas:
+      - tac: ${TAC}
+        plmn_list:
+          - plmn: "${MCC}${MNC}"
+            tai_slice_support_list:
+              - sst: ${SST}
+                sd: ${SD}
+
+cu_up:
+  upf:
+    bind_addr: ${N3_BIND_ADDR}
+
+ru_sdr:
+  device_driver: uhd
+  device_args: type=${USRP_TYPE},addr=${USRP_ADDR},num_recv_frames=64,num_send_frames=64
+  clock: ${USRP_CLOCK_SOURCE}
+  sync: ${USRP_TIME_SOURCE}
+  srate: ${SAMPLE_RATE_MHZ}
+  tx_gain: ${TX_GAIN}
+  rx_gain: ${RX_GAIN}
+
+cell_cfg:
+  dl_arfcn: ${DL_ARFCN}
+  band: ${NR_BAND}
+  channel_bandwidth_MHz: ${CHANNEL_BANDWIDTH_MHZ}
+  common_scs: 30
+  plmn: "${MCC}${MNC}"
+  tac: ${TAC}
+  pci: 1
+
+log:
+  filename: /var/log/srsran/gnb.log
+  all_level: warning

@@ -1,0 +1,11 @@
+{
+  "imsi": "REPLACE_WITH_14_OR_15_DIGITS",
+  "msisdn": "REPLACE_WITH_5_TO_15_DIGITS",
+  "ki": "REPLACE_WITH_32_HEX_CHARACTERS",
+  "opc": "REPLACE_WITH_32_HEX_CHARACTERS",
+  "amf": "8000",
+  "sqn": 0,
+  "apn_internet": "internet",
+  "apn_ims": "ims",
+  "enabled": true
+}

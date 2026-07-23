@@ -1,0 +1,9 @@
+lab_mode: cabled
+authorization_confirmed: false
+antenna_connected: false
+attenuation_db: 60
+shielded_environment: false
+maximum_duration_seconds: 60
+auto_stop: true
+capture_logs: true
+operator_note: ""

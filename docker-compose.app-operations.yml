@@ -1,0 +1,10 @@
+services:
+  backend:
+    volumes:
+      - type: bind
+        source: ${LAIN5G_PROJECT_ROOT:?Set LAIN5G_PROJECT_ROOT in .env.app}
+        target: ${LAIN5G_PROJECT_ROOT:?Set LAIN5G_PROJECT_ROOT in .env.app}
+        read_only: false
+      - type: bind
+        source: /var/run/docker.sock
+        target: /var/run/docker.sock

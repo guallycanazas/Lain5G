@@ -1,0 +1,15 @@
+mode: NSA_EN_DC_EXPERIMENTAL
+lte_band: 7
+lte_dl_earfcn: 3150
+lte_bandwidth_mhz: 10
+lte_downlink_frequency_mhz: 2660.0
+lte_uplink_frequency_mhz: 2540.0
+nr_band: 3
+nr_dl_arfcn: 368500
+nr_bandwidth_mhz: 10
+nr_downlink_frequency_mhz: 1842.5
+nr_uplink_frequency_mhz: 1747.5
+subcarrier_spacing_khz: 15
+rf_channels: 2
+authorized_lab_frequencies: false
+operator_note: ""

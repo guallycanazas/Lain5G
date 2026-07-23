@@ -1,0 +1,45 @@
+{
+  "artifact_type": "public-scenario-result",
+  "associated_files": [
+    {
+      "reference": "results/public/summaries/run-20260723-055328-checks.json",
+      "sha256": "f1b81f77c6e57ecd90daeb1c70922b2e8365c9b05a791717a9e700fbdbdf65de"
+    }
+  ],
+  "command_label": "Isolated 5G VoNR simulation validation",
+  "duration_seconds": 413,
+  "ended_at_utc": "2026-07-23T06:00:21Z",
+  "environment_reference": "results/public/environment/verification-host-20260723.json",
+  "execution_status": "BLOCKED",
+  "limitations": [
+    "Validation did not complete within the six-minute audit limit; no scenario criterion was assessed.",
+    "Containers running at the timeout were not treated as evidence and were stopped before the isolated daemon was removed."
+  ],
+  "public_configurations": [
+    {
+      "reference": "config/profiles/5g-vonr.yaml",
+      "sha256": "7be54ab4456cb7e0d04fdbb1647451ec98c4e73291ddb776ea61c43c738fd32a"
+    },
+    {
+      "reference": "deployments/5g-vonr/docker-compose.yml",
+      "sha256": "a5f4bd68b55cba33775ad325d05412031f85f9e484e439ece7814735f9b7dd94"
+    }
+  ],
+  "release_version": "1.0.0-rc.1",
+  "result_classification": "NOT_VALIDATED",
+  "run_id": "run-20260723-055328",
+  "scenario": "5g-vonr-sim",
+  "schema_version": "1.0",
+  "source_commit": "12c4a38404bbaf240c698a056e3f47182081ab5c",
+  "started_at_utc": "2026-07-23T05:53:28Z",
+  "success_criteria": [
+    {
+      "description": "Scenario validation completes within the audit limit",
+      "evidence_references": [
+        "results/public/summaries/run-20260723-055328-checks.json"
+      ],
+      "id": "validation-completion",
+      "outcome": "NOT_MET"
+    }
+  ]
+}

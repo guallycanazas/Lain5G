@@ -1,0 +1,287 @@
+name: lain5g-lab-ims-real-4g
+services:
+  mongo:
+    image: mongo@sha256:8b6d8f5bbedb25cb73517b65cf99f13aeb75ad5b157a56c479287a840bbad3ac
+    command: --bind_ip 0.0.0.0
+    env_file:
+    - ${LAIN5G_IMS_ENV_FILE}
+    volumes:
+    - mongodbdata:/data/db
+    - mongodbdata:/data/configdb
+    expose:
+    - 27017/udp
+    - 27017/tcp
+    networks:
+      default:
+        ipv4_address: ${MONGO_IP}
+  dns:
+    image: lain5g-lab/ims-real-dns:1.0.0-rc.1
+    env_file:
+    - ${LAIN5G_IMS_ENV_FILE}
+    expose:
+    - 53/udp
+    networks:
+      default:
+        ipv4_address: ${DNS_IP}
+  rtpengine:
+    image: lain5g-lab/ims-real-rtpengine:1.0.0-rc.1
+    privileged: true
+    env_file:
+    - ${LAIN5G_IMS_ENV_FILE}
+    cap_add:
+    - NET_ADMIN
+    environment:
+    - TABLE=0
+    - INTERFACE=${RTPENGINE_IP}
+    - LISTEN_NG=${RTPENGINE_IP}:2223
+    - PIDFILE=/run/ngcp-rtpengine-daemon.pid
+    - PORT_MAX=50000
+    - PORT_MIN=49000
+    - NO_FALLBACK=no
+    - TOS=184
+    expose:
+    - 2223/udp
+    networks:
+      default:
+        ipv4_address: ${RTPENGINE_IP}
+  mysql:
+    image: lain5g-lab/ims-real-mysql:1.0.0-rc.1
+    env_file:
+    - ${LAIN5G_IMS_ENV_FILE}
+    volumes:
+    - dbdata:/var/lib/mysql
+    expose:
+    - 3306/tcp
+    networks:
+      default:
+        ipv4_address: ${MYSQL_IP}
+  pyhss:
+    image: lain5g-lab/pyhss-secure:1.0.0-rc.1
+    dns: ${DNS_IP}
+    volumes:
+    - pyhss_logs:/pyhss/log
+    env_file:
+    - ${LAIN5G_IMS_ENV_FILE}
+    depends_on:
+    - dns
+    - mysql
+    expose:
+    - ${PYHSS_BIND_PORT}/tcp
+    - ${PYHSS_BIND_PORT}/sctp
+    - 8080/tcp
+    networks:
+      default:
+        ipv4_address: ${PYHSS_IP}
+  icscf:
+    image: lain5g-lab/ims-real-kamailio:1.0.0-rc.1
+    dns: ${DNS_IP}
+    env_file:
+    - ${LAIN5G_IMS_ENV_FILE}
+    environment:
+    - COMPONENT_NAME=icscf
+    depends_on:
+    - dns
+    - mysql
+    - pyhss
+    expose:
+    - ${ICSCF_BIND_PORT}/tcp
+    - ${ICSCF_BIND_PORT}/sctp
+    - 4060/udp
+    - 4060/tcp
+    networks:
+      default:
+        ipv4_address: ${ICSCF_IP}
+  scscf:
+    image: lain5g-lab/ims-real-kamailio:1.0.0-rc.1
+    dns: ${DNS_IP}
+    env_file:
+    - ${LAIN5G_IMS_ENV_FILE}
+    environment:
+    - COMPONENT_NAME=scscf
+    depends_on:
+    - dns
+    - mysql
+    - pyhss
+    expose:
+    - ${SCSCF_BIND_PORT}/tcp
+    - ${SCSCF_BIND_PORT}/sctp
+    - 6060/udp
+    - 6060/tcp
+    networks:
+      default:
+        ipv4_address: ${SCSCF_IP}
+  pcscf:
+    image: lain5g-lab/ims-real-kamailio:1.0.0-rc.1
+    dns: ${DNS_IP}
+    privileged: true
+    cap_add:
+    - NET_ADMIN
+    env_file:
+    - ${LAIN5G_IMS_ENV_FILE}
+    environment:
+    - COMPONENT_NAME=pcscf
+    - DEPLOY_MODE=4G
+    depends_on:
+    - dns
+    - mysql
+    - rtpengine
+    - icscf
+    - scscf
+    expose:
+    - ${PCSCF_BIND_PORT}/tcp
+    - ${PCSCF_BIND_PORT}/sctp
+    - 5060/tcp
+    - 5060/udp
+    networks:
+      default:
+        ipv4_address: ${PCSCF_IP}
+  hss:
+    image: lain5g-lab/ims-real-open5gs:1.0.0-rc.1
+    env_file:
+    - ${LAIN5G_IMS_ENV_FILE}
+    environment:
+    - COMPONENT_NAME=hss
+    - DB_URI=mongodb://${MONGO_IP}/open5gs
+    volumes:
+    - open5gs_logs:/open5gs/install/var/log/open5gs
+    depends_on:
+    - mongo
+    expose:
+    - 3868/tcp
+    - 3868/sctp
+    - 5868/tcp
+    - 5868/sctp
+    networks:
+      default:
+        ipv4_address: ${HSS_IP}
+  sgwc:
+    image: lain5g-lab/ims-real-open5gs:1.0.0-rc.1
+    depends_on:
+    - smf
+    - upf
+    env_file:
+    - ${LAIN5G_IMS_ENV_FILE}
+    environment:
+    - COMPONENT_NAME=sgwc
+    volumes:
+    - open5gs_logs:/open5gs/install/var/log/open5gs
+    expose:
+    - 2123/udp
+    - 8805/udp
+    networks:
+      default:
+        ipv4_address: ${SGWC_IP}
+  sgwu:
+    image: lain5g-lab/ims-real-open5gs:1.0.0-rc.1
+    depends_on:
+    - smf
+    - upf
+    env_file:
+    - ${LAIN5G_IMS_ENV_FILE}
+    environment:
+    - COMPONENT_NAME=sgwu
+    volumes:
+    - open5gs_logs:/open5gs/install/var/log/open5gs
+    expose:
+    - 8805/udp
+    - 2152/udp
+    networks:
+      default:
+        ipv4_address: ${SGWU_IP}
+  smf:
+    image: lain5g-lab/ims-real-open5gs:1.0.0-rc.1
+    env_file:
+    - ${LAIN5G_IMS_ENV_FILE}
+    environment:
+    - COMPONENT_NAME=smf
+    - DEPLOY_MODE=4G
+    volumes:
+    - open5gs_logs:/open5gs/install/var/log/open5gs
+    expose:
+    - 3868/tcp
+    - 3868/sctp
+    - 5868/tcp
+    - 5868/sctp
+    - 8805/udp
+    - 2123/udp
+    - 7777/tcp
+    - 9091/tcp
+    networks:
+      default:
+        ipv4_address: ${SMF_IP}
+  upf:
+    image: lain5g-lab/ims-real-open5gs:1.0.0-rc.1
+    depends_on:
+    - smf
+    env_file:
+    - ${LAIN5G_IMS_ENV_FILE}
+    environment:
+    - COMPONENT_NAME=upf
+    volumes:
+    - open5gs_logs:/open5gs/install/var/log/open5gs
+    expose:
+    - 2152/udp
+    - 8805/udp
+    - 9091/tcp
+    cap_add:
+    - NET_ADMIN
+    privileged: true
+    sysctls:
+    - net.ipv4.ip_forward=1
+    networks:
+      default:
+        ipv4_address: ${UPF_IP}
+  mme:
+    image: lain5g-lab/ims-real-open5gs:1.0.0-rc.1
+    depends_on:
+    - hss
+    - sgwc
+    - sgwu
+    - smf
+    - upf
+    env_file:
+    - ${LAIN5G_IMS_ENV_FILE}
+    environment:
+    - COMPONENT_NAME=mme
+    volumes:
+    - open5gs_logs:/open5gs/install/var/log/open5gs
+    expose:
+    - 3868/tcp
+    - 3868/sctp
+    - 5868/tcp
+    - 5868/sctp
+    - 36412/sctp
+    - 2123/udp
+    - 9091/tcp
+    networks:
+      default:
+        ipv4_address: ${MME_IP}
+  pcrf:
+    image: lain5g-lab/ims-real-open5gs:1.0.0-rc.1
+    env_file:
+    - ${LAIN5G_IMS_ENV_FILE}
+    environment:
+    - COMPONENT_NAME=pcrf
+    - DB_URI=mongodb://${MONGO_IP}/open5gs
+    depends_on:
+    - mongo
+    volumes:
+    - open5gs_logs:/open5gs/install/var/log/open5gs
+    expose:
+    - ${PCRF_BIND_PORT}/tcp
+    - ${PCRF_BIND_PORT}/sctp
+    - 5868/tcp
+    - 5868/sctp
+    networks:
+      default:
+        ipv4_address: ${PCRF_IP}
+networks:
+  default:
+    ipam:
+      config:
+      - subnet: ${TEST_NETWORK}
+volumes:
+  mongodbdata:
+  dbdata:
+  open5gs_logs:
+  pyhss_logs:

@@ -1,0 +1,45 @@
+db_uri: mongodb://mongo/open5gs
+
+logger:
+  file:
+    path: /var/log/open5gs/smf.log
+  level: info
+
+global:
+  max:
+    ue: 1024
+
+smf:
+  sbi:
+    server:
+      - address: 10.50.0.4
+        port: 7777
+    client:
+      nrf:
+        - uri: http://10.50.0.10:7777
+  pfcp:
+    server:
+      - address: 10.50.0.4
+    client:
+      upf:
+        - address: 10.50.0.7
+  gtpu:
+    server:
+      - address: 10.50.0.4
+  session:
+    - subnet: 10.60.0.0/16
+      gateway: 10.60.0.1
+      dnn: internet
+    - subnet: 10.61.0.0/16
+      gateway: 10.61.0.1
+      dnn: ims
+  dns:
+    - 10.50.0.30
+  mtu: 1400
+  info:
+    - s_nssai:
+        - sst: 1
+          sd: 000001
+          dnn:
+            - internet
+            - ims

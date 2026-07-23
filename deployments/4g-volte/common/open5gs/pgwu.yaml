@@ -1,0 +1,19 @@
+logger:
+  file:
+    path: /var/log/open5gs/pgwu.log
+upf:
+  pfcp:
+    server:
+      - address: 10.41.0.15
+  gtpu:
+    server:
+      - address: 10.41.0.15
+  session:
+    - subnet: 10.55.0.0/16
+      gateway: 10.55.0.1
+      dev: ogstun
+      dnn: internet
+    - subnet: 10.56.0.0/16
+      gateway: 10.56.0.1
+      dev: ogstun2
+      dnn: ims

@@ -1,0 +1,12 @@
+{
+  "artifact_type": "public-check-summary",
+  "checks": [],
+  "execution_status": "BLOCKED",
+  "limitations": [
+    "Validation did not complete within the six-minute audit limit; no scenario criterion was assessed."
+  ],
+  "result_classification": "NOT_VALIDATED",
+  "run_id": "run-20260723-055328",
+  "scenario": "5g-vonr-sim",
+  "source_commit": "12c4a38404bbaf240c698a056e3f47182081ab5c"
+}

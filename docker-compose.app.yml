@@ -1,0 +1,67 @@
+name: lain5g-lab-app
+
+# Host ports are intentionally fixed to loopback. Docker control and a writable
+# project mount are available only through docker-compose.app-operations.yml.
+
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    container_name: lain5g-lab-app-backend
+    working_dir: ${LAIN5G_PROJECT_ROOT:?Set LAIN5G_PROJECT_ROOT in .env.app}
+    environment:
+      LAIN5G_PROJECT_ROOT: ${LAIN5G_PROJECT_ROOT:?Set LAIN5G_PROJECT_ROOT in .env.app}
+      LAIN5G_SCENARIO: ${LAIN5G_SCENARIO:-5g-sa}
+      LAIN5G_DRY_RUN: ${LAIN5G_DRY_RUN:-false}
+      LAIN5G_MUTATING_OPERATIONS_ENABLED: ${LAIN5G_MUTATING_OPERATIONS_ENABLED:-false}
+      LAIN5G_COMMAND_TIMEOUT: ${LAIN5G_COMMAND_TIMEOUT:-300}
+      LAIN5G_IMAGE_PULL_TIMEOUT: ${LAIN5G_IMAGE_PULL_TIMEOUT:-3600}
+      LAIN5G_IMAGE_PULL_ENABLED: ${LAIN5G_IMAGE_PULL_ENABLED:-false}
+      LAIN5G_LOG_TAIL_LINES: ${LAIN5G_LOG_TAIL_LINES:-500}
+      LAIN5G_MAX_OUTPUT_CHARS: ${LAIN5G_MAX_OUTPUT_CHARS:-20000}
+      LAIN5G_CORS_ORIGINS: ${LAIN5G_CORS_ORIGINS:-http://localhost:8080,http://127.0.0.1:8080}
+      LAIN5G_OPEN5GS_MONGO_URI: ${LAIN5G_OPEN5GS_MONGO_URI:-mongodb://mongo:27017/open5gs}
+      LAIN5G_OPEN5GS_MONGO_DATABASE: ${LAIN5G_OPEN5GS_MONGO_DATABASE:-open5gs}
+      LAIN5G_OPEN5GS_SUBSCRIBER_COLLECTION: ${LAIN5G_OPEN5GS_SUBSCRIBER_COLLECTION:-subscribers}
+      LAIN5G_SUBSCRIBER_SECRETS_VISIBLE: ${LAIN5G_SUBSCRIBER_SECRETS_VISIBLE:-false}
+      LAIN5G_SUBSCRIBER_OPERATION_TIMEOUT: ${LAIN5G_SUBSCRIBER_OPERATION_TIMEOUT:-15}
+      LAIN5G_OPEN5GS_DOCKER_NETWORK: ${LAIN5G_OPEN5GS_DOCKER_NETWORK:-lain5g-lab-5g-sa-core}
+      LAIN5G_RF_WEB_CONTROL_ENABLED: ${LAIN5G_RF_WEB_CONTROL_ENABLED:-false}
+      PYTHONPATH: ${LAIN5G_PROJECT_ROOT:?Set LAIN5G_PROJECT_ROOT in .env.app}
+    volumes:
+      - type: bind
+        source: ${LAIN5G_PROJECT_ROOT:?Set LAIN5G_PROJECT_ROOT in .env.app}
+        target: ${LAIN5G_PROJECT_ROOT:?Set LAIN5G_PROJECT_ROOT in .env.app}
+        read_only: true
+    ports:
+      - "127.0.0.1:${APP_BACKEND_PORT:-8000}:8000"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/health', timeout=5).read()"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+    networks:
+      - app
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: lain5g-lab-app-frontend
+    depends_on:
+      backend:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:${APP_FRONTEND_PORT:-8080}:80"
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1/"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+    networks:
+      - app
+
+networks:
+  app:
+    name: lain5g-lab-app

@@ -1,0 +1,85 @@
+{
+  "artifact_type": "public-scenario-result",
+  "associated_files": [
+    {
+      "reference": "results/public/summaries/run-20260723-054913-checks.json",
+      "sha256": "bd5c1090dd52f74ffb0d71fd7f6dfe1df0aa9eca5fa9ea82c1325de32c32307f"
+    }
+  ],
+  "command_label": "Isolated 5G SA simulation validation",
+  "duration_seconds": 56,
+  "ended_at_utc": "2026-07-23T05:50:10Z",
+  "environment_reference": "results/public/environment/verification-host-20260723.json",
+  "execution_status": "PASS",
+  "limitations": [
+    "Software-only UERANSIM result; no SDR, commercial UE, IMS, voice, RF, or hardware claim.",
+    "The result was executed in one isolated ephemeral Docker daemon on one host."
+  ],
+  "public_configurations": [
+    {
+      "reference": "config/profiles/5g-sa.yaml",
+      "sha256": "5b69e527c6d6f7a5e2181c09bcd89adecb3f59523c7274b49d8901c4840f2085"
+    },
+    {
+      "reference": "deployments/5g-sa/docker-compose.yml",
+      "sha256": "0c95e296eeb65890b67d16204cb8c4ca84650d006fc0a1d5d3b2d9e526129d81"
+    }
+  ],
+  "release_version": "1.0.0-rc.1",
+  "result_classification": "SIMULATION_ONLY",
+  "run_id": "run-20260723-054913",
+  "scenario": "5g-sa-sim",
+  "schema_version": "1.0",
+  "source_commit": "12c4a38404bbaf240c698a056e3f47182081ab5c",
+  "started_at_utc": "2026-07-23T05:49:14Z",
+  "success_criteria": [
+    {
+      "description": "Core services pass the scenario checks",
+      "evidence_references": [
+        "results/public/summaries/run-20260723-054913-checks.json"
+      ],
+      "id": "core-services",
+      "outcome": "MET"
+    },
+    {
+      "description": "Data ping passes from the software UE",
+      "evidence_references": [
+        "results/public/summaries/run-20260723-054913-checks.json"
+      ],
+      "id": "data-ping",
+      "outcome": "MET"
+    },
+    {
+      "description": "NG setup passes between software RAN and core",
+      "evidence_references": [
+        "results/public/summaries/run-20260723-054913-checks.json"
+      ],
+      "id": "ng-setup",
+      "outcome": "MET"
+    },
+    {
+      "description": "PDU session establishment passes",
+      "evidence_references": [
+        "results/public/summaries/run-20260723-054913-checks.json"
+      ],
+      "id": "pdu-session",
+      "outcome": "MET"
+    },
+    {
+      "description": "Software UE interface and address checks pass",
+      "evidence_references": [
+        "results/public/summaries/run-20260723-054913-checks.json"
+      ],
+      "id": "ue-interface",
+      "outcome": "MET"
+    },
+    {
+      "description": "Software UE registration passes",
+      "evidence_references": [
+        "results/public/summaries/run-20260723-054913-checks.json"
+      ],
+      "id": "ue-registration",
+      "outcome": "MET"
+    }
+  ]
+}

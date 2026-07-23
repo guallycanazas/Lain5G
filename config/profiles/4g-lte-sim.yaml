@@ -1,0 +1,17 @@
+profile: 4g-lte-sim
+network:
+  mcc: "001"
+  mnc: "01"
+  tac: 7
+  apn_internet: internet
+core:
+  mme_addr: 10.43.0.10
+ran:
+  enb_bind_addr: 10.43.0.40
+  dl_earfcn: 3350
+  tx_gain: 80
+  rx_gain: 40
+subscriber:
+  imsi: "001011234567895"
+safety:
+  rf_allowed: false

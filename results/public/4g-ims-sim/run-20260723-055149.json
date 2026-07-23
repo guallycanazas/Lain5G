@@ -1,0 +1,69 @@
+{
+  "artifact_type": "public-scenario-result",
+  "associated_files": [
+    {
+      "reference": "results/public/summaries/run-20260723-055149-checks.json",
+      "sha256": "a142b563e78e81fcb23f9d9fbb1a2bfc415d0b0cd263fded28bcf1f17a938a66"
+    }
+  ],
+  "command_label": "Isolated 4G IMS simulation validation",
+  "duration_seconds": 89,
+  "ended_at_utc": "2026-07-23T05:53:18Z",
+  "environment_reference": "results/public/environment/verification-host-20260723.json",
+  "execution_status": "PASS",
+  "limitations": [
+    "Digest-based laboratory SIP registration only; no AKA, Cx, Rx, call completion, RF, or bidirectional media claim.",
+    "The result was executed in one isolated ephemeral Docker daemon on one host."
+  ],
+  "public_configurations": [
+    {
+      "reference": "config/profiles/4g-volte-sim.yaml",
+      "sha256": "2b78856d23b522226d9a3e78e39f8af9442a5e5f8b140de84185888f931067bf"
+    },
+    {
+      "reference": "deployments/4g-volte/sim/docker-compose.yml",
+      "sha256": "fbdddbc4f9f65304fa2d00da03df111939bf6b52f24b0e97fb9de03bccd046ab"
+    }
+  ],
+  "release_version": "1.0.0-rc.1",
+  "result_classification": "SIMULATION_ONLY",
+  "run_id": "run-20260723-055149",
+  "scenario": "4g-ims-sim",
+  "schema_version": "1.0",
+  "source_commit": "12c4a38404bbaf240c698a056e3f47182081ab5c",
+  "started_at_utc": "2026-07-23T05:51:49Z",
+  "success_criteria": [
+    {
+      "description": "IMS service checks pass",
+      "evidence_references": [
+        "results/public/summaries/run-20260723-055149-checks.json"
+      ],
+      "id": "ims-services",
+      "outcome": "MET"
+    },
+    {
+      "description": "IMS subscriber provisioning check passes",
+      "evidence_references": [
+        "results/public/summaries/run-20260723-055149-checks.json"
+      ],
+      "id": "ims-subscriber",
+      "outcome": "MET"
+    },
+    {
+      "description": "LTE registration and data-path checks pass",
+      "evidence_references": [
+        "results/public/summaries/run-20260723-055149-checks.json"
+      ],
+      "id": "lte-data-path",
+      "outcome": "MET"
+    },
+    {
+      "description": "Laboratory SIP registration check passes",
+      "evidence_references": [
+        "results/public/summaries/run-20260723-055149-checks.json"
+      ],
+      "id": "sip-registration",
+      "outcome": "MET"
+    }
+  ]
+}

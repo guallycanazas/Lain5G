@@ -1,0 +1,27 @@
+profile: 4g-volte-sim
+
+network:
+  mcc: "001"
+  mnc: "01"
+  tac: 7
+  apn_internet: internet
+  apn_ims: ims
+
+core:
+  mme_addr: "10.41.0.10"
+
+ran:
+  enb_bind_addr: "10.41.0.40"
+  dl_earfcn: 3350
+  tx_gain: 80
+  rx_gain: 40
+
+subscriber:
+  imsi: "001011234567895"
+  msisdn: "51999999999"
+
+ims:
+  domain: ims.mnc001.mcc001.3gppnetwork.org
+
+safety:
+  rf_allowed: false

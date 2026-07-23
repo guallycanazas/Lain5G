@@ -1,0 +1,24 @@
+logger:
+  file:
+    path: /var/log/open5gs/pgwc.log
+db_uri: mongodb://mongo/open5gs
+smf:
+  pfcp:
+    server:
+      - address: 10.43.0.14
+    client:
+      upf:
+        - address: 10.43.0.15
+  gtpc:
+    server:
+      - address: 10.43.0.14
+  gtpu:
+    server:
+      - address: 10.43.0.14
+  session:
+    - subnet: 10.57.0.0/16
+      gateway: 10.57.0.1
+      dnn: internet
+  dns: [1.1.1.1]
+  mtu: 1400
+  freeDiameter: /usr/local/etc/freeDiameter/smf.conf

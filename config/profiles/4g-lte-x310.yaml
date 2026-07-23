@@ -1,0 +1,36 @@
+profile: 4g-lte-x310
+network:
+  mcc: "001"
+  mnc: "01"
+  tac: 1
+  apn_internet: internet
+  apn_ims: ims
+core:
+  mme_addr: 172.22.0.9
+ran:
+  enb_bind_addr: 172.22.0.1
+radio:
+  device: x300
+  usrp_addr: 192.168.10.2
+  lte_band: 7
+  earfcn: 3150
+  bandwidth_mhz: 5
+  tx_gain: 20
+  rx_gain: 40
+  clock_source: internal
+  time_source: internal
+subscriber:
+  imsi: "001011234567895"
+  msisdn: 51999999999
+ims:
+  domain: ims.mnc001.mcc001.3gppnetwork.org
+safety:
+  maximum_duration_seconds: 600
+  rf_allowed: false
+  environment: cabled
+  attenuation_db: 60
+  antenna_connected: false
+  shielded_environment: false
+  auto_stop: true
+  authorization_confirmed: false
+  operator_note: ""

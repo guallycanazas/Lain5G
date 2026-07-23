@@ -1,0 +1,217 @@
+name: lain5g-lab-4g-volte-sim
+
+services:
+  mongo:
+    image: mongo@sha256:8b6d8f5bbedb25cb73517b65cf99f13aeb75ad5b157a56c479287a840bbad3ac
+    container_name: lain5g-lab-4g-volte-sim-mongo
+    command: ["mongod", "--bind_ip_all"]
+    volumes:
+      - mongo-data:/data/db
+    networks: { epc: { ipv4_address: 10.41.0.2 } }
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping').ok"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+
+  subscriber-provisioner:
+    image: mongo@sha256:8b6d8f5bbedb25cb73517b65cf99f13aeb75ad5b157a56c479287a840bbad3ac
+    container_name: lain5g-lab-4g-volte-sim-subscriber-provisioner
+    env_file: [../common/.env]
+    depends_on:
+      mongo: { condition: service_healthy }
+    volumes:
+      - ../common/provisioning/open5gs-subscriber-init.js:/subscriber-init.js:ro
+    command: ["mongosh", "mongodb://mongo:27017/open5gs", "/subscriber-init.js"]
+    networks: { epc: { ipv4_address: 10.41.0.3 } }
+    restart: "no"
+
+  mme:
+    image: lain5g-lab/open5gs:local
+    container_name: lain5g-lab-4g-volte-sim-mme
+    command: ["open5gs-mmed", "-c", "/etc/open5gs/mme.yaml"]
+    environment:
+      FD_LISTEN_ON: 10.41.0.10
+      FD_HSS_CONNECT_TO: 10.41.0.11
+    depends_on: [hss, sgwc]
+    volumes: ["../common/open5gs/mme.yaml:/etc/open5gs/mme.yaml:ro"]
+    networks: { epc: { ipv4_address: 10.41.0.10 } }
+
+  hss:
+    image: lain5g-lab/open5gs:local
+    container_name: lain5g-lab-4g-volte-sim-hss
+    command: ["open5gs-hssd", "-c", "/etc/open5gs/hss.yaml"]
+    environment:
+      FD_LISTEN_ON: 10.41.0.11
+      FD_MME_CONNECT_TO: 10.41.0.10
+    depends_on:
+      subscriber-provisioner: { condition: service_completed_successfully }
+    volumes: ["../common/open5gs/hss.yaml:/etc/open5gs/hss.yaml:ro"]
+    networks: { epc: { ipv4_address: 10.41.0.11 } }
+
+  sgwc:
+    image: lain5g-lab/open5gs:local
+    container_name: lain5g-lab-4g-volte-sim-sgwc
+    command: ["open5gs-sgwcd", "-c", "/etc/open5gs/sgwc.yaml"]
+    volumes: ["../common/open5gs/sgwc.yaml:/etc/open5gs/sgwc.yaml:ro"]
+    networks: { epc: { ipv4_address: 10.41.0.12 } }
+
+  sgwu:
+    image: lain5g-lab/open5gs:local
+    container_name: lain5g-lab-4g-volte-sim-sgwu
+    command: ["open5gs-sgwud", "-c", "/etc/open5gs/sgwu.yaml"]
+    volumes: ["../common/open5gs/sgwu.yaml:/etc/open5gs/sgwu.yaml:ro"]
+    networks: { epc: { ipv4_address: 10.41.0.13 } }
+
+  pgwc:
+    image: lain5g-lab/open5gs:local
+    container_name: lain5g-lab-4g-volte-sim-pgwc
+    command: ["open5gs-smfd", "-c", "/etc/open5gs/pgwc.yaml"]
+    environment:
+      FD_LISTEN_ON: 10.41.0.14
+      FD_PCRF_CONNECT_TO: 10.41.0.16
+    volumes: ["../common/open5gs/pgwc.yaml:/etc/open5gs/pgwc.yaml:ro"]
+    networks: { epc: { ipv4_address: 10.41.0.14 } }
+
+  pgwu:
+    image: lain5g-lab/open5gs:local
+    container_name: lain5g-lab-4g-volte-sim-pgwu
+    command: ["open5gs-upfd", "-c", "/etc/open5gs/pgwu.yaml"]
+    environment:
+      UE_SUBNET: ${UE_INTERNET_SUBNET:-10.55.0.0/16}
+      UE_GATEWAY: 10.55.0.1
+    cap_add: [NET_ADMIN]
+    devices: ["/dev/net/tun:/dev/net/tun"]
+    volumes: ["../common/open5gs/pgwu.yaml:/etc/open5gs/pgwu.yaml:ro"]
+    networks: { epc: { ipv4_address: 10.41.0.15 } }
+
+  pcrf:
+    image: lain5g-lab/open5gs:local
+    container_name: lain5g-lab-4g-volte-sim-pcrf
+    command: ["open5gs-pcrfd", "-c", "/etc/open5gs/pcrf.yaml"]
+    environment:
+      FD_LISTEN_ON: 10.41.0.16
+      FD_SMF_CONNECT_TO: 10.41.0.14
+    depends_on:
+      mongo: { condition: service_healthy }
+    volumes: ["../common/open5gs/pcrf.yaml:/etc/open5gs/pcrf.yaml:ro"]
+    networks: { epc: { ipv4_address: 10.41.0.16 } }
+
+  ims-database:
+    image: mariadb@sha256:efb4959ef2c835cd735dbc388eb9ad6aab0c78dd64febcd51bc17481111890c4
+    container_name: lain5g-lab-4g-volte-sim-ims-database
+    environment:
+      MARIADB_ALLOW_EMPTY_ROOT_PASSWORD: "yes"
+      MARIADB_DATABASE: ims
+    volumes:
+      - ../common/ims/database/init.sql:/docker-entrypoint-initdb.d/00-init.sql:ro
+    networks: { epc: { ipv4_address: 10.41.0.19 } }
+
+  pcscf:
+    image: lain5g-lab/kamailio:local
+    container_name: lain5g-lab-4g-volte-sim-pcscf
+    command: ["-DD", "-E", "-f", "/etc/kamailio/kamailio.cfg"]
+    volumes: ["../common/ims/pcscf/kamailio.cfg:/etc/kamailio/kamailio.cfg:ro"]
+    networks: { epc: { ipv4_address: 10.41.0.20 } }
+
+  icscf:
+    image: lain5g-lab/kamailio:local
+    container_name: lain5g-lab-4g-volte-sim-icscf
+    command: ["-DD", "-E", "-f", "/etc/kamailio/kamailio.cfg"]
+    volumes: ["../common/ims/icscf/kamailio.cfg:/etc/kamailio/kamailio.cfg:ro"]
+    networks: { epc: { ipv4_address: 10.41.0.21 } }
+
+  scscf:
+    image: lain5g-lab/ims-sip:local
+    container_name: lain5g-lab-4g-volte-sim-scscf
+    command: ["scscf_server.py"]
+    env_file: [../common/.env]
+    depends_on:
+      ims-provisioner: { condition: service_completed_successfully }
+    networks: { epc: { ipv4_address: 10.41.0.22 } }
+
+  dns:
+    image: lain5g-lab/ims-dns:local
+    container_name: lain5g-lab-4g-volte-sim-dns
+    command: ["-conf", "/etc/coredns/Corefile"]
+    volumes:
+      - ../common/ims/dns/Corefile:/etc/coredns/Corefile:ro
+      - ../common/ims/dns/ims.hosts:/etc/coredns/ims.hosts:ro
+    networks: { epc: { ipv4_address: 10.41.0.30 } }
+
+  ims-provisioner:
+    image: mariadb@sha256:efb4959ef2c835cd735dbc388eb9ad6aab0c78dd64febcd51bc17481111890c4
+    container_name: lain5g-lab-4g-volte-sim-ims-provisioner
+    env_file: [../common/.env]
+    depends_on: [ims-database]
+    command:
+      - sh
+      - -lc
+      - |
+        until mariadb --skip-ssl -h ims-database -uroot ims -e "SELECT 1" >/dev/null 2>&1; do sleep 1; done
+        mariadb --skip-ssl -h ims-database -uroot ims <<SQL
+        ALTER TABLE subscribers ADD COLUMN IF NOT EXISTS auth_ha1 VARCHAR(32);
+        INSERT INTO subscribers (imsi, msisdn, impi, impu, domain_name, auth_ha1)
+        VALUES (
+          '$${SUBSCRIBER_IMSI}',
+          '$${SUBSCRIBER_MSISDN}',
+          '$${SUBSCRIBER_IMSI}@$${IMS_DOMAIN}',
+          'sip:$${SUBSCRIBER_MSISDN}@$${IMS_DOMAIN}',
+          '$${IMS_DOMAIN}',
+          MD5(CONCAT('$${SUBSCRIBER_IMSI}', '@', '$${IMS_DOMAIN}', ':', '$${IMS_DOMAIN}', ':', '$${IMS_AUTH_PASSWORD}'))
+        )
+        ON DUPLICATE KEY UPDATE
+          msisdn = VALUES(msisdn),
+          impi = VALUES(impi),
+          impu = VALUES(impu),
+          domain_name = VALUES(domain_name),
+          auth_ha1 = VALUES(auth_ha1);
+        SQL
+    networks: { epc: { ipv4_address: 10.41.0.31 } }
+    restart: "no"
+
+  sip-register:
+    image: lain5g-lab/ims-sip:local
+    container_name: lain5g-lab-4g-volte-sim-sip-register
+    profiles: ["sip"]
+    command: ["sip_register_client.py"]
+    env_file: [../common/.env]
+    dns: [10.41.0.30]
+    depends_on: [dns, pcscf, icscf, scscf]
+    networks: { epc: { ipv4_address: 10.41.0.32 } }
+    restart: "no"
+
+  enb:
+    image: lain5g-lab/srsran4g-sim:local
+    container_name: lain5g-lab-4g-volte-sim-enb
+    command: ["srsenb", "/etc/srsran/enb.conf", "--enb_files.rr_config=/etc/srsran/rr.conf", "--enb_files.sib_config=/etc/srsran/sib.conf", "--enb_files.rb_config=/etc/srsran/rb.conf"]
+    depends_on: [mme]
+    volumes:
+      - ./ran/enb.conf:/etc/srsran/enb.conf:ro
+      - ./ran/rr.conf:/etc/srsran/rr.conf:ro
+      - ./ran/sib.conf:/etc/srsran/sib.conf:ro
+      - ./ran/rb.conf:/etc/srsran/rb.conf:ro
+    networks: { epc: { ipv4_address: 10.41.0.40 } }
+
+  ue:
+    image: lain5g-lab/srsran4g-sim:local
+    container_name: lain5g-lab-4g-volte-sim-ue
+    command: ["srsue", "/etc/srsran/ue.conf"]
+    env_file: [../common/.env]
+    cap_add: [NET_ADMIN]
+    devices: ["/dev/net/tun:/dev/net/tun"]
+    depends_on: [enb]
+    volumes: ["./ran/ue.conf:/etc/srsran/ue.conf:ro"]
+    networks: { epc: { ipv4_address: 10.41.0.41 } }
+
+networks:
+  epc:
+    name: lain5g-lab-4g-volte-sim-core
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 10.41.0.0/24
+
+volumes:
+  mongo-data:
+    name: lain5g-lab-4g-volte-sim-mongo-data

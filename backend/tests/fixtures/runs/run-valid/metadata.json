@@ -1,0 +1,10 @@
+{
+  "run_id": "run-valid",
+  "scenario": "5g-sa",
+  "deployment_path": "deployments/5g-sa",
+  "started_at": "2026-07-10T02:17:16Z",
+  "finished_at": "2026-07-10T02:18:12Z",
+  "status": "stopped",
+  "git_commit": "abc1234",
+  "validated_claims": ["gNB connected to AMF", "UE registered", "PDU session established"]
+}

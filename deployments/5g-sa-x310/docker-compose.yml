@@ -1,0 +1,137 @@
+name: lain5g-lab-5g-sa-x310
+
+services:
+  mongo:
+    image: mongo@sha256:8b6d8f5bbedb25cb73517b65cf99f13aeb75ad5b157a56c479287a840bbad3ac
+    container_name: lain5g-lab-5g-sa-x310-mongo
+    command: ["mongod", "--bind_ip_all"]
+    volumes: ["mongo-data:/data/db"]
+    networks: { core: { ipv4_address: 10.20.0.2 } }
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping').ok"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+
+  nrf:
+    image: lain5g-lab/open5gs:local
+    container_name: lain5g-lab-5g-sa-x310-nrf
+    command: ["open5gs-nrfd", "-c", "/etc/open5gs/nrf.yaml"]
+    depends_on:
+      mongo: { condition: service_healthy }
+    volumes: ["../5g-sa/open5gs/nrf.yaml:/etc/open5gs/nrf.yaml:ro"]
+    networks: { core: { ipv4_address: 10.20.0.10 } }
+
+  ausf:
+    image: lain5g-lab/open5gs:local
+    container_name: lain5g-lab-5g-sa-x310-ausf
+    command: ["open5gs-ausfd", "-c", "/etc/open5gs/ausf.yaml"]
+    depends_on: [nrf]
+    volumes: ["../5g-sa/open5gs/ausf.yaml:/etc/open5gs/ausf.yaml:ro"]
+    networks: { core: { ipv4_address: 10.20.0.6 } }
+
+  udm:
+    image: lain5g-lab/open5gs:local
+    container_name: lain5g-lab-5g-sa-x310-udm
+    command: ["open5gs-udmd", "-c", "/etc/open5gs/udm.yaml"]
+    depends_on: [nrf]
+    volumes: ["../5g-sa/open5gs/udm.yaml:/etc/open5gs/udm.yaml:ro"]
+    networks: { core: { ipv4_address: 10.20.0.8 } }
+
+  udr:
+    image: lain5g-lab/open5gs:local
+    container_name: lain5g-lab-5g-sa-x310-udr
+    command: ["open5gs-udrd", "-c", "/etc/open5gs/udr.yaml"]
+    depends_on: [nrf]
+    volumes: ["../5g-sa/open5gs/udr.yaml:/etc/open5gs/udr.yaml:ro"]
+    networks: { core: { ipv4_address: 10.20.0.9 } }
+
+  pcf:
+    image: lain5g-lab/open5gs:local
+    container_name: lain5g-lab-5g-sa-x310-pcf
+    command: ["open5gs-pcfd", "-c", "/etc/open5gs/pcf.yaml"]
+    depends_on: [nrf]
+    volumes: ["../5g-sa/open5gs/pcf.yaml:/etc/open5gs/pcf.yaml:ro"]
+    networks: { core: { ipv4_address: 10.20.0.11 } }
+
+  upf:
+    image: lain5g-lab/open5gs:local
+    container_name: lain5g-lab-5g-sa-x310-upf
+    command: ["open5gs-upfd", "-c", "/etc/open5gs/upf.yaml"]
+    environment:
+      UE_SUBNET: ${UE_SUBNET:-10.45.0.0/16}
+      UE_GATEWAY: ${UE_GATEWAY:-10.45.0.1}
+    cap_add: [NET_ADMIN]
+    devices: ["/dev/net/tun:/dev/net/tun"]
+    sysctls:
+      net.ipv4.ip_forward: "1"
+    depends_on: [nrf]
+    volumes: ["../5g-sa/open5gs/upf.yaml:/etc/open5gs/upf.yaml:ro"]
+    networks: { core: { ipv4_address: 10.20.0.7 } }
+
+  smf:
+    image: lain5g-lab/open5gs:local
+    container_name: lain5g-lab-5g-sa-x310-smf
+    command: ["open5gs-smfd", "-c", "/etc/open5gs/smf.yaml"]
+    depends_on: [nrf, upf]
+    volumes: ["./open5gs/smf.yaml:/etc/open5gs/smf.yaml:ro"]
+    networks: { core: { ipv4_address: 10.20.0.4 } }
+
+  amf:
+    image: lain5g-lab/open5gs:local
+    container_name: lain5g-lab-5g-sa-x310-amf
+    command: ["open5gs-amfd", "-c", "/etc/open5gs/amf.yaml"]
+    depends_on: [nrf, ausf, udm, udr, pcf, smf]
+    volumes: ["./open5gs/amf.yaml:/etc/open5gs/amf.yaml:ro"]
+    networks: { core: { ipv4_address: 10.20.0.5 } }
+
+  gnb-x310:
+    image: lain5g-lab/srsranproject-uhd:local
+    container_name: lain5g-lab-5g-sa-x310-gnb
+    profiles: ["rf"]
+    network_mode: host
+    restart: "no"
+    cap_add: [SYS_NICE, SYS_RESOURCE]
+    ulimits:
+      rtprio: 99
+      memlock: -1
+    environment:
+      AMF_ADDR: ${AMF_ADDR:-10.20.0.5}
+      GNB_BIND_ADDR: ${GNB_BIND_ADDR:-0.0.0.0}
+      N3_BIND_ADDR: ${N3_BIND_ADDR:-0.0.0.0}
+      USRP_ADDR: ${USRP_ADDR:-192.168.10.2}
+      USRP_TYPE: ${USRP_TYPE:-x300}
+      USRP_CLOCK_SOURCE: ${USRP_CLOCK_SOURCE:-internal}
+      USRP_TIME_SOURCE: ${USRP_TIME_SOURCE:-internal}
+      MCC: ${MCC:-001}
+      MNC: ${MNC:-01}
+      TAC: ${TAC:-1}
+      SST: ${SST:-1}
+      SD: ${SD:-000001}
+      CHANNEL_BANDWIDTH_MHZ: ${CHANNEL_BANDWIDTH_MHZ:-10}
+      SAMPLE_RATE_MHZ: ${SAMPLE_RATE_MHZ:-15.36}
+      DL_ARFCN: ${DL_ARFCN:-}
+      NR_BAND: ${NR_BAND:-}
+      TX_GAIN: ${TX_GAIN:-}
+      RX_GAIN: ${RX_GAIN:-}
+      RF_DURATION_SECONDS: ${LAIN5G_RF_DURATION_SECONDS:-60}
+    command:
+      - bash
+      - -lc
+      - envsubst < /etc/srsran/gnb_x310.yml > /tmp/gnb_x310.yml && exec timeout --signal=TERM $${RF_DURATION_SECONDS}s gnb -c /tmp/gnb_x310.yml
+    depends_on: [amf]
+    volumes:
+      - ./gnb/gnb_x310.yml:/etc/srsran/gnb_x310.yml:ro
+      - ./gnb/.runtime:/var/log/srsran
+
+networks:
+  core:
+    name: lain5g-lab-5g-sa-x310-core
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 10.20.0.0/24
+
+volumes:
+  mongo-data:
+    name: lain5g-lab-5g-sa-x310-mongo-data

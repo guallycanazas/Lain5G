@@ -1,0 +1,24 @@
+schema_version: 1
+release_version: 1.0.0-rc.1
+configuration_source:
+  repository: https://github.com/herlesupreeth/docker_open5gs
+  commit: 3685b58aa0c7c28b2fecc6b9533f128285bf8dda
+base_images:
+  open5gs: ghcr.io/herlesupreeth/docker_open5gs@sha256:441d40e16f76ae79fc25eaaa92245850ed833bdd3d0d0dc78acbffd958cdc2c6
+  kamailio: ghcr.io/herlesupreeth/docker_kamailio@sha256:67dc92b423ca5ef0b827a049d0cabeff741f3eafd9222608036494f4d7611821
+  pyhss: ghcr.io/herlesupreeth/docker_pyhss@sha256:90206eb3cbe862bfa71e0bfaf038fe3ddbefba1df531eb2157c9642ac732e6fb
+  mysql: ghcr.io/herlesupreeth/docker_mysql@sha256:324d3d4c5089feea787684f0dbf1a646dde8d356170085ac0b6538aee6910057
+  dns: ubuntu@sha256:0e0a0fc6d18feda9db1590da249ac93e8d5abfea8f4c3c0c849ce512b5ef8982
+  rtpengine: debian@sha256:60eac759739651111db372c07be67863818726f754804b8707c90979bda511df
+  mongo: mongo@sha256:8b6d8f5bbedb25cb73517b65cf99f13aeb75ad5b157a56c479287a840bbad3ac
+rtpengine_repository:
+  release: "26.0"
+  keyring_url: https://rtpengine.dfx.at/26.0/pool/main/r/rtpengine-dfx-repo-keyring/rtpengine-dfx-repo-keyring_1.0_all.deb
+  keyring_sha256: 78fe26f0251138f4e3c749c88dc4df29666c8efe0823858d3a4ab49d2fa2e088
+derived_images:
+  - lain5g-lab/ims-real-open5gs:1.0.0-rc.1
+  - lain5g-lab/ims-real-kamailio:1.0.0-rc.1
+  - lain5g-lab/pyhss-secure:1.0.0-rc.1
+  - lain5g-lab/ims-real-mysql:1.0.0-rc.1
+  - lain5g-lab/ims-real-dns:1.0.0-rc.1
+  - lain5g-lab/ims-real-rtpengine:1.0.0-rc.1

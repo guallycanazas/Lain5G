@@ -1,0 +1,8 @@
+band:
+earfcn:
+downlink_frequency_hz:
+uplink_frequency_hz:
+bandwidth_mhz:
+tx_gain:
+rx_gain:
+sample_rate:

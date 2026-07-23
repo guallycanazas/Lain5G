@@ -1,0 +1,31 @@
+logger:
+  file:
+    path: /var/log/open5gs/mme.log
+mme:
+  freeDiameter: /usr/local/etc/freeDiameter/mme.conf
+  s1ap:
+    server:
+      - address: 10.43.0.10
+  gtpc:
+    server:
+      - address: 10.43.0.10
+    client:
+      sgwc:
+        - address: 10.43.0.12
+      smf:
+        - address: 10.43.0.14
+  gummei:
+    - plmn_id: { mcc: 001, mnc: 01 }
+      mme_gid: 2
+      mme_code: 1
+  tai:
+    - plmn_id: { mcc: 001, mnc: 01 }
+      tac: 7
+  security:
+    integrity_order: [ EIA2, EIA1, EIA0 ]
+    ciphering_order: [ EEA0, EEA1, EEA2 ]
+  network_name:
+    full: Lain
+    short: Lain
+hss:
+  address: hss

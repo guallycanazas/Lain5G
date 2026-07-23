@@ -1,0 +1,6 @@
+logger:
+  file:
+    path: /var/log/open5gs/pcrf.log
+db_uri: mongodb://mongo/open5gs
+pcrf:
+  freeDiameter: /usr/local/etc/freeDiameter/pcrf.conf

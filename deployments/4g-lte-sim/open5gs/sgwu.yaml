@@ -1,0 +1,10 @@
+logger:
+  file:
+    path: /var/log/open5gs/sgwu.log
+sgwu:
+  pfcp:
+    server:
+      - address: 10.43.0.13
+  gtpu:
+    server:
+      - address: 10.43.0.13

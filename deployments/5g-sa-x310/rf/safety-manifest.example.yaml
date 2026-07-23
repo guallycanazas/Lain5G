@@ -1,0 +1,8 @@
+# Copy to safety-manifest.yaml only after local RF authorization is complete.
+authorization_confirmed: false
+auto_stop: true
+capture_logs: true
+maximum_duration_seconds: 60
+lab_mode: cabled
+attenuation_db: 60
+operator_note: ""

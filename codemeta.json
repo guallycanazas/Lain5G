@@ -1,0 +1,33 @@
+{
+  "@context": "https://w3id.org/codemeta/3.0",
+  "@type": "SoftwareSourceCode",
+  "name": "Lain5G-Lab",
+  "description": "Lain5G-Lab is a reproducible research environment for deploying, managing, and validating laboratory 4G LTE/EPC/IMS, 5G SA, and experimental 5G NSA scenarios. It integrates existing open-source components with configuration, orchestration, validation, run traceability, RF safeguards, and a FastAPI/React interface.",
+  "version": "1.0.0-rc.1",
+  "codeRepository": "https://github.com/guallycanazas/Lain5g-lab",
+  "url": "https://github.com/guallycanazas/Lain5g-lab",
+  "license": "https://spdx.org/licenses/MIT",
+  "author": [
+    {
+      "@type": "Organization",
+      "name": "Lain5G-Lab contributors"
+    }
+  ],
+  "programmingLanguage": [
+    "Python",
+    "TypeScript",
+    "Shell"
+  ],
+  "runtimePlatform": "GNU/Linux with Docker Engine and Docker Compose v2",
+  "applicationCategory": "Research software",
+  "keywords": [
+    "4G LTE",
+    "5G",
+    "IMS",
+    "network experimentation",
+    "reproducibility"
+  ],
+  "developmentStatus": "https://www.repostatus.org/#wip",
+  "issueTracker": "https://github.com/guallycanazas/Lain5g-lab/issues",
+  "releaseNotes": "Version 1.0.0-rc.1 is an unreleased source-only release candidate. Add a publication date only after an immutable release is published."
+}

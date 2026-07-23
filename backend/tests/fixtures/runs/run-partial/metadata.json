@@ -1,0 +1,10 @@
+{
+  "run_id": "run-partial",
+  "scenario": "5g-sa",
+  "deployment_path": "deployments/5g-sa",
+  "started_at": "2026-07-09T01:00:00Z",
+  "finished_at": "",
+  "status": "started",
+  "git_commit": "def5678",
+  "validated_claims": []
+}

@@ -1,0 +1,838 @@
+#!/usr/bin/env python3
+from __future__ import annotations
+
+import json
+import os
+import shutil
+import subprocess
+import sys
+from pathlib import Path
+from types import SimpleNamespace
+
+from backend.app.services.image_catalog import IMAGE_CATALOG, PROFILE_IMAGES, RF_ACCESS_IMAGES, required_images
+from backend.app.services.profile_config_service import ProfileConfigError, ProfileConfigService
+
+
+FIELDS = {
+    "4g-lte-sim": [
+        ("network.mcc", "MCC"), ("network.mnc", "MNC"), ("network.tac", "TAC"),
+        ("network.apn_internet", "APN internet"), ("subscriber.imsi", "IMSI"),
+        ("ran.dl_earfcn", "EARFCN"), ("ran.tx_gain", "ZMQ TX gain"), ("ran.rx_gain", "ZMQ RX gain"),
+    ],
+    "4g-volte-sim": [
+        ("network.mcc", "MCC"), ("network.mnc", "MNC"), ("network.tac", "TAC"),
+        ("network.apn_internet", "APN internet"), ("network.apn_ims", "APN IMS"),
+        ("subscriber.imsi", "IMSI"), ("subscriber.msisdn", "MSISDN"), ("ims.domain", "IMS domain"),
+    ],
+    "4g-lte-x310": [
+        ("network.mcc", "MCC"), ("network.mnc", "MNC"), ("network.tac", "TAC"),
+        ("network.apn_internet", "APN internet"), ("core.mme_addr", "MME address"), ("ran.enb_bind_addr", "eNB bind address"),
+        ("radio.device", "UHD device type"), ("radio.usrp_addr", "USRP address"), ("radio.lte_band", "LTE band"), ("radio.earfcn", "EARFCN"),
+        ("radio.bandwidth_mhz", "Channel bandwidth MHz"), ("radio.tx_gain", "TX gain"), ("radio.rx_gain", "RX gain"),
+        ("radio.clock_source", "Clock source"), ("radio.time_source", "Time source"),
+        ("safety.environment", "Laboratory mode"), ("safety.attenuation_db", "Attenuation dB"),
+        ("safety.antenna_connected", "Antenna connected"), ("safety.shielded_environment", "Shielded environment"),
+        ("safety.auto_stop", "Auto-stop enabled"), ("safety.authorization_confirmed", "RF authorization confirmed"),
+        ("safety.operator_note", "Authorization note"), ("safety.maximum_duration_seconds", "Maximum duration seconds"),
+    ],
+    "5g-sa": [
+        ("network.mcc", "MCC"), ("network.mnc", "MNC"), ("network.tac", "TAC"), ("network.dnn", "DNN"),
+        ("network.slice.sst", "SST"), ("network.slice.sd", "SD"), ("subscriber.imsi", "IMSI"),
+    ],
+    "5g-sa-x310": [
+        ("network.mcc", "MCC"), ("network.mnc", "MNC"), ("network.tac", "TAC"), ("network.dnn", "DNN"),
+        ("network.slice.sst", "SST"), ("network.slice.sd", "SD"), ("core.amf_addr", "AMF address"),
+        ("core.gnb_bind_addr", "gNB bind address"), ("core.n3_bind_addr", "N3 bind address"), ("radio.usrp_addr", "USRP address"),
+        ("radio.band", "NR band"), ("radio.dl_arfcn", "DL ARFCN"), ("radio.tx_gain", "TX gain"), ("radio.rx_gain", "RX gain"),
+        ("safety.maximum_duration_seconds", "Maximum duration seconds"),
+    ],
+    "5g-nsa-x310": [
+        ("network.mcc", "MCC"), ("network.mnc", "MNC"), ("network.tac", "TAC"),
+        ("network.apn_internet", "Internet APN"), ("core.mme_addr", "MME address"),
+        ("ran.enb_bind_addr", "eNB bind address"), ("radio.device", "UHD device type"),
+        ("radio.usrp_addr", "USRP address"), ("radio.lte_band", "LTE anchor band"),
+        ("radio.earfcn", "LTE anchor EARFCN"), ("radio.bandwidth_mhz", "LTE/NR bandwidth MHz"),
+        ("radio.nr_band", "NR secondary band"), ("radio.nr_dl_arfcn", "NR DL ARFCN"),
+        ("radio.subcarrier_spacing_khz", "NR subcarrier spacing kHz"),
+        ("radio.tx_gain", "Shared TX gain"), ("radio.rx_gain", "Shared RX gain"),
+        ("radio.clock_source", "Clock source"), ("radio.time_source", "Time source"),
+        ("subscriber.imsi", "IMSI"), ("safety.environment", "Laboratory mode"),
+        ("safety.attenuation_db", "Attenuation dB"), ("safety.antenna_connected", "Antenna connected"),
+        ("safety.nr_rf_path_connected", "NR RF path connected"),
+        ("safety.shielded_environment", "Shielded environment"), ("safety.auto_stop", "Auto-stop enabled"),
+        ("safety.authorization_confirmed", "RF authorization confirmed"),
+        ("safety.authorized_lab_frequencies", "All carrier frequencies authorized"),
+        ("safety.operator_note", "Authorization note"),
+        ("safety.maximum_duration_seconds", "Maximum duration seconds"),
+    ],
+    "5g-vonr": [
+        ("network.mcc", "MCC"), ("network.mnc", "MNC"), ("network.tac", "TAC"),
+        ("network.dnn_internet", "DNN internet"), ("network.dnn_ims", "DNN IMS"), ("network.slice.sst", "SST"),
+        ("network.slice.sd", "SD"), ("subscriber.imsi", "IMSI"), ("subscriber.msisdn", "MSISDN"), ("ims.domain", "IMS domain"),
+    ],
+}
+
+PROFILE_INFO = {
+    "4g-lte-sim": ("4G simulado", "SIM", "srsENB + srsUE sobre ZMQ; sin SDR ni transmision RF"),
+    "5g-sa": ("5G SA simulado", "SIM", "Open5GS + UERANSIM; registro y datos sin RF"),
+    "4g-lte-x310": ("4G LTE/VoLTE con X310", "RF PROTEGIDA", "LTE fisico con controles de seguridad RF"),
+    "5g-sa-x310": ("5G SA con X310", "RF PROTEGIDA", "5G SA fisico con controles de seguridad RF"),
+    "5g-nsa-x310": ("5G NSA B7+n3 con X310", "EXPERIMENTAL", "Ancla LTE y portadora NR sobre dos cadenas RF"),
+    "4g-volte-sim": ("4G VoLTE simulado", "SIM", "Perfil de simulacion LTE e IMS"),
+    "5g-vonr": ("5G SA VoNR simulado", "SIM", "Perfil de simulacion 5G e IMS"),
+}
+
+SECTION_NAMES = {
+    "network": "1. Red movil",
+    "core": "2. Red core",
+    "ran": "3. Acceso de radio",
+    "radio": "4. Dispositivo y senal RF",
+    "subscriber": "5. Suscriptor",
+    "ims": "6. IMS",
+    "safety": "7. Seguridad RF",
+}
+
+DOCKER_PROJECTS = {
+    "4g-lte-sim": ["lain5g-lab-4g-lte-sim"],
+    "5g-sa": ["lain5g-lab-5g-sa"],
+    "4g-lte-x310": ["lain5g-lab-4g-lte-x310"],
+    "5g-sa-x310": ["lain5g-lab-5g-sa-x310"],
+    "5g-nsa-x310": ["lain5g-lab-4g-lte-x310", "lain5g-lab-5g-nsa-x310"],
+}
+
+SIM_ACTIONS = {
+    "4g-lte-sim": {
+        "1": ("Iniciar simulacion", ["make", "start-4g-lte-sim"]),
+        "2": ("Ver estado", ["make", "status-4g-lte-sim"]),
+        "3": ("Validar attach y datos", ["make", "validate-4g-lte-sim"]),
+        "6": ("Detener simulacion", ["make", "stop-4g-lte-sim"]),
+    },
+    "5g-sa": {
+        "1": ("Iniciar simulacion", ["make", "start-5g-sa"]),
+        "2": ("Ver estado", ["make", "status-5g-sa"]),
+        "3": ("Validar registro y datos", ["make", "validate-5g-sa"]),
+        "6": ("Detener simulacion", ["make", "stop-5g-sa"]),
+    },
+}
+
+RF_ACTIONS = {
+    "4g-lte-x310": {
+        "1": ("Ejecutar preflight", ["make", "preflight-4g-lte-x310"]),
+        "2": ("Iniciar solo EPC", ["make", "start-4g-lte-x310-epc"]),
+        "3": ("Ver estado", ["make", "status-4g-lte-x310"]),
+        "7": ("Parada de emergencia", ["make", "emergency-stop-4g-lte-x310"]),
+    },
+    "5g-sa-x310": {
+        "1": ("Ejecutar preflight", ["make", "preflight-5g-x310"]),
+        "2": ("Iniciar solo 5GC", ["make", "start-5g-x310-core"]),
+        "3": ("Ver estado", ["make", "status-5g-x310"]),
+        "7": ("Parada de emergencia", ["make", "emergency-stop-5g-x310"]),
+    },
+    "5g-nsa-x310": {
+        "1": ("Preflight sin RF", ["deployments/5g-nsa-x310/scripts/preflight.sh"]),
+        "2": ("Iniciar solo EPC", ["deployments/5g-nsa-x310/scripts/start-core.sh"]),
+        "3": ("Ver estado", ["deployments/5g-nsa-x310/scripts/status.sh"]),
+        "7": ("Parada de emergencia", ["deployments/5g-nsa-x310/scripts/emergency-stop.sh"]),
+    },
+}
+
+
+def main(argv: list[str]) -> int:
+    project_root = Path(os.environ.get("LAIN5G_PROJECT_ROOT", Path(__file__).resolve().parent))
+    service = ProfileConfigService(SimpleNamespace(project_root=project_root))
+    if not argv:
+        return _main_menu(service)
+    if argv[0] in {"-h", "--help", "help"}:
+        _print_help()
+        return 0
+    if argv[0] == "images":
+        return _images_command(service, argv[1:])
+    if argv[0] == "doctor":
+        return _doctor(service, argv[1] if len(argv) > 1 else "")
+    if argv[0] != "profile":
+        _print_help(file=sys.stderr)
+        return 2
+    if len(argv) == 1:
+        return _wizard(service)
+    action = argv[1]
+    profile_id = argv[2] if len(argv) > 2 else ""
+    try:
+        if action == "list":
+            _print_profiles(service)
+            return 0
+        if action == "wizard":
+            return _wizard(service, profile_id)
+        if action in {"-h", "--help", "help"}:
+            _print_help()
+            return 0
+        if not profile_id:
+            print("Missing profile id", file=sys.stderr)
+            return 2
+        if action == "show":
+            print(json.dumps(service.get_profile(profile_id), indent=2, sort_keys=True))
+            return 0
+        if action == "validate":
+            result = service.validate_profile(profile_id)
+            _print_validation(result)
+            return 0 if result["valid"] else 1
+        if action == "diff":
+            for item in service.diff_profile(profile_id)["files"]:
+                if item["changed"]:
+                    print(item["diff"], end="")
+            return 0
+        if action == "configure":
+            profile = service.get_profile(profile_id)
+            _print_profile_header(profile_id)
+            _edit_profile(profile_id, profile)
+            updated = service.update_profile(profile_id, profile)
+            print(f"\nSaved profile: {updated['profile']}")
+            return 0
+        if action == "apply":
+            validation = service.validate_profile(profile_id)
+            _print_validation(validation)
+            if not validation["valid"]:
+                return 1
+            diff = service.diff_profile(profile_id)
+            changed = [item for item in diff["files"] if item["changed"]]
+            print(f"{len(changed)} files will be modified.")
+            answer = _input("Apply changes? [y/N] ").strip().lower()
+            if answer not in {"y", "yes"}:
+                print("Aborted.")
+                return 1
+            print(json.dumps(service.apply_profile(profile_id), indent=2, sort_keys=True))
+            return 0
+        if action == "restore":
+            print(json.dumps(service.restore_profile(profile_id), indent=2, sort_keys=True))
+            return 0
+    except ProfileConfigError as exc:
+        print(f"{exc.code}: {exc.message}", file=sys.stderr)
+        return 1 if exc.status_code < 500 else 2
+    except ValueError as exc:
+        print(f"INVALID_INPUT: {exc}", file=sys.stderr)
+        return 2
+    print(f"Unknown action: {action}", file=sys.stderr)
+    return 2
+
+
+def _print_help(file=sys.stdout) -> None:
+    print("Consola del laboratorio Lain", file=file)
+    print("", file=file)
+    print("  lain5g                         Abrir la consola principal", file=file)
+    print("  lain5g doctor [perfil]        Revisar equipo, Docker e imagenes", file=file)
+    print("  lain5g images list [perfil]   Comprobar componentes instalados", file=file)
+    print("  lain5g images pull [perfil]   Descargar sin compilar", file=file)
+    print("  lain5g profile wizard [id]    Abrir el asistente guiado", file=file)
+    print("  lain5g profile list           Ver perfiles disponibles", file=file)
+    print("  lain5g profile show ID        Mostrar valores como JSON", file=file)
+    print("  lain5g profile configure ID   Editar valores por secciones", file=file)
+    print("  lain5g profile validate ID    Validar valores y seguridad RF", file=file)
+    print("  lain5g profile diff ID        Revisar cambios efectivos", file=file)
+    print("  lain5g profile apply ID       Aplicar con validacion y confirmacion", file=file)
+    print("  lain5g profile restore ID     Restaurar el ultimo respaldo", file=file)
+
+
+def _main_menu(service: ProfileConfigService) -> int:
+    while True:
+        _clear_screen()
+        print("\n+--------------------------------------------------------------+")
+        print("|                 CONSOLA DEL LABORATORIO LAIN                 |")
+        print("+--------------------------------------------------------------+")
+        print("  [1] Perfiles y operacion")
+        print("  [2] Imagenes y componentes")
+        print("  [3] Revisar equipo y dependencias")
+        print("  [0] Salir")
+        choice = _input("\nElige una opcion: ").strip()
+        if choice in {"", "0", "q", "salir"}:
+            return 0
+        if choice == "1":
+            _wizard(service)
+        elif choice == "2":
+            _images_menu(service)
+        elif choice == "3":
+            _doctor(service, "")
+            _pause()
+        else:
+            print("Opcion invalida.")
+            _pause()
+
+
+def _images_menu(service: ProfileConfigService) -> None:
+    while True:
+        _clear_screen()
+        print("\nImagenes y componentes")
+        print("=======================")
+        print("Descarga componentes compatibles desde Docker Hub; no compila ni inicia servicios.\n")
+        print("  [1] Comprobar todas las imagenes")
+        print("  [2] Comprobar un perfil")
+        print("  [3] Descargar lo necesario para un perfil")
+        print("  [4] Descargar todo el laboratorio")
+        print("  [0] Volver")
+        choice = _input("\nElige una opcion: ").strip()
+        if choice in {"", "0", "q", "volver"}:
+            return
+        if choice == "1":
+            _print_image_status("all")
+        elif choice in {"2", "3"}:
+            profile_id = _choose_profile(service)
+            if profile_id:
+                if choice == "2":
+                    _print_image_status(profile_id)
+                else:
+                    _download_images(profile_id)
+        elif choice == "4":
+            if _confirm("Descargar todas las imagenes que falten?", default=True):
+                _download_images("all")
+        else:
+            print("Opcion invalida.")
+        _pause()
+
+
+def _images_command(service: ProfileConfigService, argv: list[str]) -> int:
+    action = argv[0] if argv else "list"
+    scope = argv[1] if len(argv) > 1 else "all"
+    if scope != "all" and scope not in PROFILE_IMAGES:
+        print(f"Perfil desconocido: {scope}", file=sys.stderr)
+        return 2
+    if action in {"list", "check", "status"}:
+        return 0 if _print_image_status(scope) else 1
+    if action in {"pull", "download"}:
+        return 0 if _download_images(scope) else 1
+    print("Uso: lain5g images list|pull [perfil|all]", file=sys.stderr)
+    return 2
+
+
+def _choose_profile(service: ProfileConfigService) -> str:
+    profiles = _ordered_profiles(service)
+    print("\nPerfiles")
+    print("--------")
+    for index, item in enumerate(profiles, 1):
+        profile_id = item["profile"]
+        name = PROFILE_INFO.get(profile_id, (profile_id, "", ""))[0]
+        print(f"  [{index}] {profile_id:<18} {name}")
+    raw = _input(f"Perfil [1-{len(profiles)}] (0 para cancelar): ").strip()
+    if raw in {"", "0", "q"}:
+        return ""
+    if raw.isdigit() and 1 <= int(raw) <= len(profiles):
+        return profiles[int(raw) - 1]["profile"]
+    if raw in PROFILE_IMAGES:
+        return raw
+    print("Perfil invalido.")
+    return ""
+
+
+def _required_images(scope: str, core_only: bool = False) -> list[str]:
+    return required_images(scope, core_only)
+
+
+def _image_exists(image: str) -> bool:
+    try:
+        completed = subprocess.run(
+            ["docker", "image", "inspect", image],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            check=False,
+        )
+    except (FileNotFoundError, PermissionError, OSError):
+        return False
+    return completed.returncode == 0
+
+
+def _print_image_status(scope: str, core_only: bool = False) -> bool:
+    docker_available = shutil.which("docker") is not None
+    rows = []
+    for image in _required_images(scope, core_only):
+        source, description = IMAGE_CATALOG.get(image, (image, "Imagen oficial de ejecucion"))
+        installed = docker_available and _image_exists(image)
+        rows.append((image, source, description, installed))
+    print(f"\nComponentes: {scope}")
+    print("=" * (13 + len(scope)))
+    print(f"{'ESTADO':<10} {'IMAGEN LOCAL':<42} ORIGEN")
+    print("-" * 100)
+    for image, source, _, installed in rows:
+        print(f"{('OK' if installed else 'FALTA'):<10} {image:<42} {source}")
+    missing = sum(1 for *_, installed in rows if not installed)
+    if not docker_available:
+        print("\nDocker no esta instalado o no se encuentra en PATH.")
+    elif missing:
+        print(f"\nFaltan {missing} componentes. Puedes descargarlos sin compilar.")
+    else:
+        print("\nTodos los componentes necesarios estan instalados.")
+    return docker_available and missing == 0
+
+
+def _download_images(scope: str, core_only: bool = False) -> bool:
+    if shutil.which("docker") is None:
+        print("Docker no esta instalado. Ejecuta './lain5g doctor' para ver la ayuda.")
+        return False
+    info = subprocess.run(["docker", "info"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=False)
+    if info.returncode != 0:
+        print("No se puede acceder al servicio Docker. Revisa que este activo y tus permisos.")
+        return False
+    missing = [image for image in _required_images(scope, core_only) if not _image_exists(image)]
+    if not missing:
+        print("\nTodos los componentes necesarios ya estan instalados.")
+        return True
+    print(f"\nSe descargaran {len(missing)} componentes. Esto puede usar varios GB.")
+    for local_image in missing:
+        remote_image = IMAGE_CATALOG.get(local_image, (local_image, ""))[0]
+        print(f"\nDescargando {remote_image}", flush=True)
+        pulled = subprocess.run(["docker", "pull", remote_image], check=False)
+        if pulled.returncode != 0:
+            print(f"ERROR: no se pudo descargar {remote_image}.")
+            return False
+        if remote_image != local_image:
+            tagged = subprocess.run(["docker", "tag", remote_image, local_image], check=False)
+            if tagged.returncode != 0:
+                print(f"ERROR: no se pudo preparar la etiqueta local {local_image}.")
+                return False
+    print("\nPreparacion completada. No se compilo ninguna imagen.")
+    return True
+
+
+def _ensure_profile_images(profile_id: str, core_only: bool = False) -> bool:
+    missing = [image for image in _required_images(profile_id, core_only) if not _image_exists(image)]
+    if not missing:
+        return True
+    print("\nFaltan componentes para continuar:")
+    for image in missing:
+        source = IMAGE_CATALOG.get(image, (image, ""))[0]
+        print(f"  - {source}")
+    if not _confirm("Descargarlos ahora sin compilar?", default=True):
+        print("Operacion cancelada; no se inicio ningun servicio.")
+        return False
+    return _download_images(profile_id, core_only)
+
+
+def _doctor(service: ProfileConfigService, profile_id: str) -> int:
+    print("\nDiagnostico del laboratorio")
+    print("===========================")
+    checks = []
+    checks.append(("Python 3", sys.version_info >= (3, 10), f"{sys.version_info.major}.{sys.version_info.minor}"))
+    checks.append(("make", shutil.which("make") is not None, shutil.which("make") or "no instalado"))
+    checks.append(("Docker CLI", shutil.which("docker") is not None, shutil.which("docker") or "no instalado"))
+    daemon = False
+    compose = False
+    if shutil.which("docker"):
+        daemon = subprocess.run(["docker", "info"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=False).returncode == 0
+        compose = subprocess.run(["docker", "compose", "version"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=False).returncode == 0
+    checks.append(("Servicio Docker", daemon, "accesible" if daemon else "detenido o sin permisos"))
+    checks.append(("Docker Compose v2", compose, "disponible" if compose else "no disponible"))
+    checks.append(("/dev/net/tun", Path("/dev/net/tun").exists(), "disponible" if Path("/dev/net/tun").exists() else "no disponible"))
+    free_gb = shutil.disk_usage(service.root).free / (1024 ** 3)
+    checks.append(("Espacio libre", free_gb >= 10, f"{free_gb:.1f} GB"))
+    for label, passed, detail in checks:
+        print(f"{('PASS' if passed else 'FAIL'):<6} {label:<22} {detail}")
+    if profile_id:
+        if profile_id not in PROFILE_IMAGES:
+            print(f"\nPerfil desconocido: {profile_id}", file=sys.stderr)
+            return 2
+        validation = service.validate_profile(profile_id)
+        print(f"\nPerfil {profile_id}: {'PASS' if validation['valid'] else 'FAIL'}")
+        for error in validation["errors"]:
+            print(f"  - {error}")
+        images_ready = _print_image_status(profile_id)
+    else:
+        images_ready = _print_image_status("all")
+    if not all(passed for _, passed, _ in checks):
+        print("\nRevisa docs/installation.md. La CLI nunca ejecuta sudo ni instala paquetes del sistema.")
+    return 0 if all(passed for _, passed, _ in checks) and images_ready else 1
+
+
+def _print_profiles(service: ProfileConfigService) -> None:
+    profiles = _ordered_profiles(service)
+    print("\nPerfiles disponibles")
+    print("=" * 88)
+    groups = [
+        ("SIMULADOS - SIN RADIO REAL", "No requieren USRP y nunca transmiten RF.", False),
+        ("RF REAL - X310 Y PROTECCIONES", "Requieren hardware, aislamiento y validacion de seguridad.", True),
+    ]
+    for title, description, rf_capable in groups:
+        print(f"\n+-- {title} {'-' * max(1, 82 - len(title))}")
+        print(f"| {description}")
+        print(f"| {'#':<3} {'PERFIL':<18} {'MODO':<13} {'NOMBRE':<28} DESCRIPCION")
+        print("| " + "-" * 84)
+        for index, item in enumerate(profiles, 1):
+            if item["rf_capable"] is not rf_capable:
+                continue
+            profile_id = item["profile"]
+            name, mode, profile_description = PROFILE_INFO.get(profile_id, (profile_id, "CUSTOM", ""))
+            print(f"| {index:<3} {profile_id:<18} {mode:<13} {name:<28} {profile_description}")
+    print("\nAplicar un perfil solo escribe configuracion. Nunca inicia Docker ni RF.")
+
+
+def _ordered_profiles(service: ProfileConfigService) -> list[dict]:
+    profiles = service.list_profiles()
+    return [item for item in profiles if not item["rf_capable"]] + [item for item in profiles if item["rf_capable"]]
+
+
+def _print_profile_header(profile_id: str) -> None:
+    name, mode, description = PROFILE_INFO.get(profile_id, (profile_id, "CUSTOM", ""))
+    print(f"\n{name}")
+    print("=" * len(name))
+    print(f"Modo: {mode}")
+    print(description)
+    print("Presiona Enter para conservar el valor actual.\n")
+
+
+def _edit_profile(profile_id: str, profile: dict) -> None:
+    section = ""
+    for path, label in FIELDS[profile_id]:
+        next_section = path.split(".", 1)[0]
+        if next_section != section:
+            section = next_section
+            print(f"\n[{SECTION_NAMES.get(section, section.title())}]")
+        current = _get(profile, path)
+        raw = _input(f"{label} [{_prompt_value(current)}]: ").strip()
+        if raw:
+            _set(profile, path, _coerce(raw, current))
+
+
+def _wizard(service: ProfileConfigService, profile_id: str = "") -> int:
+    print("\n+--------------------------------------------------------------+")
+    print("|                 CONFIGURADOR DEL LABORATORIO LAIN            |")
+    print("|      Elige, configura, valida y aplica un perfil del lab.     |")
+    print("+--------------------------------------------------------------+")
+    if not profile_id:
+        profiles = _ordered_profiles(service)
+        _print_profiles(service)
+        raw = _input(f"\nElige un perfil [1-{len(profiles)}] (predeterminado 1): ").strip() or "1"
+        if raw.isdigit() and 1 <= int(raw) <= len(profiles):
+            profile_id = profiles[int(raw) - 1]["profile"]
+        elif raw in {item["profile"] for item in profiles}:
+            profile_id = raw
+        else:
+            print(f"Seleccion de perfil invalida: {raw}", file=sys.stderr)
+            return 2
+    return _operator_console(service, profile_id)
+
+
+def _operator_console(service: ProfileConfigService, profile_id: str) -> int:
+    rf_capable = bool(service.get_profile(profile_id).get("radio"))
+    while True:
+        _clear_screen()
+        _print_console_header(service, profile_id, rf_capable)
+        if rf_capable:
+            print("  [1] Preflight seguro       [2] Iniciar solo core")
+            print("  [3] Estado                 [4] Logs recientes")
+            print("  [5] Configurar perfil      [6] Abrir control RF web")
+            print("  [7] Parada de emergencia   [0] Salir")
+        else:
+            print("  [1] Iniciar simulacion     [2] Estado")
+            print("  [3] Validar                [4] Logs recientes")
+            print("  [5] Configurar perfil      [6] Detener")
+            print("  [0] Salir")
+        choice = _input("\nElige una accion: ").strip()
+        if choice in {"", "0", "q", "salir"}:
+            return 0
+        if choice == "4":
+            _show_logs(profile_id)
+            _pause()
+            continue
+        if (not rf_capable and choice == "2") or (rf_capable and choice == "3"):
+            _show_runtime_details(profile_id)
+            _pause()
+            continue
+        if choice == "5":
+            _configure_profile(service, profile_id)
+            _pause()
+            continue
+        if rf_capable and choice == "6":
+            subprocess.run(["xdg-open", f"http://localhost:8080/scenarios/{profile_id}"], cwd=service.root, check=False)
+            continue
+        actions = RF_ACTIONS.get(profile_id, {}) if rf_capable else SIM_ACTIONS.get(profile_id, {})
+        action = actions.get(choice)
+        if not action:
+            print("Opcion invalida.")
+            _pause()
+            continue
+        if ((not rf_capable and choice == "1") or (rf_capable and choice in {"1", "2"})) and not _ensure_profile_images(
+            profile_id,
+            core_only=rf_capable and choice == "2",
+        ):
+            _pause()
+            continue
+        label, command = action
+        if choice == "7" and not _confirm("Confirmar parada de emergencia?", default=False):
+            continue
+        print(f"\n{label}\n{'-' * len(label)}", flush=True)
+        env = None
+        if profile_id == "5g-nsa-x310" and choice == "1":
+            env = {**os.environ, "LAIN5G_DRY_RUN": "true"}
+        completed = subprocess.run(command, cwd=service.root, env=env, check=False)
+        print(f"\nResultado: {'OK' if completed.returncode == 0 else f'ERROR ({completed.returncode})'}")
+        _pause()
+
+
+def _configure_profile(service: ProfileConfigService, profile_id: str) -> None:
+    try:
+        profile = service.get_profile(profile_id)
+        _print_profile_header(profile_id)
+        _edit_profile(profile_id, profile)
+        if not _confirm("Guardar este perfil?", default=True):
+            print("No se guardaron cambios.")
+            return
+        service.update_profile(profile_id, profile)
+        validation = service.validate_profile(profile_id)
+        print("\nValidacion\n----------")
+        _print_validation(validation)
+        if not validation["valid"]:
+            print("No se aplico ningun archivo efectivo.")
+            return
+        changed = [item for item in service.diff_profile(profile_id)["files"] if item["changed"]]
+        if not changed:
+            print("El despliegue efectivo ya coincide con este perfil.")
+            return
+        print(f"\nCambiaran {len(changed)} archivos efectivos:")
+        for item in changed:
+            print(f"  - {item['path']}")
+        if not _confirm("Aplicar ahora?", default=False):
+            print("Perfil guardado; despliegue sin cambios.")
+            return
+        result = service.apply_profile(profile_id)
+        print(f"Aplicados: {len(result['modified_files'])}. Respaldo: {result['backup']}")
+    except (ProfileConfigError, ValueError) as exc:
+        print(f"ERROR: {exc}")
+
+
+def _print_console_header(service: ProfileConfigService, profile_id: str, rf_capable: bool) -> None:
+    name, mode, description = PROFILE_INFO.get(profile_id, (profile_id, "CUSTOM", ""))
+    validation = service.validate_profile(profile_id)
+    pending = sum(1 for item in service.diff_profile(profile_id)["files"] if item["changed"])
+    runtime = _runtime_status(profile_id)
+    config_status = _paint("VALIDA", "32") if validation["valid"] else _paint("REVISAR", "31")
+    pending_status = _paint("SIN CAMBIOS", "32") if pending == 0 else _paint(f"{pending} PENDIENTES", "33")
+    runtime_status = _paint(runtime, "32" if runtime.startswith("ACTIVO") else "90")
+    print("\n+------------------------------------------------------------------+")
+    print("|                     CONSOLA OPERATIVA LAIN                       |")
+    print("+------------------------------------------------------------------+")
+    print(f"  {name}  [{mode}]")
+    print(f"  {description}")
+    print(f"\n  Configuracion: {config_status:<18} Archivos: {pending_status}")
+    print(f"  Ejecucion:     {runtime_status}")
+    if rf_capable:
+        print(_paint("\n  RF permanece bloqueada: use el control web para transmitir.", "33"))
+    print("\nAcciones")
+    print("--------")
+
+
+def _runtime_status(profile_id: str) -> str:
+    running = 0
+    for project in DOCKER_PROJECTS.get(profile_id, []):
+        completed = subprocess.run(
+            ["docker", "ps", "--filter", f"label=com.docker.compose.project={project}", "--format", "{{.Names}}"],
+            text=True,
+            capture_output=True,
+            check=False,
+        )
+        if completed.returncode == 0:
+            running += len([line for line in completed.stdout.splitlines() if line.strip()])
+    return f"ACTIVO ({running} contenedores)" if running else "DETENIDO"
+
+
+def _show_runtime_details(profile_id: str) -> None:
+    rows: list[tuple[str, str, str]] = []
+    for project in DOCKER_PROJECTS.get(profile_id, []):
+        completed = subprocess.run(
+            ["docker", "ps", "-a", "--filter", f"label=com.docker.compose.project={project}", "--format", '{{.Label "com.docker.compose.service"}}\t{{.Status}}\t{{.Names}}'],
+            text=True,
+            capture_output=True,
+            check=False,
+        )
+        for line in completed.stdout.splitlines():
+            service_name, _, remainder = line.partition("\t")
+            status, _, container = remainder.partition("\t")
+            if container:
+                rows.append((service_name or "-", status, container))
+    print("\nEstado de servicios")
+    print("-------------------")
+    if not rows:
+        print("No hay servicios creados para este perfil.")
+        return
+    print(f"{'SERVICIO':<24} {'ESTADO':<28} CONTENEDOR")
+    print("-" * 82)
+    for service_name, status, container in sorted(rows):
+        marker = "OK" if status.startswith(("Up", "Exited (0)")) else "--"
+        print(f"{service_name:<24} {marker + ' ' + status:<28} {container}")
+
+
+def _show_logs(profile_id: str) -> None:
+    containers: list[tuple[str, str]] = []
+    for project in DOCKER_PROJECTS.get(profile_id, []):
+        completed = subprocess.run(
+            ["docker", "ps", "--filter", f"label=com.docker.compose.project={project}", "--format", '{{.Names}}\t{{.Label "com.docker.compose.service"}}'],
+            text=True,
+            capture_output=True,
+            check=False,
+        )
+        for line in completed.stdout.splitlines():
+            name, _, service_name = line.partition("\t")
+            if name:
+                containers.append((name, service_name or name))
+    if not containers:
+        print("\nNo hay contenedores activos para este perfil.")
+        return
+    priority = {name: index for index, name in enumerate(("mme", "amf", "smf", "upf", "hss", "enb", "gnb", "gnb-x310", "enb-x310", "enb-nsa-x310", "ue", "mongo"))}
+    containers.sort(key=lambda item: (priority.get(item[1], 99), item[1]))
+    print("\nLogs recientes (80 lineas por servicio)")
+    print("---------------------------------------")
+    for index, (_, service_name) in enumerate(containers, 1):
+        print(f"  [{index}] {service_name}")
+    print("  [a] Todos")
+    selection = _input("Servicio (predeterminado 1): ").strip().lower() or "1"
+    selected = containers if selection == "a" else []
+    if not selected and selection.isdigit() and 1 <= int(selection) <= len(containers):
+        selected = [containers[int(selection) - 1]]
+    if not selected:
+        print("Seleccion invalida.")
+        return
+    for container, service_name in selected:
+        print(f"\n--- {service_name} / {container} ---", flush=True)
+        subprocess.run(["docker", "logs", "--tail", "80", container], check=False)
+
+
+def _clear_screen() -> None:
+    if sys.stdout.isatty() and os.environ.get("TERM", "") not in {"", "dumb"}:
+        print("\033[2J\033[H", end="")
+
+
+def _paint(text: str, code: str) -> str:
+    if not sys.stdout.isatty() or "NO_COLOR" in os.environ:
+        return text
+    return f"\033[{code}m{text}\033[0m"
+
+
+def _input(prompt: str) -> str:
+    try:
+        return input(prompt)
+    except EOFError:
+        return ""
+    except KeyboardInterrupt:
+        print()
+        return ""
+
+
+def _pause() -> None:
+    _input("\nPresiona Enter para volver al menu...")
+
+
+def _confirm(question: str, default: bool) -> bool:
+    hint = "Y/n" if default else "y/N"
+    answer = _input(f"{question} [{hint}] ").strip().lower()
+    if not answer:
+        return default
+    return answer in {"y", "yes", "s", "si"}
+
+
+def _print_next_steps(profile_id: str) -> None:
+    commands = {
+        "4g-lte-sim": [
+            ("Iniciar", "make start-4g-lte-sim"),
+            ("Esperar el attach del UE", "sleep 20"),
+            ("Ver estado", "make status-4g-lte-sim"),
+            ("Validar attach y datos", "make validate-4g-lte-sim"),
+            ("Detener", "make stop-4g-lte-sim"),
+        ],
+        "5g-sa": [
+            ("Iniciar", "make start-5g-sa"),
+            ("Esperar el registro del UE", "sleep 20"),
+            ("Ver estado", "make status-5g-sa"),
+            ("Validar registro y datos", "make validate-5g-sa"),
+            ("Detener", "make stop-5g-sa"),
+        ],
+        "4g-lte-x310": [
+            ("Preflight seguro", "make preflight-4g-lte-x310"),
+            ("Iniciar solo EPC", "make start-4g-lte-x310-epc"),
+            ("Abrir controles RF", "xdg-open http://localhost:8080/scenarios/4g-lte-x310"),
+        ],
+        "5g-sa-x310": [
+            ("Preflight seguro", "make preflight-5g-x310"),
+            ("Iniciar solo 5GC", "make start-5g-x310-core"),
+            ("Abrir controles RF", "xdg-open http://localhost:8080/scenarios/5g-sa-x310"),
+        ],
+        "5g-nsa-x310": [
+            ("Preflight sin RF", "LAIN5G_DRY_RUN=true deployments/5g-nsa-x310/scripts/preflight.sh"),
+            ("Abrir controles protegidos", "xdg-open http://localhost:8080/scenarios/5g-nsa-x310"),
+        ],
+    }
+    steps = commands.get(profile_id)
+    if not steps:
+        return
+    print("\nSiguiente paso")
+    print("---------------")
+    for label, command in steps:
+        print(f"\n# {label}\n{command}")
+    if profile_id.endswith("x310"):
+        print("\nLa configuracion no habilita RF automaticamente.")
+
+
+def _print_validation(result: dict) -> None:
+    if result["valid"]:
+        print("Configuracion valida.")
+    else:
+        print("Configuracion invalida.")
+        for error in result["errors"]:
+            print(f"- {error}")
+
+
+def _get(data: dict, path: str):
+    value = data
+    for part in path.split("."):
+        if not isinstance(value, dict) or part not in value:
+            return None
+        value = value[part]
+    return value
+
+
+def _set(data: dict, path: str, value) -> None:
+    current = data
+    parts = path.split(".")
+    for part in parts[:-1]:
+        current = current[part]
+    current[parts[-1]] = value
+
+
+def _prompt_value(value) -> str:
+    if value is None:
+        return ""
+    if value is True:
+        return "yes"
+    if value is False:
+        return "no"
+    return str(value)
+
+
+def _coerce(raw: str, current):
+    lowered = raw.lower()
+    if isinstance(current, bool):
+        if lowered in {"y", "yes", "true", "1"}:
+            return True
+        if lowered in {"n", "no", "false", "0"}:
+            return False
+        raise ValueError(f"Expected yes/no for boolean field, got: {raw}")
+    if lowered in {"yes", "true"}:
+        return True
+    if lowered in {"no", "false"}:
+        return False
+    if current is None:
+        return _coerce_number(raw)
+    if isinstance(current, (int, float)) and not isinstance(current, bool):
+        value = _coerce_number(raw)
+        if not isinstance(value, (int, float)):
+            raise ValueError(f"Expected a numeric value, got: {raw}")
+        return float(value) if isinstance(current, float) else value
+    if lowered == "null":
+        return None
+    return raw
+
+
+def _coerce_number(raw: str):
+    if raw.isdigit():
+        return int(raw)
+    try:
+        return float(raw)
+    except ValueError:
+        return raw
+
+
+if __name__ == "__main__":
+    raise SystemExit(main(sys.argv[1:]))

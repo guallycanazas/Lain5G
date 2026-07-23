@@ -1,0 +1,25 @@
+{
+  "artifact_type": "public-environment-summary",
+  "captured_at_utc": "2026-07-23T05:43:55Z",
+  "limitations": [
+    "Tool versions only; no scenario, container, RF, or hardware execution was performed."
+  ],
+  "release_version": "1.0.0-rc.1",
+  "schema_version": "1.0",
+  "scope": "Current verification-host tool versions only; not a scenario result.",
+  "source_commit": "12c4a38404bbaf240c698a056e3f47182081ab5c",
+  "tools": [
+    {
+      "name": "git",
+      "version": "2.53.0"
+    },
+    {
+      "name": "pytest",
+      "version": "9.1.1"
+    },
+    {
+      "name": "python",
+      "version": "3.14.4"
+    }
+  ]
+}

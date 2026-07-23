@@ -1,0 +1,25 @@
+name: lain5g-lab-5g-nsa-x310
+
+services:
+  enb-nsa-x310:
+    image: lain5g-lab/srsran4g-uhd:local
+    container_name: lain5g-lab-5g-nsa-x310-enb
+    profiles: ["rf"]
+    network_mode: host
+    restart: "no"
+    cap_add: [SYS_NICE, SYS_RESOURCE]
+    ulimits:
+      rtprio: 99
+      memlock: -1
+    environment:
+      RF_DURATION_SECONDS: ${LAIN5G_RF_DURATION_SECONDS:-${RF_DURATION_SECONDS:-120}}
+    command:
+      - bash
+      - -lc
+      - exec timeout --signal=TERM $${RF_DURATION_SECONDS}s srsenb /etc/srsran/enb.conf --enb_files.rr_config=/etc/srsran/rr.conf --enb_files.sib_config=/etc/srsran/sib.conf --enb_files.rb_config=/etc/srsran/rb.conf
+    volumes:
+      - ./ran/enb.conf:/etc/srsran/enb.conf:ro
+      - ./ran/rr.conf:/etc/srsran/rr.conf:ro
+      - ./ran/sib.conf:/etc/srsran/sib.conf:ro
+      - ./ran/rb.conf:/etc/srsran/rb.conf:ro
+      - ./ran/.runtime:/var/log/srsran

@@ -1,0 +1,14 @@
+{
+  "imsi": "001010000000001",
+  "msisdn": "51999999999",
+  "dnn": "internet",
+  "sst": 1,
+  "sd": "000001",
+  "security": {
+    "k_configured": true,
+    "op_configured": false,
+    "opc_configured": true,
+    "amf": "8000",
+    "sqn": "************"
+  }
+}

@@ -1,0 +1,57 @@
+import { useEffect, useState } from 'react';
+import { ConfirmDialog } from '../components/ConfirmDialog';
+import { ErrorAlert } from '../components/ErrorAlert';
+import { LoadingState } from '../components/LoadingState';
+import { StatusBadge } from '../components/StatusBadge';
+import { useProfile, useProfileActions, useProfiles } from '../hooks/useProfiles';
+import type { ProfileConfig, ProfileSummary } from '../types/profile';
+import { getScenarioGuidance } from '../utils/scenarioGuidance';
+
+const sections: Record<string, Array<[string, string, string]>> = {
+  Network: [['network.mcc', 'MCC', 'text'], ['network.mnc', 'MNC', 'text'], ['network.tac', 'TAC', 'number'], ['network.dnn', 'DNN', 'text'], ['network.dnn_internet', 'Internet DNN', 'text'], ['network.dnn_ims', 'IMS DNN', 'text'], ['network.apn_internet', 'Internet APN', 'text'], ['network.apn_ims', 'IMS APN', 'text'], ['network.slice.sst', 'SST', 'number'], ['network.slice.sd', 'SD', 'text']],
+  Core: [['core.amf_addr', 'AMF address', 'text'], ['core.gnb_addr', 'gNB address', 'text'], ['core.mme_addr', 'MME address', 'text'], ['core.gnb_bind_addr', 'gNB bind address', 'text'], ['core.n3_bind_addr', 'N3 bind address', 'text']],
+  Subscriber: [['subscriber.imsi', 'IMSI', 'text'], ['subscriber.msisdn', 'MSISDN', 'text']],
+  IMS: [['ims.domain', 'IMS domain', 'text']],
+  Radio: [['ran.enb_bind_addr', 'eNB bind address', 'text'], ['ran.dl_earfcn', 'DL EARFCN', 'number'], ['ran.tx_gain', 'TX gain', 'number'], ['ran.rx_gain', 'RX gain', 'number'], ['radio.device', 'UHD device type', 'text'], ['radio.usrp_addr', 'USRP address', 'text'], ['radio.lte_band', 'LTE anchor band', 'number'], ['radio.earfcn', 'LTE anchor EARFCN', 'number'], ['radio.bandwidth_mhz', 'Bandwidth MHz', 'number'], ['radio.band', 'NR band', 'number'], ['radio.dl_arfcn', 'DL ARFCN', 'number'], ['radio.nr_band', 'NR secondary band', 'number'], ['radio.nr_dl_arfcn', 'NR DL ARFCN', 'number'], ['radio.subcarrier_spacing_khz', 'NR subcarrier spacing kHz', 'number'], ['radio.tx_gain', 'TX gain', 'number'], ['radio.rx_gain', 'RX gain', 'number'], ['radio.clock_source', 'Clock source', 'text'], ['radio.time_source', 'Time source', 'text']],
+  'RF safety': [['safety.environment', 'Laboratory mode', 'environment'], ['safety.attenuation_db', 'Attenuation dB', 'number'], ['safety.antenna_connected', 'Antenna connected', 'boolean'], ['safety.nr_rf_path_connected', 'NR RF path connected', 'boolean'], ['safety.shielded_environment', 'Shielded environment', 'boolean'], ['safety.auto_stop', 'Auto-stop enabled', 'boolean'], ['safety.authorization_confirmed', 'RF authorization confirmed', 'boolean'], ['safety.authorized_lab_frequencies', 'All carrier frequencies authorized', 'boolean'], ['safety.operator_note', 'Authorization note', 'text'], ['safety.maximum_duration_seconds', 'Maximum duration', 'number']],
+};
+
+export function ProfileConfigPage() {
+  const profiles = useProfiles();
+  const [selected, setSelected] = useState<string | null>(null);
+  const [draft, setDraft] = useState<ProfileConfig | null>(null);
+  const [applyOpen, setApplyOpen] = useState(false);
+  const profile = useProfile(selected);
+  const actions = useProfileActions(selected);
+  useEffect(() => { if (!selected && profiles.data?.length) setSelected(profiles.data[0].profile); }, [profiles.data, selected]);
+  useEffect(() => { if (profile.data) setDraft(structuredClone(profile.data)); }, [profile.data]);
+  const dirty = Boolean(draft && profile.data && JSON.stringify(draft) !== JSON.stringify(profile.data));
+  const save = async () => { if (draft) await actions.update.mutateAsync(draft); };
+  const validate = async () => { if (draft) await actions.update.mutateAsync(draft); return actions.validate.mutateAsync(); };
+  const compare = async () => { if (draft) await actions.update.mutateAsync(draft); return actions.diff.mutateAsync(); };
+  const requestApply = async () => { const result = await validate(); if (result.valid) setApplyOpen(true); };
+  const errors = actions.update.error || actions.validate.error || actions.diff.error || actions.apply.error || actions.restore.error;
+
+  return <section className="page-panel"><div className="page-heading"><div><span className="eyebrow">LAB PROFILE WIZARD</span><h1>Choose and configure</h1><p className="page-subtitle">Start from a working simulation or guarded RF profile, then review network, TX/RX and safety values before applying.</p></div>{dirty ? <StatusBadge status="warning" /> : <span className="mode-indicator">No unsaved changes</span>}</div>
+    {profiles.isLoading ? <LoadingState /> : null}{profiles.error ? <ErrorAlert error={profiles.error} /> : null}{profiles.data ? <div className="profile-groups"><ProfileGroup title="Simulated, no RF" description="Learn and validate the core over virtual radio. These profiles require no USRP and do not transmit over an antenna." kind="simulation" items={profiles.data.filter((item) => !item.rf_capable)} selected={selected} onSelect={setSelected} /><ProfileGroup title="Guarded real RF" description="X-Series profiles with TX/RX, channel plan, attenuation, authorization, and automatic stop." kind="rf" items={profiles.data.filter((item) => item.rf_capable)} selected={selected} onSelect={setSelected} /></div> : null}
+    {profile.isLoading ? <LoadingState /> : null}{profile.error ? <ErrorAlert error={profile.error} /> : null}{errors ? <ErrorAlert error={errors} /> : null}
+    {draft ? <div className="page-grid" style={{ marginTop: 18 }}><section className="panel wide"><div className="panel-heading"><div><h3>Configuration editor</h3><span className="muted-text">Save preserves the profile; Apply updates the effective files used by the core and radio.</span></div><div className="inline-actions"><button className="secondary" onClick={() => profile.data && setDraft(structuredClone(profile.data))}>Discard changes</button><button className="secondary" onClick={compare}>Compare changes</button><button className="secondary" onClick={validate} disabled={actions.update.isPending || actions.validate.isPending}>Validate configuration</button><button onClick={save} disabled={!dirty || actions.update.isPending}>Save draft</button><button onClick={requestApply} disabled={actions.apply.isPending}>Apply to scenario</button></div></div>{actions.apply.data ? <div className="ims-result">Configuration applied. The effective scenario files now match this profile.</div> : null}<ProfileForm draft={draft} setDraft={setDraft} /></section>
+      <section className="panel"><h3>Validation result</h3>{actions.validate.data ? <><StatusBadge status={actions.validate.data.valid ? 'PASS' : 'FAIL'} kind="validation" />{actions.validate.data.errors.length ? <ul>{actions.validate.data.errors.map((error) => <li key={error}>{error}</li>)}</ul> : <p className="muted-text">Profile schema accepted by backend validation.</p>}</> : <div className="empty-state"><h3>Not validated</h3><p>Validate before applying deployment changes.</p></div>}</section>
+      <section className="panel"><h3>Change review</h3>{actions.diff.data ? <>{actions.diff.data.files.filter((file) => file.changed).length ? <ul>{actions.diff.data.files.filter((file) => file.changed).map((file) => <li key={file.path}><code>{file.path}</code></li>)}</ul> : <p className="muted-text">No generated deployment file changes.</p>}<details className="technical-output"><summary>Unified diff</summary><pre>{actions.diff.data.files.map((file) => file.diff).join('\n')}</pre></details></> : <div className="empty-state"><h3>No diff loaded</h3><p>Compare changes to inspect generated deployment files.</p></div>}</section></div> : null}
+    <ConfirmDialog open={applyOpen} title="Apply configuration to scenario" message="Validated values will be written to the core, RAN, channel plan, and safety manifest. This action does not start services or transmit RF." confirmLabel="Apply configuration" onConfirm={() => { actions.apply.mutate(); setApplyOpen(false); }} onCancel={() => setApplyOpen(false)} />
+  </section>;
+}
+
+function ProfileGroup({ title, description, kind, items, selected, onSelect }: { title: string; description: string; kind: 'simulation' | 'rf'; items: ProfileSummary[]; selected: string | null; onSelect: (profile: string) => void }) {
+  return <section className={`profile-group profile-group-${kind}`}><div className="profile-group-heading"><span className="profile-group-mark">{kind === 'simulation' ? 'SIM' : 'RF'}</span><div><h2>{title}</h2><p>{description}</p></div></div><div className="scenario-grid profile-catalog">{items.map((item) => { const guidance = getScenarioGuidance(item.profile); return <button key={item.profile} className={`panel scenario-card profile-choice ${selected === item.profile ? 'selected' : ''}`} onClick={() => onSelect(item.profile)}><div className="scenario-meta"><span className="eyebrow">{guidance ? `${guidance.generation} · ${guidance.variant}` : kind === 'rf' ? 'GUARDED RF PROFILE' : 'SIMULATED PROFILE'}</span><span className="profile-mode-dot">{kind === 'rf' ? 'RF' : 'SIM'}</span></div><strong>{guidance?.profileTitle || item.profile}</strong><code>{item.profile}</code><p>{guidance?.purpose}</p><span className="profile-card-footnote">{kind === 'rf' ? `RF transmission: ${item.rf_allowed ? 'enabled locally' : 'blocked by default'}` : 'Virtual radio: no SDR or RF transmission'}</span></button>; })}</div></section>;
+}
+
+function ProfileForm({ draft, setDraft }: { draft: ProfileConfig; setDraft: (value: ProfileConfig) => void }) {
+  return <div className="profile-form">{Object.entries(sections).map(([section, fields]) => { const visible = fields.filter(([path]) => hasPath(draft, path)); if (!visible.length) return null; return <fieldset key={section} className="form-section"><legend>{section}</legend>{visible.map(([path, label, type]) => { const current = getPath(draft, path); return <label key={path}><span>{label}</span>{type === 'boolean' ? <select value={String(current)} onChange={(event) => setDraft(setPath(draft, path, event.target.value === 'true'))}><option value="true">Yes</option><option value="false">No</option></select> : type === 'environment' ? <select value={valueToInput(current)} onChange={(event) => setDraft(setPath(draft, path, event.target.value))}><option value="cabled">Cabled</option><option value="shielded">Shielded</option><option value="authorized">Authorized environment</option></select> : <input type={type} value={valueToInput(current)} onChange={(event) => setDraft(setPath(draft, path, inputToValue(event.target.value, current)))} />}</label>; })}</fieldset>; })}</div>;
+}
+
+function hasPath(data: any, path: string) { return path.split('.').every((part) => { if (!data || !(part in data)) return false; data = data[part]; return true; }); }
+function getPath(data: any, path: string) { return path.split('.').reduce((value, part) => value?.[part], data); }
+function setPath(data: any, path: string, value: any) { const copy = structuredClone(data); const parts = path.split('.'); let target = copy; for (const part of parts.slice(0, -1)) target = target[part]; target[parts.at(-1)!] = value; return copy; }
+function valueToInput(value: any) { return value === null || value === undefined ? '' : String(value); }
+function inputToValue(value: string, previous: any) { if (value === '') return null; if (typeof previous === 'boolean') return ['true', 'yes', '1'].includes(value.toLowerCase()); return typeof previous === 'number' ? Number(value) : value; }

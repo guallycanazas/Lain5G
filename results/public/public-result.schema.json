@@ -1,0 +1,203 @@
+{
+  "$defs": {
+    "associatedFile": {
+      "additionalProperties": false,
+      "properties": {
+        "reference": {
+          "pattern": "^results/public/(?:summaries|tables)/[a-z0-9][a-z0-9._-]*\\.(?:csv|json|md)$",
+          "type": "string"
+        },
+        "sha256": {
+          "$ref": "#/$defs/sha256"
+        }
+      },
+      "required": [
+        "reference",
+        "sha256"
+      ],
+      "type": "object"
+    },
+    "configuration": {
+      "additionalProperties": false,
+      "properties": {
+        "reference": {
+          "pattern": "^(?:config|deployments)/(?!\\.\\.?/)(?!.*?/\\.\\.?/)[A-Za-z0-9._/-]+\\.(?:cfg|conf|ini|json|toml|yaml|yml)$",
+          "type": "string"
+        },
+        "sha256": {
+          "$ref": "#/$defs/sha256"
+        }
+      },
+      "required": [
+        "reference",
+        "sha256"
+      ],
+      "type": "object"
+    },
+    "criterion": {
+      "additionalProperties": false,
+      "properties": {
+        "description": {
+          "maxLength": 240,
+          "minLength": 1,
+          "type": "string"
+        },
+        "evidence_references": {
+          "items": {
+            "pattern": "^results/public/(?:summaries|tables)/[a-z0-9][a-z0-9._-]*\\.(?:csv|json|md)$",
+            "type": "string"
+          },
+          "type": "array",
+          "uniqueItems": true
+        },
+        "id": {
+          "pattern": "^[a-z0-9][a-z0-9._-]{0,63}$",
+          "type": "string"
+        },
+        "outcome": {
+          "enum": [
+            "MET",
+            "NOT_MET",
+            "NOT_ASSESSED"
+          ]
+        }
+      },
+      "required": [
+        "id",
+        "description",
+        "outcome",
+        "evidence_references"
+      ],
+      "type": "object"
+    },
+    "sha256": {
+      "pattern": "^[0-9a-f]{64}$",
+      "type": "string"
+    },
+    "utcTimestamp": {
+      "format": "date-time",
+      "pattern": "^\\d{4}-(?:0[1-9]|1[0-2])-(?:0[1-9]|[12]\\d|3[01])T(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d{1,6})?Z$",
+      "type": "string"
+    }
+  },
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "Contract for a sanitized, public scenario-result summary. Execution outcome and evidentiary classification are independent fields.",
+  "properties": {
+    "artifact_type": {
+      "const": "public-scenario-result"
+    },
+    "associated_files": {
+      "items": {
+        "$ref": "#/$defs/associatedFile"
+      },
+      "type": "array",
+      "uniqueItems": true
+    },
+    "command_label": {
+      "description": "Human-readable label only; shell text and arguments are not permitted.",
+      "pattern": "^(?!.* {2})[A-Za-z0-9](?:[A-Za-z0-9 ._()+:-]{0,78}[A-Za-z0-9._()+:-])?$",
+      "type": "string"
+    },
+    "duration_seconds": {
+      "minimum": 0,
+      "type": "number"
+    },
+    "ended_at_utc": {
+      "$ref": "#/$defs/utcTimestamp"
+    },
+    "environment_reference": {
+      "pattern": "^results/public/environment/[a-z0-9][a-z0-9._-]*\\.json$",
+      "type": "string"
+    },
+    "execution_status": {
+      "enum": [
+        "PASS",
+        "FAIL",
+        "BLOCKED",
+        "SKIPPED"
+      ]
+    },
+    "limitations": {
+      "items": {
+        "maxLength": 500,
+        "minLength": 1,
+        "type": "string"
+      },
+      "minItems": 1,
+      "type": "array"
+    },
+    "public_configurations": {
+      "items": {
+        "$ref": "#/$defs/configuration"
+      },
+      "minItems": 1,
+      "type": "array",
+      "uniqueItems": true
+    },
+    "release_version": {
+      "pattern": "^[0-9A-Za-z][0-9A-Za-z.+-]{0,63}$",
+      "type": "string"
+    },
+    "result_classification": {
+      "enum": [
+        "VALIDATED",
+        "PARTIALLY_VALIDATED",
+        "NOT_VALIDATED",
+        "SIMULATION_ONLY",
+        "DRY_RUN_ONLY"
+      ]
+    },
+    "run_id": {
+      "pattern": "^[a-z0-9][a-z0-9._-]{0,63}$",
+      "type": "string"
+    },
+    "scenario": {
+      "enum": [
+        "4g-lte-sim",
+        "4g-ims-sim",
+        "5g-sa-sim",
+        "5g-vonr-sim"
+      ]
+    },
+    "schema_version": {
+      "const": "1.0"
+    },
+    "source_commit": {
+      "pattern": "^[0-9a-f]{40}$",
+      "type": "string"
+    },
+    "started_at_utc": {
+      "$ref": "#/$defs/utcTimestamp"
+    },
+    "success_criteria": {
+      "items": {
+        "$ref": "#/$defs/criterion"
+      },
+      "minItems": 1,
+      "type": "array",
+      "uniqueItems": true
+    }
+  },
+  "required": [
+    "artifact_type",
+    "schema_version",
+    "run_id",
+    "started_at_utc",
+    "ended_at_utc",
+    "source_commit",
+    "release_version",
+    "scenario",
+    "command_label",
+    "public_configurations",
+    "environment_reference",
+    "success_criteria",
+    "result_classification",
+    "execution_status",
+    "duration_seconds",
+    "limitations",
+    "associated_files"
+  ],
+  "title": "Lain5G Lab Public Scenario Result",
+  "type": "object"
+}

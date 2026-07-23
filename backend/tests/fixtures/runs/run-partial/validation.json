@@ -1,0 +1,9 @@
+{
+  "scenario": "5g-sa",
+  "checked_at": "2026-07-09T01:01:00Z",
+  "checks": [
+    {"id": "mongo", "status": "PASS", "detail": "MongoDB responds"},
+    {"id": "nrf", "status": "FAIL", "detail": "container is not running"},
+    {"id": "ping", "status": "NOT_TESTED", "detail": "UE is not running"}
+  ]
+}

@@ -1,0 +1,54 @@
+supi: 'imsi-001011234567895'
+mcc: '001'
+mnc: '01'
+
+# Valores de laboratorio. Deben coincidir con deployments/5g-sa/.env.
+key: '00000000000000000000000000000000'
+op: '00000000000000000000000000000000'
+opType: 'OPC'
+amf: '8000'
+sqn: '000000000000'
+
+gnbSearchList:
+  - 10.20.0.20
+
+uacAic:
+  mps: false
+  mcs: false
+
+uacAcc:
+  normalClass: 0
+  class11: false
+  class12: false
+  class13: false
+  class14: false
+  class15: false
+
+sessions:
+  - type: IPv4
+    apn: internet
+    slice:
+      sst: 1
+      sd: 000001
+
+configured-nssai:
+  - sst: 1
+    sd: 000001
+
+default-nssai:
+  - sst: 1
+    sd: 000001
+
+integrity:
+  IA1: true
+  IA2: true
+  IA3: false
+
+ciphering:
+  EA1: true
+  EA2: true
+  EA3: false
+
+integrityMaxRate:
+  uplink: full
+  downlink: full
