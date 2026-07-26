@@ -28,6 +28,7 @@ SENSITIVE_PHRASE_RE = re.compile(
 HEX_32_RE = re.compile(r"\b[0-9a-fA-F]{32}\b")
 SUBSCRIBER_ID_RE = re.compile(r"(?<![\d.])\+?\d{5,20}(?![\d.])")
 ENV_ASSIGNMENT_RE = re.compile(r"[A-Za-z_][A-Za-z0-9_]*=.*", re.DOTALL)
+JSON_UNQUOTED_REDACTION_RE = re.compile(r"(?P<prefix>[:\[,]\s*)\[REDACTED\](?P<suffix>\s*[,\]}])")
 
 ALLOWED_DOCKER_SUBCOMMANDS = {"compose", "image", "info", "pull", "run", "tag"}
 ALLOWED_COMPOSE_ACTIONS = {"logs", "version"}
@@ -99,6 +100,8 @@ class CommandService:
             line = SENSITIVE_PHRASE_RE.sub(r"\g<prefix>[REDACTED]", line)
             line = HEX_32_RE.sub("[REDACTED]", line)
             line = SUBSCRIBER_ID_RE.sub("[REDACTED]", line)
+            if line.lstrip().startswith(("{", "[")):
+                line = JSON_UNQUOTED_REDACTION_RE.sub(r'\g<prefix>"[REDACTED]"\g<suffix>', line)
             redacted_lines.append(line)
         return "\n".join(redacted_lines)
 

@@ -18,6 +18,15 @@ export const scenarioGuidance: Record<string, ScenarioGuidance> = {
     excludes: ['USRP or RF transmission', 'IMS, SIP, and VoNR calls'],
     hardware: 'CPU, Docker, and /dev/net/tun only.',
   },
+  '5g-vonr-sim': {
+    generation: '5G',
+    variant: 'VONR SIGNALING SIMULATION',
+    profileTitle: '5G SA data and IMS signaling lab',
+    purpose: 'Validate registration, internet and IMS PDU sessions, IMS-path reachability, and authenticated SIP REGISTER without RF hardware.',
+    includes: ['Open5GS 5GC with internet and IMS DNNs', 'UERANSIM gNB and UE with two tunnels', 'IMS DNS, P/I/S-CSCF, and SIP REGISTER'],
+    excludes: ['USRP or RF transmission', 'RTP media and an end-to-end VoNR voice call'],
+    hardware: 'CPU, Docker, and /dev/net/tun only. No SDR is required.',
+  },
   '4g-lte-sim': {
     generation: '4G',
     variant: 'SIMULATION',

@@ -1,10 +1,12 @@
-import { NavLink } from 'react-router-dom';
+import { Link, NavLink } from 'react-router-dom';
 import {
   Activity,
+  BookOpen,
   Boxes,
   ChartNoAxesCombined,
   CircleGauge,
-  FlaskConical,
+  Github,
+  House,
   History,
   LayoutDashboard,
   ListChecks,
@@ -24,7 +26,7 @@ import { useHealth } from '../hooks/useDeployment';
 import { usePreferences } from '../preferences/PreferencesProvider';
 
 const groups: { label: string; links: { to: string; label: string; icon: LucideIcon }[] }[] = [
-  { label: 'nav.operation', links: [{ to: '/', label: 'nav.overview', icon: LayoutDashboard }, { to: '/scenarios', label: 'nav.scenarios', icon: Boxes }, { to: '/ims-real', label: 'nav.realIms', icon: RadioTower }, { to: '/topology', label: 'nav.topology', icon: Network }, { to: '/subscribers', label: 'nav.subscribers', icon: UsersRound }] },
+  { label: 'nav.operation', links: [{ to: '/dashboard', label: 'nav.overview', icon: LayoutDashboard }, { to: '/scenarios', label: 'nav.scenarios', icon: Boxes }, { to: '/ims-real', label: 'nav.realIms', icon: RadioTower }, { to: '/topology', label: 'nav.topology', icon: Network }, { to: '/subscribers', label: 'nav.subscribers', icon: UsersRound }] },
   { label: 'nav.observability', links: [{ to: '/validation', label: 'nav.validation', icon: ListChecks }, { to: '/metrics', label: 'nav.metrics', icon: ChartNoAxesCombined }, { to: '/logs', label: 'nav.logs', icon: ScrollText }, { to: '/runs', label: 'nav.runs', icon: History }] },
   { label: 'nav.administration', links: [{ to: '/preparation', label: 'nav.preparation', icon: PackageCheck }, { to: '/deployments', label: 'nav.deployments', icon: SlidersHorizontal }, { to: '/settings', label: 'nav.settings', icon: Settings }, { to: '/rf-safety', label: 'nav.rfSafety', icon: Radio }] },
 ];
@@ -36,7 +38,7 @@ export function Sidebar({ collapsed, onCollapse }: { collapsed: boolean; onColla
   return (
     <aside className="sidebar" aria-label="Main navigation">
       <div className="sidebar-top">
-        <div className="brand"><span className="brand-mark"><FlaskConical size={20} strokeWidth={2.2} /></span><span className="brand-copy"><strong>Lain5G</strong><small>LAB CONTROL</small></span></div>
+        <Link className="brand" to="/" title="Back to the Lain5G website"><span className="brand-mark"><img src="/images/lain5g/lain-avatar.webp" width="512" height="512" alt="" /></span><span className="brand-copy"><strong>Lain5G</strong><small>CONTROL PLANE</small></span></Link>
         <button className="sidebar-collapse" type="button" onClick={onCollapse} aria-label={collapsed ? t('shell.expandNavigation') : t('shell.collapseNavigation')}>{collapsed ? <PanelLeftOpen size={17} /> : <PanelLeftClose size={17} />}</button>
       </div>
       <div className="nav-groups">
@@ -52,6 +54,11 @@ export function Sidebar({ collapsed, onCollapse }: { collapsed: boolean; onColla
             </nav>
           </section>
         ))}
+      </div>
+      <div className="sidebar-utilities" aria-label="Project links">
+        <Link to="/" title="Back to the Lain5G website"><House size={17} /><span className="utility-label">Website</span></Link>
+        <a href="https://github.com/guallycanazas/Lain5G/tree/main/docs" target="_blank" rel="noreferrer" title="Open the documentation"><BookOpen size={17} /><span className="utility-label">Docs</span></a>
+        <a href="https://github.com/guallycanazas/Lain5G" target="_blank" rel="noreferrer" title="Open the GitHub repository"><Github size={17} /><span className="utility-label">GitHub</span></a>
       </div>
       <div className="sidebar-footer" aria-live="polite">
         <div className="sidebar-system-icon"><Activity size={17} /></div>

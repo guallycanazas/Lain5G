@@ -61,6 +61,12 @@ def test_5g_vonr_validation_requires_sip_challenge_and_ims_path():
     assert "ip route replace" in validate
 
 
+def test_5g_vonr_status_exports_compose_json_for_the_api():
+    status = (DEPLOY / "scripts" / "status.sh").read_text(encoding="utf-8")
+    assert "ps --format" in status
+    assert '\"Service\":\"{{.Service}}\"' in status
+
+
 def test_no_forbidden_claims_or_destructive_commands():
     files = list(DEPLOY.rglob("*")) + [ROOT / "Makefile"]
     forbidden = ["docker system prune"]

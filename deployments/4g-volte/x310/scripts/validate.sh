@@ -38,10 +38,19 @@ grep -q 'ethernet_link.*PASS' "$run_dir/logs/hardware-check.log" && add ethernet
 for svc in mme hss sgwc sgwu pgwc pgwu pcrf; do running "$svc" || epc_fail=1; done; [ "${epc_fail:-0}" = 0 ] && add epc_services PASS "EPC services running" || add epc_services FAIL "EPC incomplete"
 running mme && add mme_ready PASS "MME running" || add mme_ready FAIL "MME not running"
 for svc in pcscf icscf scscf; do running "$svc" || ims_fail=1; done; [ "${ims_fail:-0}" = 0 ] && add ims_services PASS "IMS services running" || add ims_services FAIL "IMS incomplete"
-if [ -f "$scenario_dir/.rf-active" ]; then add enb_started WARNING "RF session marker still present"; else add enb_started PASS "RF session completed"; fi
-compose logs --no-color enb-x310 >"$run_dir/logs/enb-x310.log" 2>/dev/null || true
-grep -Eiq 'S1 Setup|S1AP|MME connection|Connected to MME' "$run_dir/logs/enb-x310.log" && add s1_setup PASS "S1 setup evidence found" || add s1_setup FAIL "S1 setup evidence not found"
-compose ps enb-x310 2>/dev/null | grep -q running && add auto_stop FAIL "enb-x310 still running" || add auto_stop PASS "enb-x310 is stopped"
-[ -s "$run_dir/logs/enb-x310.log" ] && add logs_captured PASS "logs captured" || add logs_captured FAIL "no enb-x310 logs"
+REQUIRE_RF_READY=true LAIN5G_RUN_ID="$run_id" "$(dirname "${BASH_SOURCE[0]}")/preflight.sh" >"$run_dir/logs/preflight.log" 2>&1 && add rf_preflight PASS "RF preflight passed" || add rf_preflight FAIL "RF preflight failed; inspect preflight.log"
+if running enb-x310; then
+  add enb_started PASS "enb-x310 is currently running"
+  started_at="$(docker inspect -f '{{.State.StartedAt}}' lain5g-lab-4g-lte-x310-enb 2>/dev/null || true)"
+  if [ -n "$started_at" ]; then compose logs --no-color --since "$started_at" enb-x310 >"$run_dir/logs/enb-x310.log" 2>/dev/null || true; else compose logs --no-color enb-x310 >"$run_dir/logs/enb-x310.log" 2>/dev/null || true; fi
+  grep -Eiq 'S1 Setup|S1AP|MME connection|Connected to MME' "$run_dir/logs/enb-x310.log" && add s1_setup PASS "S1 setup evidence found in the active session" || add s1_setup FAIL "S1 setup evidence not found in the active session"
+  add auto_stop NOT_TESTED "RF session is still active; auto-stop cannot be confirmed yet"
+  [ -s "$run_dir/logs/enb-x310.log" ] && add logs_captured PASS "active-session logs captured" || add logs_captured FAIL "no active-session eNB logs"
+else
+  add enb_started NOT_TESTED "No active RF session; enb-x310 remains in guarded standby"
+  add s1_setup NOT_TESTED "No active RF session from which to collect S1 evidence"
+  add auto_stop NOT_TESTED "No current RF session lifecycle to validate"
+  add logs_captured NOT_TESTED "No active RF session logs were requested"
+fi
 add ue_registration NOT_TESTED "UE over RF not required in this profile"
 write_json

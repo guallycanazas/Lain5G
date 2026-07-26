@@ -59,6 +59,7 @@ class DeploymentSummary(BaseModel):
     validation_checks: list[str] = Field(default_factory=list)
     rf_capable: bool = False
     components: list[str] = Field(default_factory=list)
+    conditional_components: list[str] = Field(default_factory=list)
 
 
 class DeploymentStatus(BaseModel):

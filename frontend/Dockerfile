@@ -13,7 +13,7 @@ FROM nginx:1.27-alpine@sha256:65645c7bb6a0661892a8b03b89d0743208a18dd2f3f17a54ef
 ARG LAIN5G_VERSION=1.0.0-rc.1
 
 LABEL org.opencontainers.image.version="${LAIN5G_VERSION}" \
-      org.opencontainers.image.source="https://github.com/guallycanazas/Lain5G-Lab"
+      org.opencontainers.image.source="https://github.com/guallycanazas/Lain5G"
 
 COPY nginx.conf /etc/nginx/nginx.conf
 COPY --from=build /app/dist /usr/share/nginx/html

@@ -46,8 +46,9 @@ npm test
 
 ## Main Routes
 
-- `/`: backend and deployment status plus `start`, `stop`, `restart`, and
-  `validate` actions.
+- `/`: public project landing page and architecture overview.
+- `/dashboard`: backend and deployment status plus `start`, `stop`, `restart`,
+  and `validate` actions.
 - `/scenarios`: scenario catalog and guarded workspaces.
 - `/deployments`: profile editing, validation, comparison, and application.
 - `/subscribers`: Open5GS subscriber administration.

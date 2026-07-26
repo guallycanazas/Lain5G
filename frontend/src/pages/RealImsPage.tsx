@@ -129,17 +129,18 @@ export function RealImsPage() {
 
   return (
     <section className="page-panel real-ims-page">
-      <div className="page-heading">
-        <div>
-          <span className="eyebrow">First-party runtime</span>
+      <header className="console-page-hero voice-page-hero">
+        <div className="console-page-hero-copy">
+          <span className="eyebrow">📡 First-party runtime</span>
           <h1>Real 4G/5G IMS operator</h1>
           <p className="page-subtitle">Operate the real first-party IMS runtime. This workspace is separate from legacy SIP probes and simulated SIP evidence.</p>
+          <div className="tab-list ims-mode-switch" aria-label="IMS network mode">
+            <button type="button" className={mode === '4g' ? 'active' : ''} aria-pressed={mode === '4g'} onClick={() => setMode('4g')}>4G IMS</button>
+            <button type="button" className={mode === '5g' ? 'active' : ''} aria-pressed={mode === '5g'} onClick={() => setMode('5g')}>5G IMS</button>
+          </div>
         </div>
-        <div className="tab-list ims-mode-switch" aria-label="IMS network mode">
-          <button type="button" className={mode === '4g' ? 'active' : ''} aria-pressed={mode === '4g'} onClick={() => setMode('4g')}>4G IMS</button>
-          <button type="button" className={mode === '5g' ? 'active' : ''} aria-pressed={mode === '5g'} onClick={() => setMode('5g')}>5G IMS</button>
-        </div>
-      </div>
+        <figure><img src="/images/lain5g/voice-topology.webp" width="1000" height="450" alt="Concept IMS topology connecting RAN, Open5GS core and Kamailio" loading="lazy" decoding="async" /><figcaption><span>🧪 Signaling topology</span><strong>Concept illustration. Runtime readiness is not evidence of a VoLTE or VoNR call.</strong></figcaption></figure>
+      </header>
 
       <div className="warning-box ims-limitation"><strong>Readiness is not a VoLTE or VoNR call claim.</strong> Passing checks shows reported service readiness only. This page has no RF start controls and does not prove UE registration, media flow, or an end-to-end call.</div>
 

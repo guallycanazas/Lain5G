@@ -41,19 +41,20 @@ export function DashboardPage() {
 
   return (
     <div className="page-grid">
-      <section className="hero-panel panel wide">
-        <div>
-          <span className="eyebrow">{t('dashboard.eyebrow')}</span>
-          <h1 className="hero-title">Lain5G-Lab</h1>
+      <section className="hero-panel dashboard-hero panel wide">
+        <div className="dashboard-hero-content">
+          <span className="eyebrow">✨ {t('dashboard.eyebrow')}</span>
+          <h1 className="hero-title">Lain5G</h1>
           <p className="page-subtitle">{t('dashboard.subtitle')}</p>
+          <div className="hero-actions">
+            {status.data ? <StatusBadge status={status.data.status} /> : <StatusBadge status="unknown" />}
+            <ActionButton variant="secondary" onClick={() => status.refetch()} loading={status.isFetching}>{t('dashboard.sync')}</ActionButton>
+            <ActionButton loading={actions.start.isPending} disabled={busy || components.data?.ready !== true} onClick={() => actions.start.mutate()}>{t('dashboard.start')}</ActionButton>
+            <ActionButton variant="secondary" loading={actions.validate.isPending} disabled={busy} onClick={() => actions.validate.mutate()}>{t('dashboard.validate')}</ActionButton>
+            <ActionButton variant="danger" disabled={busy} onClick={() => setConfirm('stop')}>{t('dashboard.stop')}</ActionButton>
+          </div>
         </div>
-        <div className="hero-actions">
-          {status.data ? <StatusBadge status={status.data.status} /> : <StatusBadge status="unknown" />}
-          <ActionButton variant="secondary" onClick={() => status.refetch()} loading={status.isFetching}>{t('dashboard.sync')}</ActionButton>
-          <ActionButton loading={actions.start.isPending} disabled={busy || components.data?.ready !== true} onClick={() => actions.start.mutate()}>{t('dashboard.start')}</ActionButton>
-          <ActionButton variant="secondary" loading={actions.validate.isPending} disabled={busy} onClick={() => actions.validate.mutate()}>{t('dashboard.validate')}</ActionButton>
-          <ActionButton variant="danger" disabled={busy} onClick={() => setConfirm('stop')}>{t('dashboard.stop')}</ActionButton>
-        </div>
+        <figure className="dashboard-hero-visual"><img src="/images/lain5g/hero-topology.webp" width="1536" height="1024" alt="Private mobile laboratory topology" decoding="async" /><figcaption><span>🛰️ Software first</span><strong>Move to guarded RF only when the laboratory is ready.</strong></figcaption></figure>
       </section>
 
       <section className="summary-grid wide" aria-label="Operations overview">

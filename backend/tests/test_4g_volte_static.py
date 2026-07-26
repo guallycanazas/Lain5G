@@ -67,6 +67,15 @@ def test_x310_rf_start_requires_guardrails():
     assert "uhd_find_devices" in hardware_check
 
 
+def test_x310_validation_does_not_reuse_inactive_rf_logs():
+    validate = (DEPLOY / "x310" / "scripts" / "validate.sh").read_text(encoding="utf-8")
+
+    assert 'add enb_started NOT_TESTED "No active RF session' in validate
+    assert 'add s1_setup NOT_TESTED "No active RF session' in validate
+    assert 'add auto_stop NOT_TESTED "No current RF session lifecycle' in validate
+    assert 'add enb_started PASS "RF session completed"' not in validate
+
+
 def test_x310_uses_profile_specific_addresses():
     compose = (DEPLOY / "x310" / "docker-compose.yml").read_text(encoding="utf-8")
     enb = (DEPLOY / "x310" / "ran" / "enb.conf").read_text(encoding="utf-8")

@@ -38,6 +38,7 @@ export interface DeploymentSummary {
   validation_checks: string[];
   rf_capable: boolean;
   components: string[];
+  conditional_components?: string[];
 }
 
 export interface DeploymentStatus {

@@ -1,3 +1,4 @@
+import json
 import os
 import subprocess
 from pathlib import Path
@@ -193,3 +194,10 @@ def test_redacts_uri_credentials_sip_users_identifiers_rf_values_and_notes(real_
     for sensitive in ("user:", "password", "001010000000001", "15551234567", "42", "private operator note", "3400", "second private note"):
         assert sensitive not in redacted
     assert redacted.count("[REDACTED]") >= 7
+
+
+def test_redaction_preserves_json_for_numeric_values(real_settings):
+    service = CommandService(real_settings)
+    redacted = service.redact('{"Service":"mongo","TargetPort":27017,"State":"running"}')
+
+    assert json.loads(redacted) == {"Service": "mongo", "TargetPort": "[REDACTED]", "State": "running"}

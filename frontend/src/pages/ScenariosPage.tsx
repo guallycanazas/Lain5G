@@ -13,7 +13,7 @@ export function ScenariosPage() {
   const deploymentList = Array.isArray(deployments.data) ? deployments.data : [];
   const runList = Array.isArray(runs.data) ? runs.data : [];
   return <section className="page-panel">
-    <div className="page-heading"><div><span className="eyebrow">Operation</span><h1>Scenarios</h1><p className="page-subtitle">Select a laboratory workspace. Each scenario retains its own deployment, evidence and safety constraints.</p></div></div>
+    <header className="console-page-hero recipe-page-hero"><div className="console-page-hero-copy"><span className="eyebrow">🧪 Operation</span><h1>Scenarios</h1><p className="page-subtitle">Select a laboratory workspace. Each scenario retains its own deployment, evidence and safety constraints.</p></div><figure><img src="/images/lain5g/lab-recipes.webp" width="1536" height="500" alt="Illustrated workflow from laboratory recipe through validation, deployment, testing and observation" loading="lazy" decoding="async" /><figcaption><span>🧭 Reproducible workflow</span><strong>Recipe · validate · deploy · test · observe</strong></figcaption></figure></header>
     {deployments.isLoading ? <LoadingState /> : null}
     {deployments.error ? <ErrorAlert error={deployments.error} onRetry={() => deployments.refetch()} /> : null}
     {(['4G', '5G'] as const).map((generation) => <section className="scenario-family" key={generation}>

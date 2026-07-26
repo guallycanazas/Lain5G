@@ -7,7 +7,7 @@ def test_list_deployments_includes_simulation_and_x310_scenarios(client):
     assert response.status_code == 200
     payload = response.json()
     ids = {item["id"] for item in payload}
-    assert ids == {"5g-sa", "4g-lte-sim", "4g-lte-x310", "5g-sa-x310"}
+    assert ids == {"5g-sa", "5g-vonr-sim", "4g-lte-sim", "4g-lte-x310", "5g-sa-x310"}
     assert all(item["status"] == "dry_run" for item in payload)
 
 
@@ -173,3 +173,20 @@ def test_start_conflict_reports_active_scenario(deployment_service, monkeypatch)
         assert getattr(exc, "active_scenario", None) == "5g-sa"
     else:
         raise AssertionError("Expected conflict")
+
+
+def test_failed_validation_returns_new_failure_evidence(deployment_service, run_service, monkeypatch):
+    result = CommandResult(
+        command=["validate"], cwd=".", exit_code=1, stdout="status=FAIL", stderr="",
+        started_at="2026-01-01T00:00:00Z", finished_at="2026-01-01T00:00:01Z", duration_ms=1000,
+    )
+    failed_run = run_service.get_run("run-partial")
+    runs = iter([None, failed_run])
+    deployment_service.settings.dry_run = False
+    monkeypatch.setattr(deployment_service, "_execute_script", lambda *args: result)
+    monkeypatch.setattr(run_service, "latest_run", lambda **kwargs: next(runs))
+
+    report = deployment_service.validate("5g-sa")
+
+    assert report.status == "FAIL"
+    assert report.validation["nrf"] == "FAIL"

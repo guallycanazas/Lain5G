@@ -6,13 +6,13 @@ import { useProfiles } from '../hooks/useProfiles';
 import { usePreferences } from '../preferences/PreferencesProvider';
 
 const commands = [
-  { to: '/', label: 'nav.overview' }, { to: '/scenarios', label: 'nav.scenarios' }, { to: '/validation', label: 'nav.validation' },
+  { to: '/dashboard', label: 'nav.overview' }, { to: '/scenarios', label: 'nav.scenarios' }, { to: '/validation', label: 'nav.validation' },
   { to: '/logs', label: 'nav.logs' }, { to: '/runs', label: 'nav.runs' }, { to: '/rf-safety', label: 'nav.rfSafety' },
   { to: '/preparation', label: 'nav.preparation' },
 ];
 
 const pageNames: Record<string, string> = {
-  '/': 'nav.overview', '/scenarios': 'nav.scenarios', '/ims-real': 'nav.realIms', '/topology': 'nav.topology', '/subscribers': 'nav.subscribers',
+  '/dashboard': 'nav.overview', '/scenarios': 'nav.scenarios', '/ims-real': 'nav.realIms', '/topology': 'nav.topology', '/subscribers': 'nav.subscribers',
   '/validation': 'nav.validation', '/metrics': 'nav.metrics', '/logs': 'nav.logs', '/runs': 'nav.runs', '/deployments': 'nav.deployments', '/preparation': 'nav.preparation', '/settings': 'nav.settings', '/rf-safety': 'nav.rfSafety',
 };
 
@@ -29,10 +29,10 @@ export function Header() {
   const activeId = location.pathname.startsWith('/scenarios/') ? location.pathname.split('/')[2] : '5g-sa';
   const availableCommands = commands.filter((command) => t(command.label).toLowerCase().includes(query.toLowerCase()));
   const rfAuthorized = profiles.data?.some((profile) => profile.profile === activeId && profile.rf_allowed);
-  const pageName = pageNames[location.pathname] ? t(pageNames[location.pathname]) : (location.pathname.startsWith('/scenarios/') ? t('nav.scenarios') : 'Lain5G-Lab');
+  const pageName = pageNames[location.pathname] ? t(pageNames[location.pathname]) : (location.pathname.startsWith('/scenarios/') ? t('nav.scenarios') : 'Lain5G');
   return (
     <header className="topbar">
-      <div className="topbar-identity"><span className="topbar-kicker">{t('shell.controlPlane')}</span><strong>{pageName}</strong></div>
+      <Link className="topbar-identity" to="/"><span className="topbar-kicker">{t('shell.controlPlane')}</span><strong>{pageName}</strong></Link>
       <div className="topbar-context">
         <ServerCog size={17} aria-hidden="true" /><div className="scenario-control"><span className="context-label">{t('shell.activeScenario')}</span><select className="scenario-select" value={activeId} onChange={(event) => navigate(`/scenarios/${event.target.value}`)} aria-label={t('shell.activeScenario')}>
           {(deployments.data || []).map((deployment) => <option key={deployment.id} value={deployment.id}>{deployment.name}</option>)}

@@ -36,11 +36,12 @@ export function SubscribersPage() {
     <section className="subscribers-workspace">
       <div className="subscriber-hero">
         <div>
-          <span className="eyebrow">IDENTITY REGISTRY · OPEN5GS</span>
+          <span className="eyebrow">👥 IDENTITY REGISTRY · OPEN5GS</span>
           <h1>Subscribers</h1>
           <p className="page-subtitle">Manage packet-core identities without exposing authentication material.</p>
         </div>
         <div className="subscriber-hero-stats"><div><span>Total records</span><strong>{subscribers.isLoading ? '—' : subscriberCount}</strong></div><div><span>Database link</span><strong className={connectionOnline ? 'text-good' : 'text-bad'}>{connectionOnline ? 'ONLINE' : 'OFFLINE'}</strong></div></div>
+        <figure className="subscriber-hero-visual"><img src="/images/lain5g/subscriber-provisioning.webp" width="1000" height="620" alt="Illustrated subscriber provisioning workstation and programmable SIM" loading="lazy" decoding="async" /><figcaption><span>🔐 Identity workflow</span><strong>SIM/USIM management is current. eSIM imagery remains a design concept.</strong></figcaption></figure>
         <div className="subscriber-primary-actions"><button className="secondary" onClick={exportVisible} disabled={!subscribers.data?.items.length}><Download size={15} />Export CSV</button><button className="secondary" disabled title="Bulk import is not exposed by the current backend"><Upload size={15} />Import</button><Link className="action-link" to="/subscribers/new"><Plus size={16} />Create subscriber</Link></div>
       </div>
 

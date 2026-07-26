@@ -1,6 +1,7 @@
 import { createBrowserRouter, Navigate } from 'react-router-dom';
 import { AppLayout } from './components/AppLayout';
 import { DashboardPage } from './pages/DashboardPage';
+import { LandingPage } from './pages/LandingPage';
 import { LogsPage } from './pages/LogsPage';
 import { MetricsPage } from './pages/MetricsPage';
 import { ProfileConfigPage } from './pages/ProfileConfigPage';
@@ -20,11 +21,10 @@ import { TopologyPage } from './pages/TopologyPage';
 import { ValidationPage } from './pages/ValidationPage';
 
 export const router = createBrowserRouter([
+  { path: '/', element: <LandingPage /> },
   {
-    path: '/',
     element: <AppLayout />,
     children: [
-      { index: true, element: <DashboardPage /> },
       { path: 'dashboard', element: <DashboardPage /> },
       { path: 'validation', element: <ValidationPage /> },
       { path: 'topology', element: <TopologyPage /> },
@@ -44,7 +44,7 @@ export const router = createBrowserRouter([
       { path: 'subscribers/:imsi/edit', element: <SubscriberEditPage /> },
       { path: 'runs', element: <RunsPage /> },
       { path: 'runs/:runId', element: <RunDetailPage /> },
-      { path: '*', element: <Navigate to="/" replace /> },
     ],
   },
+  { path: '*', element: <Navigate to="/" replace /> },
 ]);

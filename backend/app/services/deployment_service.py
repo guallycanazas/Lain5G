@@ -169,7 +169,8 @@ class DeploymentService:
             containers = []
         else:
             containers = self._parse_containers(result.stdout)
-            state = self._state_from_containers(containers, definition.expected_services)
+            always_expected = [service for service in definition.expected_services if service != definition.rf_service]
+            state = self._state_from_containers(containers, always_expected)
         return DeploymentStatus(id=scenario, status=state, containers=containers, checked_at=datetime.now(UTC), command=result, output=result.stdout)
 
     def logs(self, scenario: str, *, container: str | None = None, tail: int | None = None) -> LogsResponse:
@@ -197,12 +198,18 @@ class DeploymentService:
         self._ensure_action(definition, "validate")
         if self.settings.dry_run:
             return self.validation_service.dry_run_report(scenario)
+        previous = self.run_service.latest_run(scenario=scenario)
         result = self._execute_script(definition, "validate")
         if result.timed_out:
             raise DeploymentCommandError("DEPLOYMENT_VALIDATE_TIMEOUT", "Validation timed out.", result)
-        if result.exit_code != 0:
-            raise DeploymentCommandError("DEPLOYMENT_VALIDATE_FAILED", "Validation command failed.", result)
         latest = self.run_service.latest_run(scenario=scenario)
+        has_new_evidence = bool(
+            latest
+            and latest.validation
+            and (previous is None or latest.run_id != previous.run_id or latest.validation != previous.validation)
+        )
+        if result.exit_code != 0 and not has_new_evidence:
+            raise DeploymentCommandError("DEPLOYMENT_VALIDATE_FAILED", "Validation command failed before producing evidence.", result)
         if latest is None:
             raise RuntimeError("Validation completed but no run was found")
         return self.validation_service.report_from_run(latest)
@@ -220,6 +227,7 @@ class DeploymentService:
             validation_checks=definition.validation_checks,
             rf_capable=definition.rf_capable,
             components=definition.expected_services,
+            conditional_components=[definition.rf_service] if definition.rf_service else [],
         )
 
     def _script_action(self, definition: DeploymentDefinition, action: str, error_code: str, error_message: str, *, script: str | None = None) -> DeploymentActionResponse:
