@@ -1,9 +1,10 @@
 # Red 4G LTE y VoLTE
 
-Este escenario contiene dos perfiles independientes:
+Este directorio conserva dos implementaciones:
 
-- `4g-volte-sim`: red software validada con EPC, IMS, srsENB y srsUE.
-- `4g-lte-x310`: ruta RF controlada con EPC, IMS y srsENB para USRP X310.
+- `4g-volte-sim`: implementación histórica con EPC, IMS, srsENB y srsUE; no
+  forma parte de la interfaz operativa pública.
+- `4g-lte-x310`: ruta RF pública controlada con EPC y srsENB para USRP X310.
 
 La ruta RF no se inicia automáticamente y exige preflight, manifiesto de seguridad y `LAIN5G_ALLOW_RF_START=true`.
 
@@ -20,18 +21,12 @@ cp deployments/4g-volte/common/.env.example deployments/4g-volte/common/.env
 
 Edita `deployments/4g-volte/common/.env` y usa claves de laboratorio, nunca credenciales reales.
 
-## Simulación Software
+## Simulación Software Histórica
 
-```bash
-make build-4g-volte-sim
-make start-4g-volte-sim
-docker compose --profile sip --env-file deployments/4g-volte/common/.env \
-  -f deployments/4g-volte/sim/docker-compose.yml up --force-recreate sip-register
-make validate-4g-volte-sim
-make stop-4g-volte-sim
-```
+Los manifiestos y resultados VoLTE se conservan para trazabilidad y pruebas
+estáticas, sin un lanzador público.
 
-El paso `sip-register` comprueba el intercambio REGISTER, desafío 401, REGISTER
+La evidencia `sip-register` comprueba el intercambio REGISTER, desafío 401, REGISTER
 autenticado y respuesta final 200 OK. Junto con las comprobaciones LTE/EPC/IMS,
 establece el flujo de señalización VoLTE validado en software. Audio, calidad de
 voz y rendimiento RTP pertenecen a una prueba de medios separada.

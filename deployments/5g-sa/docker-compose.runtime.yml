@@ -1,0 +1,18 @@
+services:
+  ue:
+    env_file:
+      - .env
+    command:
+      - bash
+      - -lc
+      - |
+        umask 077
+        mkdir -p /tmp/ueransim
+        config="$$(</etc/ueransim/ue.yaml)"
+        for name in SUBSCRIBER_IMSI SUBSCRIBER_KEY SUBSCRIBER_OPC SUBSCRIBER_AMF SUBSCRIBER_SQN; do
+          value="$${!name:-}"
+          [ -n "$$value" ] || { echo "Missing required UE setting: $$name" >&2; exit 2; }
+          config="$${config//__$${name}__/$$value}"
+        done
+        printf '%s\n' "$$config" > /tmp/ueransim/ue.yaml
+        exec nr-ue -c /tmp/ueransim/ue.yaml

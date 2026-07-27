@@ -26,5 +26,9 @@ posible, pero debe mantener la misma coherencia entre todos los archivos.
 Para cambiar un identificador sintético de simulación, use preferentemente el
 perfil correspondiente. Si se edita manualmente, deben permanecer coherentes:
 
-- `SUBSCRIBER_IMSI` en `deployments/5g-sa/.env`.
-- `supi` en `deployments/5g-sa/ueransim/ue.yaml`.
+- `SUBSCRIBER_IMSI`, `SUBSCRIBER_KEY` y `SUBSCRIBER_OPC` en el `.env` privado
+  de cada simulación.
+- La plantilla `deployments/5g-sa/ueransim/ue.yaml`, que recibe el valor de
+  esas credenciales al crear la configuración runtime dentro del contenedor UE.
+- La plantilla `deployments/4g-lte-sim/ran/ue.conf`, que recibe las mismas
+  credenciales utilizadas por el provisionador Open5GS antes de iniciar srsUE.

@@ -2,10 +2,16 @@ from fastapi import APIRouter, Depends, Query
 
 from ..dependencies import get_preparation_service, require_mutations_enabled
 from ..models.preparation import ComponentPullRequest, ComponentPullResponse, PreparationReport, ProfileComponentStatus
-from ..services.preparation_service import PreparationService
+from ..services.image_catalog import PUBLIC_PROFILE_IDS
+from ..services.preparation_service import PreparationError, PreparationService
 
 
 router = APIRouter(prefix="/api/preparation", tags=["preparation"])
+
+
+def require_public_profile(profile_id: str) -> None:
+    if profile_id not in PUBLIC_PROFILE_IDS:
+        raise PreparationError(404, "IMAGE_PROFILE_NOT_FOUND", f"Unknown image profile: {profile_id}")
 
 
 @router.get("", response_model=PreparationReport)
@@ -19,6 +25,7 @@ def profile_components(
     core_only: bool = Query(default=False),
     service: PreparationService = Depends(get_preparation_service),
 ) -> ProfileComponentStatus:
+    require_public_profile(profile_id)
     return service.profile_status(profile_id, core_only)
 
 
@@ -28,4 +35,5 @@ def pull_profile_components(
     payload: ComponentPullRequest,
     service: PreparationService = Depends(get_preparation_service),
 ) -> ComponentPullResponse:
+    require_public_profile(profile_id)
     return service.pull(profile_id, payload.core_only)

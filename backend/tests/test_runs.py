@@ -1,3 +1,5 @@
+import json
+
 import pytest
 
 from backend.app.services.run_service import RunSecurityError
@@ -67,3 +69,19 @@ def test_runs_api_get_404(client):
 def test_runs_api_rejects_traversal(client):
     response = client.get("/api/runs/..%2Foutside")
     assert response.status_code in {400, 404}
+
+
+def test_runs_api_hides_internal_scenario_evidence(client, project_root):
+    metadata_path = project_root / "runs/run-valid/metadata.json"
+    metadata = json.loads(metadata_path.read_text(encoding="utf-8"))
+    metadata["scenario"] = "5g-vonr-sim"
+    metadata_path.write_text(json.dumps(metadata), encoding="utf-8")
+
+    listed = client.get("/api/runs")
+    hidden = client.get("/api/runs/run-valid")
+    filtered = client.get("/api/runs", params={"scenario": "5g-vonr-sim"})
+
+    assert listed.status_code == 200
+    assert "run-valid" not in {run["run_id"] for run in listed.json()}
+    assert hidden.status_code == 404
+    assert filtered.json() == []

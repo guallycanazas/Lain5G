@@ -10,9 +10,10 @@ const scenarios = [
   { id: '5g-vonr-sim', name: '5G SA + VoNR Signaling', description: '5G SA data and IMS signaling', path: 'deployments/5g-vonr', status: 'stopped', mode: 'simulation', supported_actions: ['start', 'stop', 'restart', 'status', 'logs', 'validate'], validation_checks: ['ng_setup', 'pdu_internet', 'pdu_ims', 'ims_dns', 'sip_register'], rf_capable: false, components: ['mongo', 'nrf', 'amf', 'gnb', 'ue', 'ims-database', 'pcscf', 'icscf', 'scscf', 'dns'] },
   { id: '4g-lte-sim', name: '4G - srsRAN ZMQ Simulation', description: 'srsENB and srsUE over ZMQ', path: 'deployments/4g-lte-sim', status: 'stopped', mode: 'simulation', supported_actions: ['start', 'stop', 'restart', 'status', 'logs', 'validate'], validation_checks: ['s1_setup', 'ue_registration'], rf_capable: false, components: ['mme', 'enb', 'ue'] },
   { id: '4g-volte-sim', name: '4G LTE + VoLTE Signaling', description: 'LTE data and IMS signaling', path: 'deployments/4g-volte/sim', status: 'stopped', mode: 'simulation', supported_actions: ['start', 'stop', 'restart', 'status', 'logs', 'validate'], validation_checks: ['s1_setup', 'default_bearer', 'ims_dns', 'sip_register'], rf_capable: false, components: ['mme', 'enb', 'ue', 'pcscf', 'icscf', 'scscf', 'dns'] },
-  { id: '4g-lte-x310', name: '4G - Guarded VoLTE RF Preparation', description: 'Guarded SDR', path: 'deployments/4g-volte/x310', status: 'stopped', mode: 'rf-controlled', supported_actions: ['stop', 'status', 'logs', 'validate', 'hardware-check', 'preflight', 'start-core', 'start-rf', 'emergency-stop'], validation_checks: ['hardware_detected'], rf_capable: true, components: ['mongo', 'mme', 'enb-x310'], conditional_components: ['enb-x310'] },
-  { id: '5g-sa-x310', name: '5G - Guarded VoNR RF Preparation', description: 'Guarded 5G SDR', path: 'deployments/5g-sa-x310', status: 'stopped', mode: 'rf-controlled', supported_actions: ['stop', 'status', 'logs', 'validate', 'hardware-check', 'preflight', 'start-core', 'start-rf', 'emergency-stop'], validation_checks: ['hardware_detected'], rf_capable: true, components: ['amf', 'gnb-x310'] },
+  { id: '4g-lte-x310', name: '4G - Guarded LTE RF', description: 'Guarded SDR', path: 'deployments/4g-volte/x310', status: 'stopped', mode: 'rf-controlled', supported_actions: ['stop', 'status', 'logs', 'validate', 'hardware-check', 'preflight', 'start-core', 'start-rf', 'emergency-stop'], validation_checks: ['hardware_detected'], rf_capable: true, components: ['mongo', 'mme', 'enb-x310'], conditional_components: ['enb-x310'] },
+  { id: '5g-sa-x310', name: '5G - Guarded SA RF', description: 'Guarded 5G SDR', path: 'deployments/5g-sa-x310', status: 'stopped', mode: 'rf-controlled', supported_actions: ['stop', 'status', 'logs', 'validate', 'hardware-check', 'preflight', 'start-core', 'start-rf', 'emergency-stop'], validation_checks: ['hardware_detected'], rf_capable: true, components: ['amf', 'gnb-x310'] },
 ];
+const publicScenarios = scenarios.filter((scenario) => !['4g-volte-sim', '5g-vonr-sim'].includes(scenario.id));
 const run = { run_id: 'run-5g', metadata: { scenario: '5g-sa', status: 'PASS', finished_at: '2026-07-10T13:36:33Z', git_commit: 'abc1234' }, validation: { status: 'PASS', checks: [{ id: 'pdu_session', status: 'PASS', detail: 'PDU session established' }] }, metrics: {}, logs: [], loaded_at: '2026-07-10T13:36:34Z' };
 const rfProfiles: Record<string, any> = {
   '4g-lte-x310': { profile: '4g-lte-x310', radio: { device: 'x300', usrp_addr: '192.168.10.2', lte_band: 7, earfcn: 3150, bandwidth_mhz: 5, tx_gain: 20, rx_gain: 40 }, safety: { rf_allowed: false, environment: 'shielded', attenuation_db: 60, antenna_connected: false, shielded_environment: true, auto_stop: true, authorization_confirmed: true, maximum_duration_seconds: 600, operator_note: 'Authorized 4G RF test' } },
@@ -26,7 +27,7 @@ function stubScenarioFetch(extra?: (url: string, init?: RequestInit) => Promise<
       const profile = url.split('/profiles/')[1].split('?')[0];
       return jsonResponse({ profile, name: profile, rf_capable: profile.includes('x310'), core_only: url.includes('core_only=true'), ready: true, installed_count: 3, total_count: 3, images: [] });
     }
-    if (url === '/api/deployments') return jsonResponse(scenarios);
+    if (url === '/api/deployments') return jsonResponse(publicScenarios);
     const rfProfile = Object.values(rfProfiles).find((item) => url.includes(`/api/profiles/${item.profile}`));
     if (rfProfile && url.endsWith('/diff')) return jsonResponse({ profile: rfProfile.profile, files: [] });
     if (rfProfile) return jsonResponse(rfProfile);
@@ -47,12 +48,12 @@ describe('Scenario workspaces', () => {
     stubScenarioFetch(); renderWithClient(<ScenariosPage />);
     expect(await screen.findByText('5G - UERANSIM Simulation')).toBeInTheDocument();
     expect(screen.getByText('4G - srsRAN ZMQ Simulation')).toBeInTheDocument();
-    expect(screen.getByText('4G LTE + VoLTE Signaling')).toBeInTheDocument();
-    expect(screen.getByText('5G SA + VoNR Signaling')).toBeInTheDocument();
-    expect(screen.getByText('4G - Guarded VoLTE RF Preparation')).toBeInTheDocument();
-    expect(screen.getByText('5G - Guarded VoNR RF Preparation')).toBeInTheDocument();
+    expect(screen.queryByText('4G LTE + VoLTE Signaling')).not.toBeInTheDocument();
+    expect(screen.queryByText('5G SA + VoNR Signaling')).not.toBeInTheDocument();
+    expect(screen.getByText('4G - Guarded LTE RF')).toBeInTheDocument();
+    expect(screen.getByText('5G - Guarded SA RF')).toBeInTheDocument();
     expect(screen.getAllByText('Real hardware')).toHaveLength(2);
-    expect(screen.getAllByText(/^\d+ checks$/)).toHaveLength(6);
+    expect(screen.getAllByText(/^\d+ checks$/)).toHaveLength(4);
   });
   it('keeps scenario commands and workspace tabs reachable', async () => {
     stubScenarioFetch(); renderRoute('/scenarios/:scenarioId', <ScenarioDetailPage />, '/scenarios/5g-sa');
@@ -194,8 +195,6 @@ describe('Scenario workspaces', () => {
   it.each([
     ['5g-sa', 'Start 5G - UERANSIM Simulation', '5GC + UERANSIM'],
     ['4g-lte-sim', 'Start 4G - srsRAN ZMQ Simulation', 'srsENB + srsUE simulation'],
-    ['4g-volte-sim', 'Start 4G LTE + VoLTE Signaling', 'LTE + VoLTE simulation'],
-    ['5g-vonr-sim', 'Start 5G SA + VoNR Signaling', '5G SA + VoNR simulation'],
   ])('provides a guided software launch for %s', async (scenarioId, title, flowLabel) => {
     stubScenarioFetch(); renderRoute('/scenarios/:scenarioId', <ScenarioDetailPage />, `/scenarios/${scenarioId}`);
     await userEvent.click(await screen.findByRole('button', { name: 'Start lab' }));

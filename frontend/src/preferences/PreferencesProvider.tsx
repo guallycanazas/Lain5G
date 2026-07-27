@@ -28,7 +28,6 @@ const messages: Record<string, string> = {
   'nav.administration': 'Administration',
   'nav.overview': 'Overview',
   'nav.scenarios': 'Scenarios',
-  'nav.realIms': 'Real IMS',
   'nav.topology': 'Topology',
   'nav.subscribers': 'Subscribers',
   'nav.validation': 'Validation',

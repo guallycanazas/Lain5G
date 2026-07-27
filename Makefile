@@ -213,35 +213,8 @@ test-4g-lte-sim:
 	.venv/bin/pytest backend/tests/test_4g_lte_sim_static.py
 	@deployments/4g-lte-sim/scripts/test.sh
 
-build-4g-volte-sim:
-	docker build -t lain5g-lab/srsran4g-sim:local images/srsran4g-sim
-	docker build -t lain5g-lab/kamailio:local images/kamailio
-	docker build -t lain5g-lab/ims-dns:local images/ims-dns
-	docker build -t lain5g-lab/ims-sip:local images/ims-sip
-
-start-4g-volte-sim:
-	@deployments/4g-volte/sim/scripts/start.sh
-
-stop-4g-volte-sim:
-	@deployments/4g-volte/sim/scripts/stop.sh
-
-status-4g-volte-sim:
-	@deployments/4g-volte/sim/scripts/status.sh
-
-logs-4g-volte-sim:
-	@deployments/4g-volte/sim/scripts/logs.sh
-
-validate-4g-volte-sim:
-	@deployments/4g-volte/sim/scripts/validate.sh
-
-test-4g-volte-sim:
-	.venv/bin/pytest backend/tests/test_4g_volte_static.py
-	@deployments/4g-volte/sim/scripts/test.sh
-
 build-4g-lte-x310:
 	docker build -t lain5g-lab/srsran4g-uhd:local images/srsran4g-uhd
-	docker build -t lain5g-lab/kamailio:local images/kamailio
-	docker build -t lain5g-lab/ims-dns:local images/ims-dns
 
 check-x310:
 	@deployments/4g-volte/x310/scripts/hardware-check.sh
@@ -275,35 +248,6 @@ validate-4g-lte-x310:
 test-4g-lte-x310:
 	.venv/bin/pytest backend/tests/test_4g_volte_static.py
 	@deployments/4g-volte/x310/scripts/test.sh
-
-build-5g-vonr-sim:
-	docker build -t lain5g-lab/open5gs:local images/open5gs
-	docker build -t lain5g-lab/ueransim:local images/ueransim
-	docker build -t lain5g-lab/kamailio:local images/kamailio
-	docker build -t lain5g-lab/ims-dns:local images/ims-dns
-	docker build -t lain5g-lab/ims-sip:local images/ims-sip
-
-start-5g-vonr-sim:
-	@deployments/5g-vonr/scripts/start.sh
-
-stop-5g-vonr-sim:
-	@deployments/5g-vonr/scripts/stop.sh
-
-restart-5g-vonr-sim:
-	@deployments/5g-vonr/scripts/restart.sh
-
-status-5g-vonr-sim:
-	@deployments/5g-vonr/scripts/status.sh
-
-logs-5g-vonr-sim:
-	@deployments/5g-vonr/scripts/logs.sh
-
-validate-5g-vonr-sim:
-	@deployments/5g-vonr/scripts/validate.sh
-
-test-5g-vonr-sim:
-	.venv/bin/pytest backend/tests/test_5g_vonr_static.py
-	@deployments/5g-vonr/scripts/test.sh
 
 build-5g-x310:
 	docker build -t lain5g-lab/srsranproject-uhd:local images/srsranproject-uhd
@@ -339,18 +283,13 @@ test-5g-x310:
 	.venv/bin/pytest backend/tests/test_5g_x310_static.py
 	@deployments/5g-sa-x310/scripts/test.sh
 
-IMS_REAL_FLAGS ?=
+INTERNAL_ONLY_TARGETS := \
+	build-4g-volte-sim start-4g-volte-sim stop-4g-volte-sim status-4g-volte-sim logs-4g-volte-sim validate-4g-volte-sim test-4g-volte-sim \
+	build-5g-vonr-sim start-5g-vonr-sim stop-5g-vonr-sim restart-5g-vonr-sim status-5g-vonr-sim logs-5g-vonr-sim validate-5g-vonr-sim test-5g-vonr-sim \
+	ims-real-images ims-real-preflight ims-real-status ims-real-stop
 
-.PHONY: ims-real-images ims-real-preflight ims-real-status ims-real-stop
+.PHONY: $(INTERNAL_ONLY_TARGETS)
 
-ims-real-images:
-	.venv/bin/python scripts/ims_real.py images $(IMS_REAL_FLAGS)
-
-ims-real-preflight:
-	.venv/bin/python scripts/ims_real.py preflight $(IMS_REAL_FLAGS)
-
-ims-real-status:
-	.venv/bin/python scripts/ims_real.py status $(IMS_REAL_FLAGS)
-
-ims-real-stop:
-	.venv/bin/python scripts/ims_real.py stop $(IMS_REAL_FLAGS)
+$(INTERNAL_ONLY_TARGETS):
+	@printf '%s\n' 'This internal signaling target is not part of the public operational interface.' >&2
+	@false

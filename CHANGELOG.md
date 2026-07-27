@@ -16,10 +16,17 @@ All notable changes to Lain5G-Lab are recorded in this file.
 - Serialized guarded RF starts across profiles and kept emergency-stop access
   available by refusing app shutdown or downgrade during an active RF session.
 
+### Changed
+
+- Narrowed the public web, preparation, profile, and interactive CLI catalogs to
+  4G LTE ZMQ, 5G SA UERANSIM, and the guarded 4G/5G RF profiles. Signaling
+  implementations and historical evidence remain internal.
+
 ### Fixed
 
-- Exposed VoLTE and VoNR profiles in the interactive CLI and connected their
-  start, status, validation, logs, and stop workflows.
+- Rendered the 5G SA UE credentials from the private local environment so
+  UERANSIM and the provisioned Open5GS subscriber use the same authentication
+  values.
 
 ## [1.0.0] - 2026-07-27
 

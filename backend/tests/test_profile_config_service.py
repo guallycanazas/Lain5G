@@ -75,6 +75,8 @@ def make_profile_project(tmp_path: Path) -> Path:
         .replace("authorization_confirmed: true", "authorization_confirmed: false"),
         encoding="utf-8",
     )
+    shutil.copyfile(ROOT / "deployments/5g-sa/.env.example", root / "deployments/5g-sa/.env.example")
+    shutil.copyfile(ROOT / "deployments/4g-volte/common/.env.example", root / "deployments/4g-volte/common/.env.example")
     (root / "deployments/5g-sa/.env").write_text("SUBSCRIBER_KEY=SECRETKEY\nSUBSCRIBER_OPC=SECRETOPC\nSUBSCRIBER_SQN=SECRETSEQ\n", encoding="utf-8")
     (root / "deployments/5g-vonr/.env").write_text("SUBSCRIBER_KEY=SECRETKEY\nSUBSCRIBER_OPC=SECRETOPC\nSUBSCRIBER_SQN=SECRETSEQ\nIMS_AUTH_PASSWORD=SECRETIMS\n", encoding="utf-8")
     (root / "deployments/4g-volte/common/.env").write_text("SUBSCRIBER_KEY=SECRETKEY\nSUBSCRIBER_OPC=SECRETOPC\nSUBSCRIBER_SQN=SECRETSEQ\nIMS_AUTH_PASSWORD=SECRETIMS\n", encoding="utf-8")
@@ -91,17 +93,18 @@ def test_loads_profiles_and_blocks_invalid_rf_defaults(tmp_path: Path):
     profiles = svc.list_profiles()
     assert {item["profile"] for item in profiles} == {
         "4g-lte-sim",
-        "4g-volte-sim",
         "4g-lte-x310",
         "5g-sa",
         "5g-sa-x310",
-        "5g-nsa-x310",
-        "5g-vonr",
     }
     validation = svc.validate_profile("5g-sa-x310")
     assert not validation["valid"]
     assert any("radio.band" in error for error in validation["errors"])
     assert any("radio.dl_arfcn" in error for error in validation["errors"])
+    lte_rf = svc.get_profile("4g-lte-x310")
+    assert "apn_ims" not in lte_rf["network"]
+    assert "msisdn" not in lte_rf["subscriber"]
+    assert "ims" not in lte_rf
 
 
 def test_diff_apply_backup_and_secret_preservation(tmp_path: Path):
@@ -127,17 +130,74 @@ def test_diff_apply_backup_and_secret_preservation(tmp_path: Path):
     assert "SUBSCRIBER_SQN=SECRETSEQ" in env
     assert "SUBSCRIBER_IMSI=001010000000001" in env
     assert "tac: 9" in (root / "deployments/5g-sa/open5gs/amf.yaml").read_text(encoding="utf-8")
-    assert (root / result["backup"] / "deployments/5g-sa/.env").exists()
+    backup_env = root / result["backup"] / "deployments/5g-sa/.env"
+    assert backup_env.exists()
+    assert backup_env.stat().st_mode & 0o777 == 0o600
     changed_after_apply = changed_paths(tracked_before_apply, snapshot_files(root))
     assert changed_after_apply == set(result["modified_files"])
     assert not any(file["changed"] for file in svc.diff_profile("5g-sa")["files"])
     restore = svc.restore_profile("5g-sa")
     assert sorted(restore["restored_files"]) == sorted(result["modified_files"])
+    assert (root / "deployments/5g-sa/.env").stat().st_mode & 0o777 == 0o600
     restored_snapshot = snapshot_files(root)
     for path, content in tracked_before_update.items():
         if path.startswith("config/profiles/5g-sa.yaml"):
             continue
         assert restored_snapshot[path] == content
+
+
+def test_5g_sa_apply_from_clean_checkout_keeps_runtime_defaults(tmp_path: Path):
+    root = make_profile_project(tmp_path)
+    (root / "deployments/5g-sa/.env").unlink()
+    svc = service(root)
+
+    svc.apply_profile("5g-sa")
+
+    env = (root / "deployments/5g-sa/.env").read_text(encoding="utf-8")
+    ue = (root / "deployments/5g-sa/ueransim/ue.yaml").read_text(encoding="utf-8")
+    assert "SUBSCRIBER_AMF=8000" in env
+    assert "SUBSCRIBER_SQN=000000000000" in env
+    assert "UE_SUBNET=10.45.0.0/16" in env
+    assert "supi: 'imsi-__SUBSCRIBER_IMSI__'" in ue
+    assert (root / "deployments/5g-sa/.env").stat().st_mode & 0o777 == 0o600
+
+    (root / "deployments/5g-sa/.env").unlink()
+    example = root / "deployments/5g-sa/.env.example"
+    example.unlink()
+    outside = tmp_path / "outside-example.env"
+    outside.write_text("DO_NOT_READ=true\n", encoding="utf-8")
+    example.symlink_to(outside)
+    with pytest.raises(ProfileConfigError, match="must not be symbolic links"):
+        service(root).diff_profile("5g-sa")
+
+
+def test_4g_lte_apply_from_clean_checkout_keeps_runtime_defaults_private(tmp_path: Path):
+    root = make_profile_project(tmp_path)
+    env_path = root / "deployments/4g-volte/common/.env"
+    env_path.unlink()
+
+    service(root).apply_profile("4g-lte-sim")
+
+    env = env_path.read_text(encoding="utf-8")
+    assert "SUBSCRIBER_AMF=8000" in env
+    assert "SUBSCRIBER_SQN=000000000000" in env
+    assert env_path.stat().st_mode & 0o777 == 0o600
+
+    env_path.unlink()
+    outside = tmp_path / "outside.env"
+    outside.write_text("DO_NOT_TOUCH=true\n", encoding="utf-8")
+    outside.chmod(0o664)
+    env_path.symlink_to(outside)
+    with pytest.raises(ProfileConfigError, match="must not be symbolic links"):
+        service(root).apply_profile("4g-lte-sim")
+    assert outside.read_text(encoding="utf-8") == "DO_NOT_TOUCH=true\n"
+    assert outside.stat().st_mode & 0o777 == 0o664
+
+    x310_env = root / "deployments/5g-sa-x310/.env"
+    x310_env.unlink()
+    x310_env.symlink_to(outside)
+    with pytest.raises(ProfileConfigError, match="must not be symbolic links"):
+        service(root).diff_profile("5g-sa-x310")
 
 
 def test_vonr_apply_preserves_ims_and_subscriber_secrets_when_fields_are_absent(tmp_path: Path):
@@ -198,6 +258,8 @@ def test_api_uses_profile_service_without_file_paths(tmp_path: Path):
         assert response.status_code == 200
         assert client.post("/api/profiles/5g-sa/validate").json()["valid"] is True
         assert client.get("/api/profiles/5g-sa/diff").status_code == 200
+        assert client.get("/api/profiles/5g-vonr").status_code == 404
+        assert client.post("/api/profiles/4g-volte-sim/validate").status_code == 404
         response = client.put("/api/profiles/5g-sa", json={"network": {"dnn": "internet\nMALICIOUS=value"}})
         assert response.status_code == 422
         assert response.json()["detail"]["code"] == "PROFILE_VALIDATION_FAILED"
@@ -210,6 +272,9 @@ def test_cli_profile_commands_use_temporary_project(tmp_path: Path):
     list_result = subprocess.run([str(ROOT / "lain5g"), "profile", "list"], cwd=ROOT, env=env, text=True, capture_output=True, check=False)
     assert list_result.returncode == 0
     assert "5g-sa" in list_result.stdout
+    hidden = subprocess.run([str(ROOT / "lain5g"), "profile", "show", "5g-vonr"], cwd=ROOT, env=env, text=True, capture_output=True, check=False)
+    assert hidden.returncode == 2
+    assert "Perfil desconocido" in hidden.stderr
     validate_result = subprocess.run([str(ROOT / "lain5g"), "profile", "validate", "5g-sa-x310"], cwd=ROOT, env=env, text=True, capture_output=True, check=False)
     assert validate_result.returncode == 1
     assert "radio.band" in validate_result.stdout
@@ -271,19 +336,11 @@ def test_cli_guided_wizard_and_decimal_nsa_gain(tmp_path: Path):
     assert "[4] Logs recientes" in console.stdout
     assert "[6] Detener" in console.stdout
 
-    values = [""] * 15 + ["30.5"] + [""] * 13
-    configure = subprocess.run(
-        [str(ROOT / "lain5g"), "profile", "configure", "5g-nsa-x310"],
-        cwd=ROOT,
-        env=env,
-        input="\n".join(values) + "\n",
-        text=True,
-        capture_output=True,
-        check=False,
-    )
-    assert configure.returncode == 0
-    assert "[4. Dispositivo y senal RF]" in configure.stdout
-    assert service(root).get_profile("5g-nsa-x310")["radio"]["rx_gain"] == 30.5
+    svc = service(root)
+    nsa = svc.get_profile("5g-nsa-x310")
+    nsa["radio"]["rx_gain"] = 30.5
+    svc.update_profile("5g-nsa-x310", nsa)
+    assert svc.get_profile("5g-nsa-x310")["radio"]["rx_gain"] == 30.5
 
 
 def test_4g_lte_x310_rf_safety_validation_and_apply_restore(tmp_path: Path):
@@ -296,6 +353,15 @@ def test_4g_lte_x310_rf_safety_validation_and_apply_restore(tmp_path: Path):
     assert any("authorization" in error for error in validation["errors"])
     with pytest.raises(ProfileConfigError):
         svc.apply_profile("4g-lte-x310")
+
+    profile["core"]["mme_addr"] = "10.42.0.99"
+    profile["ran"]["enb_bind_addr"] = "10.42.0.98"
+    svc.update_profile("4g-lte-x310", profile)
+    topology_errors = svc.validate_profile("4g-lte-x310")["errors"]
+    assert any("core.mme_addr must remain 10.42.0.10" in error for error in topology_errors)
+    assert any("ran.enb_bind_addr must remain 10.42.0.1" in error for error in topology_errors)
+    profile["core"]["mme_addr"] = "10.42.0.10"
+    profile["ran"]["enb_bind_addr"] = "10.42.0.1"
 
     profile["safety"]["authorization_confirmed"] = True
     profile["safety"]["operator_note"] = "Cabled X310 test with 60 dB attenuation."

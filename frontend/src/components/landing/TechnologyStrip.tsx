@@ -1,7 +1,7 @@
 import { Boxes, Container, GitFork, RadioTower } from 'lucide-react';
 
 const items = [
-  { icon: RadioTower, label: '4G + 5G workflows', detail: 'RAN to core to IMS' },
+  { icon: RadioTower, label: '4G + 5G workflows', detail: 'RAN to core to data' },
   { icon: Boxes, label: 'Modular by design', detail: 'Choose only what you need' },
   { icon: Container, label: 'Local-first deploys', detail: 'Docker Compose or Kubernetes' },
   { icon: GitFork, label: 'Open and traceable', detail: 'Versioned profiles and evidence' },

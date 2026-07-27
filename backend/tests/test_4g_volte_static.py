@@ -81,9 +81,10 @@ def test_x310_uses_profile_specific_addresses():
     enb = (DEPLOY / "x310" / "ran" / "enb.conf").read_text(encoding="utf-8")
     assert "./open5gs/mme.yaml" in compose
     assert "./ims/pcscf/kamailio.cfg" in compose
-    assert "mme_addr = 172.22.0.9" in enb
-    assert "s1c_bind_addr = 172.22.0.1" in enb
-    assert "gtp_bind_addr = 172.22.0.1" in enb
+    assert "gateway: 10.42.0.1" in compose
+    assert "mme_addr = 10.42.0.10" in enb
+    assert "s1c_bind_addr = 10.42.0.1" in enb
+    assert "gtp_bind_addr = 10.42.0.1" in enb
     for path in (DEPLOY / "x310" / "open5gs").glob("*.yaml"):
         text = path.read_text(encoding="utf-8")
         assert "10.41." not in text

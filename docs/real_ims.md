@@ -1,4 +1,4 @@
-# Real IMS Operations
+# Archived Real IMS Design
 
 Lain5G-Lab packages a real IMS core separately from its simulated and X310
 scenarios. The package includes Open5GS packet core roles, MongoDB, MySQL,
@@ -32,72 +32,12 @@ MySQL/Kamailio initialization also assumes an isolated Compose network and
 permits passwordless MySQL root access from that internal network. No database
 port is published to the host, but untrusted containers must not join it.
 
-## Subscriber File
+## Archived Boundary
 
-Start from `config/real-ims-subscriber.example.json`. Replace every redacted
-placeholder in a local `config/real-ims-subscriber.json`; that path is ignored.
-Restrict the file before use:
-
-```bash
-chmod 600 config/real-ims-subscriber.json
-```
-
-Do not pass Ki or OPc as command arguments, environment variables, chat text,
-or issue content. Provisioning reads one JSON file and response reports exclude
-the authentication keys.
-
-## Commands
-
-Image build is a dry-run plan unless explicitly executed:
-
-```bash
-make ims-real-images
-make ims-real-images IMS_REAL_FLAGS="--execute"
-```
-
-Preflight and status are read-only. Select exactly one mode:
-
-```bash
-make ims-real-preflight IMS_REAL_FLAGS="--mode 5g"
-make ims-real-status IMS_REAL_FLAGS="--mode 5g"
-```
-
-Start only the core and IMS services:
-
-```bash
-.venv/bin/python scripts/ims_real.py start --mode 5g
-.venv/bin/python scripts/ims_real.py start --mode 5g --execute
-```
-
-Provision the same subscriber into Open5GS and pyHSS after startup:
-
-```bash
-.venv/bin/python scripts/ims_real.py provision \
-  --mode 5g \
-  --subscriber-file config/real-ims-subscriber.json \
-  --execute
-```
-
-Use `--mcc` and `--mnc` only when the subscriber PLMN differs from the lab
-default. The IMSI must begin with that MCC/MNC. The backend reconciles Open5GS
-`internet` and `ims` sessions plus pyHSS APN, AuC, packet subscriber, and IMS
-subscriber records.
-
-Inspect an IMSI or wait for registration evidence:
-
-```bash
-.venv/bin/python scripts/ims_real.py status --mode 5g --imsi 001010000000001
-.venv/bin/python scripts/ims_real.py wait-register --mode 5g --timeout 300
-```
-
-Stop without deleting Compose volumes:
-
-```bash
-make ims-real-stop IMS_REAL_FLAGS="--mode 5g --execute"
-```
-
-Use `--mode 4g` for the EPC/Rx topology. The backend gives each mode a distinct
-Compose project and runtime subnet and refuses to run both modes concurrently.
+The manifests, service implementation, provenance, and tests remain available
+for source review and historical traceability. Real IMS has no public web, API,
+Make, or standalone CLI entry point and is not one of the supported launchable
+profiles.
 
 ## Generated Security
 

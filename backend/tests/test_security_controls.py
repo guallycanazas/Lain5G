@@ -9,7 +9,6 @@ from backend.app.dependencies import (
     get_deployment_service,
     get_preparation_service,
     get_profile_config_service,
-    get_real_ims_service,
     get_subscriber_service,
     settings_dependency,
 )
@@ -37,14 +36,6 @@ SUBSCRIBER = {
         "opc": "FFEEDDCCBBAA99887766554433221100",
     },
 }
-REAL_IMS_SUBSCRIBER = {
-    "imsi": "001010000000001",
-    "msisdn": "15551234567",
-    "ki": "00112233445566778899AABBCCDDEEFF",
-    "opc": "FFEEDDCCBBAA99887766554433221100",
-}
-
-
 class BlockedService:
     def __init__(self) -> None:
         self.called = False
@@ -78,15 +69,6 @@ class BlockedService:
             get_subscriber_service,
         ),
         ("DELETE", "/api/subscribers/001010000000001", {"confirm": True}, get_subscriber_service),
-        ("POST", "/api/ims-real/images", {"execute": True}, get_real_ims_service),
-        ("POST", "/api/ims-real/start", {"mode": "4g", "execute": True}, get_real_ims_service),
-        ("POST", "/api/ims-real/stop", {"mode": "4g", "execute": True}, get_real_ims_service),
-        (
-            "POST",
-            "/api/ims-real/provision",
-            {"mode": "4g", "execute": True, "subscriber": REAL_IMS_SUBSCRIBER},
-            get_real_ims_service,
-        ),
     ],
 )
 def test_mutating_routes_are_blocked_before_service_call(tmp_path, method, url, payload, dependency):
@@ -104,30 +86,22 @@ def test_mutating_routes_are_blocked_before_service_call(tmp_path, method, url, 
     assert service.called is False
 
 
-def test_read_validation_and_real_ims_plan_remain_available(tmp_path):
+def test_read_validation_remains_available(tmp_path):
     settings = Settings(project_root=tmp_path, dry_run=False, mutating_operations_enabled=False)
 
     class Profiles:
         def validate_profile(self, profile_id):
             return {"profile": profile_id, "valid": True, "errors": []}
 
-    class RealIMS:
-        def start(self, mode, mcc, mnc, *, execute=False):
-            return {"mode": mode, "status": "DRY_RUN", "executed": execute}
-
     app = create_app()
     app.dependency_overrides[settings_dependency] = lambda: settings
     app.dependency_overrides[get_profile_config_service] = Profiles
-    app.dependency_overrides[get_real_ims_service] = RealIMS
 
     with TestClient(app) as client:
         validation = client.post("/api/profiles/5g-sa/validate")
-        plan = client.post("/api/ims-real/start", json={"mode": "4g"})
 
     assert validation.status_code == 200
     assert validation.json()["valid"] is True
-    assert plan.status_code == 200
-    assert plan.json()["executed"] is False
 
 
 def test_deployment_dry_run_remains_available_when_mutations_are_disabled(tmp_path):

@@ -6,7 +6,6 @@ import { LogsPage } from './pages/LogsPage';
 import { MetricsPage } from './pages/MetricsPage';
 import { ProfileConfigPage } from './pages/ProfileConfigPage';
 import { PreparationPage } from './pages/PreparationPage';
-import { RealImsPage } from './pages/RealImsPage';
 import { RfSafetyPage } from './pages/RfSafetyPage';
 import { RunDetailPage } from './pages/RunDetailPage';
 import { RunsPage } from './pages/RunsPage';
@@ -33,7 +32,6 @@ export const router = createBrowserRouter([
       { path: 'configuration', element: <Navigate to="/deployments" replace /> },
       { path: 'deployments', element: <ProfileConfigPage /> },
       { path: 'preparation', element: <PreparationPage /> },
-      { path: 'ims-real', element: <RealImsPage /> },
       { path: 'settings', element: <SettingsPage /> },
       { path: 'rf-safety', element: <RfSafetyPage /> },
       { path: 'scenarios', element: <ScenariosPage /> },

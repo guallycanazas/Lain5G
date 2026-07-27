@@ -19,17 +19,17 @@ Open5GS, UERANSIM, srsRAN, Kamailio, pyHSS, UHD, and related components. The
 current stable version is the source-only release [`1.0.0`](VERSION).
 
 > **Tested and functional software release.** All supported software-only network
-> workflows pass their complete validation suites: 4G LTE (14/14), 4G
-> VoLTE/IMS (22/22), 5G SA (15/15), and 5G VoNR/IMS (25/25). The repository-wide
-> `make softwarex-check` also passes 305 backend tests, 49 frontend tests, the
+> workflows pass their complete validation suites: 4G LTE (14/14) and 5G SA
+> (15/15). The repository-wide
+> `make softwarex-check` also passes 301 backend tests, 47 frontend tests, the
 > production build, source and Compose verification, release metadata checks,
 > and sensitive-file controls.
 
 ## Key features
 
 - Isolated Docker Compose scenarios for software and controlled SDR workflows.
-- Validated software-only 4G LTE/VoLTE and 5G SA/VoNR signaling networks.
-- LTE/5G registration, user-plane, IMS, DNS, and authenticated SIP validation.
+- Validated software-only 4G LTE and 5G SA data networks.
+- LTE/5G registration, user-plane, tunnel, and connectivity validation.
 - Declarative profiles with local, ignored files for operational values.
 - FastAPI and React tools for local observation and guarded operations.
 - Scenario validators and sanitized public result records.
@@ -53,8 +53,8 @@ Launch the operational interface:
 ./lain5g app start --operations --open
 ```
 
-In the app, choose software-only 4G LTE, 4G VoLTE, 5G SA, or 5G VoNR, as well as
-supported real-RF profiles. **Preparation** downloads missing components, while
+In the app, choose software-only 4G LTE or 5G SA, or one of the guarded 4G/5G RF
+profiles. **Preparation** downloads missing components, while
 **Scenarios** operates the selected network. Simulations create or preserve
 private synthetic credentials. RF transmission requires preflight, an authorized
 profile, the safety checklist, exact confirmation phrase, finite duration, and
@@ -67,8 +67,8 @@ session has ended.
 ./lain5g
 ```
 
-The interactive console lets the user choose any software or RF 4G/5G profile,
-download its components, and run the available actions. Starting a simulation
+The interactive console offers 4G LTE ZMQ, 5G SA UERANSIM, and the guarded 4G/5G
+RF profiles. It downloads components and runs the available actions. Starting a simulation
 automatically prepares its private synthetic credentials; RF profiles retain all
 mandatory safety controls.
 
@@ -84,26 +84,18 @@ never printed or committed. See [Installation](docs/installation.md),
 | Scenario | Purpose | Validation |
 | --- | --- | --- |
 | `4g-lte-sim` | Open5GS EPC + srsRAN ZMQ LTE data | **PASS (14/14)** |
-| `4g-volte-sim` | 4G LTE + EPC + IMS/VoLTE signaling | **PASS (22/22)** |
 | `5g-sa-sim` | Open5GS 5GC + UERANSIM 5G SA data | **PASS (15/15)** |
-| `5g-vonr-sim` | 5G SA + dual PDU sessions + IMS/VoNR signaling | **PASS (25/25)** |
 
-The public `4g-ims-sim` result corresponds to the `4g-volte-sim` operational
-profile and validates LTE, EPC, IMS, and authenticated SIP registration. The
-latest `5g-vonr-sim` operational validation covers the 5GC, NG setup, UE
-registration, internet and IMS PDU sessions, both UE tunnels, data connectivity,
-IMS DNS, P-CSCF reachability, and authenticated SIP registration. See
-[Validation](docs/validation.md) and [Public results](results/public/README.md)
-for the evidence model.
+Historical signaling evidence remains available under `results/public/`, but
+those implementations are not part of the public launch catalog. See
+[Validation](docs/validation.md) and [Public results](results/public/README.md).
 
-### Guarded hardware and experimental profiles
+### Guarded hardware profiles
 
 | Profile | Purpose | Availability |
 | --- | --- | --- |
-| `4g-lte-x310` | 4G EPC/IMS with a compatible X300/X310 eNB | Core and IMS functional; RF requires authorized hardware |
+| `4g-lte-x310` | 4G LTE with a compatible X300/X310 eNB | Guarded RF workflow; requires authorized hardware |
 | `5g-sa-x310` | 5G SA with a compatible X300/X310 gNB | Guarded RF workflow available; hardware-dependent |
-| `5g-nsa-x310` | Experimental LTE + NR EN-DC | Guarded experimental profile available |
-| `ims-real` | Separate Open5GS, pyHSS, and Kamailio runtime | Operational package; environment-dependent |
 
 ## Reproducibility and testing
 
@@ -114,7 +106,7 @@ make softwarex-check
 ```
 
 `make softwarex-check` is the single release-verification command used by CI. It
-passes 305 backend tests with 78% line coverage and 49 frontend tests, followed
+passes 301 backend tests with 77% line coverage and 47 frontend tests, followed
 by TypeScript checking, the production build, Compose and profile validation,
 metadata verification, internal-link checks, public-result verification, and
 sensitive-file controls.
@@ -151,9 +143,7 @@ Detailed audit, security, legal, and evidence records remain in `audit/`,
 - Lain5G-Lab is a research and education environment, not a production network,
   a 3GPP reference implementation, or a conformance platform.
 - Software-simulation results must not be extrapolated to SDR or commercial UEs.
-- The validated VoLTE and VoNR scope covers network registration, data sessions,
-  IMS reachability, and authenticated SIP signaling. Audio quality, RTP media
-  performance, commercial-UE behavior, and RF results are separate experiments.
+- Commercial-UE behavior and RF results require separate authorized experiments.
 - Public artifacts are sanitized validator summaries, not raw protocol traces.
 
 ## Authors

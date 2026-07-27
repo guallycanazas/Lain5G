@@ -11,7 +11,7 @@ Perfiles disponibles:
 
 - `4g-lte-sim`: EPC + srsENB + srsUE por ZMQ, sin servicios IMS.
 - `4g-volte-sim`: EPC + IMS + srsRAN 4G en modo software.
-- `4g-lte-x310`: EPC + IMS + eNB srsRAN 4G para hardware X-Series compatible,
+- `4g-lte-x310`: EPC + eNB srsRAN 4G para hardware X-Series compatible,
   con RF bloqueada por defecto. El nombre histórico del perfil se conserva.
 
 Para el commit fuente `12c4a38404bbaf240c698a056e3f47182081ab5c`, el
@@ -60,12 +60,8 @@ make validate-4g-lte-sim
 make stop-4g-lte-sim
 ```
 
-```bash
-make build-4g-volte-sim
-make start-4g-volte-sim
-make validate-4g-volte-sim
-make stop-4g-volte-sim
-```
+El escenario VoLTE se conserva como implementación y evidencia histórica, pero
+no forma parte de la interfaz operativa pública.
 
 ```bash
 make build-4g-lte-x310

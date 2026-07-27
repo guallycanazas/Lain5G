@@ -57,16 +57,15 @@ Cada comprobación devuelve uno de estos estados:
 
 El resultado se guarda en `runs/<run-id>/validation.json`.
 
-## Comprobaciones 4G LTE/IMS
+## Comprobaciones 4G LTE
 
 ```bash
 make validate-4g-lte-sim
-make validate-4g-volte-sim
 make validate-4g-lte-x310
 ```
 
 La ruta `4g-lte-sim` revisa EPC, marcadores S1, registro de srsUE, bearer,
-interfaz UE y ping de datos sin iniciar IMS. `4g-volte-sim`, cuyo artefacto
+interfaz UE y ping de datos sin iniciar IMS. La evidencia histórica `4g-volte-sim`, cuyo artefacto
 público usa el nombre de alcance `4g-ims-sim`, añade servicios IMS, DNS y
 evidencia de registro SIP de laboratorio.
 

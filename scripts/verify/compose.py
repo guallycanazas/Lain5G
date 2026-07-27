@@ -58,7 +58,7 @@ CHECKS = (
     ),
     ComposeCheck(
         "5G SA simulation",
-        ("deployments/5g-sa/docker-compose.yml",),
+        ("deployments/5g-sa/docker-compose.yml", "deployments/5g-sa/docker-compose.runtime.yml"),
         "deployments/5g-sa/.env.example",
     ),
     ComposeCheck(

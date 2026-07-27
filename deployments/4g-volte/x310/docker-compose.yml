@@ -111,6 +111,7 @@ services:
     networks: { epc: { ipv4_address: 10.42.0.16 } }
 
   ims-database:
+    profiles: ["ims-internal"]
     image: mariadb@sha256:efb4959ef2c835cd735dbc388eb9ad6aab0c78dd64febcd51bc17481111890c4
     container_name: lain5g-lab-4g-lte-x310-ims-database
     environment: { MARIADB_ALLOW_EMPTY_ROOT_PASSWORD: "yes", MARIADB_DATABASE: ims }
@@ -118,6 +119,7 @@ services:
     networks: { epc: { ipv4_address: 10.42.0.19 } }
 
   pcscf:
+    profiles: ["ims-internal"]
     image: lain5g-lab/kamailio:local
     container_name: lain5g-lab-4g-lte-x310-pcscf
     command: ["-DD", "-E", "-f", "/etc/kamailio/kamailio.cfg"]
@@ -125,6 +127,7 @@ services:
     networks: { epc: { ipv4_address: 10.42.0.20 } }
 
   icscf:
+    profiles: ["ims-internal"]
     image: lain5g-lab/kamailio:local
     container_name: lain5g-lab-4g-lte-x310-icscf
     command: ["-DD", "-E", "-f", "/etc/kamailio/kamailio.cfg"]
@@ -132,6 +135,7 @@ services:
     networks: { epc: { ipv4_address: 10.42.0.21 } }
 
   scscf:
+    profiles: ["ims-internal"]
     image: lain5g-lab/kamailio:local
     container_name: lain5g-lab-4g-lte-x310-scscf
     command: ["-DD", "-E", "-f", "/etc/kamailio/kamailio.cfg"]
@@ -139,6 +143,7 @@ services:
     networks: { epc: { ipv4_address: 10.42.0.22 } }
 
   dns:
+    profiles: ["ims-internal"]
     image: lain5g-lab/ims-dns:local
     container_name: lain5g-lab-4g-lte-x310-dns
     command: ["-conf", "/etc/coredns/Corefile"]
@@ -148,6 +153,7 @@ services:
     networks: { epc: { ipv4_address: 10.42.0.30 } }
 
   ims-provisioner:
+    profiles: ["ims-internal"]
     image: mariadb@sha256:efb4959ef2c835cd735dbc388eb9ad6aab0c78dd64febcd51bc17481111890c4
     container_name: lain5g-lab-4g-lte-x310-ims-provisioner
     env_file: [../common/.env]
@@ -182,6 +188,7 @@ networks:
     ipam:
       config:
         - subnet: 10.42.0.0/24
+          gateway: 10.42.0.1
 
 volumes:
   mongo-data:

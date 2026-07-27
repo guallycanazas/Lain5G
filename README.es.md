@@ -19,17 +19,17 @@ Open5GS, UERANSIM, srsRAN, Kamailio, pyHSS, UHD y componentes relacionados. La
 versión estable actual es la release solo de código fuente [`1.0.0`](VERSION).
 
 > **Versión software probada y funcional.** Todos los flujos de red soportados
-> completamente en software aprueban sus suites de validación: 4G LTE (14/14),
-> 4G VoLTE/IMS (22/22), 5G SA (15/15) y 5G VoNR/IMS (25/25). La verificación
-> global `make softwarex-check` también aprueba 305 pruebas backend, 49 pruebas
+> completamente en software aprueban sus suites de validación: 4G LTE (14/14) y
+> 5G SA (15/15). La verificación
+> global `make softwarex-check` también aprueba 301 pruebas backend, 47 pruebas
 > frontend, el build de producción, la verificación de código y Compose, los
 > metadatos de publicación y los controles de archivos sensibles.
 
 ## Características principales
 
 - Escenarios Docker Compose aislados para flujos software y SDR controlados.
-- Redes software 4G LTE/VoLTE y 5G SA/VoNR validadas.
-- Validación de registro LTE/5G, plano de usuario, IMS, DNS y SIP autenticado.
+- Redes de datos software 4G LTE y 5G SA validadas.
+- Validación de registro LTE/5G, plano de usuario, túneles y conectividad.
 - Perfiles declarativos con archivos locales ignorados para valores operativos.
 - Herramientas FastAPI y React para observación local y operaciones protegidas.
 - Validadores de escenarios y registros públicos anonimizados.
@@ -53,8 +53,8 @@ Inicie la interfaz operativa:
 ./lain5g app start --operations --open
 ```
 
-Dentro de la app, el usuario elige escenarios software 4G LTE, 4G VoLTE, 5G SA
-o 5G VoNR, además de los perfiles RF reales compatibles. **Preparation** descarga
+Dentro de la app, el usuario elige 4G LTE o 5G SA software, o uno de los perfiles
+RF 4G/5G protegidos. **Preparation** descarga
 los componentes faltantes y **Scenarios** permite operar la red elegida. Las
 simulaciones crean o conservan credenciales sintéticas privadas. La transmisión
 RF exige preflight, perfil autorizado, checklist, frase exacta, duración limitada
@@ -67,8 +67,8 @@ finalizar cualquier sesión RF activa.
 ./lain5g
 ```
 
-La consola interactiva permite elegir cualquier perfil 4G o 5G, software o RF,
-descargar sus componentes y ejecutar las acciones disponibles. Al iniciar una
+La consola interactiva ofrece 4G LTE ZMQ, 5G SA UERANSIM y los perfiles RF 4G/5G
+protegidos. Descarga sus componentes y ejecuta las acciones disponibles. Al iniciar una
 simulación, prepara automáticamente sus credenciales sintéticas privadas; los
 perfiles RF conservan los mismos controles obligatorios de seguridad.
 
@@ -82,26 +82,18 @@ nunca se imprimen ni versionan. Consulte [Instalación](docs/installation.md),
 | Escenario | Propósito | Validación |
 | --- | --- | --- |
 | `4g-lte-sim` | EPC Open5GS + datos LTE con srsRAN ZMQ | **PASS (14/14)** |
-| `4g-volte-sim` | 4G LTE + EPC + señalización IMS/VoLTE | **PASS (22/22)** |
 | `5g-sa-sim` | 5GC Open5GS + datos 5G SA con UERANSIM | **PASS (15/15)** |
-| `5g-vonr-sim` | 5G SA + dos sesiones PDU + señalización IMS/VoNR | **PASS (25/25)** |
 
-El resultado público `4g-ims-sim` corresponde al perfil operativo
-`4g-volte-sim` y valida LTE, EPC, IMS y registro SIP autenticado. La validación
-operacional más reciente de `5g-vonr-sim` cubre el 5GC, NG Setup, registro UE,
-sesiones PDU de internet e IMS, ambos túneles UE, conectividad de datos, DNS IMS,
-acceso al P-CSCF y registro SIP autenticado. Consulte
-[Validación](docs/validation.md) y [Resultados públicos](results/public/README.md)
-para conocer el modelo de evidencia.
+La evidencia histórica de señalización permanece en `results/public/`, pero esas
+implementaciones no forman parte del catálogo público. Consulte
+[Validación](docs/validation.md) y [Resultados públicos](results/public/README.md).
 
-### Perfiles hardware y experimentales protegidos
+### Perfiles hardware protegidos
 
 | Perfil | Propósito | Disponibilidad |
 | --- | --- | --- |
-| `4g-lte-x310` | EPC/IMS 4G con eNB X300/X310 compatible | Core e IMS funcionales; RF requiere hardware autorizado |
+| `4g-lte-x310` | 4G LTE con eNB X300/X310 compatible | Flujo RF protegido; requiere hardware autorizado |
 | `5g-sa-x310` | 5G SA con gNB X300/X310 compatible | Flujo RF protegido disponible; depende del hardware |
-| `5g-nsa-x310` | LTE + NR EN-DC experimental | Perfil experimental protegido disponible |
-| `ims-real` | Runtime separado Open5GS, pyHSS y Kamailio | Paquete operacional; depende del entorno |
 
 ## Reproducibilidad y pruebas
 
@@ -112,7 +104,7 @@ make softwarex-check
 ```
 
 `make softwarex-check` es el comando único de verificación de release utilizado
-por CI. Aprueba 305 pruebas backend con 78% de cobertura de líneas y 49 pruebas
+por CI. Aprueba 301 pruebas backend con 77% de cobertura de líneas y 47 pruebas
 frontend, seguido de TypeScript, build de producción, validación Compose y de
 perfiles, metadatos, enlaces internos, resultados públicos y controles de
 archivos sensibles.
@@ -153,10 +145,8 @@ en esta presentación general.
   conformidad.
 - Los resultados de simulación software no deben extrapolarse a SDR ni a UE
   comerciales.
-- El alcance VoLTE y VoNR validado cubre registro de red, sesiones de datos,
-  acceso IMS y señalización SIP autenticada. La calidad de audio, el rendimiento
-  RTP, el comportamiento de UE comerciales y los resultados RF son experimentos
-  separados.
+- El comportamiento de UE comerciales y los resultados RF requieren experimentos
+  autorizados independientes.
 - Los artefactos públicos son resúmenes anonimizados, no trazas de protocolo.
 
 ## Autores

@@ -2,12 +2,15 @@ from __future__ import annotations
 
 import difflib
 import math
+import os
 import re
 import shutil
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
+
+from .image_catalog import PUBLIC_PROFILE_IDS
 
 
 class ProfileConfigError(RuntimeError):
@@ -27,7 +30,7 @@ class PlannedChange:
 
 class ProfileConfigService:
     PROFILE_IDS = {"4g-lte-sim", "4g-volte-sim", "4g-lte-x310", "5g-sa", "5g-sa-x310", "5g-nsa-x310", "5g-vonr"}
-    CATALOG_PROFILE_IDS = PROFILE_IDS
+    CATALOG_PROFILE_IDS = set(PUBLIC_PROFILE_IDS)
     SECRET_KEYS = {"SUBSCRIBER_KEY", "SUBSCRIBER_OPC", "SUBSCRIBER_SQN", "IMS_AUTH_PASSWORD", "K", "KI", "OPC"}
     LTE_BAND_EARFCN_RANGES = {7: range(2750, 3450)}
     SRSRAN_4G_N_PRB_BY_BANDWIDTH = {1.4: 6, 3.0: 15, 5.0: 25, 10.0: 50, 15.0: 75, 20.0: 100}
@@ -88,7 +91,12 @@ class ProfileConfigService:
         backup_dir = self._backup(profile_id, changes)
         for change in changes:
             change.path.parent.mkdir(parents=True, exist_ok=True)
-            change.path.write_text(change.after, encoding="utf-8")
+            if change.path.name == ".env":
+                descriptor = os.open(change.path, os.O_WRONLY | os.O_CREAT | os.O_TRUNC | os.O_NOFOLLOW, 0o600)
+                with os.fdopen(descriptor, "w", encoding="utf-8") as target:
+                    target.write(change.after)
+            else:
+                change.path.write_text(change.after, encoding="utf-8")
         return {"profile": profile_id, "modified_files": [self._rel(change.path) for change in changes if change.before != change.after], "backup": self._rel(backup_dir)}
 
     def restore_profile(self, profile_id: str) -> dict[str, Any]:
@@ -100,13 +108,24 @@ class ProfileConfigService:
         latest = self._confined(backups[-1])
         restored: list[str] = []
         for source in latest.rglob("*"):
+            if source.name == ".env":
+                rel = source.relative_to(latest)
+                target_candidate = self.root / rel
+                if target_candidate.is_symlink():
+                    raise ProfileConfigError(400, "PROFILE_PATH_INVALID", "Scenario environment files must not be symbolic links.")
+                target = self._confined(target_candidate)
+                target.parent.mkdir(parents=True, exist_ok=True)
+                if self._copy_environment(source, target):
+                    restored.append(str(rel))
+                continue
             if not source.is_file():
                 continue
             resolved_source = self._confined(source)
             if resolved_source != latest and latest not in resolved_source.parents:
                 raise ProfileConfigError(400, "PROFILE_PATH_INVALID", "Backup contains a path outside its directory.")
             rel = source.relative_to(latest)
-            target = self._confined(self.root / rel)
+            target_candidate = self.root / rel
+            target = self._confined(target_candidate)
             target.parent.mkdir(parents=True, exist_ok=True)
             shutil.copy2(resolved_source, target)
             restored.append(str(rel))
@@ -187,6 +206,10 @@ class ProfileConfigService:
         errors: list[str] = []
         radio = profile.get("radio") or {}
         if profile["profile"] == "4g-lte-x310":
+            if profile.get("core", {}).get("mme_addr") != "10.42.0.10":
+                errors.append("core.mme_addr must remain 10.42.0.10 for the fixed EPC bridge topology")
+            if profile.get("ran", {}).get("enb_bind_addr") != "10.42.0.1":
+                errors.append("ran.enb_bind_addr must remain 10.42.0.1 for the fixed EPC bridge topology")
             for key in ("lte_band", "earfcn", "tx_gain", "rx_gain"):
                 if radio.get(key) in (None, ""):
                     errors.append(f"radio.{key} is required for 4G RF profiles")
@@ -291,17 +314,40 @@ class ProfileConfigService:
         raise ProfileConfigError(404, "PROFILE_NOT_FOUND", f"Unknown profile: {profile_id}")
 
     def _change(self, rel: str, after: str) -> PlannedChange:
+        if Path(rel).name == ".env":
+            path, before = self._read_environment(rel)
+            return PlannedChange(path, before, after)
         path = self._confined(self.root / rel)
         return PlannedChange(path, _read(path), after)
+
+    def _environment_path(self, rel: str) -> Path:
+        path = self.root / rel
+        if path.is_symlink():
+            raise ProfileConfigError(400, "PROFILE_PATH_INVALID", "Scenario environment files must not be symbolic links.")
+        return self._confined(path)
+
+    def _read_environment(self, rel: str) -> tuple[Path, str]:
+        path = self._environment_path(rel)
+        try:
+            descriptor = os.open(path, os.O_RDONLY | os.O_NOFOLLOW)
+        except FileNotFoundError:
+            return path, ""
+        except OSError as exc:
+            raise ProfileConfigError(400, "PROFILE_PATH_INVALID", "Scenario environment files must not be symbolic links.") from exc
+        with os.fdopen(descriptor, encoding="utf-8") as source:
+            return path, source.read()
 
     def _changes_5g_sa(self, profile: dict[str, Any]) -> list[PlannedChange]:
         n, c, s = profile["network"], profile["core"], profile["subscriber"]
         sl = n["slice"]
         changes = []
-        env = _update_env(_read(self.root / "deployments/5g-sa/.env"), {
+        env_path, env_current = self._read_environment("deployments/5g-sa/.env")
+        _, env_example = self._read_environment("deployments/5g-sa/.env.example")
+        env_source = env_current or env_example
+        env = _update_env(env_source, {
             "MCC": n["mcc"], "MNC": n["mnc"], "TAC": n["tac"], "SST": sl["sst"], "SD": sl["sd"], "DNN": n["dnn"], "SUBSCRIBER_IMSI": s["imsi"],
         })
-        changes.append(self._change("deployments/5g-sa/.env", env))
+        changes.append(PlannedChange(env_path, env_current, env))
         changes.append(self._change("deployments/5g-sa/open5gs/amf.yaml", _patch_5g_amf(_read(self.root / "deployments/5g-sa/open5gs/amf.yaml"), n)))
         changes.append(self._change("deployments/5g-sa/open5gs/smf.yaml", _patch_5g_smf(_read(self.root / "deployments/5g-sa/open5gs/smf.yaml"), n["dnn"], None, sl)))
         changes.append(self._change("deployments/5g-sa/ueransim/gnb.yaml", _patch_ueransim_gnb(_read(self.root / "deployments/5g-sa/ueransim/gnb.yaml"), n, c["amf_addr"], c["gnb_addr"])))
@@ -313,7 +359,8 @@ class ProfileConfigService:
         sl = n["slice"]
         sample_rates = {5.0: 15.36, 10.0: 15.36, 15.0: 23.04, 20.0: 23.04, 40.0: 46.08, 50.0: 61.44, 100.0: 122.88}
         sample_rate = sample_rates[float(r["bandwidth_mhz"])]
-        env = _update_env(_read(self.root / "deployments/5g-sa-x310/.env"), {
+        _, env_current = self._read_environment("deployments/5g-sa-x310/.env")
+        env = _update_env(env_current, {
             "AMF_ADDR": c["amf_addr"], "GNB_BIND_ADDR": c["gnb_bind_addr"], "N3_BIND_ADDR": c["n3_bind_addr"],
             "USRP_ADDR": r["usrp_addr"], "USRP_TYPE": r["device"], "USRP_CLOCK_SOURCE": r["clock_source"], "USRP_TIME_SOURCE": r["time_source"],
             "MCC": n["mcc"], "MNC": n["mnc"], "TAC": n["tac"], "SST": sl["sst"], "SD": sl["sd"],
@@ -342,10 +389,12 @@ class ProfileConfigService:
     def _changes_5g_nsa_x310(self, profile: dict[str, Any]) -> list[PlannedChange]:
         n, core, ran, radio = profile["network"], profile["core"], profile["ran"], profile["radio"]
         subscriber, safety = profile["subscriber"], profile["safety"]
-        common_env = _update_env(_read(self.root / "deployments/4g-volte/common/.env"), {
+        _, common_current = self._read_environment("deployments/4g-volte/common/.env")
+        _, nsa_current = self._read_environment("deployments/5g-nsa-x310/.env")
+        common_env = _update_env(common_current, {
             "MCC": n["mcc"], "MNC": n["mnc"], "TAC": n["tac"], "APN_INTERNET": n["apn_internet"], "SUBSCRIBER_IMSI": subscriber["imsi"],
         })
-        nsa_env = _update_env(_read(self.root / "deployments/5g-nsa-x310/.env"), {
+        nsa_env = _update_env(nsa_current, {
             "USRP_ADDR": radio["usrp_addr"], "USRP_TYPE": radio["device"], "RF_DURATION_SECONDS": safety["maximum_duration_seconds"],
             "LAIN5G_ALLOW_5G_NSA_RF_START": "false",
         })
@@ -389,7 +438,8 @@ class ProfileConfigService:
     def _changes_5g_vonr(self, profile: dict[str, Any]) -> list[PlannedChange]:
         n, c, s, ims = profile["network"], profile["core"], profile["subscriber"], profile["ims"]
         sl = n["slice"]
-        env = _update_env(_read(self.root / "deployments/5g-vonr/.env"), {
+        _, env_current = self._read_environment("deployments/5g-vonr/.env")
+        env = _update_env(env_current, {
             "MCC": n["mcc"], "MNC": n["mnc"], "TAC": n["tac"], "SST": sl["sst"], "SD": sl["sd"],
             "DNN_INTERNET": n["dnn_internet"], "DNN_IMS": n["dnn_ims"], "SUBSCRIBER_IMSI": s["imsi"], "SUBSCRIBER_MSISDN": s["msisdn"], "IMS_DOMAIN": ims["domain"],
         })
@@ -406,13 +456,16 @@ class ProfileConfigService:
 
     def _changes_4g_lte_sim(self, profile: dict[str, Any]) -> list[PlannedChange]:
         n, core, ran, subscriber = profile["network"], profile["core"], profile["ran"], profile["subscriber"]
-        env = _update_env(_read(self.root / "deployments/4g-volte/common/.env"), {
+        env_path, env_current = self._read_environment("deployments/4g-volte/common/.env")
+        _, env_example = self._read_environment("deployments/4g-volte/common/.env.example")
+        env_source = env_current or env_example
+        env = _update_env(env_source, {
             "MCC": n["mcc"], "MNC": n["mnc"], "TAC": n["tac"], "APN_INTERNET": n["apn_internet"], "SUBSCRIBER_IMSI": subscriber["imsi"],
         })
         enb_rel = "deployments/4g-lte-sim/ran/enb.conf"
         ue_rel = "deployments/4g-lte-sim/ran/ue.conf"
         return [
-            self._change("deployments/4g-volte/common/.env", env),
+            PlannedChange(env_path, env_current, env),
             self._change("deployments/4g-lte-sim/open5gs/mme.yaml", _patch_4g_mme(_read(self.root / "deployments/4g-lte-sim/open5gs/mme.yaml"), n)),
             self._change("deployments/4g-lte-sim/open5gs/pgwc.yaml", _patch_4g_pgwc(_read(self.root / "deployments/4g-lte-sim/open5gs/pgwc.yaml"), n)),
             self._change(enb_rel, _patch_enb_conf(_read(self.root / enb_rel), n, core["mme_addr"], ran["enb_bind_addr"], ran["dl_earfcn"], ran["tx_gain"], ran["rx_gain"])),
@@ -421,10 +474,13 @@ class ProfileConfigService:
 
     def _changes_4g_lte_x310(self, profile: dict[str, Any]) -> list[PlannedChange]:
         n, core, ran, r, safety = profile["network"], profile["core"], profile["ran"], profile["radio"], profile["safety"]
-        subscriber, ims = profile["subscriber"], profile["ims"]
-        env = _update_env(_read(self.root / "deployments/4g-volte/common/.env"), {
-            "MCC": n["mcc"], "MNC": n["mnc"], "TAC": n["tac"], "APN_INTERNET": n["apn_internet"], "APN_IMS": n["apn_ims"],
-            "SUBSCRIBER_IMSI": subscriber["imsi"], "SUBSCRIBER_MSISDN": subscriber["msisdn"], "IMS_DOMAIN": ims["domain"],
+        subscriber = profile["subscriber"]
+        env_path, env_current = self._read_environment("deployments/4g-volte/common/.env")
+        _, env_example = self._read_environment("deployments/4g-volte/common/.env.example")
+        env_source = env_current or env_example
+        env = _update_env(env_source, {
+            "MCC": n["mcc"], "MNC": n["mnc"], "TAC": n["tac"], "APN_INTERNET": n["apn_internet"],
+            "SUBSCRIBER_IMSI": subscriber["imsi"],
         })
         enb_rel = "deployments/4g-volte/x310/ran/enb.conf"
         enb = _patch_enb_conf(_read(self.root / enb_rel), n, core["mme_addr"], ran["enb_bind_addr"], r["earfcn"], r["tx_gain"], r["rx_gain"], r["bandwidth_mhz"], r.get("usrp_addr"), r.get("device"), r.get("clock_source"), r.get("time_source"))
@@ -443,7 +499,7 @@ class ProfileConfigService:
             "operator_note": safety["operator_note"],
         })
         return [
-            self._change("deployments/4g-volte/common/.env", env),
+            PlannedChange(env_path, env_current, env),
             self._change("deployments/4g-volte/x310/open5gs/mme.yaml", _patch_4g_mme(_read(self.root / "deployments/4g-volte/x310/open5gs/mme.yaml"), n)),
             self._change("deployments/4g-volte/x310/open5gs/pgwc.yaml", _patch_4g_pgwc(_read(self.root / "deployments/4g-volte/x310/open5gs/pgwc.yaml"), n)),
             self._change(enb_rel, enb),
@@ -453,7 +509,8 @@ class ProfileConfigService:
 
     def _changes_4g(self, profile: dict[str, Any], variant: str, bind_addr: str) -> list[PlannedChange]:
         n, core, ran, s, ims = profile["network"], profile["core"], profile["ran"], profile["subscriber"], profile.get("ims", {})
-        env = _update_env(_read(self.root / "deployments/4g-volte/common/.env"), {
+        _, env_current = self._read_environment("deployments/4g-volte/common/.env")
+        env = _update_env(env_current, {
             "MCC": n["mcc"], "MNC": n["mnc"], "TAC": n["tac"], "APN_INTERNET": n["apn_internet"], "APN_IMS": n["apn_ims"],
             "SUBSCRIBER_IMSI": s["imsi"], "SUBSCRIBER_MSISDN": s["msisdn"], "IMS_DOMAIN": ims.get("domain", ""),
         })
@@ -474,12 +531,42 @@ class ProfileConfigService:
         timestamp = datetime.now(UTC).strftime("%Y%m%d-%H%M%S")
         backup_dir = self._confined(self.backups_dir / profile_id / timestamp)
         for change in changes:
+            target = self._confined(backup_dir / change.path.relative_to(self.root))
+            if change.path.name == ".env":
+                target.parent.mkdir(parents=True, exist_ok=True)
+                self._copy_environment(change.path, target, secure_source=True)
+                continue
             if not change.path.exists():
                 continue
-            target = self._confined(backup_dir / change.path.relative_to(self.root))
             target.parent.mkdir(parents=True, exist_ok=True)
             shutil.copy2(change.path, target)
         return backup_dir
+
+    def _copy_environment(self, source: Path, target: Path, *, secure_source: bool = False) -> bool:
+        try:
+            source_descriptor = os.open(source, os.O_RDONLY | os.O_NOFOLLOW)
+        except FileNotFoundError:
+            return False
+        except OSError as exc:
+            raise ProfileConfigError(400, "PROFILE_PATH_INVALID", "Scenario environment files must not be symbolic links.") from exc
+        target_descriptor = -1
+        try:
+            if secure_source:
+                os.fchmod(source_descriptor, 0o600)
+            target_descriptor = os.open(target, os.O_WRONLY | os.O_CREAT | os.O_TRUNC | os.O_NOFOLLOW, 0o600)
+            os.fchmod(target_descriptor, 0o600)
+            with os.fdopen(source_descriptor, "rb") as source_file, os.fdopen(target_descriptor, "wb") as target_file:
+                source_descriptor = -1
+                target_descriptor = -1
+                shutil.copyfileobj(source_file, target_file)
+        except OSError as exc:
+            raise ProfileConfigError(400, "PROFILE_PATH_INVALID", "Scenario environment files must not be symbolic links.") from exc
+        finally:
+            if source_descriptor >= 0:
+                os.close(source_descriptor)
+            if target_descriptor >= 0:
+                os.close(target_descriptor)
+        return True
 
     def _change_payload(self, change: PlannedChange) -> dict[str, Any]:
         before = _redact_env_secrets(change.before, self.SECRET_KEYS)
@@ -682,7 +769,7 @@ def _patch_ueransim_gnb(text: str, n: dict[str, Any], amf_addr: str, gnb_addr: s
 
 def _patch_ueransim_ue(text: str, n: dict[str, Any], imsi: str | None, dnns: list[str], gnb_addr: str) -> str:
     sl = n["slice"]
-    if imsi:
+    if imsi and "__SUBSCRIBER_IMSI__" not in text:
         text = _replace_all(text, r"supi:\s*'imsi-[^']+'", f"supi: 'imsi-{imsi}'")
     text = _replace_all(text, r"mcc:\s*'[^']+'", f"mcc: '{n['mcc']}'")
     text = _replace_all(text, r"mnc:\s*'[^']+'", f"mnc: '{n['mnc']}'")

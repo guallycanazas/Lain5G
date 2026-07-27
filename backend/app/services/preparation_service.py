@@ -7,14 +7,14 @@ from datetime import UTC, datetime
 from ..models.preparation import ComponentImageStatus, ComponentPullResponse, PreparationCheck, PreparationReport, ProfileComponentStatus
 from ..settings import Settings
 from .command_service import CommandService
-from .image_catalog import IMAGE_CATALOG, PROFILE_IMAGES, RF_ACCESS_IMAGES, required_images
+from .image_catalog import IMAGE_CATALOG, PROFILE_IMAGES, PUBLIC_PROFILE_IDS, RF_ACCESS_IMAGES, required_images
 from .scenario_environment import prepare_scenario_environment
 
 
 PROFILE_NAMES = {
     "4g-lte-sim": "4G LTE simulation",
     "4g-volte-sim": "4G VoLTE simulation",
-    "4g-lte-x310": "4G LTE/VoLTE X310",
+    "4g-lte-x310": "4G LTE X310",
     "5g-sa": "5G SA simulation",
     "5g-sa-x310": "5G SA X310",
     "5g-nsa-x310": "5G NSA X310",
@@ -38,7 +38,7 @@ class PreparationService:
 
     def report(self) -> PreparationReport:
         diagnostics = self.diagnostics()
-        profiles = [self.profile_status(profile_id) for profile_id in PROFILE_IMAGES]
+        profiles = [self.profile_status(profile_id) for profile_id in PUBLIC_PROFILE_IDS]
         return PreparationReport(
             checked_at=datetime.now(UTC),
             ready=all(check.status != "FAIL" for check in diagnostics) and all(profile.ready for profile in profiles),

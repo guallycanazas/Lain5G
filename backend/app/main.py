@@ -4,7 +4,7 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
-from .api import deployments, health, preparation, profiles, real_ims, runs, subscribers, validation
+from .api import deployments, health, preparation, profiles, runs, subscribers, validation
 from .models.deployment import ErrorDetail, ErrorResponse
 from .security import MutationDisabledError
 from .services.command_service import CommandSecurityError
@@ -39,7 +39,6 @@ def create_app() -> FastAPI:
     app.include_router(subscribers.router)
     app.include_router(profiles.router)
     app.include_router(validation.router)
-    app.include_router(real_ims.router)
     app.include_router(preparation.router)
 
     register_exception_handlers(app)

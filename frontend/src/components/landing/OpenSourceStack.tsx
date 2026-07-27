@@ -3,7 +3,6 @@ import { motion } from 'framer-motion';
 const projects = [
   { image: '/images/lain5g/logos/srsran.svg', imageClass: 'srsran', name: 'srsRAN', role: 'RAN 4G / 5G', detail: 'Software and SDR radio paths', href: 'https://www.srsran.com/' },
   { image: '/images/lain5g/logos/open5gs.png', imageClass: 'open5gs', name: 'Open5GS', role: 'EPC + 5GC', detail: 'Core control and user plane', href: 'https://open5gs.org/' },
-  { image: '/images/lain5g/logos/kamailio.png', imageClass: 'kamailio', name: 'Kamailio', role: 'IMS core', detail: 'SIP routing and IMS signaling', href: 'https://www.kamailio.org/' },
   { image: '/images/lain5g/logos/ueransim.webp', imageClass: 'visual', name: 'UERANSIM', role: 'Software UE / gNB', detail: 'Reproducible 5G SA scenarios', href: 'https://github.com/aligungr/UERANSIM' },
   { image: '/images/lain5g/logos/fastapi.png', imageClass: 'fastapi', name: 'FastAPI', role: 'Management backend', detail: 'Local API and guarded control', href: 'https://fastapi.tiangolo.com/' },
   { image: '/images/lain5g/logos/uhd.webp', imageClass: 'visual', name: 'UHD', role: 'SDR access', detail: 'Compatible X300/X310 device support', href: 'https://github.com/EttusResearch/uhd' },

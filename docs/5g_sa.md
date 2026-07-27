@@ -14,13 +14,13 @@ no representa otra ejecución.
 ## Comandos
 
 ```bash
-cp deployments/5g-sa/.env.example deployments/5g-sa/.env
-make build-5g-sa
-make start-5g-sa
-make status-5g-sa
-make validate-5g-sa
-make logs-5g-sa
-make stop-5g-sa
+./lain5g scenario setup 5g-sa
+./lain5g images pull 5g-sa
+./lain5g scenario start 5g-sa
+./lain5g scenario status 5g-sa
+./lain5g scenario validate 5g-sa
+./lain5g scenario logs 5g-sa
+./lain5g scenario stop 5g-sa
 ```
 
 ## Archivos editables
@@ -29,13 +29,16 @@ make stop-5g-sa
 - `deployments/5g-sa/open5gs/smf.yaml`
 - `deployments/5g-sa/open5gs/upf.yaml`
 - `deployments/5g-sa/ueransim/gnb.yaml`
-- `deployments/5g-sa/ueransim/ue.yaml`
+- `deployments/5g-sa/ueransim/ue.yaml` (plantilla sin secretos)
 - `deployments/5g-sa/.env`
 
 El perfil se puede aplicar mediante la CLI o la API para generar una
 configuración coherente. Los archivos también se pueden editar manualmente, pero
 no deben mezclarse ambos métodos sin revisar el diff resultante. `.env` es local
 y permanece fuera de Git.
+
+Al iniciar, Compose renderiza una copia temporal del YAML del UE con IMSI, K,
+OPc, AMF y SQN tomados de `.env`. La copia runtime no se escribe en el repositorio.
 
 ## Evidencia esperada
 

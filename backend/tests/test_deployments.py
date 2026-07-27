@@ -1,22 +1,78 @@
+import os
+import subprocess
+from pathlib import Path
+
+import yaml
+
 from backend.app.models.deployment import CommandResult, DeploymentStatus
 
 
-def test_list_deployments_includes_simulation_and_x310_scenarios(client):
+def test_public_catalog_contains_data_and_guarded_rf_scenarios(client):
     response = client.get("/api/deployments")
 
     assert response.status_code == 200
     payload = response.json()
     ids = {item["id"] for item in payload}
-    assert ids == {"5g-sa", "5g-vonr-sim", "4g-lte-sim", "4g-volte-sim", "4g-lte-x310", "5g-sa-x310"}
+    assert ids == {"5g-sa", "4g-lte-sim", "4g-lte-x310", "5g-sa-x310"}
     assert all(item["status"] == "dry_run" for item in payload)
 
 
 def test_get_deployment_detail(client):
-    response = client.get("/api/deployments/5g-vonr-sim")
+    response = client.get("/api/deployments/5g-sa")
 
     assert response.status_code == 200
     assert response.json()["supported_actions"] == ["start", "stop", "restart", "status", "logs", "validate"]
     assert response.json()["rf_capable"] is False
+
+
+def test_hidden_signaling_scenarios_remain_internal(client):
+    catalog = {item["id"] for item in client.get("/api/deployments").json()}
+
+    assert {"4g-volte-sim", "5g-vonr-sim"}.isdisjoint(catalog)
+    assert client.get("/api/deployments/4g-volte-sim").status_code == 404
+    assert client.get("/api/deployments/5g-vonr-sim").status_code == 404
+
+
+def test_5g_sa_ue_renders_private_credentials_at_runtime():
+    compose = (Path(__file__).resolve().parents[2] / "deployments/5g-sa/docker-compose.runtime.yml").read_text(encoding="utf-8")
+    ue = (Path(__file__).resolve().parents[2] / "deployments/5g-sa/ueransim/ue.yaml").read_text(encoding="utf-8")
+
+    assert "env_file:\n      - .env" in compose
+    assert "umask 077" in compose
+    assert 'value="$${!name:-}"' in compose
+    for variable in ("SUBSCRIBER_IMSI", "SUBSCRIBER_KEY", "SUBSCRIBER_OPC", "SUBSCRIBER_AMF", "SUBSCRIBER_SQN"):
+        assert f"__{variable}__" in ue
+        assert variable in compose
+    assert "00000000000000000000000000000000" not in ue
+
+
+def test_5g_sa_runtime_renderer_matches_provisioned_credentials(tmp_path: Path):
+    root = Path(__file__).resolve().parents[2]
+    runtime = yaml.safe_load((root / "deployments/5g-sa/docker-compose.runtime.yml").read_text(encoding="utf-8"))
+    command = runtime["services"]["ue"]["command"][2].replace("$$", "$")
+    runtime_dir = tmp_path / "ueransim"
+    rendered_path = runtime_dir / "ue.yaml"
+    command = command.replace("/tmp/ueransim", str(runtime_dir))
+    command = command.replace("/etc/ueransim/ue.yaml", str(root / "deployments/5g-sa/ueransim/ue.yaml"))
+    command = command.replace(f"exec nr-ue -c {rendered_path}", "true")
+    credentials = {
+        "SUBSCRIBER_IMSI": "001010000000001",
+        "SUBSCRIBER_KEY": "00112233445566778899AABBCCDDEEFF",
+        "SUBSCRIBER_OPC": "FFEEDDCCBBAA99887766554433221100",
+        "SUBSCRIBER_AMF": "8000",
+        "SUBSCRIBER_SQN": "000000000001",
+    }
+
+    result = subprocess.run(["bash", "-c", command], env={**os.environ, **credentials}, text=True, capture_output=True, check=False)
+
+    assert result.returncode == 0, result.stderr
+    rendered = yaml.safe_load(rendered_path.read_text(encoding="utf-8"))
+    assert rendered["supi"] == f"imsi-{credentials['SUBSCRIBER_IMSI']}"
+    assert rendered["key"] == credentials["SUBSCRIBER_KEY"]
+    assert rendered["op"] == credentials["SUBSCRIBER_OPC"]
+    assert rendered["amf"] == credentials["SUBSCRIBER_AMF"]
+    assert rendered["sqn"] == credentials["SUBSCRIBER_SQN"]
+    assert rendered_path.stat().st_mode & 0o777 == 0o600
 
 
 def test_x310_is_rf_controlled(client):
@@ -31,15 +87,11 @@ def test_x310_is_rf_controlled(client):
     assert "emergency-stop" in payload["supported_actions"]
 
 
-def test_experimental_nsa_is_hidden_but_guarded(client):
+def test_experimental_nsa_is_not_public(client):
     catalog = client.get("/api/deployments").json()
     assert "5g-nsa-x310" not in {item["id"] for item in catalog}
     response = client.get("/api/deployments/5g-nsa-x310")
-    assert response.status_code == 200
-    payload = response.json()
-    assert payload["rf_capable"] is True
-    assert "start-rf" in payload["supported_actions"]
-    assert "emergency-stop" in payload["supported_actions"]
+    assert response.status_code == 404
 
 
 def test_unknown_deployment_returns_404(client):
@@ -50,7 +102,7 @@ def test_unknown_deployment_returns_404(client):
 
 
 def test_start_dry_run_does_not_execute_script(client):
-    response = client.post("/api/deployments/5g-vonr-sim/start")
+    response = client.post("/api/deployments/5g-sa/start")
 
     assert response.status_code == 200
     payload = response.json()
@@ -60,7 +112,7 @@ def test_start_dry_run_does_not_execute_script(client):
 
 
 def test_stop_dry_run_does_not_execute_script(client):
-    response = client.post("/api/deployments/4g-volte-sim/stop")
+    response = client.post("/api/deployments/4g-lte-sim/stop")
 
     assert response.status_code == 200
     assert response.json()["command"]["dry_run"] is True
@@ -135,7 +187,7 @@ def test_x310_specific_endpoints_are_available(client):
 
 
 def test_guarded_rf_start_is_dry_run_by_default_for_x310_profiles(client):
-    for scenario in ["4g-lte-x310", "5g-sa-x310", "5g-nsa-x310"]:
+    for scenario in ["4g-lte-x310", "5g-sa-x310"]:
         response = client.post(f"/api/deployments/{scenario}/start-rf", json={})
         assert response.status_code == 200
         assert response.json()["status"] == "dry_run"
@@ -144,7 +196,7 @@ def test_guarded_rf_start_is_dry_run_by_default_for_x310_profiles(client):
 
 def test_guarded_rf_dry_run_plan_omits_operator_and_rf_values(client):
     canary = "SYNTHETIC_PRIVATE_OPERATOR_NOTE"
-    for scenario in ["4g-lte-x310", "5g-sa-x310", "5g-nsa-x310"]:
+    for scenario in ["4g-lte-x310", "5g-sa-x310"]:
         response = client.post(
             f"/api/deployments/{scenario}/start-rf",
             json={"operator_note": canary, "requested_duration_seconds": 347},
@@ -161,7 +213,7 @@ def test_guarded_rf_dry_run_plan_omits_operator_and_rf_values(client):
 
 
 def test_rf_execution_requires_all_acknowledgements(client):
-    for scenario in ["4g-lte-x310", "5g-sa-x310", "5g-nsa-x310"]:
+    for scenario in ["4g-lte-x310", "5g-sa-x310"]:
         response = client.post(f"/api/deployments/{scenario}/start-rf", json={"execute": True})
         assert response.status_code == 422
 

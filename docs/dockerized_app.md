@@ -27,7 +27,7 @@ El opt-in operativo activa `LAIN5G_MUTATING_OPERATIONS_ENABLED` y
 transmisión automática: cada sesión conserva preflight, autorización, checklist,
 frase exacta, duración finita y parada de emergencia.
 
-El usuario elige 4G LTE, 4G VoLTE, 5G SA o 5G VoNR desde **Scenarios**. Al
+El usuario elige 4G LTE, 5G SA o los perfiles RF protegidos desde **Scenarios**. Al
 iniciar la simulación elegida, el backend crea o conserva su archivo local de
 credenciales sintéticas con permisos `0600`, sin devolver los secretos a la app.
 

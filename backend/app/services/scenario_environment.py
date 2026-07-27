@@ -8,7 +8,7 @@ from pathlib import Path
 
 
 SCENARIO_ENVIRONMENTS = {
-    "4g-lte-sim": ("deployments/4g-volte/common", ("SUBSCRIBER_KEY", "SUBSCRIBER_OPC", "IMS_AUTH_PASSWORD")),
+    "4g-lte-sim": ("deployments/4g-volte/common", ("SUBSCRIBER_KEY", "SUBSCRIBER_OPC")),
     "4g-volte-sim": ("deployments/4g-volte/common", ("SUBSCRIBER_KEY", "SUBSCRIBER_OPC", "IMS_AUTH_PASSWORD")),
     "5g-sa": ("deployments/5g-sa", ("SUBSCRIBER_KEY", "SUBSCRIBER_OPC")),
     "5g-vonr": ("deployments/5g-vonr", ("SUBSCRIBER_KEY", "SUBSCRIBER_OPC", "IMS_AUTH_PASSWORD")),

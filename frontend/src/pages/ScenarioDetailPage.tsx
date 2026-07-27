@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Link, useParams } from 'react-router';
+import { Link, Navigate, useParams } from 'react-router';
 import { Activity, Boxes, Cpu, Play, RadioTower, ShieldAlert } from 'lucide-react';
 import { ActionButton } from '../components/ActionButton';
 import { ConfirmDialog } from '../components/ConfirmDialog';
@@ -22,6 +22,7 @@ import { formatDate } from '../utils/dates';
 import { getScenarioGuidance } from '../utils/scenarioGuidance';
 
 const tabs = ['overview', 'topology', 'configuration', 'validation', 'logs', 'runs'] as const;
+const publicScenarios = new Set(['4g-lte-sim', '4g-lte-x310', '5g-sa', '5g-sa-x310']);
 type Tab = typeof tabs[number];
 
 export function ScenarioDetailPage() {
@@ -56,7 +57,7 @@ export function ScenarioDetailPage() {
     setConfirm(null);
   };
 
-  if (!scenarioId) return null;
+  if (!scenarioId || !publicScenarios.has(scenarioId)) return <Navigate to="/scenarios" replace />;
   return <div className="page-grid">
     <section className="hero-panel panel wide"><div><Link to="/scenarios" className="muted-text">Back to scenarios</Link><span className="eyebrow">{deployment?.rf_capable ? 'Guarded SDR workspace' : 'Software workspace'}</span><h1 className="hero-title">{deployment?.name || scenarioId}</h1><p className="page-subtitle">{deployment?.description}</p></div><div className="hero-actions"><StatusBadge status={status.data?.status || 'unknown'} /><ActionButton variant="secondary" onClick={() => status.refetch()} loading={status.isFetching}>Sync</ActionButton></div></section>
     {scenario.isLoading || status.isLoading ? <LoadingState /> : null}{scenario.error ? <ErrorAlert error={scenario.error} /> : null}{status.error ? <ErrorAlert error={status.error} onRetry={() => status.refetch()} /> : null}{actionError ? <ErrorAlert error={actionError} /> : null}

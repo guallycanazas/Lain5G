@@ -5,10 +5,10 @@
 Ejecuta:
 
 ```bash
-cp deployments/5g-sa/.env.example deployments/5g-sa/.env
+./lain5g scenario setup 5g-sa
 ```
 
-Después edita las claves de laboratorio.
+El comando crea credenciales sintéticas locales sin imprimirlas.
 
 ## gNB no conecta
 
@@ -16,7 +16,10 @@ Revisa que `deployments/5g-sa/ueransim/gnb.yaml` apunte al AMF `10.20.0.5:38412`
 
 ## UE no registra
 
-Revisa que IMSI, K, OPc, AMF, SQN, MCC y MNC coincidan entre `.env`, `subscriber-init.js` y `ueransim/ue.yaml`.
+El UE renderiza IMSI, K, OPc, AMF y SQN desde `.env`. Comprueba el resultado sin
+publicar secretos mediante `./lain5g scenario logs 5g-sa` y busca errores de
+autenticación en `init-subscriber`, `amf`, `ausf` y `ue`. Reinicia todo el
+escenario después de cambiar `.env`.
 
 ## No hay ping
 

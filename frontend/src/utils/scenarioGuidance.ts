@@ -18,15 +18,6 @@ export const scenarioGuidance: Record<string, ScenarioGuidance> = {
     excludes: ['USRP or RF transmission', 'IMS, SIP, and VoNR calls'],
     hardware: 'CPU, Docker, and /dev/net/tun only.',
   },
-  '5g-vonr-sim': {
-    generation: '5G',
-    variant: 'VONR SIGNALING SIMULATION',
-    profileTitle: '5G SA data and IMS signaling lab',
-    purpose: 'Validate registration, internet and IMS PDU sessions, IMS-path reachability, and authenticated SIP REGISTER without RF hardware.',
-    includes: ['Open5GS 5GC with internet and IMS DNNs', 'UERANSIM gNB and UE with two tunnels', 'IMS DNS, P/I/S-CSCF, and SIP REGISTER'],
-    excludes: ['USRP or RF transmission', 'RTP media and an end-to-end VoNR voice call'],
-    hardware: 'CPU, Docker, and /dev/net/tun only. No SDR is required.',
-  },
   '4g-lte-sim': {
     generation: '4G',
     variant: 'SIMULATION',
@@ -36,44 +27,26 @@ export const scenarioGuidance: Record<string, ScenarioGuidance> = {
     excludes: ['USRP or RF transmission', 'IMS, SIP, and VoLTE calls'],
     hardware: 'CPU, Docker, and /dev/net/tun only.',
   },
-  '4g-volte-sim': {
-    generation: '4G',
-    variant: 'VOLTE SIGNALING SIMULATION',
-    profileTitle: '4G LTE data and IMS signaling lab',
-    purpose: 'Validate LTE attach, data connectivity, IMS DNS, and authenticated SIP REGISTER without RF hardware.',
-    includes: ['Open5GS EPC and srsRAN ZMQ UE/eNB', 'Internet and IMS services', 'IMS DNS, P/I/S-CSCF, and SIP REGISTER'],
-    excludes: ['USRP or RF transmission', 'RTP media and an end-to-end VoLTE voice call'],
-    hardware: 'CPU, Docker, and /dev/net/tun only. No SDR is required.',
-  },
   '4g-lte-x310': {
     generation: '4G',
-    variant: 'GUARDED VOLTE RF',
-    profileTitle: '4G VoLTE preparation with X-Series radio',
-    purpose: 'Prepare LTE over controlled RF with EPC and IMS before validating a physical UE and a VoLTE call.',
-    includes: ['Open5GS EPC and IMS', 'srsRAN eNB with a compatible USRP', 'Preflight, auto-stop, and emergency stop'],
-    excludes: ['Physical UE attach is not yet demonstrated', 'End-to-end SIP call and RTP are not validated'],
+    variant: 'GUARDED LTE RF',
+    profileTitle: '4G LTE with X-Series radio',
+    purpose: 'Operate LTE over controlled RF with an Open5GS EPC and a guarded srsRAN eNB.',
+    includes: ['Open5GS EPC', 'srsRAN eNB with a compatible USRP', 'Preflight, auto-stop, and emergency stop'],
+    excludes: ['Physical UE attach is not yet demonstrated', 'No voice-call claim is made'],
     hardware: 'Requires a compatible USRP, laboratory UE/SIM, isolation, and RF authorization.',
   },
   '5g-sa-x310': {
     generation: '5G',
-    variant: 'GUARDED VONR RF',
-    profileTitle: '5G VoNR preparation with X-Series radio',
-    purpose: 'Prepare the 5G SA RF base before integrating IMS, registering a physical UE, and validating VoNR.',
+    variant: 'GUARDED SA RF',
+    profileTitle: '5G SA with X-Series radio',
+    purpose: 'Operate a guarded 5G SA RF base with Open5GS and srsRAN Project.',
     includes: ['Open5GS 5GC', 'srsRAN Project gNB with a compatible USRP', 'Preflight, auto-stop, and emergency stop'],
-    excludes: ['IMS and SIP client are not yet integrated', 'VoNR call and RTP are not validated'],
+    excludes: ['Physical UE registration is not yet demonstrated', 'No voice-call claim is made'],
     hardware: 'Requires a compatible USRP, 5G SA laboratory UE/SIM, isolation, and RF authorization.',
-  },
-  '5g-nsa-x310': {
-    generation: '5G',
-    variant: 'NSA EXPERIMENTAL',
-    profileTitle: '5G NSA with LTE anchor and X-Series radio',
-    purpose: 'Configure EN-DC with an LTE anchor and NR secondary carrier over two RF chains.',
-    includes: ['Shared Open5GS EPC', 'srsENB EN-DC with LTE + NR', 'TX/RX, dual RF paths, preflight, and auto-stop'],
-    excludes: ['Applying the profile does not start RF', 'Compatibility with every commercial UE is not guaranteed'],
-    hardware: 'Requires a compatible USRP with two connected, attenuated, and authorized RF paths.',
   },
 };
 
 export function getScenarioGuidance(id: string) {
-  return scenarioGuidance[id === '5g-vonr' ? '5g-vonr-sim' : id];
+  return scenarioGuidance[id];
 }

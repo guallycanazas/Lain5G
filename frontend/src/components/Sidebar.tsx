@@ -15,7 +15,6 @@ import {
   PanelLeftOpen,
   PackageCheck,
   Radio,
-  RadioTower,
   ScrollText,
   Settings,
   SlidersHorizontal,
@@ -26,7 +25,7 @@ import { useHealth } from '../hooks/useDeployment';
 import { usePreferences } from '../preferences/PreferencesProvider';
 
 const groups: { label: string; links: { to: string; label: string; icon: LucideIcon }[] }[] = [
-  { label: 'nav.operation', links: [{ to: '/dashboard', label: 'nav.overview', icon: LayoutDashboard }, { to: '/scenarios', label: 'nav.scenarios', icon: Boxes }, { to: '/ims-real', label: 'nav.realIms', icon: RadioTower }, { to: '/topology', label: 'nav.topology', icon: Network }, { to: '/subscribers', label: 'nav.subscribers', icon: UsersRound }] },
+  { label: 'nav.operation', links: [{ to: '/dashboard', label: 'nav.overview', icon: LayoutDashboard }, { to: '/scenarios', label: 'nav.scenarios', icon: Boxes }, { to: '/topology', label: 'nav.topology', icon: Network }, { to: '/subscribers', label: 'nav.subscribers', icon: UsersRound }] },
   { label: 'nav.observability', links: [{ to: '/validation', label: 'nav.validation', icon: ListChecks }, { to: '/metrics', label: 'nav.metrics', icon: ChartNoAxesCombined }, { to: '/logs', label: 'nav.logs', icon: ScrollText }, { to: '/runs', label: 'nav.runs', icon: History }] },
   { label: 'nav.administration', links: [{ to: '/preparation', label: 'nav.preparation', icon: PackageCheck }, { to: '/deployments', label: 'nav.deployments', icon: SlidersHorizontal }, { to: '/settings', label: 'nav.settings', icon: Settings }, { to: '/rf-safety', label: 'nav.rfSafety', icon: Radio }] },
 ];

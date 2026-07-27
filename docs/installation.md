@@ -87,7 +87,6 @@ Para 4G software:
 
 ```bash
 make build-4g-lte-sim
-make build-4g-volte-sim
 ```
 
 Para 4G X310:
@@ -108,8 +107,6 @@ Esto crea las mismas etiquetas locales que la descarga automática:
 - `lain5g-lab/ueransim:local`
 - `lain5g-lab/srsran4g-sim:local`
 - `lain5g-lab/srsran4g-uhd:local`
-- `lain5g-lab/kamailio:local`
-- `lain5g-lab/ims-dns:local`
 
 Las imágenes locales se construyen desde los repositorios y revisiones fijados
 en los Dockerfiles del proyecto.
@@ -123,7 +120,7 @@ software elegido. Para preparar un perfil directamente sin iniciar servicios:
 ./lain5g scenario setup PERFIL
 ```
 
-`PERFIL` puede ser `4g-lte-sim`, `4g-volte-sim`, `5g-sa` o `5g-vonr-sim`. El
+`PERFIL` puede ser `4g-lte-sim` o `5g-sa`. El
 comando genera valores sintéticos aleatorios en un archivo local ignorado y
 aplica permisos `0600`.
 

@@ -12,7 +12,7 @@ const commands = [
 ];
 
 const pageNames: Record<string, string> = {
-  '/dashboard': 'nav.overview', '/scenarios': 'nav.scenarios', '/ims-real': 'nav.realIms', '/topology': 'nav.topology', '/subscribers': 'nav.subscribers',
+  '/dashboard': 'nav.overview', '/scenarios': 'nav.scenarios', '/topology': 'nav.topology', '/subscribers': 'nav.subscribers',
   '/validation': 'nav.validation', '/metrics': 'nav.metrics', '/logs': 'nav.logs', '/runs': 'nav.runs', '/deployments': 'nav.deployments', '/preparation': 'nav.preparation', '/settings': 'nav.settings', '/rf-safety': 'nav.rfSafety',
 };
 

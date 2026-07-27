@@ -59,10 +59,10 @@ printf '{\n  "checks": []\n}\n' > "$run_dir/validation.json"
 printf '{\n  "created_at": "%s",\n  "metrics": []\n}\n' "$started_at" > "$run_dir/metrics.json"
 
 if [ "${LAIN5G_DRY_RUN:-false}" = "true" ]; then
-  echo "DRY RUN: docker compose --env-file .env -f docker-compose.yml up -d"
+  echo "DRY RUN: docker compose --env-file .env -f docker-compose.yml -f docker-compose.runtime.yml up -d"
   echo "Created run metadata: runs/$run_id"
   exit 0
 fi
 
-(cd "$scenario_dir" && docker compose --env-file .env -f docker-compose.yml up -d)
+(cd "$scenario_dir" && docker compose --env-file .env -f docker-compose.yml -f docker-compose.runtime.yml up -d)
 echo "Created run metadata: runs/$run_id"

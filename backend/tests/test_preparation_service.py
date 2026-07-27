@@ -8,7 +8,7 @@ from pathlib import Path
 import pytest
 
 from backend.app.models.deployment import CommandResult
-from backend.app.services.image_catalog import MONGO_IMAGE, PROFILE_IMAGES
+from backend.app.services.image_catalog import MONGO_IMAGE, PROFILE_IMAGES, PUBLIC_PROFILE_IDS
 from backend.app.services.preparation_service import PreparationError, PreparationService
 from backend.app.services.profile_config_service import ProfileConfigService
 from backend.app.settings import Settings
@@ -45,8 +45,11 @@ def service(tmp_path: Path, commands: FakeCommands) -> PreparationService:
     return PreparationService(Settings(project_root=tmp_path, image_pull_enabled=True), commands)  # type: ignore[arg-type]
 
 
-def test_image_catalog_covers_every_configurable_profile():
+def test_image_catalog_covers_every_configurable_profile(tmp_path: Path):
     assert set(PROFILE_IMAGES) == ProfileConfigService.PROFILE_IDS
+
+    report = service(tmp_path, FakeCommands()).report()
+    assert [profile.profile for profile in report.profiles] == list(PUBLIC_PROFILE_IDS)
 
 
 def test_pull_uses_only_fixed_pull_and_tag_commands(tmp_path: Path):
@@ -94,7 +97,7 @@ def test_core_only_does_not_require_the_rf_access_image(tmp_path: Path):
 @pytest.mark.parametrize(
     ("profile", "directory", "requires_ims_password"),
     (
-        ("4g-lte-sim", "deployments/4g-volte/common", True),
+        ("4g-lte-sim", "deployments/4g-volte/common", False),
         ("4g-volte-sim", "deployments/4g-volte/common", True),
         ("5g-sa", "deployments/5g-sa", False),
         ("5g-vonr-sim", "deployments/5g-vonr", True),

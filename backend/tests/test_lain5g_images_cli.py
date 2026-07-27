@@ -113,6 +113,27 @@ def test_main_menu_exposes_preparation_without_publishing():
     assert "Revisar equipo y dependencias" in result.stdout
     assert "publicar" not in result.stdout.lower()
 
+    profiles = subprocess.run(
+        [str(ROOT / "lain5g"), "profile", "list"],
+        cwd=ROOT,
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+    assert profiles.returncode == 0
+    for profile in ("4g-lte-sim", "5g-sa", "4g-lte-x310", "5g-sa-x310"):
+        assert profile in profiles.stdout
+    for hidden in ("4g-volte-sim", "5g-vonr", "5g-nsa-x310"):
+        assert hidden not in profiles.stdout
+    hidden_start = subprocess.run(
+        [str(ROOT / "lain5g"), "scenario", "start", "5g-vonr-sim"],
+        cwd=ROOT,
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+    assert hidden_start.returncode == 2
+
 
 def test_app_setup_creates_private_safe_configuration(tmp_path: Path):
     project_root = tmp_path / "project"
@@ -352,9 +373,7 @@ def test_operational_make_target_cleans_inherited_environment_before_compose():
     ("profile", "target"),
     (
         ("4g-lte-sim", "start-4g-lte-sim"),
-        ("4g-volte-sim", "start-4g-volte-sim"),
         ("5g-sa", "start-5g-sa"),
-        ("5g-vonr", "start-5g-vonr-sim"),
     ),
 )
 def test_guided_console_prepares_and_starts_every_software_profile(tmp_path: Path, profile: str, target: str):
@@ -370,9 +389,7 @@ def test_guided_console_prepares_and_starts_every_software_profile(tmp_path: Pat
     )
     environment_directory = {
         "4g-lte-sim": "deployments/4g-volte/common",
-        "4g-volte-sim": "deployments/4g-volte/common",
         "5g-sa": "deployments/5g-sa",
-        "5g-vonr": "deployments/5g-vonr",
     }[profile]
     environment_dir = project_root / environment_directory
     environment_dir.mkdir(parents=True)
@@ -451,10 +468,10 @@ def test_direct_scenario_command_starts_software_profile(tmp_path: Path):
     bin_dir.mkdir()
     make_log = tmp_path / "make.log"
     project_root = tmp_path / "project"
-    environment_dir = project_root / "deployments/5g-vonr"
+    environment_dir = project_root / "deployments/5g-sa"
     environment_dir.mkdir(parents=True)
     (environment_dir / ".env.example").write_text(
-        (ROOT / "deployments/5g-vonr/.env.example").read_text(encoding="utf-8"),
+        (ROOT / "deployments/5g-sa/.env.example").read_text(encoding="utf-8"),
         encoding="utf-8",
     )
     for name in ("docker", "make"):
@@ -474,7 +491,7 @@ def test_direct_scenario_command_starts_software_profile(tmp_path: Path):
     }
 
     result = subprocess.run(
-        [str(ROOT / "lain5g"), "scenario", "start", "5g-vonr-sim"],
+        [str(ROOT / "lain5g"), "scenario", "start", "5g-sa"],
         cwd=ROOT,
         env=env,
         text=True,
@@ -483,17 +500,15 @@ def test_direct_scenario_command_starts_software_profile(tmp_path: Path):
     )
 
     assert result.returncode == 0
-    assert make_log.read_text(encoding="utf-8").splitlines() == ["start-5g-vonr-sim"]
+    assert make_log.read_text(encoding="utf-8").splitlines() == ["start-5g-sa"]
     assert (environment_dir / ".env").stat().st_mode & 0o777 == 0o600
 
 
 @pytest.mark.parametrize(
     ("profile", "directory", "requires_ims_password"),
     (
-        ("4g-lte-sim", "deployments/4g-volte/common", True),
+        ("4g-lte-sim", "deployments/4g-volte/common", False),
         ("5g-sa", "deployments/5g-sa", False),
-        ("5g-vonr-sim", "deployments/5g-vonr", True),
-        ("4g-volte-sim", "deployments/4g-volte/common", True),
     ),
 )
 def test_scenario_setup_generates_private_synthetic_credentials(

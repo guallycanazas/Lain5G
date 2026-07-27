@@ -17,7 +17,6 @@ const layers = [
   { title: 'Session establishment', ids: ['pdu_session', 'default_bearer', 'bearer'] },
   { title: 'IP and TUN', ids: ['ue_tun', 'ue_ip', 'tun'] },
   { title: 'User plane', ids: ['ping', 'data_plane'] },
-  { title: 'IMS and voice', ids: ['ims', 'dns', 'sip_register', 'volte', 'vonr'] },
 ];
 
 function layerFor(check: ValidationCheck) {

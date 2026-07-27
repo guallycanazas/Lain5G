@@ -5,9 +5,14 @@ from typing import Any
 from fastapi import APIRouter, Body, Depends
 
 from ..dependencies import get_profile_config_service, require_mutations_enabled
-from ..services.profile_config_service import ProfileConfigService
+from ..services.profile_config_service import ProfileConfigError, ProfileConfigService
 
 router = APIRouter(prefix="/api/profiles", tags=["profiles"])
+
+
+def require_public_profile(profile_id: str) -> None:
+    if profile_id not in ProfileConfigService.CATALOG_PROFILE_IDS:
+        raise ProfileConfigError(404, "PROFILE_NOT_FOUND", f"Profile {profile_id} was not found.")
 
 
 @router.get("")
@@ -17,29 +22,35 @@ def list_profiles(service: ProfileConfigService = Depends(get_profile_config_ser
 
 @router.get("/{profile_id}")
 def get_profile(profile_id: str, service: ProfileConfigService = Depends(get_profile_config_service)) -> dict[str, Any]:
+    require_public_profile(profile_id)
     return service.get_profile(profile_id)
 
 
 @router.post("/{profile_id}/validate")
 def validate_profile(profile_id: str, service: ProfileConfigService = Depends(get_profile_config_service)) -> dict[str, Any]:
+    require_public_profile(profile_id)
     return service.validate_profile(profile_id)
 
 
 @router.get("/{profile_id}/diff")
 def diff_profile(profile_id: str, service: ProfileConfigService = Depends(get_profile_config_service)) -> dict[str, Any]:
+    require_public_profile(profile_id)
     return service.diff_profile(profile_id)
 
 
 @router.put("/{profile_id}", dependencies=[Depends(require_mutations_enabled)])
 def update_profile(profile_id: str, payload: dict[str, Any] = Body(...), service: ProfileConfigService = Depends(get_profile_config_service)) -> dict[str, Any]:
+    require_public_profile(profile_id)
     return service.update_profile(profile_id, payload)
 
 
 @router.post("/{profile_id}/apply", dependencies=[Depends(require_mutations_enabled)])
 def apply_profile(profile_id: str, service: ProfileConfigService = Depends(get_profile_config_service)) -> dict[str, Any]:
+    require_public_profile(profile_id)
     return service.apply_profile(profile_id)
 
 
 @router.post("/{profile_id}/restore", dependencies=[Depends(require_mutations_enabled)])
 def restore_profile(profile_id: str, service: ProfileConfigService = Depends(get_profile_config_service)) -> dict[str, Any]:
+    require_public_profile(profile_id)
     return service.restore_profile(profile_id)

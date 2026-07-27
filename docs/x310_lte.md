@@ -37,7 +37,7 @@ El script ejecuta preflight, arranca solo `enb-x310`, espera la duración defini
 
 ## Inicio Desde La Interfaz
 
-Ejecute `make app-up` y abra `http://localhost:8080/scenarios/4g-lte-x310`. Use `Core only` para verificar EPC e IMS sin RF. `Start core + RF` muestra el plan de canal efectivo y exige completar las guardas antes de habilitar una ejecución real; si `Execute real RF` permanece desmarcado, la acción es un dry-run que no transmite. El botón `Emergency stop` permanece disponible en el workspace.
+Ejecute `make app-up` y abra `http://localhost:8080/scenarios/4g-lte-x310`. Use `Core only` para verificar el EPC sin RF. `Start core + RF` muestra el plan de canal efectivo y exige completar las guardas antes de habilitar una ejecución real; si `Execute real RF` permanece desmarcado, la acción es un dry-run que no transmite. El botón `Emergency stop` permanece disponible en el workspace.
 
 ## Alcance de las observaciones
 

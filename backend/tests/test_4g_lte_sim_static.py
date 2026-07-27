@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+import os
+import shlex
+import subprocess
 from pathlib import Path
 
 
@@ -39,6 +42,51 @@ def test_lte_simulation_uses_srsenb_and_srsue_over_zmq():
     assert "device_name = zmq" in enb
     assert "device_name = zmq" in ue
     assert "mme_addr = 10.43.0.10" in enb
+
+
+def test_lte_simulation_runtime_renderer_matches_provisioned_credentials(tmp_path: Path):
+    template = DEPLOY / "ran" / "ue.conf"
+    entrypoint = (ROOT / "images/srsran4g-sim/entrypoint.sh").read_text(encoding="utf-8")
+    runtime_config = tmp_path / "runtime-ue.conf"
+    captured_config = tmp_path / "captured-ue.conf"
+    executable_dir = tmp_path / "bin"
+    executable_dir.mkdir()
+    srsue = executable_dir / "srsue"
+    srsue.write_text('#!/bin/sh\ncp "$1" "$CAPTURED_CONFIG"\n', encoding="utf-8")
+    srsue.chmod(0o755)
+    entrypoint = entrypoint.replace("runtime_conf=/tmp/lain5g-srsue.conf", f"runtime_conf={shlex.quote(str(runtime_config))}")
+    entrypoint = entrypoint.replace("/etc/srsran/ue.conf", str(template))
+    credentials = {
+        "SUBSCRIBER_IMSI": "001010000000001",
+        "SUBSCRIBER_KEY": "00112233445566778899AABBCCDDEEFF",
+        "SUBSCRIBER_OPC": "FFEEDDCCBBAA99887766554433221100",
+    }
+    environment = {
+        **os.environ,
+        **credentials,
+        "CAPTURED_CONFIG": str(captured_config),
+        "PATH": f"{executable_dir}:{os.environ['PATH']}",
+    }
+
+    result = subprocess.run(
+        ["bash", "-c", entrypoint, "entrypoint", "srsue", str(template)],
+        env=environment,
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+
+    assert result.returncode == 0, result.stderr
+    values = {
+        key.strip(): value.strip()
+        for line in captured_config.read_text(encoding="utf-8").splitlines()
+        if "=" in line
+        for key, value in [line.split("=", 1)]
+    }
+    assert values["imsi"] == credentials["SUBSCRIBER_IMSI"]
+    assert values["k"] == credentials["SUBSCRIBER_KEY"]
+    assert values["opc"] == credentials["SUBSCRIBER_OPC"]
+    assert "00000000000000000000000000000000" not in template.read_text(encoding="utf-8")
 
 
 def test_lte_simulation_provisions_only_internet_apn():

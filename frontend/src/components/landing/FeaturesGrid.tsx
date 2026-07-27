@@ -1,7 +1,7 @@
 import { motion } from 'framer-motion';
 
 const features = [
-  { image: '/images/lain5g/hero-topology.webp', imageClass: 'topology', title: 'End-to-end building blocks', text: 'Compose RAN, EPC or 5GC, IMS, subscribers, and validation without hiding component boundaries.' },
+  { image: '/images/lain5g/hero-topology.webp', imageClass: 'topology', title: 'End-to-end building blocks', text: 'Compose RAN, EPC or 5GC, subscribers, and validation without hiding component boundaries.' },
   { image: '/images/lain5g/lab-recipes.webp', imageClass: 'recipe-start', title: 'Docker first', text: 'Keep software scenarios isolated, repeatable, and straightforward to inspect on one workstation.' },
   { image: '/images/lain5g/deployment-cluster.webp', imageClass: 'cluster', title: 'Orchestration path', text: 'Carry clear component boundaries from the local lab toward a future cluster-managed deployment.' },
   { image: '/images/lain5g/lab-recipes.webp', imageClass: 'recipe-middle', title: 'Declarative profiles', text: 'Version network intent while keeping site-specific and sensitive values outside Git.' },

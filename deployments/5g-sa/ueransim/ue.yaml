@@ -1,13 +1,13 @@
-supi: 'imsi-001011234567895'
+supi: 'imsi-__SUBSCRIBER_IMSI__'
 mcc: '001'
 mnc: '01'
 
-# Valores de laboratorio. Deben coincidir con deployments/5g-sa/.env.
-key: '00000000000000000000000000000000'
-op: '00000000000000000000000000000000'
+# Rendered at runtime from the ignored local environment.
+key: '__SUBSCRIBER_KEY__'
+op: '__SUBSCRIBER_OPC__'
 opType: 'OPC'
-amf: '8000'
-sqn: '000000000000'
+amf: '__SUBSCRIBER_AMF__'
+sqn: '__SUBSCRIBER_SQN__'
 
 gnbSearchList:
   - 10.20.0.20

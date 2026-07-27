@@ -4,11 +4,10 @@ network:
   mnc: "01"
   tac: 1
   apn_internet: internet
-  apn_ims: ims
 core:
-  mme_addr: 172.22.0.9
+  mme_addr: 10.42.0.10
 ran:
-  enb_bind_addr: 172.22.0.1
+  enb_bind_addr: 10.42.0.1
 radio:
   device: x300
   usrp_addr: 192.168.10.2
@@ -21,9 +20,6 @@ radio:
   time_source: internal
 subscriber:
   imsi: "001011234567895"
-  msisdn: 51999999999
-ims:
-  domain: ims.mnc001.mcc001.3gppnetwork.org
 safety:
   maximum_duration_seconds: 600
   rf_allowed: false

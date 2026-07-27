@@ -11,7 +11,7 @@ import tempfile
 from pathlib import Path
 from types import SimpleNamespace
 
-from backend.app.services.image_catalog import IMAGE_CATALOG, PROFILE_IMAGES, RF_ACCESS_IMAGES, required_images
+from backend.app.services.image_catalog import IMAGE_CATALOG, PROFILE_IMAGES, PUBLIC_PROFILE_IDS, RF_ACCESS_IMAGES, required_images
 from backend.app.services.profile_config_service import ProfileConfigError, ProfileConfigService
 from backend.app.services.scenario_environment import prepare_scenario_environment
 
@@ -78,7 +78,7 @@ FIELDS = {
 PROFILE_INFO = {
     "4g-lte-sim": ("4G simulado", "SIM", "srsENB + srsUE sobre ZMQ; sin SDR ni transmision RF"),
     "5g-sa": ("5G SA simulado", "SIM", "Open5GS + UERANSIM; registro y datos sin RF"),
-    "4g-lte-x310": ("4G LTE/VoLTE con X310", "RF PROTEGIDA", "LTE fisico con controles de seguridad RF"),
+    "4g-lte-x310": ("4G LTE con X310", "RF PROTEGIDA", "LTE fisico con controles de seguridad RF"),
     "5g-sa-x310": ("5G SA con X310", "RF PROTEGIDA", "5G SA fisico con controles de seguridad RF"),
     "5g-nsa-x310": ("5G NSA B7+n3 con X310", "EXPERIMENTAL", "Ancla LTE y portadora NR sobre dos cadenas RF"),
     "4g-volte-sim": ("4G VoLTE simulado", "SIM", "Perfil de simulacion LTE e IMS"),
@@ -183,6 +183,9 @@ def main(argv: list[str]) -> int:
         return _wizard(service)
     action = argv[1]
     profile_id = argv[2] if len(argv) > 2 else ""
+    if profile_id and profile_id not in PUBLIC_PROFILE_IDS:
+        print(f"Perfil desconocido: {profile_id}", file=sys.stderr)
+        return 2
     try:
         if action == "list":
             _print_profiles(service)
@@ -566,7 +569,7 @@ def _images_menu(service: ProfileConfigService) -> None:
 def _images_command(service: ProfileConfigService, argv: list[str]) -> int:
     action = argv[0] if argv else "list"
     scope = argv[1] if len(argv) > 1 else "all"
-    if scope != "all" and scope not in PROFILE_IMAGES:
+    if scope != "all" and scope not in PUBLIC_PROFILE_IDS:
         print(f"Perfil desconocido: {scope}", file=sys.stderr)
         return 2
     if action in {"list", "check", "status"}:
@@ -583,7 +586,7 @@ def _scenario_command(service: ProfileConfigService, argv: list[str]) -> int:
         return 2
     action, profile_id = argv
     profile_id = "5g-vonr" if profile_id == "5g-vonr-sim" else profile_id
-    if profile_id not in SIM_ACTIONS:
+    if profile_id not in PUBLIC_PROFILE_IDS or profile_id not in SIM_ACTIONS:
         print("La operacion directa solo admite perfiles software; usa el asistente para RF.", file=sys.stderr)
         return 2
     if action == "setup":
@@ -637,7 +640,7 @@ def _choose_profile(service: ProfileConfigService) -> str:
         return ""
     if raw.isdigit() and 1 <= int(raw) <= len(profiles):
         return profiles[int(raw) - 1]["profile"]
-    if raw in PROFILE_IMAGES:
+    if raw in PUBLIC_PROFILE_IDS:
         return raw
     print("Perfil invalido.")
     return ""
@@ -746,7 +749,7 @@ def _doctor(service: ProfileConfigService, profile_id: str) -> int:
     for label, passed, detail in checks:
         print(f"{('PASS' if passed else 'FAIL'):<6} {label:<22} {detail}")
     if profile_id:
-        if profile_id not in PROFILE_IMAGES:
+        if profile_id not in PUBLIC_PROFILE_IDS:
             print(f"\nPerfil desconocido: {profile_id}", file=sys.stderr)
             return 2
         validation = service.validate_profile(profile_id)
