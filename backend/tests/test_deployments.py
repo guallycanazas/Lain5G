@@ -73,6 +73,31 @@ def test_restart_dry_run_does_not_execute_script(client):
     assert response.json()["command"]["dry_run"] is True
 
 
+def test_software_start_prepares_selected_environment(deployment_service, monkeypatch):
+    events = []
+
+    class Preparation:
+        def ensure_ready(self, profile: str, core_only: bool = False):
+            events.append(("components", profile, core_only))
+
+        def prepare_environment(self, profile: str):
+            events.append(("environment", profile))
+
+    deployment_service.settings.dry_run = False
+    deployment_service.preparation_service = Preparation()
+    monkeypatch.setattr(deployment_service, "_ensure_no_conflict", lambda definition: events.append(("conflicts", definition.id)))
+    monkeypatch.setattr(deployment_service, "_script_action", lambda definition, *args: events.append(("start", definition.id)))
+
+    deployment_service.start("4g-volte-sim")
+
+    assert events == [
+        ("components", "4g-volte-sim", False),
+        ("environment", "4g-volte-sim"),
+        ("conflicts", "4g-volte-sim"),
+        ("start", "4g-volte-sim"),
+    ]
+
+
 def test_status_returns_model(client):
     response = client.get("/api/deployments/5g-sa/status")
 

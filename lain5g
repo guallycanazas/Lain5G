@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 from __future__ import annotations
 
+import fcntl
 import json
 import os
-import secrets
 import shutil
 import subprocess
 import sys
@@ -13,6 +13,7 @@ from types import SimpleNamespace
 
 from backend.app.services.image_catalog import IMAGE_CATALOG, PROFILE_IMAGES, RF_ACCESS_IMAGES, required_images
 from backend.app.services.profile_config_service import ProfileConfigError, ProfileConfigService
+from backend.app.services.scenario_environment import prepare_scenario_environment
 
 
 FIELDS = {
@@ -131,12 +132,11 @@ SIM_ACTIONS = {
     },
 }
 
-SCENARIO_ENVIRONMENTS = {
-    "4g-lte-sim": ("deployments/4g-volte/common", ("SUBSCRIBER_KEY", "SUBSCRIBER_OPC", "IMS_AUTH_PASSWORD")),
-    "4g-volte-sim": ("deployments/4g-volte/common", ("SUBSCRIBER_KEY", "SUBSCRIBER_OPC", "IMS_AUTH_PASSWORD")),
-    "5g-sa": ("deployments/5g-sa", ("SUBSCRIBER_KEY", "SUBSCRIBER_OPC")),
-    "5g-vonr": ("deployments/5g-vonr", ("SUBSCRIBER_KEY", "SUBSCRIBER_OPC", "IMS_AUTH_PASSWORD")),
-}
+RF_ACTIVE_MARKERS = (
+    "deployments/4g-volte/x310/.rf-active",
+    "deployments/5g-sa-x310/.rf-active",
+    "deployments/5g-nsa-x310/.rf-active",
+)
 
 RF_ACTIONS = {
     "4g-lte-x310": {
@@ -250,7 +250,7 @@ def _print_help(file=sys.stdout) -> None:
     print("  lain5g images pull [perfil]   Descargar sin compilar", file=file)
     print("  lain5g app setup              Preparar la aplicacion web", file=file)
     print("  lain5g app start [--open]     Iniciar la app local segura", file=file)
-    print("  lain5g app start --operations Iniciar la app con control Docker", file=file)
+    print("  lain5g app start --operations Iniciar la app con control Docker y RF protegido", file=file)
     print("  lain5g app open               Abrir la app en el navegador", file=file)
     print("  lain5g app status|logs|stop   Administrar la aplicacion", file=file)
     print("  lain5g scenario start ID      Iniciar un escenario software", file=file)
@@ -303,7 +303,7 @@ def _app_menu(service: ProfileConfigService) -> None:
         print("Opera en 127.0.0.1. El modo operativo otorga control Docker al backend.\n")
         print("  [1] Preparar configuracion segura")
         print("  [2] Iniciar y abrir app segura")
-        print("  [3] Iniciar y abrir app operativa")
+        print("  [3] Iniciar y abrir app operativa (software y RF)")
         print("  [4] Ver estado")
         print("  [5] Ver logs")
         print("  [6] Detener app")
@@ -317,7 +317,7 @@ def _app_menu(service: ProfileConfigService) -> None:
             _app_command(service, ["start", "--open"])
         elif choice == "3":
             if _confirm(
-                "El modo operativo monta el socket Docker y permite modificar el proyecto. Continuar?",
+                "El modo operativo habilita Docker y RF real bajo controles de seguridad. Continuar?",
                 default=False,
             ):
                 _app_command(service, ["start", "--operations", "--open"])
@@ -363,6 +363,38 @@ def _app_command(service: ProfileConfigService, argv: list[str]) -> int:
         return 2
 
     operations = "--operations" in flags
+    if action not in {"setup", "start", "stop"}:
+        return _run_app_command(service, action, flags, operations)
+
+    lock_fd = os.open(service.root, os.O_RDONLY)
+    try:
+        try:
+            fcntl.flock(lock_fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except BlockingIOError:
+            print("Hay un inicio RF en curso; no se modifico la aplicacion.", file=sys.stderr)
+            return 1
+        return _run_app_command(service, action, flags, operations)
+    finally:
+        os.close(lock_fd)
+
+
+def _run_app_command(service: ProfileConfigService, action: str, flags: set[str], operations: bool) -> int:
+    active_rf = [path for path in RF_ACTIVE_MARKERS if (service.root / path).is_file()]
+    if active_rf and action in {"setup", "start", "stop"}:
+        print(
+            "Hay una sesion RF activa. Ejecuta la parada de emergencia o espera su auto-stop antes de cerrar o degradar la app.",
+            file=sys.stderr,
+        )
+        return 1
+    app_environment = service.root / ".env.app"
+    if action in {"setup", "start"} and app_environment.is_symlink():
+        print("No se modifico .env.app porque es un enlace simbolico.", file=sys.stderr)
+        return 1
+    if action in {"setup", "start"} and not operations and app_environment.is_file():
+        completed = subprocess.run(["make", "app-down-operations"], cwd=service.root, check=False)
+        if completed.returncode != 0:
+            print("No se pudo detener la app operativa antes de preparar el modo seguro.", file=sys.stderr)
+            return completed.returncode
     if action in {"setup", "start"}:
         if not _prepare_app_environment(service, operations=operations):
             return 1
@@ -417,7 +449,7 @@ def _prepare_app_environment(service: ProfileConfigService, *, operations: bool)
             {
                 "LAIN5G_MUTATING_OPERATIONS_ENABLED": "true",
                 "LAIN5G_IMAGE_PULL_ENABLED": "true",
-                "LAIN5G_RF_WEB_CONTROL_ENABLED": "false",
+                "LAIN5G_RF_WEB_CONTROL_ENABLED": "true",
             }
         )
     lines = text.splitlines()
@@ -467,7 +499,7 @@ def _prepare_app_environment(service: ProfileConfigService, *, operations: bool)
         if temporary_path is not None:
             temporary_path.unlink(missing_ok=True)
     if operations:
-        print("Descargas y operaciones de software habilitadas; la ejecucion RF sigue deshabilitada.")
+        print("Operaciones software y RF protegido habilitadas; completa todos los controles antes de transmitir.")
     return True
 
 
@@ -573,83 +605,21 @@ def _scenario_command(service: ProfileConfigService, argv: list[str]) -> int:
                 file=sys.stderr,
             )
             return 1
+        if os.environ.get("LAIN5G_DRY_RUN", "false").lower() != "true" and not _prepare_scenario_environment(service, profile_id):
+            return 1
     return subprocess.run(command, cwd=service.root, check=False).returncode
 
 
 def _prepare_scenario_environment(service: ProfileConfigService, profile_id: str) -> bool:
-    directory, required_secrets = SCENARIO_ENVIRONMENTS[profile_id]
-    environment_dir = service.root / directory
-    example = environment_dir / ".env.example"
-    target = environment_dir / ".env"
-    if target.is_symlink():
-        print(f"No se modifico {target.relative_to(service.root)} porque es un enlace simbolico.", file=sys.stderr)
-        return False
     try:
-        text = target.read_text(encoding="utf-8") if target.is_file() else example.read_text(encoding="utf-8")
-    except (OSError, UnicodeError) as exc:
-        print(f"No se pudo preparar {target.relative_to(service.root)}: {exc}", file=sys.stderr)
-        return False
-
-    current: dict[str, tuple[str, str]] = {}
-    for raw in text.splitlines():
-        line = raw.strip()
-        if not line or line.startswith("#") or "=" not in line:
-            continue
-        if line.startswith("export "):
-            line = line[7:].lstrip()
-        key, value = line.split("=", 1)
-        raw_value = value.strip()
-        current[key.strip()] = (raw_value.strip("\"'"), raw_value)
-    generated = {
-        key: current[key][1] if key in current and current[key][0] else secrets.token_hex(16)
-        for key in required_secrets
-    }
-    lines = text.splitlines()
-    for key, value in generated.items():
-        replacement = f"{key}={value}"
-        found = False
-        normalized = []
-        for line in lines:
-            candidate = line.lstrip()
-            if candidate.startswith("export "):
-                candidate = candidate[7:].lstrip()
-            if candidate.startswith(f"{key}="):
-                if not found:
-                    normalized.append(replacement)
-                    found = True
-                continue
-            normalized.append(line)
-        if not found:
-            normalized.append(replacement)
-        lines = normalized
-    updated = "\n".join(lines) + "\n"
-    temporary_path: Path | None = None
-    try:
-        if not target.is_file() or target.read_text(encoding="utf-8") != updated:
-            with tempfile.NamedTemporaryFile(
-                mode="w",
-                encoding="utf-8",
-                dir=target.parent,
-                prefix=".env.",
-                delete=False,
-            ) as temporary:
-                temporary_path = Path(temporary.name)
-                temporary.write(updated)
-                temporary.flush()
-                os.fsync(temporary.fileno())
-            temporary_path.chmod(0o600)
-            os.replace(temporary_path, target)
-            temporary_path = None
+        target, changed = prepare_scenario_environment(service.root, profile_id)
+        if changed:
             print(f"Configuracion local preparada: {target.relative_to(service.root)}")
         else:
             print(f"Configuracion local lista: {target.relative_to(service.root)}")
-        target.chmod(0o600)
-    except (OSError, UnicodeError) as exc:
-        print(f"No se pudo escribir {target.relative_to(service.root)}: {exc}", file=sys.stderr)
+    except (OSError, UnicodeError, ValueError) as exc:
+        print(f"No se pudo preparar la configuracion local: {exc}", file=sys.stderr)
         return False
-    finally:
-        if temporary_path is not None:
-            temporary_path.unlink(missing_ok=True)
     print("Credenciales sinteticas listas; no se descargaron imagenes ni se iniciaron servicios.")
     return True
 
@@ -901,6 +871,14 @@ def _operator_console(service: ProfileConfigService, profile_id: str) -> int:
         if ((not rf_capable and choice == "1") or (rf_capable and choice in {"1", "2"})) and not _ensure_profile_images(
             profile_id,
             core_only=rf_capable and choice == "2",
+        ):
+            _pause()
+            continue
+        if (
+            not rf_capable
+            and choice == "1"
+            and os.environ.get("LAIN5G_DRY_RUN", "false").lower() != "true"
+            and not _prepare_scenario_environment(service, profile_id)
         ):
             _pause()
             continue

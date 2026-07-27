@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import fcntl
 import os
 import subprocess
 from pathlib import Path
@@ -150,10 +151,10 @@ def test_app_setup_creates_private_safe_configuration(tmp_path: Path):
     assert text.count("LAIN5G_IMAGE_PULL_ENABLED=") == 1
     assert text.count("LAIN5G_RF_WEB_CONTROL_ENABLED=") == 1
     assert configured.stat().st_mode & 0o777 == 0o600
-    assert not make_log.exists()
+    assert make_log.read_text(encoding="utf-8").splitlines() == ["app-down-operations"]
 
 
-def test_app_operational_start_enables_software_operations_and_opens_browser(tmp_path: Path):
+def test_app_operational_start_enables_software_and_guarded_rf_operations(tmp_path: Path):
     project_root = tmp_path / "project"
     project_root.mkdir()
     (project_root / ".env.app.example").write_text(
@@ -175,9 +176,79 @@ def test_app_operational_start_enables_software_operations_and_opens_browser(tmp
     text = (project_root / ".env.app").read_text(encoding="utf-8")
     assert "LAIN5G_MUTATING_OPERATIONS_ENABLED=true" in text
     assert "LAIN5G_IMAGE_PULL_ENABLED=true" in text
-    assert "LAIN5G_RF_WEB_CONTROL_ENABLED=false" in text
+    assert "LAIN5G_RF_WEB_CONTROL_ENABLED=true" in text
     assert make_log.read_text(encoding="utf-8").splitlines() == ["app-up-operations"]
     assert open_log.read_text(encoding="utf-8").splitlines() == ["http://127.0.0.1:8080"]
+
+
+@pytest.mark.parametrize("arguments", (("stop",), ("start", "--open")))
+def test_app_refuses_to_remove_emergency_control_during_active_rf(tmp_path: Path, arguments: tuple[str, ...]):
+    project_root = tmp_path / "project"
+    marker = project_root / "deployments/5g-sa-x310/.rf-active"
+    marker.parent.mkdir(parents=True)
+    marker.write_text("run_id=test\n", encoding="utf-8")
+    env, make_log, _ = fake_app_tools(tmp_path, project_root)
+
+    result = subprocess.run(
+        [str(ROOT / "lain5g"), "app", *arguments],
+        cwd=ROOT,
+        env=env,
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+
+    assert result.returncode == 1
+    assert "parada de emergencia" in result.stderr
+    assert not make_log.exists()
+
+
+def test_app_downgrade_stops_operational_stack_before_safe_start(tmp_path: Path):
+    project_root = tmp_path / "project"
+    project_root.mkdir()
+    template = (ROOT / ".env.app.example").read_text(encoding="utf-8")
+    (project_root / ".env.app.example").write_text(template, encoding="utf-8")
+    (project_root / ".env.app").write_text(
+        template.replace("LAIN5G_MUTATING_OPERATIONS_ENABLED=false", "LAIN5G_MUTATING_OPERATIONS_ENABLED=true"),
+        encoding="utf-8",
+    )
+    env, make_log, _ = fake_app_tools(tmp_path, project_root)
+
+    result = subprocess.run(
+        [str(ROOT / "lain5g"), "app", "start", "--open"],
+        cwd=ROOT,
+        env=env,
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+
+    assert result.returncode == 0
+    assert make_log.read_text(encoding="utf-8").splitlines() == ["app-down-operations", "app-up"]
+    assert "LAIN5G_MUTATING_OPERATIONS_ENABLED=false" in (project_root / ".env.app").read_text(encoding="utf-8")
+
+
+def test_app_transition_rejects_concurrent_rf_start(tmp_path: Path):
+    project_root = tmp_path / "project"
+    project_root.mkdir()
+    env, make_log, _ = fake_app_tools(tmp_path, project_root)
+    lock_fd = os.open(project_root, os.O_RDONLY)
+    fcntl.flock(lock_fd, fcntl.LOCK_EX)
+    try:
+        result = subprocess.run(
+            [str(ROOT / "lain5g"), "app", "stop"],
+            cwd=ROOT,
+            env=env,
+            text=True,
+            capture_output=True,
+            check=False,
+        )
+    finally:
+        os.close(lock_fd)
+
+    assert result.returncode == 1
+    assert "inicio RF en curso" in result.stderr
+    assert not make_log.exists()
 
 
 def test_app_setup_rejects_symlink_environment(tmp_path: Path):
@@ -256,7 +327,7 @@ def test_app_management_uses_complete_compose_definition(tmp_path: Path, action:
     assert make_log.read_text(encoding="utf-8").splitlines() == [target]
 
 
-def test_operational_make_target_normalizes_environment_before_compose():
+def test_operational_make_target_cleans_inherited_environment_before_compose():
     makefile = (ROOT / "Makefile").read_text(encoding="utf-8")
     target = makefile.split("app-up-operations:", 1)[1].split("app-down-operations:", 1)[0]
 
@@ -273,19 +344,42 @@ def test_operational_make_target_normalizes_environment_before_compose():
         "APP_FRONTEND_PORT",
     ):
         assert f"-u {variable}" in clean_env
-    assert "$(APP_CLEAN_ENV) ./lain5g app setup --operations" in target
     assert "$(APP_CLEAN_ENV) docker compose" in target
-    assert target.index("app setup --operations") < target.index("docker compose")
+    assert "$(APP_CLEAN_ENV) ./lain5g app setup --operations" not in target
 
 
 @pytest.mark.parametrize(
     ("profile", "target"),
-    (("4g-volte-sim", "start-4g-volte-sim"), ("5g-vonr", "start-5g-vonr-sim")),
+    (
+        ("4g-lte-sim", "start-4g-lte-sim"),
+        ("4g-volte-sim", "start-4g-volte-sim"),
+        ("5g-sa", "start-5g-sa"),
+        ("5g-vonr", "start-5g-vonr-sim"),
+    ),
 )
-def test_guided_console_starts_all_advertised_ims_simulations(tmp_path: Path, profile: str, target: str):
+def test_guided_console_prepares_and_starts_every_software_profile(tmp_path: Path, profile: str, target: str):
     bin_dir = tmp_path / "console-bin"
     bin_dir.mkdir()
     make_log = tmp_path / "make.log"
+    project_root = tmp_path / "project"
+    profiles_dir = project_root / "config/profiles"
+    profiles_dir.mkdir(parents=True)
+    (profiles_dir / f"{profile}.yaml").write_text(
+        (ROOT / "config/profiles" / f"{profile}.yaml").read_text(encoding="utf-8"),
+        encoding="utf-8",
+    )
+    environment_directory = {
+        "4g-lte-sim": "deployments/4g-volte/common",
+        "4g-volte-sim": "deployments/4g-volte/common",
+        "5g-sa": "deployments/5g-sa",
+        "5g-vonr": "deployments/5g-vonr",
+    }[profile]
+    environment_dir = project_root / environment_directory
+    environment_dir.mkdir(parents=True)
+    (environment_dir / ".env.example").write_text(
+        (ROOT / environment_directory / ".env.example").read_text(encoding="utf-8"),
+        encoding="utf-8",
+    )
     for name in ("docker", "make"):
         executable = bin_dir / name
         executable.write_text(
@@ -299,6 +393,7 @@ def test_guided_console_starts_all_advertised_ims_simulations(tmp_path: Path, pr
         **os.environ,
         "PATH": f"{bin_dir}:{os.environ['PATH']}",
         "MAKE_COMMAND_LOG": str(make_log),
+        "LAIN5G_PROJECT_ROOT": str(project_root),
     }
 
     result = subprocess.run(
@@ -313,12 +408,55 @@ def test_guided_console_starts_all_advertised_ims_simulations(tmp_path: Path, pr
 
     assert result.returncode == 0
     assert make_log.read_text(encoding="utf-8").splitlines() == [target]
+    assert (environment_dir / ".env").stat().st_mode & 0o777 == 0o600
+
+
+def test_guided_console_dry_run_does_not_create_credentials(tmp_path: Path):
+    project_root = tmp_path / "project"
+    profiles_dir = project_root / "config/profiles"
+    profiles_dir.mkdir(parents=True)
+    (profiles_dir / "5g-sa.yaml").write_text(
+        (ROOT / "config/profiles/5g-sa.yaml").read_text(encoding="utf-8"),
+        encoding="utf-8",
+    )
+    bin_dir = tmp_path / "bin"
+    bin_dir.mkdir()
+    for name in ("docker", "make"):
+        executable = bin_dir / name
+        executable.write_text("#!/usr/bin/env bash\nexit 0\n", encoding="utf-8")
+        executable.chmod(0o755)
+    env = {
+        **os.environ,
+        "PATH": f"{bin_dir}:{os.environ['PATH']}",
+        "LAIN5G_PROJECT_ROOT": str(project_root),
+        "LAIN5G_DRY_RUN": "true",
+    }
+
+    result = subprocess.run(
+        [str(ROOT / "lain5g"), "profile", "wizard", "5g-sa"],
+        cwd=ROOT,
+        env=env,
+        input="1\n\n0\n",
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+
+    assert result.returncode == 0
+    assert not (project_root / "deployments/5g-sa/.env").exists()
 
 
 def test_direct_scenario_command_starts_software_profile(tmp_path: Path):
     bin_dir = tmp_path / "scenario-bin"
     bin_dir.mkdir()
     make_log = tmp_path / "make.log"
+    project_root = tmp_path / "project"
+    environment_dir = project_root / "deployments/5g-vonr"
+    environment_dir.mkdir(parents=True)
+    (environment_dir / ".env.example").write_text(
+        (ROOT / "deployments/5g-vonr/.env.example").read_text(encoding="utf-8"),
+        encoding="utf-8",
+    )
     for name in ("docker", "make"):
         executable = bin_dir / name
         executable.write_text(
@@ -332,6 +470,7 @@ def test_direct_scenario_command_starts_software_profile(tmp_path: Path):
         **os.environ,
         "PATH": f"{bin_dir}:{os.environ['PATH']}",
         "MAKE_COMMAND_LOG": str(make_log),
+        "LAIN5G_PROJECT_ROOT": str(project_root),
     }
 
     result = subprocess.run(
@@ -345,11 +484,13 @@ def test_direct_scenario_command_starts_software_profile(tmp_path: Path):
 
     assert result.returncode == 0
     assert make_log.read_text(encoding="utf-8").splitlines() == ["start-5g-vonr-sim"]
+    assert (environment_dir / ".env").stat().st_mode & 0o777 == 0o600
 
 
 @pytest.mark.parametrize(
     ("profile", "directory", "requires_ims_password"),
     (
+        ("4g-lte-sim", "deployments/4g-volte/common", True),
         ("5g-sa", "deployments/5g-sa", False),
         ("5g-vonr-sim", "deployments/5g-vonr", True),
         ("4g-volte-sim", "deployments/4g-volte/common", True),

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import fcntl
 import os
 import re
 import stat
@@ -186,6 +187,58 @@ def test_dry_run_exit_precedes_normal_rf_authorization_and_start(start_script: P
     rf_service_start = source.index("docker compose", rf_ready_preflight)
 
     assert dry_run < dry_run_exit < authorization_guard < rf_ready_preflight < rf_service_start
+
+
+@pytest.mark.parametrize(
+    "start_script",
+    (
+        Path("deployments/4g-volte/x310/scripts/start-enb.sh"),
+        Path("deployments/5g-sa-x310/scripts/start-gnb.sh"),
+        Path("deployments/5g-nsa-x310/scripts/start-rf.sh"),
+    ),
+)
+def test_rf_starts_are_serialized_and_reject_other_active_markers(start_script: Path):
+    source = (ROOT / start_script).read_text(encoding="utf-8")
+
+    assert 'exec 9<"$repo_dir"' in source
+    assert "flock -n -x 9" in source
+    assert "exec 9>&-" in source
+    assert "deployments/4g-volte/x310/.rf-active" in source
+    assert "deployments/5g-sa-x310/.rf-active" in source
+    assert "deployments/5g-nsa-x310/.rf-active" in source
+
+
+@pytest.mark.parametrize(
+    "start_script",
+    (
+        Path("deployments/4g-volte/x310/scripts/start-enb.sh"),
+        Path("deployments/5g-sa-x310/scripts/start-gnb.sh"),
+        Path("deployments/5g-nsa-x310/scripts/start-rf.sh"),
+    ),
+)
+def test_concurrent_rf_start_is_rejected_without_queueing(
+    start_script: Path,
+    rf_dry_run_sandbox: tuple[Path, Path, dict[str, str]],
+):
+    sandbox, _, dry_env = rf_dry_run_sandbox
+    env = {**dry_env, "LAIN5G_DRY_RUN": "false"}
+    lock_fd = os.open(sandbox, os.O_RDONLY)
+    fcntl.flock(lock_fd, fcntl.LOCK_EX)
+    try:
+        result = subprocess.run(
+            ["bash", str(sandbox / start_script)],
+            cwd=sandbox,
+            env=env,
+            text=True,
+            capture_output=True,
+            timeout=5,
+            check=False,
+        )
+    finally:
+        os.close(lock_fd)
+
+    assert result.returncode == 2
+    assert "another RF start is in progress" in result.stderr
 
 
 @pytest.mark.parametrize(

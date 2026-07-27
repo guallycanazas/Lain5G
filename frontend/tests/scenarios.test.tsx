@@ -194,6 +194,7 @@ describe('Scenario workspaces', () => {
   it.each([
     ['5g-sa', 'Start 5G - UERANSIM Simulation', '5GC + UERANSIM'],
     ['4g-lte-sim', 'Start 4G - srsRAN ZMQ Simulation', 'srsENB + srsUE simulation'],
+    ['4g-volte-sim', 'Start 4G LTE + VoLTE Signaling', 'LTE + VoLTE simulation'],
     ['5g-vonr-sim', 'Start 5G SA + VoNR Signaling', '5G SA + VoNR simulation'],
   ])('provides a guided software launch for %s', async (scenarioId, title, flowLabel) => {
     stubScenarioFetch(); renderRoute('/scenarios/:scenarioId', <ScenarioDetailPage />, `/scenarios/${scenarioId}`);
@@ -201,6 +202,7 @@ describe('Scenario workspaces', () => {
     expect(screen.getByRole('dialog', { name: title })).toBeInTheDocument();
     expect(screen.getByText(flowLabel)).toBeInTheDocument();
     expect(screen.getByText('Software-only scenario')).toBeInTheDocument();
+    expect(screen.getByText(/creates or preserves private synthetic credentials/)).toBeInTheDocument();
     await userEvent.click(screen.getByRole('button', { name: 'Start full simulation' }));
     await waitFor(() => expect(fetch).toHaveBeenCalledWith(`/api/deployments/${scenarioId}/start`, expect.objectContaining({ method: 'POST' })));
   });

@@ -15,7 +15,12 @@ manifest="$scenario_dir/rf/safety-manifest.yaml"
 if [ "${LAIN5G_ALLOW_5G_RF_START:-false}" != true ]; then echo "5G RF start refused: set LAIN5G_ALLOW_5G_RF_START=true" >&2; exit 2; fi
 [ -f "$env_file" ] || { echo "5G RF start refused: missing deployments/5g-sa-x310/.env" >&2; exit 2; }
 [ -f "$manifest" ] || { echo "5G RF start refused: missing rf/safety-manifest.yaml" >&2; exit 2; }
-if [ -f "$scenario_dir/.rf-active" ]; then echo "5G RF session already active" >&2; exit 2; fi
+command -v flock >/dev/null 2>&1 || { echo "5G RF start refused: flock is required" >&2; exit 2; }
+exec 9<"$repo_dir"
+flock -n -x 9 || { echo "5G RF start refused: another RF start is in progress" >&2; exit 2; }
+for marker in "$repo_dir/deployments/4g-volte/x310/.rf-active" "$repo_dir/deployments/5g-sa-x310/.rf-active" "$repo_dir/deployments/5g-nsa-x310/.rf-active"; do
+  [ ! -f "$marker" ] || { echo "5G RF start refused: another RF session is active" >&2; exit 2; }
+done
 REQUIRE_RF_READY=true "$script_dir/preflight.sh"
 # Let the UHD probe release the X310 management channel before the gNB opens it.
 sleep 5
@@ -49,6 +54,7 @@ if [ "$(docker inspect -f '{{.State.Running}}' lain5g-lab-5g-sa-x310-gnb 2>/dev/
   exit 1
 fi
 (
+  exec 9>&-
   while [ "$(docker inspect -f '{{.State.Running}}' lain5g-lab-5g-sa-x310-gnb 2>/dev/null || true)" = true ]; do sleep 2; done
   (cd "$scenario_dir" && docker compose --env-file "$env_file" -f docker-compose.yml --profile rf logs --no-color --since "$started_at" gnb-x310 > "$run_dir/logs/gnb-x310.log" 2>/dev/null || true)
   (cd "$scenario_dir" && docker compose --env-file "$env_file" -f docker-compose.yml --profile rf stop gnb-x310 >/dev/null 2>&1 || true)

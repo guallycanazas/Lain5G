@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import time
+from concurrent.futures import ThreadPoolExecutor
 from datetime import UTC, datetime
 from pathlib import Path
 
@@ -87,3 +89,86 @@ def test_core_only_does_not_require_the_rf_access_image(tmp_path: Path):
     status = service(tmp_path, commands).profile_status("5g-sa-x310", core_only=True)
     assert status.ready is True
     assert all(image.local_image != "lain5g-lab/srsranproject-uhd:local" for image in status.images)
+
+
+@pytest.mark.parametrize(
+    ("profile", "directory", "requires_ims_password"),
+    (
+        ("4g-lte-sim", "deployments/4g-volte/common", True),
+        ("4g-volte-sim", "deployments/4g-volte/common", True),
+        ("5g-sa", "deployments/5g-sa", False),
+        ("5g-vonr-sim", "deployments/5g-vonr", True),
+    ),
+)
+def test_prepare_environment_supports_every_software_scenario(
+    tmp_path: Path,
+    profile: str,
+    directory: str,
+    requires_ims_password: bool,
+):
+    environment_dir = tmp_path / directory
+    environment_dir.mkdir(parents=True)
+    template = "SUBSCRIBER_KEY=\nSUBSCRIBER_OPC=\n"
+    if requires_ims_password:
+        template += "IMS_AUTH_PASSWORD=\n"
+    (environment_dir / ".env.example").write_text(template, encoding="utf-8")
+
+    target = service(tmp_path, FakeCommands()).prepare_environment(profile)
+    values = dict(line.split("=", 1) for line in target.read_text(encoding="utf-8").splitlines())
+
+    assert len(values["SUBSCRIBER_KEY"]) == 32
+    assert len(values["SUBSCRIBER_OPC"]) == 32
+    assert bool(values.get("IMS_AUTH_PASSWORD")) is requires_ims_password
+    assert target.stat().st_mode & 0o777 == 0o600
+
+
+def test_prepare_environment_preserves_existing_quoted_secret(tmp_path: Path):
+    environment_dir = tmp_path / "deployments/5g-vonr"
+    environment_dir.mkdir(parents=True)
+    (environment_dir / ".env.example").write_text(
+        "SUBSCRIBER_KEY=\nSUBSCRIBER_OPC=\nIMS_AUTH_PASSWORD=\n",
+        encoding="utf-8",
+    )
+    target = environment_dir / ".env"
+    target.write_text(
+        "SUBSCRIBER_KEY=\nSUBSCRIBER_OPC=\nIMS_AUTH_PASSWORD='secret value'\n",
+        encoding="utf-8",
+    )
+
+    service(tmp_path, FakeCommands()).prepare_environment("5g-vonr")
+
+    assert "IMS_AUTH_PASSWORD='secret value'" in target.read_text(encoding="utf-8")
+
+
+def test_prepare_environment_rejects_symlink_target(tmp_path: Path):
+    environment_dir = tmp_path / "deployments/5g-sa"
+    environment_dir.mkdir(parents=True)
+    (environment_dir / ".env.example").write_text("SUBSCRIBER_KEY=\nSUBSCRIBER_OPC=\n", encoding="utf-8")
+    (environment_dir / ".env").symlink_to(tmp_path / "outside")
+
+    with pytest.raises(PreparationError) as exc:
+        service(tmp_path, FakeCommands()).prepare_environment("5g-sa")
+
+    assert exc.value.code == "ENVIRONMENT_PREPARATION_FAILED"
+    assert "outside" not in exc.value.message
+
+
+def test_concurrent_environment_preparation_reuses_one_generation(tmp_path: Path, monkeypatch):
+    environment_dir = tmp_path / "deployments/5g-sa"
+    environment_dir.mkdir(parents=True)
+    (environment_dir / ".env.example").write_text("SUBSCRIBER_KEY=\nSUBSCRIBER_OPC=\n", encoding="utf-8")
+    preparation = service(tmp_path, FakeCommands())
+    calls = 0
+
+    def token_hex(_length: int) -> str:
+        nonlocal calls
+        calls += 1
+        time.sleep(0.02)
+        return f"{calls:032x}"
+
+    monkeypatch.setattr("backend.app.services.scenario_environment.secrets.token_hex", token_hex)
+    with ThreadPoolExecutor(max_workers=2) as executor:
+        targets = list(executor.map(preparation.prepare_environment, ("5g-sa", "5g-sa")))
+
+    assert targets[0] == targets[1]
+    assert calls == 2

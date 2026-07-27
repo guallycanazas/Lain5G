@@ -37,9 +37,10 @@ Only on a dedicated trusted workstation, use the explicit operations mode:
 ./lain5g app start --operations --open
 ```
 
-The CLI sets `LAIN5G_MUTATING_OPERATIONS_ENABLED=true` and
-`LAIN5G_IMAGE_PULL_ENABLED=true` in the ignored local `.env.app`, clears
-conflicting inherited variables, and starts both Compose files through:
+The CLI sets `LAIN5G_MUTATING_OPERATIONS_ENABLED=true`,
+`LAIN5G_IMAGE_PULL_ENABLED=true`, and `LAIN5G_RF_WEB_CONTROL_ENABLED=true` in the
+ignored local `.env.app`, clears conflicting inherited variables, and starts both
+Compose files through:
 
 ```bash
 make app-up-operations
@@ -59,15 +60,16 @@ Use the same file set when inspecting or removing this operational stack:
 
 ## Additional Opt-Ins
 
-The operational CLI mode enables image pulls. When configuring `.env.app`
-manually, image pulls require both the general mutation setting and:
+The operational CLI mode enables image pulls and guarded RF control. When
+configuring `.env.app` manually, image pulls require both the general mutation
+setting and:
 
 ```env
 LAIN5G_IMAGE_PULL_ENABLED=true
 ```
 
 RF execution requires the general mutation setting, all request and profile
-safety checks, and the separate setting:
+safety checks, and the separate setting, which `--operations` enables explicitly:
 
 ```env
 LAIN5G_RF_WEB_CONTROL_ENABLED=true
@@ -75,7 +77,9 @@ LAIN5G_RF_WEB_CONTROL_ENABLED=true
 
 Do not treat either setting as RF authorization. Complete the laboratory's
 physical isolation, attenuation, frequency authorization, duration, and
-emergency-stop procedures independently.
+emergency-stop procedures independently. Guarded RF starts share an interprocess
+lock, and the CLI refuses to stop or downgrade the app while an RF marker is
+active so the web emergency stop remains available.
 
 ## Native Backend
 

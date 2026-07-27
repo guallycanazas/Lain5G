@@ -1,40 +1,35 @@
 # Aplicación Dockerizada
 
-El stack de aplicación dockerizado ejecuta dos servicios separados del laboratorio 5G SA:
+El stack de aplicación dockerizado ejecuta dos servicios separados de los
+escenarios 4G y 5G del laboratorio:
 
 - `frontend`: Nginx sirviendo la aplicación React y proxy `/api`.
 - `backend`: FastAPI; el acceso al Docker del host es un opt-in separado.
 
-No reemplaza ni modifica `deployments/5g-sa/docker-compose.yml`.
+No reemplaza los despliegues de red elegidos por el usuario.
 
 ## Uso desde la CLI
 
 ```bash
-./lain5g scenario setup 5g-sa
-./lain5g app setup
-./lain5g app start --open
+./lain5g app start --operations --open
 ./lain5g app status
 ./lain5g app logs
 ./lain5g app stop
 ```
 
-`app setup` crea `.env.app`, registra automáticamente la ruta absoluta del
-repositorio y restringe el archivo a permisos `0600`. Para habilitar descargas y
-operaciones de escenarios software desde la interfaz:
-
-```bash
-./lain5g app start --operations --open
-```
+`app start` crea `.env.app`, registra automáticamente la ruta absoluta del
+repositorio y restringe el archivo a permisos `0600`. `--operations` habilita
+descargas y operaciones de escenarios software y RF desde la interfaz.
 
 El opt-in operativo activa `LAIN5G_MUTATING_OPERATIONS_ENABLED` y
 `LAIN5G_IMAGE_PULL_ENABLED`, usa `docker-compose.app-operations.yml` y deja
-`LAIN5G_RF_WEB_CONTROL_ENABLED=false`.
+`LAIN5G_RF_WEB_CONTROL_ENABLED=true`. Esto habilita el flujo RF protegido, no una
+transmisión automática: cada sesión conserva preflight, autorización, checklist,
+frase exacta, duración finita y parada de emergencia.
 
-Prepara también el entorno del escenario que vayas a operar:
-
-```bash
-./lain5g scenario setup 5g-sa
-```
+El usuario elige 4G LTE, 4G VoLTE, 5G SA o 5G VoNR desde **Scenarios**. Al
+iniciar la simulación elegida, el backend crea o conserva su archivo local de
+credenciales sintéticas con permisos `0600`, sin devolver los secretos a la app.
 
 ## Uso directo con Make
 

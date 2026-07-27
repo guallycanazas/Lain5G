@@ -7,10 +7,14 @@ All notable changes to Lain5G-Lab are recorded in this file.
 ### Added
 
 - Integrated web application and direct software-scenario lifecycle commands
-  into the `lain5g` CLI, including an explicit software-operations mode that
-  keeps RF control disabled.
+  into the `lain5g` CLI, including an explicit operations mode for software and
+  guarded RF workflows.
 - Added private local scenario setup with generated synthetic credentials for
   the supported software profiles.
+- Made web and interactive CLI starts prepare the selected 4G or 5G software
+  environment automatically, without exposing generated credentials.
+- Serialized guarded RF starts across profiles and kept emergency-stop access
+  available by refusing app shutdown or downgrade during an active RF session.
 
 ### Fixed
 

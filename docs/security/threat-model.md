@@ -40,7 +40,7 @@ untrusted host, and do not publish the ports on a LAN or public interface.
 | Threat | Control | Residual risk |
 | --- | --- | --- |
 | Accidental or drive-by writes | `LAIN5G_MUTATING_OPERATIONS_ENABLED=false` by default; write routes return `403` | The setting is a coarse operator interlock, not user authentication |
-| RF execution enabled by the general gate | `LAIN5G_RF_WEB_CONTROL_ENABLED` remains independent and defaults false; request and profile RF guards still apply | Host compromise can bypass application controls |
+| RF execution enabled unintentionally | `LAIN5G_RF_WEB_CONTROL_ENABLED` defaults false; the trusted-workstation `--operations` launcher enables it explicitly, while request and profile RF guards still apply | Host compromise can bypass application controls |
 | Arbitrary process execution | Fixed executable and Docker-subcommand allowlists, fixed scenario/action registries, `shell=False` | An allowlisted Docker operation is powerful when the socket is present |
 | Path traversal or symlink escape | Project-root resolution and confinement for scripts, working directories, Compose paths, profiles, backups, and real IMS state | A process that can rewrite the backend itself is outside this boundary |
 | Shell or log injection through input | Structured Pydantic validation, control-character rejection, argument arrays, no shell parsing | Downstream tools may still interpret their own configuration formats |
@@ -59,7 +59,8 @@ outside dry-run. Read routes, validation-only routes, real IMS plans with
 
 Image pulls additionally require `LAIN5G_IMAGE_PULL_ENABLED=true`. RF execution
 additionally requires `LAIN5G_RF_WEB_CONTROL_ENABLED=true` and all existing RF
-guards. These settings are deliberately not aliases for one another.
+guards. The `--operations` launcher explicitly opts into both capabilities; the
+settings remain independently enforceable for manual deployments.
 
 ## Docker Socket Risk
 

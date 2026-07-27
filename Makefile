@@ -153,7 +153,6 @@ app-up-operations:
 		echo "Missing .env.app. Create it with: ./lain5g app setup --operations" >&2; \
 		exit 2; \
 	fi
-	@$(APP_CLEAN_ENV) ./lain5g app setup --operations
 	$(APP_CLEAN_ENV) docker compose --env-file .env.app -f docker-compose.app.yml -f docker-compose.app-operations.yml up -d --build
 
 app-down-operations:

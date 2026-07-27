@@ -12,7 +12,12 @@ scenario_dir="$(cd "$script_dir/.." && pwd)"
 repo_dir="$(cd "$scenario_dir/../../.." && pwd)"
 manifest="$scenario_dir/rf/safety-manifest.yaml"
 if [ "${LAIN5G_ALLOW_RF_START:-false}" != "true" ]; then echo "RF start refused: set LAIN5G_ALLOW_RF_START=true" >&2; exit 2; fi
-if [ -f "$scenario_dir/.rf-active" ]; then echo "RF session already active" >&2; exit 2; fi
+command -v flock >/dev/null 2>&1 || { echo "RF start refused: flock is required" >&2; exit 2; }
+exec 9<"$repo_dir"
+flock -n -x 9 || { echo "RF start refused: another RF start is in progress" >&2; exit 2; }
+for marker in "$repo_dir/deployments/4g-volte/x310/.rf-active" "$repo_dir/deployments/5g-sa-x310/.rf-active" "$repo_dir/deployments/5g-nsa-x310/.rf-active"; do
+  [ ! -f "$marker" ] || { echo "RF start refused: another RF session is active" >&2; exit 2; }
+done
 run_id="${LAIN5G_RUN_ID:-run-$(date -u +%Y%m%d-%H%M%S)}"
 run_dir="$repo_dir/runs/$run_id"
 mkdir -p "$run_dir/logs"
@@ -45,6 +50,7 @@ if [ "$(docker inspect -f '{{.State.Running}}' lain5g-lab-4g-lte-x310-enb 2>/dev
   exit 1
 fi
 (
+  exec 9>&-
   while [ "$(docker inspect -f '{{.State.Running}}' lain5g-lab-4g-lte-x310-enb 2>/dev/null || true)" = true ]; do sleep 2; done
   (cd "$scenario_dir" && docker compose --env-file ../common/.env -f docker-compose.yml --profile rf logs --no-color --since "$started_at" enb-x310 >"$run_dir/logs/enb-x310.log" 2>/dev/null || true)
   if grep -Fxq "run_id=$run_id" "$scenario_dir/.rf-active" 2>/dev/null; then

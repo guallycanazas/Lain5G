@@ -21,7 +21,7 @@ current stable version is the source-only release [`1.0.0`](VERSION).
 > **Tested and functional software release.** All supported software-only network
 > workflows pass their complete validation suites: 4G LTE (14/14), 4G
 > VoLTE/IMS (22/22), 5G SA (15/15), and 5G VoNR/IMS (25/25). The repository-wide
-> `make softwarex-check` also passes 283 backend tests, 48 frontend tests, the
+> `make softwarex-check` also passes 305 backend tests, 49 frontend tests, the
 > production build, source and Compose verification, release metadata checks,
 > and sensitive-file controls.
 
@@ -38,41 +38,44 @@ current stable version is the source-only release [`1.0.0`](VERSION).
 ## Quick start
 
 Requirements: GNU/Linux x86_64, Docker Engine, Docker Compose v2, Git, GNU Make,
-SCTP support, and `/dev/net/tun`.
-
-### Option A: web application
-
-This is the easiest path. It creates local synthetic credentials, builds the
-application, and opens it in your browser:
+util-linux `flock`, SCTP support, and `/dev/net/tun`.
 
 ```bash
 git clone https://github.com/guallycanazas/Lain5G.git
 cd Lain5G
-./lain5g scenario setup 5g-sa
+```
+
+### Option A: web application
+
+Launch the operational interface:
+
+```bash
 ./lain5g app start --operations --open
 ```
 
-In the app, open **Preparation**, download the missing 5G SA components, then
-open **Scenarios** to start and validate the network. RF remains disabled. Stop
-the application with `./lain5g app stop`.
+In the app, choose software-only 4G LTE, 4G VoLTE, 5G SA, or 5G VoNR, as well as
+supported real-RF profiles. **Preparation** downloads missing components, while
+**Scenarios** operates the selected network. Simulations create or preserve
+private synthetic credentials. RF transmission requires preflight, an authorized
+profile, the safety checklist, exact confirmation phrase, finite duration, and
+emergency stop. Stop the interface with `./lain5g app stop` after any active RF
+session has ended.
 
 ### Option B: CLI only
 
 ```bash
-./lain5g scenario setup 5g-sa
-./lain5g images pull 5g-sa
-./lain5g scenario start 5g-sa
-./lain5g scenario validate 5g-sa
-./lain5g scenario stop 5g-sa
+./lain5g
 ```
 
-Run `./lain5g` without arguments for the interactive console, or use
-`./lain5g profile wizard 5g-sa` for guided configuration. The safe
-observation-only app is available through `./lain5g app start --open`.
+The interactive console lets the user choose any software or RF 4G/5G profile,
+download its components, and run the available actions. Starting a simulation
+automatically prepares its private synthetic credentials; RF profiles retain all
+mandatory safety controls.
 
-`scenario setup` writes ignored local files with random synthetic credentials;
-it never prints or commits them. Use only synthetic or laboratory values. See
-[Installation](docs/installation.md) and [5G SA](docs/5g_sa.md) for details.
+The safe observation-only app is available through `./lain5g app start --open`.
+Credentials are stored in ignored local files with `0600` permissions; they are
+never printed or committed. See [Installation](docs/installation.md),
+[software 4G](docs/4g_simulation.md), and [5G SA](docs/5g_sa.md).
 
 <a id="canonical-capability-status"></a>
 
@@ -111,7 +114,7 @@ make softwarex-check
 ```
 
 `make softwarex-check` is the single release-verification command used by CI. It
-passes 283 backend tests with 77% line coverage and 48 frontend tests, followed
+passes 305 backend tests with 78% line coverage and 49 frontend tests, followed
 by TypeScript checking, the production build, Compose and profile validation,
 metadata verification, internal-link checks, public-result verification, and
 sensitive-file controls.

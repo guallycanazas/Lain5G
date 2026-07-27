@@ -8,6 +8,7 @@ from ..models.preparation import ComponentImageStatus, ComponentPullResponse, Pr
 from ..settings import Settings
 from .command_service import CommandService
 from .image_catalog import IMAGE_CATALOG, PROFILE_IMAGES, RF_ACCESS_IMAGES, required_images
+from .scenario_environment import prepare_scenario_environment
 
 
 PROFILE_NAMES = {
@@ -119,6 +120,15 @@ class PreparationService:
         status = self.profile_status(profile_id, core_only)
         if not status.ready:
             raise PreparationError(409, "COMPONENTS_MISSING", "Components are missing. Prepare them before starting the scenario.")
+
+    def prepare_environment(self, profile_id: str) -> Path:
+        try:
+            target, _ = prepare_scenario_environment(self.settings.project_root, profile_id)
+        except ValueError as exc:
+            raise PreparationError(404, "ENVIRONMENT_PROFILE_NOT_FOUND", str(exc)) from exc
+        except (OSError, UnicodeError) as exc:
+            raise PreparationError(500, "ENVIRONMENT_PREPARATION_FAILED", "Could not prepare the private scenario environment.") from exc
+        return target
 
     def _image_status(self, local_image: str) -> ComponentImageStatus:
         source, description = IMAGE_CATALOG.get(local_image, (local_image, "Official runtime image"))

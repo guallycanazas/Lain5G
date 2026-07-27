@@ -72,6 +72,7 @@ class DeploymentService:
         definition = self._definition(scenario)
         self._ensure_action(definition, "start")
         self._ensure_components(definition)
+        self._prepare_environment(definition)
         self._ensure_no_conflict(definition)
         return self._script_action(definition, "start", "DEPLOYMENT_START_FAILED", f"{definition.name} could not be started.")
 
@@ -84,6 +85,7 @@ class DeploymentService:
         definition = self._definition(scenario)
         self._ensure_action(definition, "restart")
         self._ensure_components(definition)
+        self._prepare_environment(definition)
         self._ensure_no_conflict(definition)
         return self._script_action(definition, "restart", "DEPLOYMENT_RESTART_FAILED", f"{definition.name} could not be restarted.")
 
@@ -340,3 +342,8 @@ class DeploymentService:
             return
         profile_id = "5g-vonr" if definition.id == "5g-vonr-sim" else definition.id
         self.preparation_service.ensure_ready(profile_id, core_only)
+
+    def _prepare_environment(self, definition: DeploymentDefinition) -> None:
+        if self.preparation_service is None or self.settings.dry_run or definition.rf_capable:
+            return
+        self.preparation_service.prepare_environment(definition.id)

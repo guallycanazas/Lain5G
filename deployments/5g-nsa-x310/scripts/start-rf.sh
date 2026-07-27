@@ -13,7 +13,12 @@ repo_dir="$(cd "$scenario_dir/../.." && pwd)"
 env_file="$scenario_dir/.env"; [ -f "$env_file" ] || env_file="$scenario_dir/.env.example"
 manifest="$scenario_dir/rf/safety-manifest.yaml"
 [ "${LAIN5G_ALLOW_5G_NSA_RF_START:-false}" = true ] || { echo "NSA RF start refused: set LAIN5G_ALLOW_5G_NSA_RF_START=true" >&2; exit 2; }
-[ ! -f "$scenario_dir/.rf-active" ] || { echo "NSA RF session already active" >&2; exit 2; }
+command -v flock >/dev/null 2>&1 || { echo "NSA RF start refused: flock is required" >&2; exit 2; }
+exec 9<"$repo_dir"
+flock -n -x 9 || { echo "NSA RF start refused: another RF start is in progress" >&2; exit 2; }
+for marker in "$repo_dir/deployments/4g-volte/x310/.rf-active" "$repo_dir/deployments/5g-sa-x310/.rf-active" "$repo_dir/deployments/5g-nsa-x310/.rf-active"; do
+  [ ! -f "$marker" ] || { echo "NSA RF start refused: another RF session is active" >&2; exit 2; }
+done
 REQUIRE_RF_READY=true "$script_dir/preflight.sh"
 # Let the UHD probe release the X310 management channel before srsENB opens it.
 sleep 5
@@ -33,6 +38,7 @@ if [ "$(docker inspect -f '{{.State.Running}}' lain5g-lab-5g-nsa-x310-enb 2>/dev
   exit 1
 fi
 (
+  exec 9>&-
   while [ "$(docker inspect -f '{{.State.Running}}' lain5g-lab-5g-nsa-x310-enb 2>/dev/null || true)" = true ]; do sleep 2; done
   (cd "$scenario_dir" && docker compose --env-file "$env_file" -f docker-compose.yml --profile rf logs --no-color --since "$started_at" enb-nsa-x310 >"$run_dir/logs/enb-nsa-x310.log" 2>/dev/null || true)
   (cd "$scenario_dir" && docker compose --env-file "$env_file" -f docker-compose.yml --profile rf stop enb-nsa-x310 >/dev/null 2>&1 || true)

@@ -3,6 +3,7 @@
 ## Requisitos
 
 - Docker con soporte de Compose v2.
+- `flock` de util-linux para exclusión mutua entre sesiones RF.
 - Kernel con SCTP y `/dev/net/tun` disponible.
 - Acceso a Internet para clonar y compilar Open5GS y UERANSIM durante `make build-5g-sa`.
 - Para X310: red host preparada para USRP y herramientas UHD en host si se desea validar hardware fuera del contenedor.
@@ -38,13 +39,16 @@ Para iniciar la interfaz en modo seguro de observación:
 Para permitir desde la app descargas y operaciones sobre escenarios software:
 
 ```bash
-./lain5g scenario setup 5g-sa
 ./lain5g app start --operations --open
 ```
 
-Este modo monta explícitamente el socket Docker y habilita escritura local. Debe
-usarse solo en una estación de laboratorio confiable. La ejecución RF permanece
-deshabilitada y conserva sus autorizaciones independientes.
+Este modo monta explícitamente el socket Docker y habilita escritura local y el
+control RF protegido. Debe usarse solo en una estación de laboratorio confiable.
+El usuario puede elegir perfiles software o RF 4G/5G desde la interfaz. Las
+simulaciones preparan automáticamente credenciales sintéticas privadas; RF exige
+además preflight, autorización, checklist, frase exacta, duración finita y parada
+de emergencia. Mientras exista una sesión RF activa, la CLI rechaza detener o
+degradar la app para mantener disponible la parada de emergencia web.
 
 La preparación queda disponible en:
 
@@ -112,12 +116,16 @@ en los Dockerfiles del proyecto.
 
 ## Configuración inicial
 
-La opción recomendada genera valores sintéticos aleatorios en el archivo local
-ignorado y aplica permisos `0600`:
+La web operativa y la consola interactiva preparan automáticamente el escenario
+software elegido. Para preparar un perfil directamente sin iniciar servicios:
 
 ```bash
-./lain5g scenario setup 5g-sa
+./lain5g scenario setup PERFIL
 ```
+
+`PERFIL` puede ser `4g-lte-sim`, `4g-volte-sim`, `5g-sa` o `5g-vonr-sim`. El
+comando genera valores sintéticos aleatorios en un archivo local ignorado y
+aplica permisos `0600`.
 
 Para configurar los valores manualmente:
 

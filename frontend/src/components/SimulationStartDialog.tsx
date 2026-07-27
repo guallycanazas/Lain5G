@@ -78,7 +78,7 @@ export function SimulationStartDialog({ deployment, open, loading, onCancel, onC
               return <div key={stage.name}><span><Icon size={17} /></span><strong>{stage.name}</strong><p>{stage.detail}</p></div>;
             })}
           </div>
-          <div className="simulation-launch-note"><strong>What happens next</strong><p>The backend checks for another active scenario, starts this stack, and refreshes service status. Use <b>Validate</b> after startup to record registration, session and signaling evidence.</p></div>
+          <div className="simulation-launch-note"><strong>What happens next</strong><p>The backend creates or preserves private synthetic credentials for this profile, checks for another active scenario, starts the stack, and refreshes service status. Use <b>Validate</b> after startup to record registration, session and signaling evidence.</p></div>
         </div>
         <footer><ActionButton variant="secondary" disabled={loading} onClick={onCancel}>Cancel</ActionButton><ActionButton loading={loading} onClick={onConfirm}><Boxes size={15} />Start full simulation</ActionButton></footer>
       </section>
