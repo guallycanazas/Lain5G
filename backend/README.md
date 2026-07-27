@@ -1,6 +1,9 @@
 # Lain5G-Lab Backend
 
-Backend FastAPI mínimo para administrar el despliegue 5G SA existente mediante los scripts ya validados en `deployments/5g-sa/scripts/`.
+Backend FastAPI para preparar, operar y validar las redes de laboratorio 4G
+LTE/VoLTE y 5G SA/VoNR, junto con los perfiles RF controlados X-Series y el
+perfil NSA experimental. La API reutiliza los scripts versionados de cada
+escenario bajo `deployments/` y conserva sus límites de seguridad.
 
 ## Desarrollo
 

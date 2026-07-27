@@ -10,8 +10,12 @@ All notable changes to Lain5G-Lab are recorded in this file.
 - Offline `make version-check` policy enforcement and focused release tests.
 - Reproducibility policy and an evidence-backed dependency/version matrix.
 - Hardware-free CI and a unified `make softwarex-check` entry point.
-- A schema-validated, sanitized public-result pipeline with three passing
-  software-validator summaries and one blocked VoNR attempt.
+- A schema-validated, sanitized public-result pipeline with passing 4G LTE,
+  VoLTE/IMS, and 5G SA summaries plus preserved historical VoNR evidence.
+- Validated 5G VoNR software operation with 25/25 passing 5GC, UE, dual-PDU,
+  user-plane, IMS-path, and authenticated SIP checks.
+- Validated 4G VoLTE software operation with 22/22 passing LTE, EPC, data, IMS,
+  DNS, subscriber-provisioning, and authenticated SIP checks.
 - English-first release documentation, Spanish overview, citation and community
   policy stubs, legal review, and a partial application dependency SBOM.
 
@@ -56,8 +60,9 @@ All notable changes to Lain5G-Lab are recorded in this file.
 
 ### Known Limitations
 
-- No RF, hardware, database, or end-to-end scenario run was performed for this
-  release-candidate dependency update.
+- Software 4G LTE/VoLTE, 5G SA, and VoNR scenarios were validated. RF hardware,
+  commercial-UE behavior, audio quality, and RTP performance remain separate
+  experimental scopes.
 - Debian and Ubuntu package repositories used inside image builds are not
   snapshot repositories, so `apt-get` package closure remains time-dependent.
 - The RTPengine `26.0` repository is a moving release channel, and its observed

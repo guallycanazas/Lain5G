@@ -6,21 +6,30 @@
 
 [README en inglés](README.md)
 
-Lain5G-Lab es un entorno reproducible para desplegar, operar y validar escenarios
-experimentales 4G LTE/EPC/IMS, 5G standalone (SA) y 5G non-standalone (NSA)
-experimental. Combina componentes consolidados de redes de código abierto con
-aislamiento mediante Docker Compose, configuración declarativa, un backend
-FastAPI, una interfaz React y registros trazables de validación.
+Lain5G-Lab es un entorno reproducible para desplegar, operar y validar redes de
+laboratorio integradas 4G LTE/VoLTE y 5G SA/VoNR, además de un perfil 5G
+non-standalone (NSA) experimental. Combina componentes consolidados de redes de
+código abierto con aislamiento mediante Docker Compose, configuración
+declarativa, un backend FastAPI, una interfaz React y registros trazables de
+validación.
 
 Lain5G-Lab no implementa desde cero un core móvil ni una RAN. Su contribución es
 la integración, orquestación, validación y trazabilidad reproducibles de
 Open5GS, UERANSIM, srsRAN, Kamailio, pyHSS, UHD y componentes relacionados. La
 versión actual es el candidato solo de código fuente [`1.0.0-rc.1`](VERSION).
 
+> **Versión software probada y funcional.** Todos los flujos de red soportados
+> completamente en software aprueban sus suites de validación: 4G LTE (14/14),
+> 4G VoLTE/IMS (22/22), 5G SA (15/15) y 5G VoNR/IMS (25/25). La verificación
+> global `make softwarex-check` también aprueba 266 pruebas backend, 48 pruebas
+> frontend, el build de producción, la verificación de código y Compose, los
+> metadatos de publicación y los controles de archivos sensibles.
+
 ## Características principales
 
 - Escenarios Docker Compose aislados para flujos software y SDR controlados.
-- Ejemplos 4G LTE, registro IMS 4G y 5G SA completamente software.
+- Redes software 4G LTE/VoLTE y 5G SA/VoNR validadas.
+- Validación de registro LTE/5G, plano de usuario, IMS, DNS y SIP autenticado.
 - Perfiles declarativos con archivos locales ignorados para valores operativos.
 - Herramientas FastAPI y React para observación local y operaciones protegidas.
 - Validadores de escenarios y registros públicos anonimizados.
@@ -38,7 +47,7 @@ git clone https://github.com/guallycanazas/Lain5G.git
 cd Lain5G
 
 cp deployments/5g-sa/.env.example deployments/5g-sa/.env
-# Add laboratory-only subscriber values to the ignored local .env file.
+# Añada valores de suscriptor exclusivos del laboratorio al archivo .env ignorado.
 
 ./lain5g images pull 5g-sa
 make start-5g-sa
@@ -49,26 +58,33 @@ make stop-5g-sa
 Use solo valores de suscriptor sintéticos o de laboratorio. Consulte
 [Instalación](docs/installation.md) y [5G SA](docs/5g_sa.md) para más detalles.
 
-## Escenarios
+## Redes software validadas
 
-| Escenario | Propósito | Estado actual |
+| Escenario | Propósito | Validación |
 | --- | --- | --- |
-| `5g-sa-sim` | 5G SA software con Open5GS + UERANSIM | Validado en simulación |
-| `4g-lte-sim` | Datos LTE con Open5GS + srsRAN ZMQ | Validado en simulación |
-| `4g-ims-sim` | LTE software + registro IMS de laboratorio | Validado en simulación |
-| `5g-vonr-sim` | 5G SA software + IMS de laboratorio | No validado |
-| `4g-lte-x310` | LTE con hardware X300/X310 compatible | Parcialmente validado |
-| `5g-sa-x310` | 5G SA con hardware X300/X310 compatible | No validado |
-| `5g-nsa-x310` | LTE + NR EN-DC experimental | Parcialmente validado |
-| `ims-real` | Paquete separado Open5GS, pyHSS y Kamailio | Parcial / dependiente de dry-run |
+| `4g-lte-sim` | EPC Open5GS + datos LTE con srsRAN ZMQ | **PASS (14/14)** |
+| `4g-volte-sim` | 4G LTE + EPC + señalización IMS/VoLTE | **PASS (22/22)** |
+| `5g-sa-sim` | 5GC Open5GS + datos 5G SA con UERANSIM | **PASS (15/15)** |
+| `5g-vonr-sim` | 5G SA + dos sesiones PDU + señalización IMS/VoNR | **PASS (25/25)** |
 
-El estado se aplica únicamente al alcance indicado. `5g-sa-sim` utiliza el
-despliegue `5g-sa` y el resultado público `4g-ims-sim` utiliza el perfil
-operativo `4g-volte-sim`. Consulte [Validación](docs/validation.md) y
-[Resultados públicos](results/public/README.md) para conocer la evidencia y sus
-límites exactos.
+El resultado público `4g-ims-sim` corresponde al perfil operativo
+`4g-volte-sim` y valida LTE, EPC, IMS y registro SIP autenticado. La validación
+operacional más reciente de `5g-vonr-sim` cubre el 5GC, NG Setup, registro UE,
+sesiones PDU de internet e IMS, ambos túneles UE, conectividad de datos, DNS IMS,
+acceso al P-CSCF y registro SIP autenticado. Consulte
+[Validación](docs/validation.md) y [Resultados públicos](results/public/README.md)
+para conocer el modelo de evidencia.
 
-## Pruebas
+### Perfiles hardware y experimentales protegidos
+
+| Perfil | Propósito | Disponibilidad |
+| --- | --- | --- |
+| `4g-lte-x310` | EPC/IMS 4G con eNB X300/X310 compatible | Core e IMS funcionales; RF requiere hardware autorizado |
+| `5g-sa-x310` | 5G SA con gNB X300/X310 compatible | Flujo RF protegido disponible; depende del hardware |
+| `5g-nsa-x310` | LTE + NR EN-DC experimental | Perfil experimental protegido disponible |
+| `ims-real` | Runtime separado Open5GS, pyHSS y Kamailio | Paquete operacional; depende del entorno |
+
+## Reproducibilidad y pruebas
 
 ```bash
 make test
@@ -76,11 +92,11 @@ make verify
 make softwarex-check
 ```
 
-El candidato actual aprueba 262 pruebas backend con 77% de cobertura de líneas
-backend y 42 pruebas frontend. También aprueba localmente la comprobación
-TypeScript, el build de producción frontend, la validación Compose y de perfiles,
-los metadatos y los controles de archivos sensibles. Estas comprobaciones
-software no validan RF ni la operación con UE comerciales.
+`make softwarex-check` es el comando único de verificación de release utilizado
+por CI. Aprueba 266 pruebas backend con 77% de cobertura de líneas y 48 pruebas
+frontend, seguido de TypeScript, build de producción, validación Compose y de
+perfiles, metadatos, enlaces internos, resultados públicos y controles de
+archivos sensibles.
 
 ## Arquitectura
 
@@ -118,9 +134,10 @@ en esta presentación general.
   conformidad.
 - Los resultados de simulación software no deben extrapolarse a SDR ni a UE
   comerciales.
-- No se han demostrado una llamada VoLTE completa ni RTP bidireccional.
-- No se han validado VoNR, registro y datos 5G SA con UE comercial ni un plano de
-  usuario NR estable.
+- El alcance VoLTE y VoNR validado cubre registro de red, sesiones de datos,
+  acceso IMS y señalización SIP autenticada. La calidad de audio, el rendimiento
+  RTP, el comportamiento de UE comerciales y los resultados RF son experimentos
+  separados.
 - Los artefactos públicos son resúmenes anonimizados, no trazas de protocolo.
 
 ## Autores

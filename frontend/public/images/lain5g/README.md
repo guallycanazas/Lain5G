@@ -6,15 +6,14 @@ the high-quality sources; the website uses optimized WebP variants.
 
 Console placements:
 
-- `voice-topology.webp`: IMS workspace concept; it does not claim a validated
-  VoLTE or VoNR call.
+- `voice-topology.webp`: IMS workspace concept; validation claims come from the
+  scenario run evidence, not from the illustration itself.
 - `subscriber-provisioning.webp`: subscriber workflow; eSIM remains a design
   concept and is not exposed by the current backend.
 - `sdr-hardware.webp`: cropped to the supported X300/X310 preparation path.
 - `observability-concept.webp`: illustrative dashboard; displayed values are
   not live telemetry.
-- `lab-recipes.webp`: reproducible workflow, cropped before unsupported voice
-  outcome labels.
+- `lab-recipes.webp`: reproducible 4G/5G and VoLTE/VoNR workflow.
 - `isolation-concept.webp`: isolation artwork; actual enforcement remains in
   local manifests, preflight checks, and backend guardrails.
 

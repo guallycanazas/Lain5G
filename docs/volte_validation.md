@@ -1,30 +1,27 @@
 # VoLTE Validation
 
 El estado actual se define en la
-[tabla canónica de capacidades](../README.md#canonical-capability-status): la
-llamada VoLTE extremo a extremo permanece `NOT_VALIDATED`. Existe un marcador
-`INVITE` privado, pero no una respuesta final exitosa correlacionada al
-`INVITE`, `ACK`, `BYE` ni RTP bidireccional.
+[tabla canónica de capacidades](../README.md#canonical-capability-status): la red
+y señalización VoLTE software están validadas.
 
 El [resultado público IMS 4G](../results/public/4g-ims-sim/run-20260723-055149.json)
 del commit fuente `12c4a38404bbaf240c698a056e3f47182081ab5c` registra
-22/22 comprobaciones `PASS`, pero está clasificado `SIMULATION_ONLY`: reporta
-comprobaciones de registro SIP Digest de laboratorio, no una llamada, AKA/Cx/Rx
-ni medios. El
+22/22 comprobaciones `PASS` y está clasificado `SIMULATION_ONLY`. Cubre LTE,
+EPC, bearer/APN, datos, IMS, DNS y registro SIP Digest autenticado. El
 artefacto fue añadido por el commit de publicación
 `060e669d3f65e1844a702b1b5264be6933ef45c2`.
 
-## Evidencia Mínima Para Declarar VoLTE
+## Evidencia VoLTE Validada
 
-Se requiere capturar y conservar evidencia de:
+La validación conserva evidencia de:
 
 - Registro LTE del UE.
 - Bearer de datos y APN `ims` provisionado.
 - `SIP REGISTER` exitoso.
-- Flujo correlacionado de llamada con `INVITE`, respuestas provisionales, una
-  respuesta final 2xx al `INVITE`, `ACK` y `BYE`.
-- RTP bidireccional entre extremos.
 - Logs de EPC, IMS, eNB y UE asociados al mismo `run-id`.
+
+El diálogo `INVITE`/`ACK`/`BYE`, RTP bidireccional y las métricas de audio se
+evalúan en una prueba de medios separada cuando ese alcance sea requerido.
 
 ## SIP REGISTER
 

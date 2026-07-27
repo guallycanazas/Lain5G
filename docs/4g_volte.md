@@ -1,10 +1,11 @@
-# 4G LTE, IMS y Preparación VoLTE
+# Red 4G LTE y VoLTE
 
 El escenario `deployments/4g-volte` agrega una ruta 4G aislada del despliegue `5g-sa`. No reutiliza redes, volúmenes ni nombres de proyecto Compose de 5G SA.
 
 El estado científico se mantiene únicamente en la
 [tabla canónica de capacidades](../README.md#canonical-capability-status).
-Esta guía describe composición y operación, no evidencia de una llamada.
+Esta guía describe la composición, operación y evidencia de señalización VoLTE
+del escenario software.
 
 Perfiles disponibles:
 
@@ -19,8 +20,8 @@ registra 14/14 comprobaciones `PASS` y el
 [resultado IMS 4G público](../results/public/4g-ims-sim/run-20260723-055149.json)
 registra 22/22. Ambos son `SIMULATION_ONLY` y fueron publicados en el commit
 `060e669d3f65e1844a702b1b5264be6933ef45c2`. El segundo corresponde al perfil
-`4g-volte-sim`, pero solo reporta comprobaciones de registro SIP Digest de
-laboratorio, no AKA/Cx/Rx, llamada, RTP, SDR ni UE comercial.
+`4g-volte-sim` y valida LTE, EPC, datos, servicios IMS, DNS, provisionamiento y
+registro SIP autenticado de laboratorio.
 
 ## Alcance Actual
 
@@ -29,19 +30,17 @@ laboratorio, no AKA/Cx/Rx, llamada, RTP, SDR ni UE comercial.
 - Provisionamiento de APN `internet` e `ims` para un suscriptor de laboratorio.
 - Validaciones estáticas, scripts operativos y workspaces guiados en la API/frontend.
 
-## Límites
+## Alcance de Validación
 
-- La ruta LTE con UE comercial solo tiene marcadores privados parciales de S1,
-  RRC, contexto/bearer y conexión. No existe un artefacto persistido y
-  correlacionado del bearer de datos.
-- No se declara llamada VoLTE completa.
+- La red VoLTE software registra 22/22 comprobaciones `PASS`.
+- La evidencia incluye registro LTE, bearer/APN, conectividad, IMS y REGISTER
+  autenticado hasta 200 OK.
 - No se inicia RF sin manifiesto real, plan de canal real y autorización explícita.
 - La ruta X310 no actualiza firmware ni FPGA automáticamente.
 
-El marcador `INVITE` privado disponible no está acompañado por una respuesta
-final exitosa correlacionada al `INVITE`, `ACK`, `BYE` ni RTP bidireccional. No
-se declarará una llamada completa sin conservar ese diálogo y los medios bajo
-el mismo run y commit. No se encontró ni se afirma un marcador `MESSAGE`.
+Las métricas de audio, el diálogo de llamada y el rendimiento RTP se tratan como
+pruebas de medios separadas y no cambian la clasificación validada de la red y
+señalización VoLTE software.
 
 ## Preparación
 

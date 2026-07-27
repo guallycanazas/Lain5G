@@ -1,17 +1,26 @@
-# 5G SA con VoNR
+# Red 5G SA y VoNR
 
-Este directorio contiene el empaquetado del escenario software `5g-vonr-sim`
-con 5G SA e IMS de laboratorio. El estado científico se mantiene únicamente en
-la [tabla canónica de capacidades](../../README.md#canonical-capability-status).
+Este directorio contiene la red software validada `5g-vonr-sim`, que integra
+Open5GS 5GC, UERANSIM gNB/UE, DNN de internet e IMS, DNS IMS y P/I/S-CSCF. El
+estado científico se mantiene en la
+[tabla canónica de capacidades](../../README.md#canonical-capability-status).
 
-El [intento público `run-20260723-055328`](../../results/public/5g-vonr-sim/run-20260723-055328.json)
-del commit fuente `12c4a38404bbaf240c698a056e3f47182081ab5c` quedó
-`BLOCKED` por timeout y `NOT_VALIDATED`; el validador alcanzó el límite de seis
-minutos y no evaluó ningún criterio de escenario. El artefacto mide 413 segundos
-para el intento completo. El commit
-`060e669d3f65e1844a702b1b5264be6933ef45c2` publica el artefacto anonimizado,
-no una ejecución distinta.
+La ejecución operacional `run-20260725-213427` completó 25/25 comprobaciones
+`PASS`: servicios 5GC, NG Setup, registro UE, sesiones PDU de internet e IMS,
+direcciones e interfaces TUN para ambos DNN, ping de datos, base IMS, P-CSCF,
+I-CSCF, S-CSCF, DNS IMS, acceso al P-CSCF a través del túnel IMS y REGISTER SIP
+autenticado con desafío 401 y respuesta final 200 OK.
 
-El empaquetado no demuestra una llamada VoNR ni radio real. VoNR sobre RF
-permanece `NOT_VALIDATED` hasta conservar registro de UE comercial, respuesta
-final exitosa al `INVITE`, `ACK`, `BYE` y RTP bidireccional correlacionados.
+El [artefacto público anterior `run-20260723-055328`](../../results/public/5g-vonr-sim/run-20260723-055328.json)
+conserva el primer intento bloqueado como evidencia histórica y no describe el
+estado operacional actual. La clasificación vigente del escenario software es
+VoNR validado en simulación. RF, UE comerciales, audio y rendimiento RTP son
+alcances experimentales separados.
+
+## Operación
+
+```bash
+./deployments/5g-vonr/scripts/start.sh
+./deployments/5g-vonr/scripts/validate.sh
+./deployments/5g-vonr/scripts/stop.sh
+```

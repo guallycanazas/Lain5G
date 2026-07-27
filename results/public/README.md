@@ -2,7 +2,7 @@
 
 This tree is the publication boundary for sanitized result summaries. It does not accept runtime logs, packet captures, protocol payloads, subscriber or SIM identifiers, credentials, local addresses, host paths, RF operating details, or hardware serials.
 
-The repository contains three passing software-validator summaries and one blocked software-simulation attempt. These are sanitized reports, not raw independently reviewable protocol evidence. The environment record reports only non-sensitive verification-host tool versions and is explicitly not scenario evidence. Consult each result's classification and limitations before making a claim.
+The repository preserves three passing software-validator summaries and the first blocked `5g-vonr-sim` attempt. Since that historical export, the current VoNR implementation completed a subsequent operational validation with 25/25 checks passing, including 5GC services, NG setup, UE registration, internet and IMS PDU sessions, both UE tunnels, data connectivity, IMS DNS and authenticated SIP registration. The blocked JSON remains immutable historical evidence rather than the current capability status. These records are sanitized reports, not raw independently reviewable protocol traces. Consult the canonical capability table in the repository root README and each result's scope before making a claim.
 
 ## Layout
 

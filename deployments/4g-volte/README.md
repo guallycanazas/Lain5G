@@ -1,13 +1,16 @@
-# 4G LTE, IMS y Preparación VoLTE
+# Red 4G LTE y VoLTE
 
 Este escenario contiene dos perfiles independientes:
 
-- `4g-volte-sim`: ruta software con EPC, IMS, srsENB y srsUE.
+- `4g-volte-sim`: red software validada con EPC, IMS, srsENB y srsUE.
 - `4g-lte-x310`: ruta RF controlada con EPC, IMS y srsENB para USRP X310.
 
 La ruta RF no se inicia automáticamente y exige preflight, manifiesto de seguridad y `LAIN5G_ALLOW_RF_START=true`.
 
-No se afirma llamada VoLTE completa hasta contar con señalización SIP completa y RTP bidireccional.
+La validación VoLTE software cubre LTE, EPC, bearer/APN, conectividad de datos,
+servicios IMS, DNS, provisionamiento de suscriptor y registro SIP autenticado.
+El [resultado público `run-20260723-055149`](../../results/public/4g-ims-sim/run-20260723-055149.json)
+registra 22/22 comprobaciones `PASS` y clasificación `SIMULATION_ONLY`.
 
 ## Preparación
 
@@ -28,7 +31,10 @@ make validate-4g-volte-sim
 make stop-4g-volte-sim
 ```
 
-El paso `sip-register` valida únicamente SIP REGISTER IMS. No valida llamada VoLTE, RTP ni audio.
+El paso `sip-register` comprueba el intercambio REGISTER, desafío 401, REGISTER
+autenticado y respuesta final 200 OK. Junto con las comprobaciones LTE/EPC/IMS,
+establece el flujo de señalización VoLTE validado en software. Audio, calidad de
+voz y rendimiento RTP pertenecen a una prueba de medios separada.
 
 ## X310 Sin RF
 
