@@ -21,7 +21,7 @@ current stable version is the source-only release [`1.0.0`](VERSION).
 > **Tested and functional software release.** All supported software-only network
 > workflows pass their complete validation suites: 4G LTE (14/14) and 5G SA
 > (15/15). The repository-wide
-> `make softwarex-check` also passes 301 backend tests, 47 frontend tests, the
+> `make softwarex-check` also passes 305 backend tests, 47 frontend tests, the
 > production build, source and Compose verification, release metadata checks,
 > and sensitive-file controls.
 
@@ -106,7 +106,7 @@ make softwarex-check
 ```
 
 `make softwarex-check` is the single release-verification command used by CI. It
-passes 301 backend tests with 77% line coverage and 47 frontend tests, followed
+passes 305 backend tests with 77% line coverage and 47 frontend tests, followed
 by TypeScript checking, the production build, Compose and profile validation,
 metadata verification, internal-link checks, public-result verification, and
 sensitive-file controls.

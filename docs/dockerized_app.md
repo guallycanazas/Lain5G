@@ -117,8 +117,9 @@ LAIN5G_OPEN5GS_MONGO_URI=mongodb://mongo:27017/open5gs
 LAIN5G_OPEN5GS_MONGO_DATABASE=open5gs
 LAIN5G_OPEN5GS_SUBSCRIBER_COLLECTION=subscribers
 LAIN5G_OPEN5GS_DOCKER_NETWORK=lain5g-lab-5g-sa-core
+LAIN5G_OPEN5GS_DOCKER_IP=10.20.0.250
 ```
 
-El backend solo intenta unirse a la red Docker 5G SA cuando el contenedor MongoDB está en ejecución y `LAIN5G_MUTATING_OPERATIONS_ENABLED=true`. El modo base nunca modifica redes Docker.
+El backend solo intenta unirse a una red Docker 5G SA existente cuando `LAIN5G_MUTATING_OPERATIONS_ENABLED=true`. Usa obligatoriamente la IP reservada `10.20.0.250` para no competir con MongoDB (`10.20.0.2`), `init-subscriber` (`10.20.0.3`) ni las demás direcciones estáticas del núcleo. El inicio 5G también corrige una conexión antigua antes de limpiar o levantar servicios. El modo base nunca modifica redes Docker.
 
 Ver `docs/subscribers.md`.

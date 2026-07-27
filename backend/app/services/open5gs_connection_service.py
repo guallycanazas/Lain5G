@@ -87,9 +87,54 @@ class Open5GSConnectionService:
         network = self.settings.open5gs_docker_network.strip()
         if not network:
             return
-        if not self._mongo_container_running():
+        containers = self._network_containers(network)
+        if containers is None:
             return
         hostname = socket.gethostname()
+        target_ip = self.settings.open5gs_docker_ip
+        current_ip = self._backend_network_ip(containers, hostname)
+        if current_ip == target_ip:
+            return
+        try:
+            if current_ip is not None:
+                disconnected = subprocess.run(
+                    ["docker", "network", "disconnect", network, hostname],
+                    capture_output=True,
+                    text=True,
+                    timeout=5,
+                    check=False,
+                    shell=False,
+                )
+                if disconnected.returncode != 0 and self._current_backend_ip(network, hostname) != target_ip:
+                    raise OSError("Could not disconnect backend from the Open5GS network")
+            connected = subprocess.run(
+                ["docker", "network", "connect", "--ip", target_ip, network, hostname],
+                capture_output=True,
+                text=True,
+                timeout=5,
+                check=False,
+                shell=False,
+            )
+        except (FileNotFoundError, subprocess.SubprocessError) as exc:
+            raise OSError("Could not reserve the backend Open5GS network address") from exc
+        if connected.returncode != 0 and self._current_backend_ip(network, hostname) != target_ip:
+            raise OSError("Could not connect backend to the reserved Open5GS network address")
+        if self._current_backend_ip(network, hostname) != target_ip:
+            raise OSError("Backend did not receive the reserved Open5GS network address")
+
+    @staticmethod
+    def _backend_network_ip(containers: dict, hostname: str) -> str | None:
+        for data in containers.values():
+            if data.get("Name") == hostname or data.get("Name") == "lain5g-lab-app-backend":
+                return str(data.get("IPv4Address") or "").split("/", 1)[0]
+        return None
+
+    def _current_backend_ip(self, network: str, hostname: str) -> str | None:
+        containers = self._network_containers(network)
+        return self._backend_network_ip(containers, hostname) if containers is not None else None
+
+    @staticmethod
+    def _network_containers(network: str) -> dict | None:
         try:
             inspect = subprocess.run(
                 ["docker", "network", "inspect", network, "--format", "{{json .Containers}}"],
@@ -99,30 +144,17 @@ class Open5GSConnectionService:
                 check=False,
                 shell=False,
             )
-        except (FileNotFoundError, subprocess.SubprocessError):
-            return
+        except (FileNotFoundError, subprocess.SubprocessError) as exc:
+            raise OSError("Could not inspect the Open5GS Docker network") from exc
         if inspect.returncode != 0:
-            return
+            error = str(inspect.stderr or "").lower()
+            if "no such network" in error or "not found" in error:
+                return None
+            raise OSError("Could not inspect the Open5GS Docker network")
         try:
             containers = json.loads(inspect.stdout or "{}")
-        except json.JSONDecodeError:
-            return
-        for data in containers.values():
-            if data.get("Name") == hostname or data.get("Name") == "lain5g-lab-app-backend":
-                return
-        subprocess.run(["docker", "network", "connect", network, hostname], capture_output=True, text=True, timeout=5, check=False, shell=False)
-
-    @staticmethod
-    def _mongo_container_running() -> bool:
-        try:
-            result = subprocess.run(
-                ["docker", "inspect", "-f", "{{.State.Running}}", "lain5g-lab-5g-sa-mongo"],
-                capture_output=True,
-                text=True,
-                timeout=3,
-                check=False,
-                shell=False,
-            )
-        except (FileNotFoundError, subprocess.SubprocessError):
-            return False
-        return result.returncode == 0 and result.stdout.strip() == "true"
+        except json.JSONDecodeError as exc:
+            raise OSError("Docker returned an invalid Open5GS network description") from exc
+        if not isinstance(containers, dict):
+            raise OSError("Docker returned an invalid Open5GS network description")
+        return containers

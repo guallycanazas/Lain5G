@@ -27,12 +27,13 @@ LAIN5G_OPEN5GS_SUBSCRIBER_COLLECTION=subscribers
 LAIN5G_SUBSCRIBER_SECRETS_VISIBLE=false
 LAIN5G_SUBSCRIBER_OPERATION_TIMEOUT=15
 LAIN5G_OPEN5GS_DOCKER_NETWORK=lain5g-lab-5g-sa-core
+LAIN5G_OPEN5GS_DOCKER_IP=10.20.0.250
 LAIN5G_MUTATING_OPERATIONS_ENABLED=false
 ```
 
 Cuando el laboratorio 5G SA está detenido, la aplicación sigue iniciando y `/api/subscribers/connection` devuelve `disconnected` o `timeout` de forma controlada.
 
-Cuando MongoDB está activo, el backend puede conectarse a la red Docker `lain5g-lab-5g-sa-core` solo si las mutaciones están habilitadas. No se levanta 5G SA automáticamente.
+Cuando existe la red Docker `lain5g-lab-5g-sa-core`, el backend puede conectarse solo si las mutaciones están habilitadas. La IP reservada `10.20.0.250` evita colisiones con los servicios estáticos del núcleo, incluso entre reinicios. No se levanta 5G SA automáticamente.
 
 ## Esquema Soportado
 

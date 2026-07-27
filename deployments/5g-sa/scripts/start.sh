@@ -22,6 +22,27 @@ if [ "${LAIN5G_DRY_RUN:-false}" != "true" ]; then
     exit 2
   fi
 
+  network=lain5g-lab-5g-sa-core
+  backend=lain5g-lab-app-backend
+  backend_ip=10.20.0.250
+  backend_network_ip(){
+    docker network inspect "$network" --format '{{range .Containers}}{{if eq .Name "lain5g-lab-app-backend"}}{{.IPv4Address}}{{end}}{{end}}' 2>/dev/null | cut -d/ -f1 || true
+  }
+  if docker network inspect "$network" >/dev/null 2>&1; then
+    current_ip="$(backend_network_ip)"
+    if [ -n "$current_ip" ] && [ "$current_ip" != "$backend_ip" ]; then
+      docker network disconnect "$network" "$backend" >/dev/null 2>&1 || true
+      if ! docker network connect --ip "$backend_ip" "$network" "$backend"; then
+        if [ "$(backend_network_ip)" = "$backend_ip" ] || ! docker network inspect "$network" >/dev/null 2>&1 || ! docker inspect "$backend" >/dev/null 2>&1; then
+          :
+        else
+          echo "Could not reserve $backend_ip for $backend" >&2
+          exit 2
+        fi
+      fi
+    fi
+  fi
+
   x310_project="lain5g-lab-5g-sa-x310"
   x310_network="lain5g-lab-5g-sa-x310-core"
   if [ -n "$(docker ps -aq --filter "label=com.docker.compose.project=$x310_project")" ] || docker network inspect "$x310_network" >/dev/null 2>&1; then
@@ -34,8 +55,8 @@ if [ "${LAIN5G_DRY_RUN:-false}" != "true" ]; then
   existing_containers="$(docker ps -aq --filter "label=com.docker.compose.project=$project_name")"
   running_containers="$(docker ps -q --filter "label=com.docker.compose.project=$project_name")"
   if [ -n "$existing_containers" ] && [ -z "$running_containers" ]; then
-    (cd "$scenario_dir" && docker compose --env-file .env -f docker-compose.yml down --remove-orphans)
-    echo "Removed stopped 5G SA containers with stale network references."
+    (cd "$scenario_dir" && docker compose --env-file .env -f docker-compose.yml rm -f)
+    echo "Removed stopped 5G SA containers while preserving the reserved backend network."
   fi
 fi
 
@@ -59,10 +80,10 @@ printf '{\n  "checks": []\n}\n' > "$run_dir/validation.json"
 printf '{\n  "created_at": "%s",\n  "metrics": []\n}\n' "$started_at" > "$run_dir/metrics.json"
 
 if [ "${LAIN5G_DRY_RUN:-false}" = "true" ]; then
-  echo "DRY RUN: docker compose --env-file .env -f docker-compose.yml -f docker-compose.runtime.yml up -d"
+  echo "DRY RUN: docker compose --env-file .env -f docker-compose.yml -f docker-compose.runtime.yml up -d --remove-orphans"
   echo "Created run metadata: runs/$run_id"
   exit 0
 fi
 
-(cd "$scenario_dir" && docker compose --env-file .env -f docker-compose.yml -f docker-compose.runtime.yml up -d)
+(cd "$scenario_dir" && docker compose --env-file .env -f docker-compose.yml -f docker-compose.runtime.yml up -d --remove-orphans)
 echo "Created run metadata: runs/$run_id"

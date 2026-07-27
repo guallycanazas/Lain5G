@@ -21,7 +21,7 @@ versión estable actual es la release solo de código fuente [`1.0.0`](VERSION).
 > **Versión software probada y funcional.** Todos los flujos de red soportados
 > completamente en software aprueban sus suites de validación: 4G LTE (14/14) y
 > 5G SA (15/15). La verificación
-> global `make softwarex-check` también aprueba 301 pruebas backend, 47 pruebas
+> global `make softwarex-check` también aprueba 305 pruebas backend, 47 pruebas
 > frontend, el build de producción, la verificación de código y Compose, los
 > metadatos de publicación y los controles de archivos sensibles.
 
@@ -104,7 +104,7 @@ make softwarex-check
 ```
 
 `make softwarex-check` es el comando único de verificación de release utilizado
-por CI. Aprueba 301 pruebas backend con 77% de cobertura de líneas y 47 pruebas
+por CI. Aprueba 305 pruebas backend con 77% de cobertura de líneas y 47 pruebas
 frontend, seguido de TypeScript, build de producción, validación Compose y de
 perfiles, metadatos, enlaces internos, resultados públicos y controles de
 archivos sensibles.

@@ -1,5 +1,6 @@
 import re
 from functools import lru_cache
+from ipaddress import AddressValueError, IPv4Address
 from pathlib import Path
 from typing import Annotated
 
@@ -30,6 +31,7 @@ class Settings(BaseSettings):
     subscriber_secrets_visible: bool = Field(default=False, alias="LAIN5G_SUBSCRIBER_SECRETS_VISIBLE")
     subscriber_operation_timeout: int = Field(default=15, ge=1, le=120, alias="LAIN5G_SUBSCRIBER_OPERATION_TIMEOUT")
     open5gs_docker_network: str = Field(default="lain5g-lab-5g-sa-core", alias="LAIN5G_OPEN5GS_DOCKER_NETWORK")
+    open5gs_docker_ip: str = Field(default="10.20.0.250", alias="LAIN5G_OPEN5GS_DOCKER_IP")
     rf_web_control_enabled: bool = Field(default=False, alias="LAIN5G_RF_WEB_CONTROL_ENABLED")
     image_pull_enabled: bool = Field(default=False, alias="LAIN5G_IMAGE_PULL_ENABLED")
 
@@ -58,6 +60,18 @@ class Settings(BaseSettings):
         value = value.strip()
         if value and not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9_.-]{0,127}", value):
             raise ValueError("Docker network name contains unsupported characters")
+        return value
+
+    @field_validator("open5gs_docker_ip")
+    @classmethod
+    def validate_docker_ip(cls, value: str) -> str:
+        value = value.strip()
+        try:
+            IPv4Address(value)
+        except AddressValueError as exc:
+            raise ValueError("Docker network attachment IP must be an IPv4 address") from exc
+        if value != "10.20.0.250":
+            raise ValueError("Docker network attachment IP must remain 10.20.0.250")
         return value
 
 

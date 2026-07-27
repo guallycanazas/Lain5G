@@ -8,7 +8,7 @@ const spectrum = Array.from({ length: 36 }, (_, index) => ({
 }));
 
 const metrics = [
-  { icon: CheckCircle2, label: 'Backend tests', value: '301', detail: 'Passing locally' },
+  { icon: CheckCircle2, label: 'Backend tests', value: '305', detail: 'Passing locally' },
   { icon: Gauge, label: 'Line coverage', value: '77%', detail: 'Backend coverage' },
   { icon: Code2, label: 'Frontend tests', value: '47', detail: 'Passing locally' },
 ];

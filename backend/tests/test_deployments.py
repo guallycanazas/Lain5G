@@ -36,6 +36,7 @@ def test_hidden_signaling_scenarios_remain_internal(client):
 def test_5g_sa_ue_renders_private_credentials_at_runtime():
     compose = (Path(__file__).resolve().parents[2] / "deployments/5g-sa/docker-compose.runtime.yml").read_text(encoding="utf-8")
     ue = (Path(__file__).resolve().parents[2] / "deployments/5g-sa/ueransim/ue.yaml").read_text(encoding="utf-8")
+    start = (Path(__file__).resolve().parents[2] / "deployments/5g-sa/scripts/start.sh").read_text(encoding="utf-8")
 
     assert "env_file:\n      - .env" in compose
     assert "umask 077" in compose
@@ -44,6 +45,10 @@ def test_5g_sa_ue_renders_private_credentials_at_runtime():
         assert f"__{variable}__" in ue
         assert variable in compose
     assert "00000000000000000000000000000000" not in ue
+    assert 'docker network connect --ip "$backend_ip"' in start
+    assert "backend_ip=10.20.0.250" in start
+    assert "docker compose --env-file .env -f docker-compose.yml rm -f" in start
+    assert start.index('if [ "${LAIN5G_DRY_RUN:-false}" != "true" ]') < start.index('docker network connect --ip "$backend_ip"')
 
 
 def test_5g_sa_runtime_renderer_matches_provisioned_credentials(tmp_path: Path):

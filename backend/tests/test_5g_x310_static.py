@@ -111,4 +111,5 @@ def test_5g_scenarios_stop_each_other_and_release_the_shared_address_space():
     assert 'deployments/5g-sa-x310/scripts/stop.sh' in simulation_start
     assert 'simulation_project="lain5g-lab-5g-sa"' in start_core
     assert 'deployments/5g-sa/scripts/stop.sh' in start_core
-    assert "Removed stopped 5G SA containers with stale network references" in simulation_start
+    assert "Removed stopped 5G SA containers while preserving the reserved backend network" in simulation_start
+    assert "up -d --remove-orphans" in simulation_start
