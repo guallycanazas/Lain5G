@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link } from 'react-router';
 import { Database, Download, Plus, RefreshCw, Search, ShieldCheck, Upload, UsersRound } from 'lucide-react';
 import { ActionButton } from '../components/ActionButton';
 import { EmptyState } from '../components/EmptyState';

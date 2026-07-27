@@ -5,6 +5,7 @@ import argparse
 import json
 import re
 import sys
+from datetime import date
 from pathlib import Path
 
 
@@ -16,6 +17,7 @@ SEMVER = re.compile(
 SHA256 = re.compile(r"sha256:[0-9a-f]{64}")
 GIT_COMMIT = re.compile(r"[0-9a-f]{40}")
 EXACT_REQUIREMENT = re.compile(r"([A-Za-z0-9][A-Za-z0-9_.-]*)==([^;\s]+)")
+OCI_SOURCE = "https://github.com/guallycanazas/Lain5G"
 
 SOURCE_COMMITS = {
     "images/open5gs/Dockerfile": ("OPEN5GS_COMMIT",),
@@ -124,8 +126,17 @@ def check(root: Path) -> list[str]:
         errors.append("backend version module must read the root VERSION file")
 
     changelog = _read(root / "CHANGELOG.md", errors)
-    if f"## [{version}] - Unreleased" not in changelog:
-        errors.append(f"CHANGELOG.md is missing [{version}] - Unreleased")
+    heading = re.search(rf"^## \[{re.escape(version)}\] - (\S+)\s*$", changelog, re.MULTILINE)
+    if heading is None:
+        errors.append(f"CHANGELOG.md is missing a release heading for [{version}]")
+    elif "-" in version:
+        if heading.group(1) != "Unreleased":
+            errors.append(f"CHANGELOG.md prerelease [{version}] must be Unreleased")
+    else:
+        try:
+            date.fromisoformat(heading.group(1))
+        except ValueError:
+            errors.append(f"CHANGELOG.md stable release [{version}] must use an ISO date")
     versions_doc = _read(root / "docs/versions.md", errors)
     matrix_doc = _read(root / "docs/reproducibility/version-matrix.md", errors)
     policy_doc = _read(root / "docs/reproducibility/dependency-policy.md", errors)
@@ -191,6 +202,8 @@ def check(root: Path) -> list[str]:
                 errors.append(f"{rel}: LAIN5G_VERSION does not match VERSION")
             if 'org.opencontainers.image.version="${LAIN5G_VERSION}"' not in text:
                 errors.append(f"{rel}: missing synchronized OCI version label")
+            if f'org.opencontainers.image.source="{OCI_SOURCE}"' not in text:
+                errors.append(f"{rel}: OCI source label does not identify {OCI_SOURCE}")
 
     for rel_name, arguments in SOURCE_COMMITS.items():
         text = _read(root / rel_name, errors)

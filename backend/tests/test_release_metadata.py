@@ -18,6 +18,7 @@ def test_root_version_drives_api_and_health(client):
 
 
 def test_release_version_and_dependency_policy_passes():
+    version = (ROOT / "VERSION").read_text(encoding="utf-8").strip()
     result = subprocess.run(
         [sys.executable, str(CHECK)],
         cwd=ROOT,
@@ -27,13 +28,13 @@ def test_release_version_and_dependency_policy_passes():
     )
 
     assert result.returncode == 0, result.stderr
-    assert "version-check: OK (1.0.0-rc.1)" in result.stdout
+    assert f"version-check: OK ({version})" in result.stdout
 
 
 def test_release_policy_rejects_a_frontend_version_contradiction(tmp_path: Path):
     frontend = tmp_path / "frontend"
     frontend.mkdir()
-    (tmp_path / "VERSION").write_text("1.0.0-rc.1\n", encoding="utf-8")
+    (tmp_path / "VERSION").write_text("2.3.4\n", encoding="utf-8")
     (frontend / "package.json").write_text(
         json.dumps({"version": "9.9.9", "dependencies": {}, "devDependencies": {}}),
         encoding="utf-8",
@@ -51,4 +52,4 @@ def test_release_policy_rejects_a_frontend_version_contradiction(tmp_path: Path)
     )
 
     assert result.returncode == 1
-    assert "frontend/package.json version '9.9.9' != '1.0.0-rc.1'" in result.stderr
+    assert "frontend/package.json version '9.9.9' != '2.3.4'" in result.stderr

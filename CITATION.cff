@@ -1,10 +1,11 @@
 cff-version: "1.2.0"
 message: >-
-  If you use this release candidate, cite the software metadata in this file.
-  No journal article or DOI is associated with this unreleased candidate.
+  If you use Lain5G-Lab 1.0.0, cite the software metadata in this file.
+  No journal article or archival DOI is associated with this source release.
 title: "Lain5G-Lab"
 type: software
-version: "1.0.0-rc.1"
+version: "1.0.0"
+date-released: "2026-07-27"
 authors:
   - family-names: "Canazas Rosas"
     given-names: "Willian Roy"
@@ -29,5 +30,4 @@ keywords:
   - "VoNR"
   - "network experimentation"
   - "reproducibility"
-# TODO: Add date-released only after an immutable release is published.
 # TODO: Add a DOI only after an archive or article has issued one.

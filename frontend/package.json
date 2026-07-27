@@ -1,6 +1,6 @@
 {
   "name": "lain5g-lab-frontend",
-  "version": "1.0.0-rc.1",
+  "version": "1.0.0",
   "private": true,
   "type": "module",
   "scripts": {
@@ -15,9 +15,9 @@
     "@vitejs/plugin-react": "^4.3.4",
     "framer-motion": "^12.42.2",
     "lucide-react": "^0.468.0",
-    "react": "^19.0.0",
-    "react-dom": "^19.0.0",
-    "react-router-dom": "^7.1.1",
+    "react": "19.2.7",
+    "react-dom": "19.2.7",
+    "react-router": "8.3.0",
     "recharts": "^3.10.1",
     "vite": "^6.0.7"
   },

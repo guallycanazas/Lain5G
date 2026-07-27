@@ -5,7 +5,7 @@
 - **Willian Roy Canazas Rosas**
 - **Manuel Ismael Prieto Tito**
 
-These names and this order are confirmed for the software release-candidate
+These names and this order are confirmed for the software release
 metadata. Authorship for a future article must still be approved separately.
 
 Affiliation for both authors: **National University of San Agustin of
@@ -19,4 +19,4 @@ Arequipa**.
 - TODO: Approve a separate author list for any future SoftwareX article.
 
 No personal email address, ORCID, funding source, DOI, or article authorship is
-asserted in this release-candidate metadata.
+asserted in this software release metadata.

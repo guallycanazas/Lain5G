@@ -1,8 +1,9 @@
 import type { ReactElement } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render } from '@testing-library/react';
-import { MemoryRouter, Route, Routes } from 'react-router-dom';
+import { MemoryRouter, Route, Routes } from 'react-router';
 import { PreferencesProvider } from '../src/preferences/PreferencesProvider';
+import packageJson from '../package.json';
 
 export function renderWithClient(ui: ReactElement, route = '/') {
   const queryClient = new QueryClient({
@@ -35,7 +36,7 @@ export function jsonResponse(body: unknown, status = 200) {
   return Promise.resolve(new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } }));
 }
 
-export const healthResponse = { status: 'ok', service: 'lain5g-lab-backend', version: '1.0.0-rc.1', dry_run: false };
+export const healthResponse = { status: 'ok', service: 'lain5g-lab-backend', version: packageJson.version, dry_run: false };
 
 export const deploymentStatus = {
   id: '5g-sa',

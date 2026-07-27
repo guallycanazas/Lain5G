@@ -1,12 +1,12 @@
 FROM debian:bookworm-slim@sha256:7b140f374b289a7c2befc338f42ebe6441b7ea838a042bbd5acbfca6ec875818
 
 ARG DEBIAN_FRONTEND=noninteractive
-ARG LAIN5G_VERSION=1.0.0-rc.1
+ARG LAIN5G_VERSION=1.0.0
 ARG KAMAILIO_VERSION=5.8.8
 ARG KAMAILIO_COMMIT=053181eb9c3136836cb272584b582484a9a11b48
 
 LABEL org.opencontainers.image.version="${LAIN5G_VERSION}" \
-      org.opencontainers.image.source="https://github.com/guallycanazas/Lain5G-Lab"
+      org.opencontainers.image.source="https://github.com/guallycanazas/Lain5G"
 
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \

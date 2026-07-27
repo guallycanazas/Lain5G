@@ -1,8 +1,8 @@
 # Support
 
-Support for `1.0.0-rc.1` is community-based and best effort. This release
-candidate has no guaranteed response time, service-level agreement, production
-support, or RF-operational support.
+Support for `1.0.0` is community-based and best effort. This release has no
+guaranteed response time, service-level agreement, production support, or
+RF-operational support.
 
 ## Getting help
 
@@ -15,8 +15,9 @@ support, or RF-operational support.
 Do not include secrets, real subscriber identifiers, private addresses,
 operational RF settings, or authorization records. Do not run RF to gather
 support information. Do not submit security-sensitive details through a public
-issue; request a private contact channel without disclosing the vulnerability.
+issue. Use GitHub Private Vulnerability Reporting from the repository Security
+tab without disclosing the vulnerability publicly.
 
-TODO: Confirm maintainers, support scope, and a public support contact before a
-final release. No support email or institutional help desk is currently
-asserted.
+The maintainers support reproducible source and software-simulation issues
+through GitHub Issues. No support email, institutional help desk, guaranteed
+response time, or RF operations service is asserted.

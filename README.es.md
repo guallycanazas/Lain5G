@@ -2,7 +2,7 @@
 
 [![CI](https://github.com/guallycanazas/Lain5G/actions/workflows/ci.yml/badge.svg)](https://github.com/guallycanazas/Lain5G/actions/workflows/ci.yml)
 [![Licencia: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![Versión](https://img.shields.io/badge/version-1.0.0--rc.1-blue.svg)](VERSION)
+[![Versión](https://img.shields.io/badge/version-1.0.0-blue.svg)](VERSION)
 
 [README en inglés](README.md)
 
@@ -16,12 +16,12 @@ validación.
 Lain5G-Lab no implementa desde cero un core móvil ni una RAN. Su contribución es
 la integración, orquestación, validación y trazabilidad reproducibles de
 Open5GS, UERANSIM, srsRAN, Kamailio, pyHSS, UHD y componentes relacionados. La
-versión actual es el candidato solo de código fuente [`1.0.0-rc.1`](VERSION).
+versión estable actual es la release solo de código fuente [`1.0.0`](VERSION).
 
 > **Versión software probada y funcional.** Todos los flujos de red soportados
 > completamente en software aprueban sus suites de validación: 4G LTE (14/14),
 > 4G VoLTE/IMS (22/22), 5G SA (15/15) y 5G VoNR/IMS (25/25). La verificación
-> global `make softwarex-check` también aprueba 266 pruebas backend, 48 pruebas
+> global `make softwarex-check` también aprueba 268 pruebas backend, 48 pruebas
 > frontend, el build de producción, la verificación de código y Compose, los
 > metadatos de publicación y los controles de archivos sensibles.
 
@@ -93,7 +93,7 @@ make softwarex-check
 ```
 
 `make softwarex-check` es el comando único de verificación de release utilizado
-por CI. Aprueba 266 pruebas backend con 77% de cobertura de líneas y 48 pruebas
+por CI. Aprueba 268 pruebas backend con 77% de cobertura de líneas y 48 pruebas
 frontend, seguido de TypeScript, build de producción, validación Compose y de
 perfiles, metadatos, enlaces internos, resultados públicos y controles de
 archivos sensibles.

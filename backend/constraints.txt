@@ -1,4 +1,4 @@
-# Exact Python 3.14.4 environment tested for 1.0.0-rc.1 on 2026-07-23 UTC.
+# Exact Python 3.14.4 environment tested for 1.0.0 on 2026-07-27 UTC.
 # Refresh only after installing both requirements files and running the test suite.
 annotated-doc==0.0.4
 annotated-types==0.7.0

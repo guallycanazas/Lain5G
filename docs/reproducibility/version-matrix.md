@@ -4,9 +4,9 @@
 
 | Item | Exact value | Authority |
 | --- | --- | --- |
-| Lain5G-Lab | `1.0.0-rc.1` | Root `VERSION` |
-| Status | Unreleased release candidate | `CHANGELOG.md` |
-| Evidence captured | `2026-07-23T04:30:11Z` | Local UTC clock during verification |
+| Lain5G-Lab | `1.0.0` | Root `VERSION` |
+| Status | Stable source release | `CHANGELOG.md` |
+| Evidence captured | `2026-07-27T02:45:52Z` | Local UTC clock during final verification |
 | Verification host | Linux `x86_64` | `uname -m` |
 | Python test environment | CPython `3.14.4`, pip `25.1.1` | `.venv/bin/python --version`, `.venv/bin/pip --version` |
 | Node/npm environment | Node `v22.22.1`, npm `9.2.0` | `node --version`, `npm --version` |
@@ -86,11 +86,11 @@ attestation was available. Every listed artifact is Linux/amd64-only. The local
 | Full closure | Every package and version is listed in `backend/constraints.txt`; source was `.venv/bin/pip freeze --all` before release tests |
 
 The npm transitive closure and registry integrity values remain authoritative in
-`frontend/package-lock.json`; the root package version is `1.0.0-rc.1`.
+`frontend/package-lock.json`; the root package version is `1.0.0`.
 `npm audit --omit=dev` reports zero findings. The full locked tree reports five
 development findings (three moderate, one high, and one critical) in the
-Vitest/Vite test path. npm's available remediation is the semver-major update to
-Vitest `4.1.10`; it was not applied as an unreviewed release metadata change.
+build/test toolchain. npm's available complete remediation requires breaking
+dependency upgrades and was not applied as an unreviewed release change.
 
 ## RTPengine Evidence
 
@@ -116,13 +116,13 @@ Vitest `4.1.10`; it was not applied as an unreviewed release metadata change.
 - Local first-party image tags are aliases and do not identify build output by
   digest. Archive final image digests with experiment evidence.
 - Catalogued registry digests are not linked to the current source commits by a
-  verifiable build record and are blocked for release-candidate republication.
-- The locked Vitest/Vite development tree has five npm audit findings. The
+  verifiable build record and are blocked for binary republication.
+- The locked frontend development tree has five npm audit findings. The
   production dependency audit is clean, and the vulnerable Vitest UI mode is
   not used by the release test command, but the test toolchain still requires a
   separately reviewed major upgrade.
-- No scenario, RF, hardware, or database validation was run as part of this
-  release metadata work.
+- Software 4G LTE/VoLTE, 5G SA, and VoNR scenarios were validated. RF hardware
+  and commercial-UE behavior remain outside this source-release verification.
 
 ## Static Validation
 

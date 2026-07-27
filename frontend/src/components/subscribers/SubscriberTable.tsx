@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom';
+import { Link } from 'react-router';
 import { Copy, Eye, KeyRound, Pencil, Trash2 } from 'lucide-react';
 import type { SubscriberSummary } from '../../types/subscriber';
 

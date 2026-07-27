@@ -5,7 +5,7 @@ media relay, DNS server, or database server. It provides an independently
 licensed deployment, configuration, administration, validation, and
 visualisation layer around the third-party works identified below.
 
-This inventory was checked on 2026-07-23 against the upstream materials linked
+This inventory was checked on 2026-07-27 against the upstream materials linked
 in each entry. Versions and commits are taken from
 `docs/reproducibility/version-matrix.md`, the checked-in build recipes, and the
 package lock files. An SPDX identifier is stated only where exact-version
@@ -30,7 +30,7 @@ terms supplied by each project.
 
 No signed attestation or archived build record currently binds the catalogued
 project image digests to the source commits and Dockerfiles below. Those images
-therefore remain blocked for release-candidate binary publication even where the
+therefore remain blocked for binary publication even where the
 principal program's source revision and license are known.
 
 ## Mobile Core and Radio Access Components
@@ -53,7 +53,7 @@ principal program's source revision and license are known.
 - **Restrictions and open questions:** conveyance of object code requires the
   notices and Corresponding Source arrangements in AGPL section 6. Modified
   network-facing versions are also subject to AGPL section 13. Before any
-  release-candidate republication, the publisher must provide durable,
+  binary republication, the publisher must provide durable,
   equivalent access to the exact source and build modifications. Existing
   public artifacts require the same provenance and source-material remediation.
 
@@ -305,17 +305,22 @@ No npm tarball or `node_modules` directory is vendored.
 | --- | --- | --- | --- | --- | --- |
 | `@tanstack/react-query` | `5.101.2` | [TanStack/query](https://github.com/TanStack/query); [npm metadata](https://registry.npmjs.org/@tanstack%2freact-query/5.101.2) | `MIT` | Client data fetching and cache | Build download; application bundle. Retain the MIT notice. |
 | `@vitejs/plugin-react` | `4.7.0` | [vitejs/vite-plugin-react](https://github.com/vitejs/vite-plugin-react); [npm metadata](https://registry.npmjs.org/@vitejs%2fplugin-react/4.7.0) | `MIT` | React build transform | Build-stage download; not intended for the final runtime layer. Retain notice if conveyed. |
+| `framer-motion` | `12.42.2` | [motiondivision/motion](https://github.com/motiondivision/motion); [npm metadata](https://registry.npmjs.org/framer-motion/12.42.2) | `MIT` | Landing-page animation runtime | Build download; application bundle. Retain the MIT notice. |
 | `lucide-react` | `0.468.0` | [lucide-icons/lucide](https://github.com/lucide-icons/lucide); [npm metadata](https://registry.npmjs.org/lucide-react/0.468.0) | `ISC` | User-interface icons | Build download; application bundle. Retain the ISC copyright and permission notice. |
 | `react` | `19.2.7` | [facebook/react](https://github.com/facebook/react); [npm metadata](https://registry.npmjs.org/react/19.2.7) | `MIT` | User-interface runtime | Build download; application bundle. Retain the MIT notice. |
 | `react-dom` | `19.2.7` | [facebook/react](https://github.com/facebook/react); [npm metadata](https://registry.npmjs.org/react-dom/19.2.7) | `MIT` | DOM renderer | Build download; application bundle. Retain the MIT notice. |
-| `react-router-dom` | `7.18.1` | [remix-run/react-router](https://github.com/remix-run/react-router); [npm metadata](https://registry.npmjs.org/react-router-dom/7.18.1) | `MIT` | Browser routing | Build download; application bundle. Retain the MIT notice. |
+| `react-router` | `8.3.0` | [remix-run/react-router](https://github.com/remix-run/react-router); [npm metadata](https://registry.npmjs.org/react-router/8.3.0) | `MIT` | Browser routing | Build download; application bundle. Retain the MIT notice. |
+| `recharts` | `3.10.1` | [recharts/recharts](https://github.com/recharts/recharts); [npm metadata](https://registry.npmjs.org/recharts/3.10.1) | `MIT` | Frontend charts and visualizations | Build download; application bundle. Retain the MIT notice. |
 | `vite` | `6.4.3` | [vitejs/vite](https://github.com/vitejs/vite); [npm metadata](https://registry.npmjs.org/vite/6.4.3) | `MIT` | Frontend build tool | Build-stage download; not intended for the final runtime layer. Retain notice if conveyed. |
 | `@testing-library/jest-dom` | `6.9.1` | [testing-library/jest-dom](https://github.com/testing-library/jest-dom); [npm metadata](https://registry.npmjs.org/@testing-library%2fjest-dom/6.9.1) | `MIT` | DOM test assertions | Development download only; retain notice if conveyed. |
 | `@testing-library/react` | `16.3.2` | [testing-library/react-testing-library](https://github.com/testing-library/react-testing-library); [npm metadata](https://registry.npmjs.org/@testing-library%2freact/16.3.2) | `MIT` | React test utilities | Development download only; retain notice if conveyed. |
 | `@testing-library/user-event` | `14.6.1` | [testing-library/user-event](https://github.com/testing-library/user-event); [npm metadata](https://registry.npmjs.org/@testing-library%2fuser-event/14.6.1) | `MIT` | User interaction tests | Development download only; retain notice if conveyed. |
 | `@types/react` | `19.2.17` | [DefinitelyTyped](https://github.com/DefinitelyTyped/DefinitelyTyped/tree/master/types/react); [npm metadata](https://registry.npmjs.org/@types%2freact/19.2.17) | `MIT` | React type declarations | Development/build download; retain notice if conveyed. |
 | `@types/react-dom` | `19.2.3` | [DefinitelyTyped](https://github.com/DefinitelyTyped/DefinitelyTyped/tree/master/types/react-dom); [npm metadata](https://registry.npmjs.org/@types%2freact-dom/19.2.3) | `MIT` | React DOM type declarations | Development/build download; retain notice if conveyed. |
+| `autoprefixer` | `10.5.4` | [postcss/autoprefixer](https://github.com/postcss/autoprefixer); [npm metadata](https://registry.npmjs.org/autoprefixer/10.5.4) | `MIT` | CSS build compatibility | Development/build download only; retain notice if conveyed. |
 | `jsdom` | `25.0.1` | [jsdom/jsdom](https://github.com/jsdom/jsdom); [npm metadata](https://registry.npmjs.org/jsdom/25.0.1) | `MIT` | Browser-like test environment | Development download only; retain notice if conveyed. |
+| `postcss` | `8.5.23` | [postcss/postcss](https://github.com/postcss/postcss); [npm metadata](https://registry.npmjs.org/postcss/8.5.23) | `MIT` | CSS transformation | Development/build download only; retain notice if conveyed. |
+| `tailwindcss` | `3.4.17` | [tailwindlabs/tailwindcss](https://github.com/tailwindlabs/tailwindcss); [npm metadata](https://registry.npmjs.org/tailwindcss/3.4.17) | `MIT` | Utility CSS generation | Development/build download only; retain notice if conveyed. |
 | `typescript` | `5.9.3` | [microsoft/TypeScript](https://github.com/microsoft/TypeScript); [npm metadata](https://registry.npmjs.org/typescript/5.9.3) | `Apache-2.0` | Type checking and compilation | Development/build download; retain Apache 2.0 and applicable NOTICE material if conveyed. |
 | `vitest` | `2.1.9` | [vitest-dev/vitest](https://github.com/vitest-dev/vitest); [npm metadata](https://registry.npmjs.org/vitest/2.1.9) | `MIT` | Frontend test runner | Development download only; retain notice if conveyed. |
 

@@ -2,7 +2,7 @@
 
 All notable changes to Lain5G-Lab are recorded in this file.
 
-## [1.0.0-rc.1] - Unreleased
+## [1.0.0] - 2026-07-27
 
 ### Added
 
@@ -27,7 +27,7 @@ All notable changes to Lain5G-Lab are recorded in this file.
   preserving `package-lock.json` and its integrity records.
 - Pinned source builds to commits resolved from authoritative upstream tags.
 - Pinned viable Docker bases and third-party Compose images by verified digest.
-- Tagged locally derived Real-IMS images as `1.0.0-rc.1` and synchronized OCI
+- Tagged locally derived Real-IMS images as `1.0.0` and synchronized OCI
   version labels on first-party build definitions.
 - Made the base web application observation-only and moved Docker/project
   mutation behind a separate opt-in override and runtime flag.
@@ -75,12 +75,12 @@ All notable changes to Lain5G-Lab are recorded in this file.
 - `npm audit --omit=dev` reports no production findings. The full locked tree
   reports five test-tool findings (three moderate, one high, and one critical)
   through Vitest/Vite; npm's available fix requires a Vitest major upgrade.
-- The `1.0.0-rc.1` Real-IMS derived images are local build tags and have not
+- The `1.0.0` Real-IMS derived images are local build tags and have not
   been asserted as published registry artifacts.
-- Removed private keys remain reachable in pre-remediation Git history; a
-  coordinated history and rotation decision is required before final release.
-- This is a source-only candidate. Catalogued project image digests lack a
+- Removed private-key paths are absent from the published clean release history;
+  material copied from older private clones must still be treated as revoked.
+- This is a source-only release. Catalogued project image digests lack a
   verifiable source-to-build mapping and are blocked for binary republication.
 - The application SBOM is partial and does not inspect final image filesystems.
-- A private vulnerability-reporting channel and confirmed author metadata are
-  still absent.
+- GitHub Private Vulnerability Reporting is enabled. Article-specific ORCIDs,
+  corresponding-author details, and declarations remain manuscript metadata.

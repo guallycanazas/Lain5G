@@ -60,6 +60,9 @@ def _citation(path: Path) -> list[str]:
     if release_version is not None and str(release_version) != expected_version:
         errors.append(f"CITATION.cff version does not match VERSION ({expected_version})")
     released = value.get("date-released")
+    stable_release = "-" not in expected_version
+    if stable_release and released is None:
+        errors.append("CITATION.cff stable release is missing date-released")
     if released is not None:
         try:
             date.fromisoformat(str(released))
@@ -84,6 +87,14 @@ def _codemeta(path: Path) -> list[str]:
         errors.append("codemeta.json codeRepository does not identify the project repository")
     if value.get("license") != "https://spdx.org/licenses/MIT":
         errors.append("codemeta.json does not identify the MIT license")
+    published = value.get("datePublished")
+    if "-" not in expected_version and published is None:
+        errors.append("codemeta.json stable release is missing datePublished")
+    if published is not None:
+        try:
+            date.fromisoformat(str(published))
+        except ValueError:
+            errors.append("codemeta.json datePublished is not an ISO date")
     authors = value.get("author")
     if not isinstance(authors, list) or not authors:
         errors.append("codemeta.json must contain a non-empty author list")

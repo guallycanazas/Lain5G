@@ -41,7 +41,7 @@ the version matrix.
 
 The backend container uses the same runtime requirements and constraints, but
 its pinned Python 3.12 base is a separate interpreter target. A local Python
-3.12 container build was not executed for this candidate.
+3.12 container build was not executed for this release.
 
 ## JavaScript
 
@@ -57,7 +57,7 @@ require a separately reviewed lockfile refresh, followed by `npm ci`, frontend
 tests, and a production build. The release version is changed in only the root
 package records; transitive package metadata remains untouched.
 
-For this candidate, `npm audit --omit=dev` reports zero findings. A full audit
+For this release, `npm audit --omit=dev` reports zero findings. A full audit
 reports five findings in the locked Vitest/Vite development path. The available
 automatic fix is a semver-major Vitest update, so it is documented as a release
 limitation rather than applied without a dedicated compatibility review.
@@ -93,7 +93,7 @@ SHA-256 value.
 
 Base filesystem digests do not lock packages later selected by `apt-get`.
 Ubuntu, Debian, Docker, Redis, and RTPengine package repositories are not
-snapshot-pinned in this candidate. Rebuilding at another time can therefore
+snapshot-pinned in this release. Rebuilding at another time can therefore
 select different OS packages. This is a known reproducibility boundary, not an
 architecture-neutral lock.
 

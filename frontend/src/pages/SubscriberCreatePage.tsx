@@ -1,4 +1,4 @@
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import { ErrorAlert } from '../components/ErrorAlert';
 import { SubscriberForm } from '../components/subscribers/SubscriberForm';
 import { useSubscriberActions } from '../hooks/useSubscribers';

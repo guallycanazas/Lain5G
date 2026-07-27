@@ -43,7 +43,7 @@ Ejecute `make app-up` y abra `http://localhost:8080/scenarios/4g-lte-x310`. Use 
 
 Una auditoría histórica no encontró las herramientas UHD del host en `PATH` y
 no pudo inspeccionar hardware en esa sesión. Existen observaciones privadas
-posteriores, pero no son evidencia pública ligada al candidato. Consulte la
+posteriores, pero no son evidencia pública ligada a la release. Consulte la
 [tabla canónica](../README.md#canonical-capability-status) en lugar de inferir
 un estado actual a partir de cualquiera de esas sesiones.
 

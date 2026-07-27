@@ -40,7 +40,7 @@ from a fresh mirror after freezing pushes and recording protected branches,
 tags, release artifacts, and hosting-provider cleanup requirements:
 
 ```sh
-git clone --mirror https://github.com/guallycanazas/Lain5G-Lab.git repository-sanitized.git
+git clone --mirror https://github.com/guallycanazas/Lain5G.git repository-sanitized.git
 cd repository-sanitized.git
 git filter-repo --force --invert-paths \
   --path images/ims-real-open5gs/roles/udm/curve25519-1.key \
@@ -48,7 +48,7 @@ git filter-repo --force --invert-paths \
 git log --all -- \
   images/ims-real-open5gs/roles/udm/curve25519-1.key \
   images/ims-real-open5gs/roles/udm/secp256r1-2.key
-git push --force --mirror https://github.com/guallycanazas/Lain5G-Lab.git
+git push --force --mirror https://github.com/guallycanazas/Lain5G.git
 ```
 
 Before the force push, run a release-grade secret scanner over all rewritten

@@ -81,8 +81,11 @@ def test_real_ims_outer_images_use_target_namespace_and_locked_bases() -> None:
     assert "mongo@sha256:8b6d8f5bbedb25cb73517b65cf99f13aeb75ad5b157a56c479287a840bbad3ac" in lock
     for context, (digest, licenses) in IMAGE_CONTEXTS.items():
         dockerfile = (ROOT / "images" / context / "Dockerfile").read_text(encoding="utf-8")
-        assert "guallycanazas/Lain5G-Lab" in dockerfile
-        assert "guallycanazas/Lain5G\"" not in dockerfile
+        assert (
+            'org.opencontainers.image.source="https://github.com/guallycanazas/Lain5G"'
+            in dockerfile
+        )
+        assert "guallycanazas/Lain5G-Lab" not in dockerfile
         assert f'org.opencontainers.image.licenses="{licenses}"' in dockerfile
         assert f"@sha256:{digest}" in dockerfile
         assert digest in lock

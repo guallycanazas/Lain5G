@@ -1,6 +1,6 @@
 FROM debian@sha256:60eac759739651111db372c07be67863818726f754804b8707c90979bda511df
 
-ARG LAIN5G_VERSION=1.0.0-rc.1
+ARG LAIN5G_VERSION=1.0.0
 
 ENV DEBIAN_FRONTEND=noninteractive
 ENV DIST=bookworm
@@ -19,7 +19,7 @@ RUN apt-get update && \
 
 LABEL org.opencontainers.image.version="${LAIN5G_VERSION}" \
       org.opencontainers.image.title="Lain5G-Lab Real IMS RTPengine" \
-      org.opencontainers.image.source="https://github.com/guallycanazas/Lain5G-Lab" \
+      org.opencontainers.image.source="https://github.com/guallycanazas/Lain5G" \
       org.opencontainers.image.licenses="MIT AND GPL-3.0-only AND BSD-2-Clause"
 
 COPY runtime/ /mnt/rtpengine/

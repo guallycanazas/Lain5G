@@ -11,13 +11,13 @@ Artifact:
 
 - Path: `sbom/lain5g-lab-application.cdx.json`
 - Format: CycloneDX JSON 1.7
-- Subject: `Lain5G-Lab` version `1.0.0-rc.1`
-- Generated: `2026-07-23T05:08:58Z`
-- Components: 269 libraries, comprising 260 npm package/version entries and 9
+- Subject: `Lain5G-Lab` version `1.0.0`
+- Generated: `2026-07-27T02:28:25Z`
+- Components: 370 libraries, comprising 361 npm package/version entries and 9
   direct PyPI package/version entries
-- Dependency graph entries: 84
+- Dependency graph entries: 128
 - SHA-256:
-  `7135ccb716e64f27611099efa20ecec440f897f0b95fca169c280b7d94ae6576`
+  `0137246e16316032d503c23c40c7200d106156be42d2d674008e613e6e4dd658`
 
 ## Generator
 
@@ -73,7 +73,7 @@ The artifact is therefore a partial application dependency SBOM, not a complete
 release, deployment, or container SBOM.
 
 The generated BOM does not encode that partiality through a CycloneDX
-`composition` declaration. Its dependency graph contains 84 entries and leaves
+`composition` declaration. Its dependency graph contains 128 entries and leaves
 87 components disconnected, including all nine direct PyPI entries. The
 sidecar status in this document is therefore required to interpret its scope;
 the artifact must not be used as a complete dependency graph.
@@ -93,7 +93,7 @@ docker run --rm --network none \
   --mount type=bind,source="$PWD",target=/src,readonly \
   anchore/syft:v1.49.0@sha256:13b53ebabe3d215268c90cf8fb9b875f0183908245f376fd4b3a2cb69d21d484 \
   scan dir:/src --base-path /src \
-  --source-name Lain5G-Lab --source-version 1.0.0-rc.1 \
+  --source-name Lain5G-Lab --source-version 1.0.0 \
   --exclude './.git' --exclude './.git/**' \
   --exclude './.github' --exclude './.github/**' \
   --exclude './.venv' --exclude './.venv/**' \
@@ -158,7 +158,7 @@ template:
 
 ```bash
 image_id="$(docker image inspect --format '{{.Id}}' \
-  lain5g-lab/backend:1.0.0-rc.1)"
+  lain5g-lab/backend:1.0.0)"
 docker save --output /reviewed/lain5g-lab-backend.tar \
   "$image_id"
 sha256sum /reviewed/lain5g-lab-backend.tar \
@@ -173,7 +173,7 @@ docker run --rm --network none \
   --mount type=bind,source="$PWD/sbom",target=/out \
   anchore/syft:v1.49.0@sha256:13b53ebabe3d215268c90cf8fb9b875f0183908245f376fd4b3a2cb69d21d484 \
   scan docker-archive:/input/backend.tar \
-  --source-name lain5g-lab/backend --source-version 1.0.0-rc.1 \
+  --source-name lain5g-lab/backend --source-version 1.0.0 \
   --output cyclonedx-json=/out/lain5g-lab-backend-image.cdx.json
 ```
 

@@ -1,14 +1,14 @@
 FROM ubuntu:24.04@sha256:4fbb8e6a8395de5a7550b33509421a2bafbc0aab6c06ba2cef9ebffbc7092d90
 
 ARG DEBIAN_FRONTEND=noninteractive
-ARG LAIN5G_VERSION=1.0.0-rc.1
+ARG LAIN5G_VERSION=1.0.0
 ARG UHD_VERSION=v4.10.0.0
 ARG UHD_COMMIT=2af4ddb96219a99d2300804830e0971f79557b23
 ARG SRSRAN_PROJECT_REF=release_24_10_1
 ARG SRSRAN_PROJECT_COMMIT=ef4b0749a12a3b1a8347ae01c937a621603b4069
 
 LABEL org.opencontainers.image.version="${LAIN5G_VERSION}" \
-      org.opencontainers.image.source="https://github.com/guallycanazas/Lain5G-Lab"
+      org.opencontainers.image.source="https://github.com/guallycanazas/Lain5G"
 
 ENV LD_LIBRARY_PATH=/usr/local/lib:${LD_LIBRARY_PATH:-}
 

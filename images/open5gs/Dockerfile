@@ -1,12 +1,12 @@
 FROM ubuntu:22.04@sha256:0e0a0fc6d18feda9db1590da249ac93e8d5abfea8f4c3c0c849ce512b5ef8982
 
 ARG DEBIAN_FRONTEND=noninteractive
-ARG LAIN5G_VERSION=1.0.0-rc.1
+ARG LAIN5G_VERSION=1.0.0
 ARG OPEN5GS_VERSION=v2.7.5
 ARG OPEN5GS_COMMIT=7dfd9a39649700c24c22f1978ed7a35541a72cca
 
 LABEL org.opencontainers.image.version="${LAIN5G_VERSION}" \
-      org.opencontainers.image.source="https://github.com/guallycanazas/Lain5G-Lab"
+      org.opencontainers.image.source="https://github.com/guallycanazas/Lain5G"
 
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \

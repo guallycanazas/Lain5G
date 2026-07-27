@@ -8,8 +8,9 @@ el commit fuente `12c4a38404bbaf240c698a056e3f47182081ab5c`; el commit posterior
 `060e669d3f65e1844a702b1b5264be6933ef45c2` publica los artefactos anonimizados
 sin representar una nueva ejecución.
 
-La evidencia validada de `1.0.0-rc.1` comprende resultados públicos sanitizados
-y la ejecución operacional VoNR más reciente:
+La evidencia validada para la línea estable `1.0.0` comprende resultados
+públicos sanitizados, que conservan su versión histórica de captura, y la
+ejecución operacional VoNR más reciente:
 
 - [5G SA software](../results/public/5g-sa-sim/run-20260723-054913.json):
   15/15 comprobaciones `PASS`, `SIMULATION_ONLY`.

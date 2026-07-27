@@ -43,6 +43,28 @@ RESULT_DIRECTORIES = set(SCENARIOS)
 SUPPORT_DIRECTORIES = {"summaries", "tables"}
 REQUIRED_DIRECTORIES = {"environment"} | RESULT_DIRECTORIES | SUPPORT_DIRECTORIES
 SAFE_NAME_RE = re.compile(r"[a-z0-9][a-z0-9._-]{0,127}\Z")
+HISTORICAL_PROVENANCE = {
+    "results/public/4g-ims-sim/run-20260723-055149.json": (
+        "1.0.0-rc.1",
+        "12c4a38404bbaf240c698a056e3f47182081ab5c",
+    ),
+    "results/public/4g-lte-sim/run-20260723-055025.json": (
+        "1.0.0-rc.1",
+        "12c4a38404bbaf240c698a056e3f47182081ab5c",
+    ),
+    "results/public/5g-sa-sim/run-20260723-054913.json": (
+        "1.0.0-rc.1",
+        "12c4a38404bbaf240c698a056e3f47182081ab5c",
+    ),
+    "results/public/5g-vonr-sim/run-20260723-055328.json": (
+        "1.0.0-rc.1",
+        "12c4a38404bbaf240c698a056e3f47182081ab5c",
+    ),
+    "results/public/environment/verification-host-20260723.json": (
+        "1.0.0-rc.1",
+        "12c4a38404bbaf240c698a056e3f47182081ab5c",
+    ),
+}
 
 
 def _load(path: Path) -> Any:
@@ -171,6 +193,15 @@ def _path_parts(path: str) -> tuple[str, ...]:
     return tuple(part for part in path.split("/") if part)
 
 
+def _requires_current_release(relative_path: str, value: Any) -> bool:
+    expected = HISTORICAL_PROVENANCE.get(relative_path)
+    if expected is None:
+        return True
+    if not isinstance(value, dict) or (value.get("release_version"), value.get("source_commit")) != expected:
+        raise PublicResultError("approved historical artifact provenance changed")
+    return False
+
+
 def main() -> int:
     errors: list[str] = []
     try:
@@ -229,7 +260,11 @@ def main() -> int:
             continue
         try:
             value = _load(path)
-            validate_environment_summary(value, root=ROOT)
+            validate_environment_summary(
+                value,
+                root=ROOT,
+                require_current_release=_requires_current_release(rel, value),
+            )
             if path.read_bytes() != normalized_json(value):
                 raise PublicResultError("environment summary is not deterministically normalized")
         except (OSError, PublicResultError) as exc:
@@ -254,7 +289,12 @@ def main() -> int:
                 continue
             try:
                 value = _load(path)
-                validate_public_result(value, root=ROOT, expected_scenario=scenario)
+                validate_public_result(
+                    value,
+                    root=ROOT,
+                    expected_scenario=scenario,
+                    require_current_release=_requires_current_release(rel, value),
+                )
                 if path.name != f"{value['run_id']}.json":
                     raise PublicResultError("scenario result filename does not match its run ID")
                 if path.read_bytes() != normalized_json(value):

@@ -1,5 +1,5 @@
 import { ArrowUpRight, Github, RadioTower } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link } from 'react-router';
 
 export function CommunityFooter() {
   return (
@@ -11,7 +11,7 @@ export function CommunityFooter() {
           <h2 className="landing-display my-5 text-[clamp(2.6rem,5vw,4.7rem)] font-medium leading-[1.02]">The network is yours.<br />The lab is yours.<br /><span className="text-[#a68cff]">Let&apos;s build carefully.</span></h2>
           <p className="mb-8 max-w-[590px] text-sm leading-7 text-[#5f6685]">Created at the National University of San Agustin of Arequipa for reproducible mobile-network research and education.</p>
           <div className="mb-10 grid gap-4 sm:grid-cols-3">
-            {[['License', 'MIT'], ['Release', '1.0.0-rc.1'], ['Default', 'RF disabled']].map(([label, value]) => <div className="border-l border-[#c8c2ed] pl-4" key={label}><span className="block text-[.58rem] font-bold uppercase tracking-[.13em] text-[#777c9d]">{label}</span><strong className="mt-2 block text-[.9rem] text-[#18214f]">{value}</strong></div>)}
+            {[['License', 'MIT'], ['Release', import.meta.env.VITE_APP_VERSION], ['Default', 'RF disabled']].map(([label, value]) => <div className="border-l border-[#c8c2ed] pl-4" key={label}><span className="block text-[.58rem] font-bold uppercase tracking-[.13em] text-[#777c9d]">{label}</span><strong className="mt-2 block text-[.9rem] text-[#18214f]">{value}</strong></div>)}
           </div>
           <div className="flex flex-wrap items-center gap-4">
             <Link className="landing-primary" to="/dashboard"><RadioTower size={16} /> Open the lab</Link>

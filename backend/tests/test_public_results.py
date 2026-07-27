@@ -9,12 +9,16 @@ from pathlib import Path
 
 import pytest
 
-
 ROOT = Path(__file__).resolve().parents[2]
 RESULTS_SCRIPTS = ROOT / "scripts" / "results"
 if str(RESULTS_SCRIPTS) not in sys.path:
     sys.path.insert(0, str(RESULTS_SCRIPTS))
+VERIFY_SCRIPTS = ROOT / "scripts" / "verify"
+if str(VERIFY_SCRIPTS) not in sys.path:
+    sys.path.insert(0, str(VERIFY_SCRIPTS))
 
+import public_result  # noqa: E402
+import public_results as public_results_verifier  # noqa: E402
 from public_result import (  # noqa: E402
     PublicResultError,
     export_public_result,
@@ -40,7 +44,7 @@ def _synthetic_result() -> dict:
         "started_at_utc": "2026-01-01T00:00:00Z",
         "ended_at_utc": "2026-01-01T00:00:05Z",
         "source_commit": environment["source_commit"],
-        "release_version": (ROOT / "VERSION").read_text(encoding="utf-8").strip(),
+        "release_version": environment["release_version"],
         "scenario": "4g-lte-sim",
         "command_label": "Synthetic simulation validation",
         "public_configurations": [
@@ -66,11 +70,12 @@ def _synthetic_result() -> dict:
     }
 
 
-def test_synthetic_safe_summary_exports_deterministic_json(tmp_path: Path):
+def test_synthetic_safe_summary_exports_deterministic_json(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
     public_root = tmp_path / "results" / "public"
     scenario_dir = public_root / "4g-lte-sim"
     scenario_dir.mkdir(parents=True)
     value = _synthetic_result()
+    monkeypatch.setattr(public_result, "_release_version", lambda _root: value["release_version"])
 
     first = export_public_result(value, root=ROOT, public_root=public_root)
     second = export_public_result(deepcopy(value), root=ROOT, public_root=public_root)
@@ -105,7 +110,7 @@ def test_synthetic_unsafe_values_are_rejected_without_echo(unsafe_value: str):
     value["limitations"] = [unsafe_value]
 
     with pytest.raises(PublicResultError) as caught:
-        validate_public_result(value, root=ROOT)
+        validate_public_result(value, root=ROOT, require_current_release=False)
 
     assert unsafe_value not in str(caught.value)
 
@@ -129,7 +134,7 @@ def test_synthetic_unsafe_field_names_are_rejected_without_echo(unsafe_field: st
     value[unsafe_field] = unsafe_value
 
     with pytest.raises(PublicResultError) as caught:
-        validate_public_result(value, root=ROOT)
+        validate_public_result(value, root=ROOT, require_current_release=False)
 
     assert unsafe_field not in str(caught.value)
     assert str(unsafe_value) not in str(caught.value)
@@ -150,9 +155,31 @@ def test_synthetic_contract_rejects_invalid_provenance_and_status_fields(field: 
     value[field] = invalid_value
 
     with pytest.raises(PublicResultError) as caught:
-        validate_public_result(value, root=ROOT)
+        validate_public_result(value, root=ROOT, require_current_release=False)
 
     assert invalid_value not in str(caught.value)
+
+
+def test_historical_result_requires_explicit_repository_verification_mode():
+    value = _synthetic_result()
+
+    with pytest.raises(PublicResultError, match="does not match VERSION"):
+        validate_public_result(value, root=ROOT)
+
+    validate_public_result(value, root=ROOT, require_current_release=False)
+
+
+def test_repository_verifier_limits_historical_mode_to_approved_artifacts():
+    relative_path = "results/public/4g-lte-sim/run-20260723-055025.json"
+    value = json.loads((ROOT / relative_path).read_text(encoding="utf-8"))
+
+    assert not public_results_verifier._requires_current_release(relative_path, value)
+    assert public_results_verifier._requires_current_release("results/public/4g-lte-sim/new.json", value)
+
+    changed = deepcopy(value)
+    changed["release_version"] = "9.9.9"
+    with pytest.raises(PublicResultError, match="historical artifact provenance changed"):
+        public_results_verifier._requires_current_release(relative_path, changed)
 
 
 def test_exporter_cli_does_not_echo_rejected_input(tmp_path: Path):

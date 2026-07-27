@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router';
 import { Bell, ChevronDown, Command, Radio, Search, ServerCog } from 'lucide-react';
 import { useDeployments, useHealth } from '../hooks/useDeployment';
 import { useProfiles } from '../hooks/useProfiles';

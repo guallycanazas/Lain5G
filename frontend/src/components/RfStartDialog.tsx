@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useMutation, useQuery } from '@tanstack/react-query';
-import { Link } from 'react-router-dom';
+import { Link } from 'react-router';
 import { AlertTriangle, CheckCircle2, RadioTower, ShieldCheck, Timer, X } from 'lucide-react';
 import type { RfStartPayload } from '../types/deployment';
 import { profilesApi } from '../services/profilesApi';

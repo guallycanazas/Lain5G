@@ -2,7 +2,7 @@
 
 [![CI](https://github.com/guallycanazas/Lain5G/actions/workflows/ci.yml/badge.svg)](https://github.com/guallycanazas/Lain5G/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/version-1.0.0--rc.1-blue.svg)](VERSION)
+[![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)](VERSION)
 
 [Spanish translation](README.es.md)
 
@@ -16,12 +16,12 @@ records.
 Lain5G-Lab does not implement a mobile core or RAN from scratch. Its contribution
 is the reproducible integration, orchestration, validation, and traceability of
 Open5GS, UERANSIM, srsRAN, Kamailio, pyHSS, UHD, and related components. The
-current version is the source-only release candidate [`1.0.0-rc.1`](VERSION).
+current stable version is the source-only release [`1.0.0`](VERSION).
 
 > **Tested and functional software release.** All supported software-only network
 > workflows pass their complete validation suites: 4G LTE (14/14), 4G
 > VoLTE/IMS (22/22), 5G SA (15/15), and 5G VoNR/IMS (25/25). The repository-wide
-> `make softwarex-check` also passes 266 backend tests, 48 frontend tests, the
+> `make softwarex-check` also passes 268 backend tests, 48 frontend tests, the
 > production build, source and Compose verification, release metadata checks,
 > and sensitive-file controls.
 
@@ -95,7 +95,7 @@ make softwarex-check
 ```
 
 `make softwarex-check` is the single release-verification command used by CI. It
-passes 266 backend tests with 77% line coverage and 48 frontend tests, followed
+passes 268 backend tests with 77% line coverage and 48 frontend tests, followed
 by TypeScript checking, the production build, Compose and profile validation,
 metadata verification, internal-link checks, public-result verification, and
 sensitive-file controls.

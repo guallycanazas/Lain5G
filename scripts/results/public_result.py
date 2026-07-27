@@ -503,6 +503,7 @@ def validate_environment_summary(
     value: Any,
     *,
     root: Path = ROOT,
+    require_current_release: bool = True,
 ) -> None:
     scan_value(value)
     if not isinstance(value, Mapping) or set(value) != ENVIRONMENT_FIELDS:
@@ -516,7 +517,7 @@ def validate_environment_summary(
     release_version = value["release_version"]
     if not isinstance(release_version, str) or _VERSION_RE.fullmatch(release_version) is None:
         raise PublicResultError("environment summary release version is invalid")
-    if release_version != _release_version(root):
+    if require_current_release and release_version != _release_version(root):
         raise PublicResultError("environment summary release version does not match VERSION")
     scope = _required_text(value["scope"], maximum=240)
     if "not a scenario result" not in scope.lower():
@@ -592,6 +593,7 @@ def validate_public_result(
     root: Path = ROOT,
     expected_scenario: str | None = None,
     require_versionable: bool = True,
+    require_current_release: bool = True,
 ) -> None:
     scan_value(value)
     if not isinstance(value, Mapping) or set(value) != RESULT_FIELDS:
@@ -613,7 +615,7 @@ def validate_public_result(
     release_version = value["release_version"]
     if not isinstance(release_version, str) or _VERSION_RE.fullmatch(release_version) is None:
         raise PublicResultError("public result release version is invalid")
-    if release_version != _release_version(root):
+    if require_current_release and release_version != _release_version(root):
         raise PublicResultError("public result release version does not match VERSION")
 
     scenario = value["scenario"]
@@ -652,7 +654,7 @@ def validate_public_result(
         raise PublicResultError("public result environment reference must be JSON")
     environment_path = _safe_target(root, environment_reference, require_versionable=require_versionable)
     environment = load_json_file(environment_path)
-    validate_environment_summary(environment, root=root)
+    validate_environment_summary(environment, root=root, require_current_release=require_current_release)
     if environment["source_commit"] != commit or environment["release_version"] != release_version:
         raise PublicResultError("public result and environment provenance do not match")
 

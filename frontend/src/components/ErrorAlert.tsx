@@ -1,5 +1,5 @@
 import { errorMessage, errorTitle, technicalDetails } from '../utils/errors';
-import { Link } from 'react-router-dom';
+import { Link } from 'react-router';
 import { AlertTriangle, ExternalLink, RotateCcw, ScrollText } from 'lucide-react';
 
 interface ErrorAlertProps {
