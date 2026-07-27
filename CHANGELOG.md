@@ -2,6 +2,19 @@
 
 All notable changes to Lain5G-Lab are recorded in this file.
 
+## [Unreleased]
+
+### Added
+
+- Integrated web application and direct software-scenario lifecycle commands
+  into the `lain5g` CLI, including an explicit software-operations mode that
+  keeps RF control disabled.
+
+### Fixed
+
+- Exposed VoLTE and VoNR profiles in the interactive CLI and connected their
+  start, status, validation, logs, and stop workflows.
+
 ## [1.0.0] - 2026-07-27
 
 ### Added

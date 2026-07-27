@@ -7,27 +7,35 @@ El stack de aplicación dockerizado ejecuta dos servicios separados del laborato
 
 No reemplaza ni modifica `deployments/5g-sa/docker-compose.yml`.
 
-## Preparación
+## Uso desde la CLI
 
 ```bash
-cp .env.app.example .env.app
+./lain5g app setup
+./lain5g app start --open
+./lain5g app status
+./lain5g app logs
+./lain5g app stop
 ```
 
-Edita `.env.app` y define `LAIN5G_PROJECT_ROOT` con la ruta absoluta del repositorio en el host:
+`app setup` crea `.env.app`, registra automáticamente la ruta absoluta del
+repositorio y restringe el archivo a permisos `0600`. Para habilitar descargas y
+operaciones de escenarios software desde la interfaz:
 
-```env
-LAIN5G_PROJECT_ROOT=/path/to/Lain5G
+```bash
+./lain5g app start --operations --open
 ```
 
-La ruta debe ser absoluta. En el modo operativo opcional también debe coincidir con la ruta que ve el daemon Docker del host porque los despliegues contienen bind mounts relativos.
+El opt-in operativo activa `LAIN5G_MUTATING_OPERATIONS_ENABLED` y
+`LAIN5G_IMAGE_PULL_ENABLED`, usa `docker-compose.app-operations.yml` y deja
+`LAIN5G_RF_WEB_CONTROL_ENABLED=false`.
 
-Si quieres que el backend ejecute comandos reales, prepara también el entorno del escenario y sigue el opt-in de `docs/security/local-deployment.md`:
+Prepara también el entorno del escenario que vayas a operar:
 
 ```bash
 cp deployments/5g-sa/.env.example deployments/5g-sa/.env
 ```
 
-## Uso
+## Uso directo con Make
 
 ```bash
 make app-up
@@ -35,6 +43,9 @@ make app-ps
 make app-logs
 make app-down
 ```
+
+Estos objetivos no crean `.env.app`; use primero `./lain5g app setup` o copie y
+edite `.env.app.example` manualmente.
 
 Interfaz web:
 

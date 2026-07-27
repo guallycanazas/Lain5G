@@ -21,7 +21,7 @@ current stable version is the source-only release [`1.0.0`](VERSION).
 > **Tested and functional software release.** All supported software-only network
 > workflows pass their complete validation suites: 4G LTE (14/14), 4G
 > VoLTE/IMS (22/22), 5G SA (15/15), and 5G VoNR/IMS (25/25). The repository-wide
-> `make softwarex-check` also passes 268 backend tests, 48 frontend tests, the
+> `make softwarex-check` also passes 280 backend tests, 48 frontend tests, the
 > production build, source and Compose verification, release metadata checks,
 > and sensitive-file controls.
 
@@ -50,10 +50,24 @@ cp deployments/5g-sa/.env.example deployments/5g-sa/.env
 # Add laboratory-only subscriber values to the ignored local .env file.
 
 ./lain5g images pull 5g-sa
-make start-5g-sa
-make validate-5g-sa
-make stop-5g-sa
+./lain5g scenario start 5g-sa
+./lain5g scenario validate 5g-sa
+./lain5g scenario stop 5g-sa
 ```
+
+Run `./lain5g` without arguments for the interactive console. It checks the
+host, downloads images, configures profiles,
+starts/validates/stops scenarios, and manages the web application. It can also
+start the operational app directly, enabling software image downloads and
+scenario control while keeping RF disabled:
+
+```bash
+./lain5g app start --operations --open
+```
+
+Use `./lain5g profile wizard 5g-sa` for guided profile configuration. Start the
+safe observation-only app with
+`./lain5g app start --open`.
 
 Use only synthetic or laboratory subscriber values. See
 [Installation](docs/installation.md) and [5G SA](docs/5g_sa.md) for details.
@@ -95,7 +109,7 @@ make softwarex-check
 ```
 
 `make softwarex-check` is the single release-verification command used by CI. It
-passes 268 backend tests with 77% line coverage and 48 frontend tests, followed
+passes 280 backend tests with 77% line coverage and 48 frontend tests, followed
 by TypeScript checking, the production build, Compose and profile validation,
 metadata verification, internal-link checks, public-result verification, and
 sensitive-file controls.

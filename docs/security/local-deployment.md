@@ -2,8 +2,8 @@
 
 ## Base Mode
 
-Create `.env.app` from the example and set only the absolute project path. Keep
-the secure defaults:
+`./lain5g app start --open` creates `.env.app` when needed and sets the absolute
+project path automatically. If configuring it manually, keep the secure defaults:
 
 ```env
 LAIN5G_MUTATING_OPERATIONS_ENABLED=false
@@ -14,7 +14,7 @@ LAIN5G_RF_WEB_CONTROL_ENABLED=false
 Start the base stack with:
 
 ```bash
-docker compose --env-file .env.app -f docker-compose.app.yml up -d --build
+./lain5g app start --open
 ```
 
 This mode publishes the UI and API only on `127.0.0.1`, mounts the repository
@@ -31,19 +31,18 @@ LAIN5G_DRY_RUN=true
 
 ## Explicit Operations Opt-In
 
-Only on a dedicated trusted workstation, set:
-
-```env
-LAIN5G_MUTATING_OPERATIONS_ENABLED=true
-```
-
-Then start with both Compose files, in this order:
+Only on a dedicated trusted workstation, use the explicit operations mode:
 
 ```bash
-docker compose --env-file .env.app \
-  -f docker-compose.app.yml \
-  -f docker-compose.app-operations.yml \
-  up -d --build
+./lain5g app start --operations --open
+```
+
+The CLI sets `LAIN5G_MUTATING_OPERATIONS_ENABLED=true` and
+`LAIN5G_IMAGE_PULL_ENABLED=true` in the ignored local `.env.app`, clears
+conflicting inherited variables, and starts both Compose files through:
+
+```bash
+make app-up-operations
 ```
 
 The override changes the project mount to writable and adds the host Docker
@@ -54,15 +53,14 @@ the override does not grant a container Docker or project-write capability.
 Use the same file set when inspecting or removing this operational stack:
 
 ```bash
-docker compose --env-file .env.app \
-  -f docker-compose.app.yml \
-  -f docker-compose.app-operations.yml \
-  down
+./lain5g app status
+./lain5g app stop
 ```
 
 ## Additional Opt-Ins
 
-Image pulls require both the general mutation setting and:
+The operational CLI mode enables image pulls. When configuring `.env.app`
+manually, image pulls require both the general mutation setting and:
 
 ```env
 LAIN5G_IMAGE_PULL_ENABLED=true

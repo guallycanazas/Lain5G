@@ -89,7 +89,15 @@ def service(root: Path) -> ProfileConfigService:
 def test_loads_profiles_and_blocks_invalid_rf_defaults(tmp_path: Path):
     svc = service(make_profile_project(tmp_path))
     profiles = svc.list_profiles()
-    assert {item["profile"] for item in profiles} == {"4g-lte-sim", "4g-lte-x310", "5g-sa", "5g-sa-x310", "5g-nsa-x310"}
+    assert {item["profile"] for item in profiles} == {
+        "4g-lte-sim",
+        "4g-volte-sim",
+        "4g-lte-x310",
+        "5g-sa",
+        "5g-sa-x310",
+        "5g-nsa-x310",
+        "5g-vonr",
+    }
     validation = svc.validate_profile("5g-sa-x310")
     assert not validation["valid"]
     assert any("radio.band" in error for error in validation["errors"])

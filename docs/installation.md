@@ -15,15 +15,37 @@ Comprueba primero que la versión y los locks no se contradicen:
 make version-check
 ```
 
-La consola comprueba Docker, Compose, TUN, espacio, configuración e imágenes:
+La consola es el punto de entrada recomendado. Comprueba Docker, Compose, TUN,
+espacio, configuración e imágenes; además permite operar escenarios y abrir la
+aplicación web:
 
 ```bash
 ./lain5g
 ```
 
-Selecciona `Imágenes y componentes` para comprobar o descargar lo necesario. Las imágenes compatibles se descargan desde Docker Hub y se etiquetan automáticamente con los nombres internos del laboratorio; no se compila ni se inicia ningún servicio.
+Selecciona `Imágenes y componentes` para comprobar o descargar lo necesario,
+`Perfiles y operación` para configurar/iniciar/validar/detener una red o
+`Aplicación web` para preparar, iniciar, abrir y detener la interfaz. Descargar
+imágenes no compila ni inicia servicios.
 
-La misma preparación está disponible en la interfaz web después de `make app-up`:
+La CLI prepara automáticamente `.env.app` con la ruta absoluta del repositorio.
+Para iniciar la interfaz en modo seguro de observación:
+
+```bash
+./lain5g app start --open
+```
+
+Para permitir desde la app descargas y operaciones sobre escenarios software:
+
+```bash
+./lain5g app start --operations --open
+```
+
+Este modo monta explícitamente el socket Docker y habilita escritura local. Debe
+usarse solo en una estación de laboratorio confiable. La ejecución RF permanece
+deshabilitada y conserva sus autorizaciones independientes.
+
+La preparación queda disponible en:
 
 ```text
 http://localhost:8080/preparation
@@ -34,13 +56,19 @@ También se puede preparar un perfil directamente:
 ```bash
 ./lain5g doctor 4g-lte-sim
 ./lain5g images pull 4g-lte-sim
+./lain5g scenario start 4g-lte-sim
+./lain5g scenario validate 4g-lte-sim
+./lain5g scenario stop 4g-lte-sim
 ```
 
 Para descargar todos los componentes publicados:
 
 ```bash
-make images-pull
+./lain5g images pull all
 ```
+
+Los comandos `make images-pull`, `make app-up` y los objetivos de cada escenario
+siguen disponibles como interfaz alternativa para automatización.
 
 ## Construcción alternativa
 
@@ -78,7 +106,8 @@ Esto crea las mismas etiquetas locales que la descarga automática:
 - `lain5g-lab/kamailio:local`
 - `lain5g-lab/ims-dns:local`
 
-Las imágenes se construyen desde repositorios oficiales, no desde imágenes de terceros.
+Las imágenes locales se construyen desde los repositorios y revisiones fijados
+en los Dockerfiles del proyecto.
 
 ## Configuración inicial
 

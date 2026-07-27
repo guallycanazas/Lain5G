@@ -6,6 +6,7 @@ import os
 import shutil
 import subprocess
 import sys
+import tempfile
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -94,7 +95,9 @@ SECTION_NAMES = {
 
 DOCKER_PROJECTS = {
     "4g-lte-sim": ["lain5g-lab-4g-lte-sim"],
+    "4g-volte-sim": ["lain5g-lab-4g-volte-sim"],
     "5g-sa": ["lain5g-lab-5g-sa"],
+    "5g-vonr": ["lain5g-lab-5g-vonr-sim"],
     "4g-lte-x310": ["lain5g-lab-4g-lte-x310"],
     "5g-sa-x310": ["lain5g-lab-5g-sa-x310"],
     "5g-nsa-x310": ["lain5g-lab-4g-lte-x310", "lain5g-lab-5g-nsa-x310"],
@@ -112,6 +115,18 @@ SIM_ACTIONS = {
         "2": ("Ver estado", ["make", "status-5g-sa"]),
         "3": ("Validar registro y datos", ["make", "validate-5g-sa"]),
         "6": ("Detener simulacion", ["make", "stop-5g-sa"]),
+    },
+    "4g-volte-sim": {
+        "1": ("Iniciar simulacion VoLTE", ["make", "start-4g-volte-sim"]),
+        "2": ("Ver estado", ["make", "status-4g-volte-sim"]),
+        "3": ("Validar LTE e IMS", ["make", "validate-4g-volte-sim"]),
+        "6": ("Detener simulacion", ["make", "stop-4g-volte-sim"]),
+    },
+    "5g-vonr": {
+        "1": ("Iniciar simulacion VoNR", ["make", "start-5g-vonr-sim"]),
+        "2": ("Ver estado", ["make", "status-5g-vonr-sim"]),
+        "3": ("Validar 5G e IMS", ["make", "validate-5g-vonr-sim"]),
+        "6": ("Detener simulacion", ["make", "stop-5g-vonr-sim"]),
     },
 }
 
@@ -147,6 +162,10 @@ def main(argv: list[str]) -> int:
         return 0
     if argv[0] == "images":
         return _images_command(service, argv[1:])
+    if argv[0] == "app":
+        return _app_command(service, argv[1:])
+    if argv[0] == "scenario":
+        return _scenario_command(service, argv[1:])
     if argv[0] == "doctor":
         return _doctor(service, argv[1] if len(argv) > 1 else "")
     if argv[0] != "profile":
@@ -221,6 +240,14 @@ def _print_help(file=sys.stdout) -> None:
     print("  lain5g doctor [perfil]        Revisar equipo, Docker e imagenes", file=file)
     print("  lain5g images list [perfil]   Comprobar componentes instalados", file=file)
     print("  lain5g images pull [perfil]   Descargar sin compilar", file=file)
+    print("  lain5g app setup              Preparar la aplicacion web", file=file)
+    print("  lain5g app start [--open]     Iniciar la app local segura", file=file)
+    print("  lain5g app start --operations Iniciar la app con control Docker", file=file)
+    print("  lain5g app open               Abrir la app en el navegador", file=file)
+    print("  lain5g app status|logs|stop   Administrar la aplicacion", file=file)
+    print("  lain5g scenario start ID      Iniciar un escenario software", file=file)
+    print("  lain5g scenario validate ID   Validar un escenario software", file=file)
+    print("  lain5g scenario status|logs|stop ID", file=file)
     print("  lain5g profile wizard [id]    Abrir el asistente guiado", file=file)
     print("  lain5g profile list           Ver perfiles disponibles", file=file)
     print("  lain5g profile show ID        Mostrar valores como JSON", file=file)
@@ -239,7 +266,8 @@ def _main_menu(service: ProfileConfigService) -> int:
         print("+--------------------------------------------------------------+")
         print("  [1] Perfiles y operacion")
         print("  [2] Imagenes y componentes")
-        print("  [3] Revisar equipo y dependencias")
+        print("  [3] Aplicacion web")
+        print("  [4] Revisar equipo y dependencias")
         print("  [0] Salir")
         choice = _input("\nElige una opcion: ").strip()
         if choice in {"", "0", "q", "salir"}:
@@ -249,11 +277,218 @@ def _main_menu(service: ProfileConfigService) -> int:
         elif choice == "2":
             _images_menu(service)
         elif choice == "3":
+            _app_menu(service)
+        elif choice == "4":
             _doctor(service, "")
             _pause()
         else:
             print("Opcion invalida.")
             _pause()
+
+
+def _app_menu(service: ProfileConfigService) -> None:
+    while True:
+        _clear_screen()
+        print("\nAplicacion web")
+        print("==============")
+        print("Opera en 127.0.0.1. El modo operativo otorga control Docker al backend.\n")
+        print("  [1] Preparar configuracion segura")
+        print("  [2] Iniciar y abrir app segura")
+        print("  [3] Iniciar y abrir app operativa")
+        print("  [4] Ver estado")
+        print("  [5] Ver logs")
+        print("  [6] Detener app")
+        print("  [0] Volver")
+        choice = _input("\nElige una opcion: ").strip()
+        if choice in {"", "0", "q", "volver"}:
+            return
+        if choice == "1":
+            _app_command(service, ["setup"])
+        elif choice == "2":
+            _app_command(service, ["start", "--open"])
+        elif choice == "3":
+            if _confirm(
+                "El modo operativo monta el socket Docker y permite modificar el proyecto. Continuar?",
+                default=False,
+            ):
+                _app_command(service, ["start", "--operations", "--open"])
+        elif choice == "4":
+            _app_command(service, ["status"])
+        elif choice == "5":
+            _app_command(service, ["logs"])
+        elif choice == "6":
+            _app_command(service, ["stop"])
+        else:
+            print("Opcion invalida.")
+        _pause()
+
+
+def _app_command(service: ProfileConfigService, argv: list[str]) -> int:
+    if not argv:
+        _app_menu(service)
+        return 0
+    aliases = {
+        "install": "setup",
+        "prepare": "setup",
+        "up": "start",
+        "ps": "status",
+        "log": "logs",
+        "down": "stop",
+    }
+    action = aliases.get(argv[0], argv[0])
+    flags = set(argv[1:])
+    allowed_flags = {
+        "setup": {"--operations"},
+        "build": set(),
+        "start": {"--operations", "--open"},
+        "open": set(),
+        "status": {"--operations"},
+        "logs": {"--operations"},
+        "stop": {"--operations"},
+    }.get(action, set())
+    if action not in {"setup", "build", "start", "open", "status", "logs", "stop"} or not flags <= allowed_flags:
+        print(
+            "Uso: lain5g app setup|build|start|open|status|logs|stop [--operations] [--open]",
+            file=sys.stderr,
+        )
+        return 2
+
+    operations = "--operations" in flags
+    if action in {"setup", "start"}:
+        if not _prepare_app_environment(service, operations=operations):
+            return 1
+    elif action == "build" and not (service.root / ".env.app").is_file():
+        if not _prepare_app_environment(service, operations=False):
+            return 1
+    elif action != "open" and not (service.root / ".env.app").is_file():
+        print("Falta .env.app. Ejecuta primero: ./lain5g app setup", file=sys.stderr)
+        return 2
+
+    if action == "setup":
+        return 0
+    if action == "open":
+        return _open_app(service)
+
+    target = {
+        "build": "app-build",
+        "start": "app-up-operations" if operations else "app-up",
+        "status": "app-ps-operations",
+        "logs": "app-logs-operations",
+        "stop": "app-down-operations",
+    }[action]
+    if operations and action == "start":
+        print("Modo operativo: el backend tendra acceso de escritura al proyecto y al socket Docker.")
+    completed = subprocess.run(["make", target], cwd=service.root, check=False)
+    if completed.returncode == 0 and action == "start" and "--open" in flags:
+        if _open_app(service) != 0:
+            print("La aplicacion esta iniciada; abre manualmente la URL indicada.")
+        return 0
+    return completed.returncode
+
+
+def _prepare_app_environment(service: ProfileConfigService, *, operations: bool) -> bool:
+    example = service.root / ".env.app.example"
+    target = service.root / ".env.app"
+    if target.is_symlink():
+        print("No se modifico .env.app porque es un enlace simbolico.", file=sys.stderr)
+        return False
+    try:
+        text = target.read_text(encoding="utf-8") if target.is_file() else example.read_text(encoding="utf-8")
+    except (OSError, UnicodeError) as exc:
+        print(f"No se pudo preparar .env.app: {exc}", file=sys.stderr)
+        return False
+    values = {
+        "LAIN5G_PROJECT_ROOT": str(service.root.resolve()),
+        "LAIN5G_MUTATING_OPERATIONS_ENABLED": "false",
+        "LAIN5G_IMAGE_PULL_ENABLED": "false",
+        "LAIN5G_RF_WEB_CONTROL_ENABLED": "false",
+    }
+    if operations:
+        values.update(
+            {
+                "LAIN5G_MUTATING_OPERATIONS_ENABLED": "true",
+                "LAIN5G_IMAGE_PULL_ENABLED": "true",
+                "LAIN5G_RF_WEB_CONTROL_ENABLED": "false",
+            }
+        )
+    lines = text.splitlines()
+    for key, value in values.items():
+        replacement = f"{key}={value}"
+        found = False
+        normalized = []
+        for line in lines:
+            candidate = line.lstrip()
+            if candidate.startswith("export "):
+                candidate = candidate[7:].lstrip()
+            if candidate.startswith(f"{key}="):
+                if not found:
+                    normalized.append(replacement)
+                    found = True
+                continue
+            normalized.append(line)
+        if not found:
+            normalized.append(replacement)
+        lines = normalized
+    updated = "\n".join(lines) + "\n"
+    temporary_path: Path | None = None
+    try:
+        if not target.is_file() or target.read_text(encoding="utf-8") != updated:
+            with tempfile.NamedTemporaryFile(
+                mode="w",
+                encoding="utf-8",
+                dir=target.parent,
+                prefix=".env.app.",
+                delete=False,
+            ) as temporary:
+                temporary_path = Path(temporary.name)
+                temporary.write(updated)
+                temporary.flush()
+                os.fsync(temporary.fileno())
+            temporary_path.chmod(0o600)
+            os.replace(temporary_path, target)
+            temporary_path = None
+            print(f"Configuracion preparada: {target}")
+        else:
+            print(f"Configuracion lista: {target}")
+        target.chmod(0o600)
+    except (OSError, UnicodeError) as exc:
+        print(f"No se pudo escribir .env.app: {exc}", file=sys.stderr)
+        return False
+    finally:
+        if temporary_path is not None:
+            temporary_path.unlink(missing_ok=True)
+    if operations:
+        print("Descargas y operaciones de software habilitadas; la ejecucion RF sigue deshabilitada.")
+    return True
+
+
+def _app_environment_values(service: ProfileConfigService) -> dict[str, str]:
+    try:
+        text = (service.root / ".env.app").read_text(encoding="utf-8")
+    except (OSError, UnicodeError):
+        return {}
+    values: dict[str, str] = {}
+    for raw in text.splitlines():
+        line = raw.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        if line.startswith("export "):
+            line = line[7:].lstrip()
+        key, value = line.split("=", 1)
+        values[key.strip()] = value.strip().strip("\"'")
+    return values
+
+
+def _open_app(service: ProfileConfigService) -> int:
+    candidate = _app_environment_values(service).get("APP_FRONTEND_PORT", "8080")
+    port = candidate if candidate.isdigit() and 1 <= int(candidate) <= 65535 else "8080"
+    opener = shutil.which("xdg-open")
+    url = f"http://127.0.0.1:{port}"
+    if opener is None:
+        print(f"Abre la aplicacion manualmente: {url}")
+        return 1
+    print(f"Abriendo {url}")
+    return subprocess.run([opener, url], cwd=service.root, check=False).returncode
 
 
 def _images_menu(service: ProfileConfigService) -> None:
@@ -299,6 +534,35 @@ def _images_command(service: ProfileConfigService, argv: list[str]) -> int:
         return 0 if _download_images(scope) else 1
     print("Uso: lain5g images list|pull [perfil|all]", file=sys.stderr)
     return 2
+
+
+def _scenario_command(service: ProfileConfigService, argv: list[str]) -> int:
+    if len(argv) != 2:
+        print("Uso: lain5g scenario start|status|validate|logs|stop PERFIL", file=sys.stderr)
+        return 2
+    action, profile_id = argv
+    profile_id = "5g-vonr" if profile_id == "5g-vonr-sim" else profile_id
+    if profile_id not in SIM_ACTIONS:
+        print("La operacion directa solo admite perfiles software; usa el asistente para RF.", file=sys.stderr)
+        return 2
+    action_choice = {"start": "1", "status": "2", "validate": "3", "stop": "6"}
+    if action == "logs":
+        suffix = "5g-vonr-sim" if profile_id == "5g-vonr" else profile_id
+        command = ["make", f"logs-{suffix}"]
+    elif action in action_choice:
+        command = SIM_ACTIONS[profile_id][action_choice[action]][1]
+    else:
+        print("Uso: lain5g scenario start|status|validate|logs|stop PERFIL", file=sys.stderr)
+        return 2
+    if action == "start":
+        missing = [image for image in _required_images(profile_id) if not _image_exists(image)]
+        if missing:
+            print(
+                f"Faltan {len(missing)} componentes. Ejecuta primero: ./lain5g images pull {profile_id}",
+                file=sys.stderr,
+            )
+            return 1
+    return subprocess.run(command, cwd=service.root, check=False).returncode
 
 
 def _choose_profile(service: ProfileConfigService) -> str:

@@ -36,6 +36,15 @@ export const scenarioGuidance: Record<string, ScenarioGuidance> = {
     excludes: ['USRP or RF transmission', 'IMS, SIP, and VoLTE calls'],
     hardware: 'CPU, Docker, and /dev/net/tun only.',
   },
+  '4g-volte-sim': {
+    generation: '4G',
+    variant: 'VOLTE SIGNALING SIMULATION',
+    profileTitle: '4G LTE data and IMS signaling lab',
+    purpose: 'Validate LTE attach, data connectivity, IMS DNS, and authenticated SIP REGISTER without RF hardware.',
+    includes: ['Open5GS EPC and srsRAN ZMQ UE/eNB', 'Internet and IMS services', 'IMS DNS, P/I/S-CSCF, and SIP REGISTER'],
+    excludes: ['USRP or RF transmission', 'RTP media and an end-to-end VoLTE voice call'],
+    hardware: 'CPU, Docker, and /dev/net/tun only. No SDR is required.',
+  },
   '4g-lte-x310': {
     generation: '4G',
     variant: 'GUARDED VOLTE RF',
@@ -66,5 +75,5 @@ export const scenarioGuidance: Record<string, ScenarioGuidance> = {
 };
 
 export function getScenarioGuidance(id: string) {
-  return scenarioGuidance[id];
+  return scenarioGuidance[id === '5g-vonr' ? '5g-vonr-sim' : id];
 }

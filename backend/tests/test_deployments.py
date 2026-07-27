@@ -7,7 +7,7 @@ def test_list_deployments_includes_simulation_and_x310_scenarios(client):
     assert response.status_code == 200
     payload = response.json()
     ids = {item["id"] for item in payload}
-    assert ids == {"5g-sa", "5g-vonr-sim", "4g-lte-sim", "4g-lte-x310", "5g-sa-x310"}
+    assert ids == {"5g-sa", "5g-vonr-sim", "4g-lte-sim", "4g-volte-sim", "4g-lte-x310", "5g-sa-x310"}
     assert all(item["status"] == "dry_run" for item in payload)
 
 

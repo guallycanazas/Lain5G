@@ -27,7 +27,7 @@ class PlannedChange:
 
 class ProfileConfigService:
     PROFILE_IDS = {"4g-lte-sim", "4g-volte-sim", "4g-lte-x310", "5g-sa", "5g-sa-x310", "5g-nsa-x310", "5g-vonr"}
-    CATALOG_PROFILE_IDS = {"4g-lte-sim", "4g-lte-x310", "5g-sa", "5g-sa-x310", "5g-nsa-x310"}
+    CATALOG_PROFILE_IDS = PROFILE_IDS
     SECRET_KEYS = {"SUBSCRIBER_KEY", "SUBSCRIBER_OPC", "SUBSCRIBER_SQN", "IMS_AUTH_PASSWORD", "K", "KI", "OPC"}
     LTE_BAND_EARFCN_RANGES = {7: range(2750, 3450)}
     SRSRAN_4G_N_PRB_BY_BANDWIDTH = {1.4: 6, 3.0: 15, 5.0: 25, 10.0: 50, 15.0: 75, 20.0: 100}

@@ -51,7 +51,6 @@ DEPLOYMENTS: dict[str, DeploymentDefinition] = {
         validation_checks=["s1_setup", "ue_registration", "default_bearer", "ue_ip", "ue_tun", "data_ping", "ims_dns", "sip_register"],
         expected_services=["mongo", "mme", "hss", "sgwc", "sgwu", "pgwc", "pgwu", "pcrf", "enb", "ue", "pcscf", "icscf", "scscf", "dns"],
         log_services=["mongo", "mme", "hss", "sgwc", "sgwu", "pgwc", "pgwu", "pcrf", "enb", "ue", "pcscf", "icscf", "scscf", "dns", "sip-register"],
-        catalog_visible=False,
     ),
     "4g-lte-sim": DeploymentDefinition(
         id="4g-lte-sim",

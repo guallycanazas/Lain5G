@@ -3,8 +3,9 @@ SHELL := /bin/bash
 PYTHON ?= python3
 VENV_PYTHON := .venv/bin/python
 BACKEND_INSTALL_STAMP := .venv/.lain5g-dev-deps
+APP_CLEAN_ENV := env -u COMPOSE_PROJECT_NAME -u COMPOSE_FILE -u COMPOSE_PROFILES -u LAIN5G_PROJECT_ROOT -u LAIN5G_SCENARIO -u LAIN5G_DRY_RUN -u LAIN5G_MUTATING_OPERATIONS_ENABLED -u LAIN5G_COMMAND_TIMEOUT -u LAIN5G_IMAGE_PULL_TIMEOUT -u LAIN5G_IMAGE_PULL_ENABLED -u LAIN5G_LOG_TAIL_LINES -u LAIN5G_MAX_OUTPUT_CHARS -u LAIN5G_CORS_ORIGINS -u LAIN5G_OPEN5GS_MONGO_URI -u LAIN5G_OPEN5GS_MONGO_DATABASE -u LAIN5G_OPEN5GS_SUBSCRIBER_COLLECTION -u LAIN5G_SUBSCRIBER_SECRETS_VISIBLE -u LAIN5G_SUBSCRIBER_OPERATION_TIMEOUT -u LAIN5G_OPEN5GS_DOCKER_NETWORK -u LAIN5G_RF_WEB_CONTROL_ENABLED -u APP_FRONTEND_PORT -u APP_BACKEND_PORT
 
-.PHONY: version-check images-check images-pull build-5g-sa start-5g-sa stop-5g-sa restart-5g-sa status-5g-sa logs-5g-sa validate-5g-sa clean-5g-sa backend-install backend-dev backend-test backend-cov frontend-install frontend-dev frontend-build frontend-test app-build app-up app-down app-logs app-ps subscribers-test subscribers-integration-test build-4g-lte-sim start-4g-lte-sim stop-4g-lte-sim restart-4g-lte-sim status-4g-lte-sim logs-4g-lte-sim validate-4g-lte-sim test-4g-lte-sim build-4g-volte-sim start-4g-volte-sim stop-4g-volte-sim status-4g-volte-sim logs-4g-volte-sim validate-4g-volte-sim test-4g-volte-sim build-4g-lte-x310 check-x310 preflight-4g-lte-x310 start-4g-lte-x310-epc start-4g-lte-x310-rf emergency-stop-4g-lte-x310 stop-4g-lte-x310 status-4g-lte-x310 logs-4g-lte-x310 validate-4g-lte-x310 test-4g-lte-x310 build-5g-vonr-sim start-5g-vonr-sim stop-5g-vonr-sim restart-5g-vonr-sim status-5g-vonr-sim logs-5g-vonr-sim validate-5g-vonr-sim test-5g-vonr-sim build-5g-x310 check-5g-x310 preflight-5g-x310 start-5g-x310-core dry-run-5g-x310 start-5g-x310-rf emergency-stop-5g-x310 stop-5g-x310 status-5g-x310 logs-5g-x310 test-5g-x310
+.PHONY: version-check images-check images-pull build-5g-sa start-5g-sa stop-5g-sa restart-5g-sa status-5g-sa logs-5g-sa validate-5g-sa clean-5g-sa backend-install backend-dev backend-test backend-cov frontend-install frontend-dev frontend-build frontend-test app-build app-up app-down app-logs app-ps app-up-operations app-down-operations app-logs-operations app-ps-operations subscribers-test subscribers-integration-test build-4g-lte-sim start-4g-lte-sim stop-4g-lte-sim restart-4g-lte-sim status-4g-lte-sim logs-4g-lte-sim validate-4g-lte-sim test-4g-lte-sim build-4g-volte-sim start-4g-volte-sim stop-4g-volte-sim status-4g-volte-sim logs-4g-volte-sim validate-4g-volte-sim test-4g-volte-sim build-4g-lte-x310 check-x310 preflight-4g-lte-x310 start-4g-lte-x310-epc start-4g-lte-x310-rf emergency-stop-4g-lte-x310 stop-4g-lte-x310 status-4g-lte-x310 logs-4g-lte-x310 validate-4g-lte-x310 test-4g-lte-x310 build-5g-vonr-sim start-5g-vonr-sim stop-5g-vonr-sim restart-5g-vonr-sim status-5g-vonr-sim logs-5g-vonr-sim validate-5g-vonr-sim test-5g-vonr-sim build-5g-x310 check-5g-x310 preflight-5g-x310 start-5g-x310-core dry-run-5g-x310 start-5g-x310-rf emergency-stop-5g-x310 stop-5g-x310 status-5g-x310 logs-5g-x310 test-5g-x310
 .PHONY: test verify softwarex-check frontend-typecheck source-formats-check compose-check profile-check links-check release-artifacts-check public-results-check secret-scan
 
 version-check:
@@ -117,35 +118,64 @@ app-build:
 		echo "Missing .env.app. Create it with: cp .env.app.example .env.app" >&2; \
 		exit 2; \
 	fi
-	docker compose --env-file .env.app -f docker-compose.app.yml build
+	$(APP_CLEAN_ENV) docker compose --env-file .env.app -f docker-compose.app.yml build
 
 app-up:
 	@if [ ! -f .env.app ]; then \
 		echo "Missing .env.app. Create it with: cp .env.app.example .env.app" >&2; \
 		exit 2; \
 	fi
-	docker compose --env-file .env.app -f docker-compose.app.yml up -d --build
+	$(APP_CLEAN_ENV) docker compose --env-file .env.app -f docker-compose.app.yml up -d --build
 
 app-down:
 	@if [ ! -f .env.app ]; then \
 		echo "Missing .env.app. Create it with: cp .env.app.example .env.app" >&2; \
 		exit 2; \
 	fi
-	docker compose --env-file .env.app -f docker-compose.app.yml down
+	$(APP_CLEAN_ENV) docker compose --env-file .env.app -f docker-compose.app.yml down
 
 app-logs:
 	@if [ ! -f .env.app ]; then \
 		echo "Missing .env.app. Create it with: cp .env.app.example .env.app" >&2; \
 		exit 2; \
 	fi
-	docker compose --env-file .env.app -f docker-compose.app.yml logs -f
+	$(APP_CLEAN_ENV) docker compose --env-file .env.app -f docker-compose.app.yml logs -f
 
 app-ps:
 	@if [ ! -f .env.app ]; then \
 		echo "Missing .env.app. Create it with: cp .env.app.example .env.app" >&2; \
 		exit 2; \
 	fi
-	docker compose --env-file .env.app -f docker-compose.app.yml ps
+	$(APP_CLEAN_ENV) docker compose --env-file .env.app -f docker-compose.app.yml ps
+
+app-up-operations:
+	@if [ ! -f .env.app ]; then \
+		echo "Missing .env.app. Create it with: ./lain5g app setup --operations" >&2; \
+		exit 2; \
+	fi
+	@$(APP_CLEAN_ENV) ./lain5g app setup --operations
+	$(APP_CLEAN_ENV) docker compose --env-file .env.app -f docker-compose.app.yml -f docker-compose.app-operations.yml up -d --build
+
+app-down-operations:
+	@if [ ! -f .env.app ]; then \
+		echo "Missing .env.app. Create it with: ./lain5g app setup --operations" >&2; \
+		exit 2; \
+	fi
+	$(APP_CLEAN_ENV) docker compose --env-file .env.app -f docker-compose.app.yml -f docker-compose.app-operations.yml down
+
+app-logs-operations:
+	@if [ ! -f .env.app ]; then \
+		echo "Missing .env.app. Create it with: ./lain5g app setup --operations" >&2; \
+		exit 2; \
+	fi
+	$(APP_CLEAN_ENV) docker compose --env-file .env.app -f docker-compose.app.yml -f docker-compose.app-operations.yml logs -f
+
+app-ps-operations:
+	@if [ ! -f .env.app ]; then \
+		echo "Missing .env.app. Create it with: ./lain5g app setup --operations" >&2; \
+		exit 2; \
+	fi
+	$(APP_CLEAN_ENV) docker compose --env-file .env.app -f docker-compose.app.yml -f docker-compose.app-operations.yml ps
 
 subscribers-test:
 	.venv/bin/pytest backend/tests/test_open5gs_connection_service.py backend/tests/test_subscriber_service.py backend/tests/test_subscribers_api.py

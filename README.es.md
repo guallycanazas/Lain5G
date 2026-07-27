@@ -21,7 +21,7 @@ versión estable actual es la release solo de código fuente [`1.0.0`](VERSION).
 > **Versión software probada y funcional.** Todos los flujos de red soportados
 > completamente en software aprueban sus suites de validación: 4G LTE (14/14),
 > 4G VoLTE/IMS (22/22), 5G SA (15/15) y 5G VoNR/IMS (25/25). La verificación
-> global `make softwarex-check` también aprueba 268 pruebas backend, 48 pruebas
+> global `make softwarex-check` también aprueba 280 pruebas backend, 48 pruebas
 > frontend, el build de producción, la verificación de código y Compose, los
 > metadatos de publicación y los controles de archivos sensibles.
 
@@ -50,10 +50,24 @@ cp deployments/5g-sa/.env.example deployments/5g-sa/.env
 # Añada valores de suscriptor exclusivos del laboratorio al archivo .env ignorado.
 
 ./lain5g images pull 5g-sa
-make start-5g-sa
-make validate-5g-sa
-make stop-5g-sa
+./lain5g scenario start 5g-sa
+./lain5g scenario validate 5g-sa
+./lain5g scenario stop 5g-sa
 ```
+
+Ejecute `./lain5g` sin argumentos para usar la consola interactiva, que permite
+revisar el equipo, descargar imágenes, configurar
+perfiles, iniciar/validar/detener escenarios y administrar la aplicación web.
+También puede abrir directamente la app operativa, con descargas y control de
+escenarios software habilitados pero RF desactivada:
+
+```bash
+./lain5g app start --operations --open
+```
+
+Para configurar el perfil mediante el asistente use
+`./lain5g profile wizard 5g-sa`. La app segura de solo observación se inicia con
+`./lain5g app start --open`.
 
 Use solo valores de suscriptor sintéticos o de laboratorio. Consulte
 [Instalación](docs/installation.md) y [5G SA](docs/5g_sa.md) para más detalles.
@@ -93,7 +107,7 @@ make softwarex-check
 ```
 
 `make softwarex-check` es el comando único de verificación de release utilizado
-por CI. Aprueba 268 pruebas backend con 77% de cobertura de líneas y 48 pruebas
+por CI. Aprueba 280 pruebas backend con 77% de cobertura de líneas y 48 pruebas
 frontend, seguido de TypeScript, build de producción, validación Compose y de
 perfiles, metadatos, enlaces internos, resultados públicos y controles de
 archivos sensibles.
