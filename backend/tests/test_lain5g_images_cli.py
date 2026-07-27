@@ -347,6 +347,79 @@ def test_direct_scenario_command_starts_software_profile(tmp_path: Path):
     assert make_log.read_text(encoding="utf-8").splitlines() == ["start-5g-vonr-sim"]
 
 
+@pytest.mark.parametrize(
+    ("profile", "directory", "requires_ims_password"),
+    (
+        ("5g-sa", "deployments/5g-sa", False),
+        ("5g-vonr-sim", "deployments/5g-vonr", True),
+        ("4g-volte-sim", "deployments/4g-volte/common", True),
+    ),
+)
+def test_scenario_setup_generates_private_synthetic_credentials(
+    tmp_path: Path,
+    profile: str,
+    directory: str,
+    requires_ims_password: bool,
+):
+    project_root = tmp_path / "project"
+    environment_dir = project_root / directory
+    environment_dir.mkdir(parents=True)
+    source_directory = "deployments/5g-vonr" if profile == "5g-vonr-sim" else directory
+    (environment_dir / ".env.example").write_text(
+        (ROOT / source_directory / ".env.example").read_text(encoding="utf-8"),
+        encoding="utf-8",
+    )
+    if requires_ims_password:
+        (environment_dir / ".env").write_text(
+            (environment_dir / ".env.example")
+            .read_text(encoding="utf-8")
+            .replace("IMS_AUTH_PASSWORD=", "IMS_AUTH_PASSWORD='secret value'"),
+            encoding="utf-8",
+        )
+    env = {**os.environ, "LAIN5G_PROJECT_ROOT": str(project_root)}
+
+    first = subprocess.run(
+        [str(ROOT / "lain5g"), "scenario", "setup", profile],
+        cwd=ROOT,
+        env=env,
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+
+    assert first.returncode == 0
+    target = environment_dir / ".env"
+    original = target.read_text(encoding="utf-8")
+    values = dict(
+        line.split("=", 1)
+        for line in original.splitlines()
+        if line and not line.startswith("#") and "=" in line
+    )
+    assert len(values["SUBSCRIBER_KEY"]) == 32
+    assert len(values["SUBSCRIBER_OPC"]) == 32
+    int(values["SUBSCRIBER_KEY"], 16)
+    int(values["SUBSCRIBER_OPC"], 16)
+    assert values["SUBSCRIBER_KEY"] != values["SUBSCRIBER_OPC"]
+    assert bool(values.get("IMS_AUTH_PASSWORD")) is requires_ims_password
+    if requires_ims_password:
+        assert "IMS_AUTH_PASSWORD='secret value'" in original
+    assert target.stat().st_mode & 0o777 == 0o600
+    assert values["SUBSCRIBER_KEY"] not in first.stdout
+    assert values["SUBSCRIBER_OPC"] not in first.stdout
+
+    second = subprocess.run(
+        [str(ROOT / "lain5g"), "scenario", "setup", profile],
+        cwd=ROOT,
+        env=env,
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+
+    assert second.returncode == 0
+    assert target.read_text(encoding="utf-8") == original
+
+
 def test_direct_scenario_start_requires_explicit_image_pull(tmp_path: Path):
     env, docker_log = fake_docker(tmp_path)
 

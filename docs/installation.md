@@ -38,6 +38,7 @@ Para iniciar la interfaz en modo seguro de observación:
 Para permitir desde la app descargas y operaciones sobre escenarios software:
 
 ```bash
+./lain5g scenario setup 5g-sa
 ./lain5g app start --operations --open
 ```
 
@@ -110,6 +111,15 @@ Las imágenes locales se construyen desde los repositorios y revisiones fijados
 en los Dockerfiles del proyecto.
 
 ## Configuración inicial
+
+La opción recomendada genera valores sintéticos aleatorios en el archivo local
+ignorado y aplica permisos `0600`:
+
+```bash
+./lain5g scenario setup 5g-sa
+```
+
+Para configurar los valores manualmente:
 
 ```bash
 cp deployments/5g-sa/.env.example deployments/5g-sa/.env

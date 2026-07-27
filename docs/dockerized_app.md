@@ -10,6 +10,7 @@ No reemplaza ni modifica `deployments/5g-sa/docker-compose.yml`.
 ## Uso desde la CLI
 
 ```bash
+./lain5g scenario setup 5g-sa
 ./lain5g app setup
 ./lain5g app start --open
 ./lain5g app status
@@ -32,7 +33,7 @@ El opt-in operativo activa `LAIN5G_MUTATING_OPERATIONS_ENABLED` y
 Prepara también el entorno del escenario que vayas a operar:
 
 ```bash
-cp deployments/5g-sa/.env.example deployments/5g-sa/.env
+./lain5g scenario setup 5g-sa
 ```
 
 ## Uso directo con Make

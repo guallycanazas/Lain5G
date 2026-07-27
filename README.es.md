@@ -21,7 +21,7 @@ versión estable actual es la release solo de código fuente [`1.0.0`](VERSION).
 > **Versión software probada y funcional.** Todos los flujos de red soportados
 > completamente en software aprueban sus suites de validación: 4G LTE (14/14),
 > 4G VoLTE/IMS (22/22), 5G SA (15/15) y 5G VoNR/IMS (25/25). La verificación
-> global `make softwarex-check` también aprueba 280 pruebas backend, 48 pruebas
+> global `make softwarex-check` también aprueba 283 pruebas backend, 48 pruebas
 > frontend, el build de producción, la verificación de código y Compose, los
 > metadatos de publicación y los controles de archivos sensibles.
 
@@ -40,36 +40,39 @@ versión estable actual es la release solo de código fuente [`1.0.0`](VERSION).
 Requisitos: GNU/Linux x86_64, Docker Engine, Docker Compose v2, Git, GNU Make,
 soporte SCTP y `/dev/net/tun`.
 
-Este ejemplo ejecuta Open5GS y UERANSIM completamente en software y no usa RF:
+### Opción A: aplicación web
+
+Esta es la ruta más sencilla. Crea credenciales sintéticas locales, construye la
+aplicación y la abre en el navegador:
 
 ```bash
 git clone https://github.com/guallycanazas/Lain5G.git
 cd Lain5G
+./lain5g scenario setup 5g-sa
+./lain5g app start --operations --open
+```
 
-cp deployments/5g-sa/.env.example deployments/5g-sa/.env
-# Añada valores de suscriptor exclusivos del laboratorio al archivo .env ignorado.
+En la app, abra **Preparation**, descargue los componentes 5G SA faltantes y
+entre a **Scenarios** para iniciar y validar la red. RF permanece desactivada.
+Detenga la aplicación con `./lain5g app stop`.
 
+### Opción B: solo CLI
+
+```bash
+./lain5g scenario setup 5g-sa
 ./lain5g images pull 5g-sa
 ./lain5g scenario start 5g-sa
 ./lain5g scenario validate 5g-sa
 ./lain5g scenario stop 5g-sa
 ```
 
-Ejecute `./lain5g` sin argumentos para usar la consola interactiva, que permite
-revisar el equipo, descargar imágenes, configurar
-perfiles, iniciar/validar/detener escenarios y administrar la aplicación web.
-También puede abrir directamente la app operativa, con descargas y control de
-escenarios software habilitados pero RF desactivada:
+Ejecute `./lain5g` sin argumentos para usar la consola interactiva o
+`./lain5g profile wizard 5g-sa` para la configuración guiada. La app segura de
+solo observación se inicia con `./lain5g app start --open`.
 
-```bash
-./lain5g app start --operations --open
-```
-
-Para configurar el perfil mediante el asistente use
-`./lain5g profile wizard 5g-sa`. La app segura de solo observación se inicia con
-`./lain5g app start --open`.
-
-Use solo valores de suscriptor sintéticos o de laboratorio. Consulte
+`scenario setup` escribe archivos locales ignorados con credenciales sintéticas
+aleatorias; nunca las imprime ni versiona. Use solo valores sintéticos o de
+laboratorio. Consulte
 [Instalación](docs/installation.md) y [5G SA](docs/5g_sa.md) para más detalles.
 
 ## Redes software validadas
@@ -107,7 +110,7 @@ make softwarex-check
 ```
 
 `make softwarex-check` es el comando único de verificación de release utilizado
-por CI. Aprueba 280 pruebas backend con 77% de cobertura de líneas y 48 pruebas
+por CI. Aprueba 283 pruebas backend con 77% de cobertura de líneas y 48 pruebas
 frontend, seguido de TypeScript, build de producción, validación Compose y de
 perfiles, metadatos, enlaces internos, resultados públicos y controles de
 archivos sensibles.
