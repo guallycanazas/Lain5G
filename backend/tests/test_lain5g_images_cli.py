@@ -108,6 +108,7 @@ def test_main_menu_exposes_preparation_without_publishing():
     )
 
     assert result.returncode == 0
+    assert "[1] PREPARAR MAQUINA Y DESCARGAR TODO" in result.stdout
     assert "Imagenes y componentes" in result.stdout
     assert "Aplicacion web" in result.stdout
     assert "Revisar equipo y dependencias" in result.stdout
@@ -133,6 +134,42 @@ def test_main_menu_exposes_preparation_without_publishing():
         check=False,
     )
     assert hidden_start.returncode == 2
+
+
+def test_bootstrap_dry_run_installs_tools_and_downloads_everything():
+    env = {
+        **os.environ,
+        "LAIN5G_BOOTSTRAP_FORCE_MISSING": "git,make,docker,util-linux,compose",
+        "LAIN5G_BOOTSTRAP_PACKAGE_MANAGER": "apt-get",
+    }
+
+    result = subprocess.run(
+        [str(ROOT / "lain5g"), "bootstrap", "--dry-run", "--yes"],
+        cwd=ROOT,
+        env=env,
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+
+    assert result.returncode == 0
+    assert "apt-get install -y git make docker.io util-linux docker-compose-v2" in result.stdout
+    assert "systemctl enable --now docker" in result.stdout
+    assert "./lain5g scenario setup 4g-lte-sim" in result.stdout
+    assert "./lain5g scenario setup 5g-sa-x310" in result.stdout
+    assert "docker pull gually/lain5g-open5gs" in result.stdout
+    assert "docker pull gually/lain5g-srsranproject-uhd" in result.stdout
+    assert "MAQUINA PREPARADA" in result.stdout
+
+
+def test_shell_installer_bootstraps_python_before_cli():
+    installer = ROOT / "install.sh"
+    source = installer.read_text(encoding="utf-8")
+
+    assert installer.stat().st_mode & 0o111
+    assert "python3" in source
+    assert 'lain5g\" bootstrap' in source
+    assert "apt-get install -y python3" in source
 
 
 def test_app_setup_creates_private_safe_configuration(tmp_path: Path):

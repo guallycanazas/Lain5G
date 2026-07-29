@@ -43,7 +43,13 @@ Requisitos: GNU/Linux x86_64, Docker Engine, Docker Compose v2, Git, GNU Make,
 ```bash
 git clone https://github.com/guallycanazas/Lain5G.git
 cd Lain5G
+./install.sh
 ```
+
+En una máquina limpia, `install.sh` instala Python, Git, Make, Docker, Compose y
+util-linux cuando faltan, habilita Docker, prepara la configuración privada y
+descarga todos los componentes publicados. Use `./install.sh --dry-run` para
+revisar el plan sin modificar el sistema.
 
 ### Opción A: aplicación web
 

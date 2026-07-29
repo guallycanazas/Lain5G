@@ -58,6 +58,18 @@ runs this exact command on Ubuntu 24.04. Reviewed evidence is under
 Operational requirements: GNU/Linux x86_64, Docker Engine, Docker Compose v2,
 Git, GNU Make, util-linux `flock`, SCTP support, and `/dev/net/tun`.
 
+On a clean GNU/Linux machine, run the guided installer first:
+
+```bash
+./install.sh
+```
+
+It installs missing Python, Git, Make, Docker, Compose, and util-linux packages using
+the detected `apt-get`, `dnf`, `pacman`, or `zypper` manager; enables Docker;
+prepares private configuration; and downloads every published component. All
+system changes are shown before execution. Use `./install.sh --dry-run` to print
+the plan without changing the machine.
+
 ### Web application
 
 Launch the operational interface:

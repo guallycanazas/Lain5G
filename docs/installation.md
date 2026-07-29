@@ -1,6 +1,29 @@
 # Installation
 
-## Requisitos
+## Instalación En Una Máquina Limpia
+
+Después de clonar el repositorio, ejecute:
+
+```bash
+./install.sh
+```
+
+El instalador detecta `apt-get`, `dnf`, `pacman` o `zypper`; instala Python,
+Git, Make, Docker, Docker Compose v2 y util-linux cuando faltan; inicia Docker; agrega
+el usuario al grupo `docker`; genera configuraciones privadas; y descarga todas
+las imágenes publicadas. Cada comando privilegiado se muestra antes de usar
+`sudo`.
+
+Para revisar todo sin modificar el equipo:
+
+```bash
+./install.sh --dry-run
+```
+
+Si el instalador agregó el grupo Docker, ejecute `newgrp docker` o vuelva a
+iniciar sesión antes de abrir la aplicación.
+
+## Requisitos Operativos
 
 - Docker con soporte de Compose v2.
 - `flock` de util-linux para exclusión mutua entre sesiones RF.
@@ -8,7 +31,7 @@
 - Acceso a Internet para clonar y compilar Open5GS y UERANSIM durante `make build-5g-sa`.
 - Para X310: red host preparada para USRP y herramientas UHD en host si se desea validar hardware fuera del contenedor.
 
-## Preparación recomendada
+## Preparación Manual Alternativa
 
 Comprueba primero que la versión y los locks no se contradicen:
 
@@ -16,15 +39,16 @@ Comprueba primero que la versión y los locks no se contradicen:
 make version-check
 ```
 
-La consola es el punto de entrada recomendado. Comprueba Docker, Compose, TUN,
-espacio, configuración e imágenes; además permite operar escenarios y abrir la
-aplicación web:
+La consola es el punto de entrada recomendado. Su primera opción instala las
+dependencias faltantes y descarga todo el laboratorio; también permite operar
+escenarios y abrir la aplicación web:
 
 ```bash
 ./lain5g
 ```
 
-Selecciona `Imágenes y componentes` para comprobar o descargar lo necesario,
+Selecciona `PREPARAR MAQUINA Y DESCARGAR TODO` en una instalación nueva,
+`Imágenes y componentes` para administrar descargas,
 `Perfiles y operación` para configurar/iniciar/validar/detener una red o
 `Aplicación web` para preparar, iniciar, abrir y detener la interfaz. Descargar
 imágenes no compila ni inicia servicios.
@@ -120,7 +144,7 @@ software elegido. Para preparar un perfil directamente sin iniciar servicios:
 ./lain5g scenario setup PERFIL
 ```
 
-`PERFIL` puede ser `4g-lte-sim` o `5g-sa`. El
+`PERFIL` puede ser `4g-lte-sim`, `5g-sa`, `4g-lte-x310` o `5g-sa-x310`. El
 comando genera valores sintéticos aleatorios en un archivo local ignorado y
 aplica permisos `0600`.
 

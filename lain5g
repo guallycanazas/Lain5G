@@ -2,8 +2,11 @@
 from __future__ import annotations
 
 import fcntl
+import getpass
 import json
 import os
+import pwd
+import shlex
 import shutil
 import subprocess
 import sys
@@ -168,6 +171,16 @@ def main(argv: list[str]) -> int:
     if argv[0] in {"-h", "--help", "help"}:
         _print_help()
         return 0
+    if argv[0] in {"bootstrap", "install", "prepare"}:
+        flags = set(argv[1:])
+        if not flags <= {"--yes", "--dry-run"}:
+            print("Uso: lain5g bootstrap [--yes] [--dry-run]", file=sys.stderr)
+            return 2
+        return _bootstrap_machine(
+            service,
+            assume_yes="--yes" in flags,
+            dry_run="--dry-run" in flags or os.environ.get("LAIN5G_DRY_RUN", "false").lower() == "true",
+        )
     if argv[0] == "images":
         return _images_command(service, argv[1:])
     if argv[0] == "app":
@@ -248,6 +261,7 @@ def _print_help(file=sys.stdout) -> None:
     print("Consola del laboratorio Lain", file=file)
     print("", file=file)
     print("  lain5g                         Abrir la consola principal", file=file)
+    print("  lain5g bootstrap               Instalar dependencias y descargar todo", file=file)
     print("  lain5g doctor [perfil]        Revisar equipo, Docker e imagenes", file=file)
     print("  lain5g images list [perfil]   Comprobar componentes instalados", file=file)
     print("  lain5g images pull [perfil]   Descargar sin compilar", file=file)
@@ -276,26 +290,221 @@ def _main_menu(service: ProfileConfigService) -> int:
         print("\n+--------------------------------------------------------------+")
         print("|                 CONSOLA DEL LABORATORIO LAIN                 |")
         print("+--------------------------------------------------------------+")
-        print("  [1] Perfiles y operacion")
-        print("  [2] Imagenes y componentes")
-        print("  [3] Aplicacion web")
-        print("  [4] Revisar equipo y dependencias")
+        print("  [1] PREPARAR MAQUINA Y DESCARGAR TODO")
+        print("  [2] Perfiles y operacion")
+        print("  [3] Imagenes y componentes")
+        print("  [4] Aplicacion web")
+        print("  [5] Revisar equipo y dependencias")
         print("  [0] Salir")
         choice = _input("\nElige una opcion: ").strip()
         if choice in {"", "0", "q", "salir"}:
             return 0
         if choice == "1":
-            _wizard(service)
+            _bootstrap_machine(service)
+            _pause()
         elif choice == "2":
-            _images_menu(service)
+            _wizard(service)
         elif choice == "3":
-            _app_menu(service)
+            _images_menu(service)
         elif choice == "4":
+            _app_menu(service)
+        elif choice == "5":
             _doctor(service, "")
             _pause()
         else:
             print("Opcion invalida.")
             _pause()
+
+
+def _run_bootstrap_step(command: list[str], *, dry_run: bool) -> bool:
+    print(f"$ {shlex.join(command)}", flush=True)
+    if dry_run:
+        return True
+    try:
+        return subprocess.run(command, check=False).returncode == 0
+    except (FileNotFoundError, PermissionError, OSError) as exc:
+        print(f"ERROR: no se pudo ejecutar {command[0]}: {exc}", file=sys.stderr)
+        return False
+
+
+def _bootstrap_package_manager() -> str:
+    forced = os.environ.get("LAIN5G_BOOTSTRAP_PACKAGE_MANAGER", "").strip()
+    if forced:
+        return forced if forced in {"apt-get", "dnf", "pacman", "zypper"} else ""
+    return next((name for name in ("apt-get", "dnf", "pacman", "zypper") if shutil.which(name)), "")
+
+
+def _apt_compose_package(*, dry_run: bool) -> str:
+    if dry_run or shutil.which("apt-cache") is None:
+        return "docker-compose-v2"
+    for candidate in ("docker-compose-v2", "docker-compose-plugin"):
+        if subprocess.run(
+            ["apt-cache", "show", candidate],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            check=False,
+        ).returncode == 0:
+            return candidate
+    return "docker-compose-v2"
+
+
+def _bootstrap_install_commands(manager: str, features: set[str], privileged: list[str], *, dry_run: bool) -> list[list[str]]:
+    packages: list[str] = []
+    if manager == "apt-get":
+        if "python" in features:
+            packages.append("python3")
+        if "git" in features:
+            packages.append("git")
+        if "make" in features:
+            packages.append("make")
+        if "docker" in features:
+            packages.append("docker.io")
+        if "util-linux" in features:
+            packages.append("util-linux")
+        if "compose" in features:
+            packages.append(_apt_compose_package(dry_run=dry_run))
+        return [[*privileged, "apt-get", "update"], [*privileged, "apt-get", "install", "-y", *packages]]
+    mappings = {
+        "dnf": {"python": "python3", "git": "git", "make": "make", "docker": "moby-engine", "util-linux": "util-linux", "compose": "docker-compose-plugin"},
+        "pacman": {"python": "python", "git": "git", "make": "make", "docker": "docker", "util-linux": "util-linux", "compose": "docker-compose"},
+        "zypper": {"python": "python3", "git": "git", "make": "make", "docker": "docker", "util-linux": "util-linux", "compose": "docker-compose"},
+    }
+    ordered_features = ("python", "git", "make", "docker", "util-linux", "compose")
+    packages = list(dict.fromkeys(mappings.get(manager, {}).get(feature, feature) for feature in ordered_features if feature in features))
+    if manager == "dnf":
+        return [[*privileged, "dnf", "install", "-y", *packages]]
+    if manager == "pacman":
+        return [[*privileged, "pacman", "-Sy", "--needed", "--noconfirm", *packages]]
+    if manager == "zypper":
+        return [[*privileged, "zypper", "--non-interactive", "install", *packages]]
+    return []
+
+
+def _bootstrap_machine(service: ProfileConfigService, *, assume_yes: bool = False, dry_run: bool = False) -> int:
+    print("\nPreparacion completa de Lain5G-Lab")
+    print("===================================")
+    print("Instala herramientas base, activa Docker, prepara archivos privados y descarga todos los componentes.")
+    if dry_run:
+        print("MODO DRY-RUN: solo se mostraran los comandos.")
+    if not assume_yes and not dry_run and not _confirm("Continuar con la preparacion del sistema?", default=True):
+        print("Preparacion cancelada.")
+        return 1
+
+    forced_missing = {item.strip() for item in os.environ.get("LAIN5G_BOOTSTRAP_FORCE_MISSING", "").split(",") if item.strip()}
+    docker_present = shutil.which("docker") is not None and "docker" not in forced_missing
+    compose_present = docker_present and "compose" not in forced_missing and subprocess.run(
+        ["docker", "compose", "version"],
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+        check=False,
+    ).returncode == 0
+    docker_accessible = docker_present and subprocess.run(
+        ["docker", "info"],
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+        check=False,
+    ).returncode == 0
+    features = set()
+    if sys.version_info < (3, 10) or "python" in forced_missing:
+        features.add("python")
+    if shutil.which("git") is None or "git" in forced_missing:
+        features.add("git")
+    if shutil.which("make") is None or "make" in forced_missing:
+        features.add("make")
+    if shutil.which("flock") is None or "util-linux" in forced_missing:
+        features.add("util-linux")
+    if not docker_present:
+        features.add("docker")
+    if not compose_present:
+        features.add("compose")
+
+    privileged: list[str] = []
+    if os.geteuid() != 0:
+        if shutil.which("sudo") is None and not dry_run and (features or not docker_accessible):
+            print("ERROR: se necesita sudo para instalar paquetes del sistema.", file=sys.stderr)
+            return 2
+        privileged = ["sudo"]
+
+    if features:
+        manager = _bootstrap_package_manager()
+        if not manager:
+            print("ERROR: gestor compatible no encontrado (apt-get, dnf, pacman o zypper).", file=sys.stderr)
+            return 2
+        print(f"\nInstalando dependencias con {manager}: {', '.join(sorted(features))}")
+        for command in _bootstrap_install_commands(manager, features, privileged, dry_run=dry_run):
+            if not _run_bootstrap_step(command, dry_run=dry_run):
+                print("ERROR: fallo la instalacion de dependencias.", file=sys.stderr)
+                return 1
+    else:
+        print("\nDependencias base: OK")
+
+    if not docker_accessible and (dry_run or shutil.which("docker") is not None):
+        started = False
+        if shutil.which("systemctl") or dry_run:
+            started = _run_bootstrap_step([*privileged, "systemctl", "enable", "--now", "docker"], dry_run=dry_run)
+        if not started and shutil.which("service"):
+            _run_bootstrap_step([*privileged, "service", "docker", "start"], dry_run=dry_run)
+
+    user = os.environ.get("SUDO_USER") or getpass.getuser() or pwd.getpwuid(os.getuid()).pw_name
+    normal_access = docker_accessible
+    if not dry_run:
+        normal_access = subprocess.run(
+            ["docker", "info"],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            check=False,
+        ).returncode == 0
+    group_changed = False
+    if user != "root" and not normal_access:
+        groups = subprocess.run(["id", "-nG", user], text=True, capture_output=True, check=False).stdout.split() if shutil.which("id") else []
+        if "docker" not in groups:
+            print(f"\nHabilitando acceso Docker para {user}")
+            if not _run_bootstrap_step([*privileged, "usermod", "-aG", "docker", user], dry_run=dry_run):
+                return 1
+            group_changed = True
+
+    docker_command = ["docker"]
+    if not dry_run:
+        if not normal_access and privileged:
+            elevated_access = subprocess.run([*privileged, "docker", "info"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=False).returncode == 0
+            if elevated_access:
+                docker_command = [*privileged, "docker"]
+            else:
+                print("ERROR: Docker no inicio correctamente. Revisa: systemctl status docker", file=sys.stderr)
+                return 1
+        elif not normal_access:
+            print("ERROR: Docker no esta accesible.", file=sys.stderr)
+            return 1
+
+    print("\nPreparando configuraciones privadas")
+    if not dry_run:
+        for profile_id in PUBLIC_PROFILE_IDS:
+            try:
+                prepare_scenario_environment(service.root, profile_id)
+            except (OSError, UnicodeError, ValueError) as exc:
+                print(f"ERROR: no se pudo preparar {profile_id}: {exc}", file=sys.stderr)
+                return 1
+        if not _prepare_app_environment(service, operations=True):
+            return 1
+    else:
+        for profile_id in PUBLIC_PROFILE_IDS:
+            print(f"$ ./lain5g scenario setup {profile_id}")
+
+    print("\nDescargando todos los componentes publicados")
+    if dry_run:
+        for local_image in _required_images("all"):
+            remote_image = IMAGE_CATALOG.get(local_image, (local_image, ""))[0]
+            print(f"$ docker pull {shlex.quote(remote_image)}")
+            if remote_image != local_image:
+                print(f"$ docker tag {shlex.quote(remote_image)} {shlex.quote(local_image)}")
+    elif not _download_images("all", docker_command=docker_command):
+        return 1
+
+    print("\nMAQUINA PREPARADA")
+    if group_changed:
+        print("Activa el grupo con 'newgrp docker' o vuelve a iniciar sesion.")
+    print("Siguiente paso: ./lain5g app start --operations --open")
+    return 0
 
 
 def _app_menu(service: ProfileConfigService) -> None:
@@ -541,26 +750,26 @@ def _images_menu(service: ProfileConfigService) -> None:
         print("\nImagenes y componentes")
         print("=======================")
         print("Descarga componentes compatibles desde Docker Hub; no compila ni inicia servicios.\n")
-        print("  [1] Comprobar todas las imagenes")
-        print("  [2] Comprobar un perfil")
-        print("  [3] Descargar lo necesario para un perfil")
-        print("  [4] Descargar todo el laboratorio")
+        print("  [1] Descargar todo el laboratorio")
+        print("  [2] Comprobar todas las imagenes")
+        print("  [3] Comprobar un perfil")
+        print("  [4] Descargar lo necesario para un perfil")
         print("  [0] Volver")
         choice = _input("\nElige una opcion: ").strip()
         if choice in {"", "0", "q", "volver"}:
             return
         if choice == "1":
+            if _confirm("Descargar todas las imagenes que falten?", default=True):
+                _download_images("all")
+        elif choice == "2":
             _print_image_status("all")
-        elif choice in {"2", "3"}:
+        elif choice in {"3", "4"}:
             profile_id = _choose_profile(service)
             if profile_id:
-                if choice == "2":
+                if choice == "3":
                     _print_image_status(profile_id)
                 else:
                     _download_images(profile_id)
-        elif choice == "4":
-            if _confirm("Descargar todas las imagenes que falten?", default=True):
-                _download_images("all")
         else:
             print("Opcion invalida.")
         _pause()
@@ -650,10 +859,10 @@ def _required_images(scope: str, core_only: bool = False) -> list[str]:
     return required_images(scope, core_only)
 
 
-def _image_exists(image: str) -> bool:
+def _image_exists(image: str, docker_command: list[str] | None = None) -> bool:
     try:
         completed = subprocess.run(
-            ["docker", "image", "inspect", image],
+            [*(docker_command or ["docker"]), "image", "inspect", image],
             stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL,
             check=False,
@@ -686,15 +895,16 @@ def _print_image_status(scope: str, core_only: bool = False) -> bool:
     return docker_available and missing == 0
 
 
-def _download_images(scope: str, core_only: bool = False) -> bool:
-    if shutil.which("docker") is None:
+def _download_images(scope: str, core_only: bool = False, docker_command: list[str] | None = None) -> bool:
+    docker = docker_command or ["docker"]
+    if shutil.which(docker[0]) is None:
         print("Docker no esta instalado. Ejecuta './lain5g doctor' para ver la ayuda.")
         return False
-    info = subprocess.run(["docker", "info"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=False)
+    info = subprocess.run([*docker, "info"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=False)
     if info.returncode != 0:
         print("No se puede acceder al servicio Docker. Revisa que este activo y tus permisos.")
         return False
-    missing = [image for image in _required_images(scope, core_only) if not _image_exists(image)]
+    missing = [image for image in _required_images(scope, core_only) if not _image_exists(image, docker)]
     if not missing:
         print("\nTodos los componentes necesarios ya estan instalados.")
         return True
@@ -702,12 +912,12 @@ def _download_images(scope: str, core_only: bool = False) -> bool:
     for local_image in missing:
         remote_image = IMAGE_CATALOG.get(local_image, (local_image, ""))[0]
         print(f"\nDescargando {remote_image}", flush=True)
-        pulled = subprocess.run(["docker", "pull", remote_image], check=False)
+        pulled = subprocess.run([*docker, "pull", remote_image], check=False)
         if pulled.returncode != 0:
             print(f"ERROR: no se pudo descargar {remote_image}.")
             return False
         if remote_image != local_image:
-            tagged = subprocess.run(["docker", "tag", remote_image, local_image], check=False)
+            tagged = subprocess.run([*docker, "tag", remote_image, local_image], check=False)
             if tagged.returncode != 0:
                 print(f"ERROR: no se pudo preparar la etiqueta local {local_image}.")
                 return False
@@ -760,7 +970,7 @@ def _doctor(service: ProfileConfigService, profile_id: str) -> int:
     else:
         images_ready = _print_image_status("all")
     if not all(passed for _, passed, _ in checks):
-        print("\nRevisa docs/installation.md. La CLI nunca ejecuta sudo ni instala paquetes del sistema.")
+        print("\nEjecuta './lain5g bootstrap' para instalar dependencias y descargar los componentes.")
     return 0 if all(passed for _, passed, _ in checks) and images_ready else 1
 
 
