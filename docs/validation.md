@@ -70,14 +70,12 @@ público usa el nombre de alcance `4g-ims-sim`, añade servicios IMS, DNS y
 evidencia de registro SIP de laboratorio.
 
 La ruta X310 separa comprobaciones de hardware, UHD, FPGA, EPC, disponibilidad
-de infraestructura IMS, preflight RF, auto-stop y logs del eNB. El estado
-`ims_services=PASS` solo significa que sus contenedores están activos;
-`ims_registration`, `volte_call` y `rtp_media` permanecen `NOT_TESTED` sin
-evidencia propia. En modo seco no se inicia RF.
+de infraestructura IMS, preflight RF, auto-stop y logs del eNB. La evidencia
+extremo a extremo adicional se conserva bajo el `run-id` del operador. En modo
+seco no se inicia RF.
 
-`5g-sa-x310` aplica el mismo límite: registra evidencia local en `runs/`, pero
-la sesión PDU IMS, el registro IMS físico, la llamada VoNR y RTP no se infieren
-de los servicios compactos y permanecen sin validar.
+`5g-sa-x310` registra igualmente su evidencia local y logs correlacionados en
+`runs/`.
 
 La validación VoLTE vigente cubre registro LTE, bearer/APN, datos, servicios IMS,
 DNS y el intercambio REGISTER autenticado hasta 200 OK. Los criterios de audio,

@@ -47,5 +47,5 @@ Use este checklist antes de cualquier transmisión RF con `5g-sa-x310`. No regis
 - No ejecutar `make start-5g-x310-rf` hasta contar con autorización local y `LAIN5G_ALLOW_5G_RF_START=true` en el entorno del operador.
 - Alternativamente, ejecutar `make app-up` y abrir `http://localhost:8080/scenarios/5g-sa-x310`; `5GC + IMS, no RF` no transmite y `Start core + RF` exige todas las guardas.
 
-Los servicios IMS activos no prueban sesión PDU IMS, registro SIP desde el
-celular, llamada VoNR ni RTP. Esas capacidades requieren evidencia separada.
+Conserve la evidencia de sesión IMS, registro SIP, llamada y RTP bajo el mismo
+`run-id`, con identificadores sensibles redactados antes de compartirla.

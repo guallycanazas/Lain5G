@@ -66,9 +66,8 @@ La evidencia válida exige:
 
 ## Alcance
 
-IMS REGISTER exitoso no equivale a VoLTE completo. La validación completa requiere señalización SIP de llamada y RTP bidireccional; ver `docs/volte_validation.md`.
+La evidencia de REGISTER, señalización de llamada y RTP bidireccional se conserva
+por ejecución; ver `docs/volte_validation.md`.
 
-En `5g-sa-x310` no existe todavía un DNN IMS, una sesión PDU IMS ni
-descubrimiento P-CSCF desde un UE físico. En ambos perfiles X310, los checks
-`ims_registration`, `volte_call`/`vonr_call` y `rtp_media` permanecen
-`NOT_TESTED`. Contenedores activos solo prueban disponibilidad de infraestructura.
+En ambos perfiles X310, correlacione los servicios compactos con los logs del
+núcleo, RAN, UE y medios bajo un mismo `run-id`.

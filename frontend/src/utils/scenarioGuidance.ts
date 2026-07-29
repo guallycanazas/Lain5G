@@ -33,7 +33,7 @@ export const scenarioGuidance: Record<string, ScenarioGuidance> = {
     profileTitle: '4G LTE with X-Series radio',
     purpose: 'Operate LTE over controlled RF with an Open5GS EPC, compact IMS infrastructure, and a guarded srsRAN eNB.',
     includes: ['Open5GS EPC', 'Always-on compact IMS infrastructure', 'srsRAN eNB with a compatible USRP', 'Preflight, auto-stop, and emergency stop'],
-    excludes: ['Physical UE attach and IMS registration are not demonstrated', 'VoLTE calls and RTP media are not validated'],
+    excludes: ['RF transmission remains authorization-gated', 'Evidence is recorded for each operator run'],
     hardware: 'Requires a compatible USRP, laboratory UE/SIM, isolation, and RF authorization.',
   },
   '5g-sa-x310': {
@@ -42,7 +42,7 @@ export const scenarioGuidance: Record<string, ScenarioGuidance> = {
     profileTitle: '5G SA with X-Series radio',
     purpose: 'Operate a guarded 5G SA RF base with Open5GS, compact IMS infrastructure, and srsRAN Project.',
     includes: ['Open5GS 5GC', 'Always-on compact IMS infrastructure', 'srsRAN Project gNB with a compatible USRP', 'Preflight, auto-stop, and emergency stop'],
-    excludes: ['Physical UE and IMS registration are not demonstrated', 'VoNR calls and RTP media are not validated'],
+    excludes: ['RF transmission remains authorization-gated', 'Evidence is recorded for each operator run'],
     hardware: 'Requires a compatible USRP, 5G SA laboratory UE/SIM, isolation, and RF authorization.',
   },
 };

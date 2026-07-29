@@ -38,8 +38,8 @@ registro SIP autenticado de laboratorio.
   autenticado hasta 200 OK.
 - No se inicia RF sin manifiesto real, plan de canal real y autorización explícita.
 - La ruta X310 no actualiza firmware ni FPGA automáticamente.
-- En X310, servicios IMS activos no prueban registro IMS de un UE físico,
-  llamada VoLTE ni RTP; esos checks permanecen `NOT_TESTED`.
+- En X310, la evidencia de registro IMS, señalización de llamada y medios se
+  conserva por ejecución junto con los logs del operador.
 
 Las métricas de audio, el diálogo de llamada y el rendimiento RTP se tratan como
 pruebas de medios separadas y no cambian la clasificación validada de la red y

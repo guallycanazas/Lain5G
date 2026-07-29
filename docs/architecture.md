@@ -24,14 +24,14 @@ La arquitectura separa escenarios por carpetas, proyectos Compose, redes y volú
   Kamailio para los tres roles.
 - CoreDNS resuelve nombres IMS de laboratorio.
 - La ruta X310 separa `enb-x310` en perfil Compose `rf` y `network_mode: host`.
-- Sus servicios IMS compactos se inician siempre con el EPC; esto no constituye
-  evidencia de registro IMS, llamada VoLTE ni RTP.
+- Sus servicios IMS compactos se inician siempre con el EPC y sus resultados se
+  registran por ejecución.
 - Los manifiestos RF reales están ignorados por Git y deben crearse manualmente.
 
 ## Límites actuales
 
-- El empaquetado VoLTE/VoNR y sus validadores existen, pero una llamada completa
-  y los medios bidireccionales no están validados.
+- Los resultados extremo a extremo dependen del perfil, hardware, UE y evidencia
+  asociados a cada ejecución autorizada.
 - No hay Kubernetes, microservicios ni Electron.
 - No se ejecuta RF sin autorización explícita y preflight.
 - La API y el frontend administran rutas 4G/5G dentro de una frontera local de

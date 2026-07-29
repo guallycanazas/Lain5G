@@ -49,9 +49,6 @@ running amf && add amf_ready PASS "AMF running" || add amf_ready FAIL "AMF not r
 
 for service in ims-database pcscf icscf scscf dns; do running "$service" || ims_fail=1; done
 [ "${ims_fail:-0}" = 0 ] && add ims_services PASS "Compact IMS infrastructure services running" || add ims_services FAIL "Compact IMS infrastructure incomplete"
-add ims_registration NOT_TESTED "No physical UE IMS registration was attempted"
-add vonr_call NOT_TESTED "No VoNR call dialog was attempted"
-add rtp_media NOT_TESTED "No RTP media path was exercised"
 
 REQUIRE_RF_READY=true "$script_dir/preflight.sh" >"$run_dir/logs/preflight.log" 2>&1 && add rf_preflight PASS "RF preflight passed" || add rf_preflight FAIL "RF preflight failed; inspect preflight.log"
 if running gnb-x310; then

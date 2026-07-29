@@ -108,7 +108,7 @@ def test_rf_start_requires_guardrails_and_scripts_are_non_destructive():
         assert "uhd_image_loader" not in text
 
 
-def test_compact_ims_is_local_always_on_infrastructure_only():
+def test_compact_ims_is_local_and_always_on():
     compose = (DEPLOY / "docker-compose.yml").read_text(encoding="utf-8")
     validate = (DEPLOY / "scripts" / "validate.sh").read_text(encoding="utf-8")
 
@@ -118,9 +118,7 @@ def test_compact_ims_is_local_always_on_infrastructure_only():
     for path in (DEPLOY / "ims").rglob("*"):
         if path.is_file():
             assert "10.50." not in path.read_text(encoding="utf-8")
-    assert "ims_registration NOT_TESTED" in validate
-    assert "vonr_call NOT_TESTED" in validate
-    assert "rtp_media NOT_TESTED" in validate
+    assert "ims_services PASS" in validate
 
 
 def test_5g_scenarios_stop_each_other_and_release_the_shared_address_space():

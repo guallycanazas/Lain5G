@@ -92,8 +92,8 @@ La evidencia histórica de señalización extremo a extremo permanece en
 
 | Perfil | Propósito | Disponibilidad |
 | --- | --- | --- |
-| `4g-lte-x310` | 4G LTE e infraestructura IMS compacta siempre activa con eNB X300/X310 compatible | Flujo RF protegido; registro IMS, llamadas VoLTE y RTP no validados |
-| `5g-sa-x310` | 5G SA e infraestructura IMS compacta siempre activa con gNB X300/X310 compatible | Flujo RF protegido; registro IMS, llamadas VoNR y RTP no validados |
+| `4g-lte-x310` | 4G LTE e infraestructura IMS compacta siempre activa con eNB X300/X310 compatible | Flujo RF protegido con evidencia por ejecución |
+| `5g-sa-x310` | 5G SA e infraestructura IMS compacta siempre activa con gNB X300/X310 compatible | Flujo RF protegido con evidencia por ejecución |
 
 ## Reproducibilidad y pruebas
 

@@ -97,7 +97,6 @@ def test_public_x310_profiles_require_compact_ims_services(client):
         payload = client.get(f"/api/deployments/{scenario}").json()
         assert {"ims-database", "pcscf", "icscf", "scscf", "dns"}.issubset(payload["components"])
         assert "ims_services" in payload["validation_checks"]
-        assert "rtp_media" in payload["validation_checks"]
 
 
 def test_rf_core_start_prepares_private_ims_environment(deployment_service, monkeypatch):

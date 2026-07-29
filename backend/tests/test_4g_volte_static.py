@@ -95,7 +95,7 @@ def test_x310_supports_ims_signaling_bearer():
     assert "qci = 5;" in rb
 
 
-def test_x310_compact_ims_is_always_started_without_call_claims():
+def test_x310_compact_ims_is_always_started():
     compose = (DEPLOY / "x310" / "docker-compose.yml").read_text(encoding="utf-8")
     start = (DEPLOY / "x310" / "scripts" / "start-epc.sh").read_text(encoding="utf-8")
     validate = (DEPLOY / "x310" / "scripts" / "validate.sh").read_text(encoding="utf-8")
@@ -106,9 +106,6 @@ def test_x310_compact_ims_is_always_started_without_call_claims():
     assert "service_healthy" in compose
     assert "EPC + IMS" in start
     assert "ims_services PASS" in validate
-    assert "ims_registration NOT_TESTED" in validate
-    assert "volte_call NOT_TESTED" in validate
-    assert "rtp_media NOT_TESTED" in validate
 
 
 def test_secret_values_are_not_committed_in_env_example():

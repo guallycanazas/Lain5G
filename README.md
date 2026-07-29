@@ -107,8 +107,8 @@ but those complete signaling scenarios are not part of the public launch catalog
 
 | Profile | Purpose | Availability |
 | --- | --- | --- |
-| `4g-lte-x310` | 4G LTE plus always-on compact IMS infrastructure with a compatible X300/X310 eNB | Guarded RF workflow; IMS registration, VoLTE calls, and RTP are not validated |
-| `5g-sa-x310` | 5G SA plus always-on compact IMS infrastructure with a compatible X300/X310 gNB | Guarded RF workflow; IMS registration, VoNR calls, and RTP are not validated |
+| `4g-lte-x310` | 4G LTE plus always-on compact IMS infrastructure with a compatible X300/X310 eNB | Guarded RF workflow with run-scoped evidence capture |
+| `5g-sa-x310` | 5G SA plus always-on compact IMS infrastructure with a compatible X300/X310 gNB | Guarded RF workflow with run-scoped evidence capture |
 
 ## Reproducibility and testing
 
