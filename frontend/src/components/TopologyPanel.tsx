@@ -46,7 +46,7 @@ export function TopologyPanel({ containers, checks = [], title = 'Network topolo
           })}
         </div>
       </div>
-      <div className="topology-legend"><span className="legend-item"><span className="node-signal good" /> Container health, protocol, validation</span><span className="legend-item"><span className="node-signal warning" /> Evidence not reported</span><span>Links become active only when validation evidence is available.</span></div>
+      <div className="topology-legend"><span className="legend-item"><span className="node-signal good" /> Container health, protocol, validation</span><span className="legend-item"><span className="node-signal warning" /> Evidence not reported</span><span>Grid lines are layout guides; use the operational proof chain for verified end-to-end links.</span></div>
     </section>
   );
 }

@@ -1,5 +1,6 @@
 import type { DeploymentState } from '../types/deployment';
 import type { ValidationState } from '../types/validation';
+import type { ValidationCheck } from '../types/validation';
 
 export function deploymentLabel(status: DeploymentState | string): string {
   const labels: Record<string, string> = {
@@ -26,6 +27,15 @@ export function validationLabel(status: ValidationState | string): string {
     RUNNING: 'RUNNING',
   };
   return labels[status] || status;
+}
+
+export function aggregateValidationStatus(checks: ValidationCheck[]): ValidationState {
+  if (!checks.length) return 'NOT_TESTED';
+  const statuses = checks.map((check) => check.status);
+  if (statuses.includes('FAIL')) return 'FAIL';
+  if (statuses.includes('WARNING')) return 'WARNING';
+  if (statuses.every((status) => status === 'PASS')) return 'PASS';
+  return 'NOT_TESTED';
 }
 
 export function validationDescription(id: string): string {

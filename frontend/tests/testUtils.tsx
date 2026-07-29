@@ -64,9 +64,9 @@ export const deploymentStatus = {
 export const validationReport = {
   run_id: 'run-valid',
   scenario: '5g-sa',
-  status: 'PASS',
+  status: 'FAIL',
   checked_at: '2026-07-10T02:00:00Z',
-  validation: { mongo: 'PASS', nrf: 'PASS', amf: 'PASS', smf: 'PASS', upf: 'PASS', ausf: 'PASS', udm: 'PASS', udr: 'PASS', pcf: 'PASS', ng_connection: 'PASS', ue_registration: 'PASS', pdu_session: 'PASS', ue_tun: 'PASS', ue_ip: 'PASS', ping: 'PASS' },
+  validation: { mongo: 'PASS', nrf: 'FAIL', ue_ip: 'WARNING', ping: 'NOT_TESTED' },
   checks: [
     { id: 'mongo', status: 'PASS', detail: 'MongoDB responds to ping' },
     { id: 'nrf', status: 'FAIL', detail: 'container is not running' },

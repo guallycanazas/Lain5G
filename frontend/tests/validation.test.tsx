@@ -13,7 +13,7 @@ describe('ValidationPage', () => {
     expect(await screen.findByText('Infrastructure')).toBeInTheDocument();
     expect(screen.getByText('Core control plane')).toBeInTheDocument();
     expect(screen.getByText('MongoDB available')).toBeInTheDocument();
-    expect(screen.getByText('FAIL')).toBeInTheDocument();
+    expect(screen.getAllByText('FAIL')).toHaveLength(2);
     expect(screen.getByText('WARNING')).toBeInTheDocument();
   });
 

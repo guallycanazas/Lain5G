@@ -21,7 +21,7 @@ versión estable actual es la release solo de código fuente [`1.0.0`](VERSION).
 > **Versión software probada y funcional.** Todos los flujos de red soportados
 > completamente en software aprueban sus suites de validación: 4G LTE (14/14) y
 > 5G SA (15/15). La verificación
-> global `make softwarex-check` también aprueba 314 pruebas backend, 50 pruebas
+> global `make softwarex-check` también aprueba 321 pruebas backend, 51 pruebas
 > frontend, el build de producción, la verificación de código y Compose, los
 > metadatos de publicación y los controles de archivos sensibles.
 
@@ -70,6 +70,11 @@ RF exige preflight, perfil autorizado, checklist, frase exacta, duración limita
 y parada de emergencia. Detenga la interfaz con `./lain5g app stop` después de
 finalizar cualquier sesión RF activa.
 
+El overview de cada escenario muestra una cadena visual de prueba operacional.
+Separa salud de contenedores de evidencia real de core, enlace RAN, registro y
+sesión UE, IP y ping. En RF separa X310/UHD, preflight, core, RAN y prueba UE por
+aire; un eNB/gNB activo nunca se presenta como prueba de recepción RF.
+
 ### Opción B: solo CLI
 
 ```bash
@@ -113,7 +118,7 @@ make softwarex-check
 ```
 
 `make softwarex-check` es el comando único de verificación de release utilizado
-por CI. Aprueba 314 pruebas backend con 78% de cobertura de líneas y 50 pruebas
+por CI. Aprueba 321 pruebas backend con 78% de cobertura de líneas y 51 pruebas
 frontend, seguido de TypeScript, build de producción, validación Compose y de
 perfiles, metadatos, enlaces internos, resultados públicos y controles de
 archivos sensibles.

@@ -1,4 +1,4 @@
-import { screen, waitFor } from '@testing-library/react';
+import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ScenarioDetailPage } from '../src/pages/ScenarioDetailPage';
@@ -72,6 +72,10 @@ describe('Scenario workspaces', () => {
     expect(screen.queryByRole('button', { name: 'Start' })).not.toBeInTheDocument();
     expect(screen.getByText('Always-on compact IMS infrastructure')).toBeInTheDocument();
     expect(screen.getByText('Evidence is recorded for each operator run')).toBeInTheDocument();
+    const proof = await screen.findByLabelText('Operational proof');
+    expect(within(proof).getByText('Guarded RF evidence chain')).toBeInTheDocument();
+    expect(within(proof).getByText('UE over air')).toBeInTheDocument();
+    expect(within(proof).getByText(/never inferred from a running RAN process/i)).toBeInTheDocument();
   });
   it('shows expected services that are missing from a partial deployment', async () => {
     stubScenarioFetch((url) => url.includes('/api/deployments/4g-lte-x310/status') ? jsonResponse({
@@ -97,6 +101,35 @@ describe('Scenario workspaces', () => {
     expect(screen.getByText('No evidence was recorded for this check in the latest completed validation.')).toBeInTheDocument();
     await userEvent.click(screen.getByRole('button', { name: 'Run validation' }));
     await waitFor(() => expect(fetch).toHaveBeenCalledWith('/api/deployments/5g-sa/validate', expect.objectContaining({ method: 'POST' })));
+  });
+  it('shows a conservative end-to-end proof chain instead of trusting a recorded PASS', async () => {
+    const checks = [
+      ...['mongo', 'mme', 'hss', 'sgwc', 'sgwu', 'pgwc', 'pgwu', 'pcrf'].map((id) => ({ id, status: 'PASS', detail: 'container is running' })),
+      { id: 's1_setup', status: 'PASS', detail: 'eNB/MME S1 evidence found' },
+      { id: 'ue_registration', status: 'WARNING', detail: 'UE registration evidence not found' },
+      { id: 'default_bearer', status: 'WARNING', detail: 'bearer evidence not found' },
+      { id: 'ue_tun', status: 'WARNING', detail: 'tun_srsue not found' },
+      { id: 'ue_ip', status: 'WARNING', detail: 'UE IPv4 address not found' },
+      { id: 'data_ping', status: 'WARNING', detail: 'Ping was not validated' },
+    ];
+    stubScenarioFetch((url) => {
+      if (url.includes('/api/runs?') && url.includes('scenario=4g-lte-sim')) return jsonResponse([{ run_id: 'run-4g-warning', scenario: '4g-lte-sim', status: 'PASS' }]);
+      if (url.includes('/api/runs/run-4g-warning')) return jsonResponse({ run_id: 'run-4g-warning', metadata: { scenario: '4g-lte-sim', finished_at: '2026-07-29T19:49:50Z' }, validation: { status: 'PASS', checked_at: '2026-07-29T19:49:50Z', checks }, metrics: {}, logs: [] });
+      return undefined;
+    });
+    renderRoute('/scenarios/:scenarioId', <ScenarioDetailPage />, '/scenarios/4g-lte-sim');
+
+    const proof = await screen.findByLabelText('Operational proof');
+    expect(within(proof).getByText('End-to-end simulation evidence chain')).toBeInTheDocument();
+    expect(await within(proof).findByText('2/5 stages proven')).toBeInTheDocument();
+    expect(within(proof).getAllByText('WARNING').length).toBeGreaterThan(0);
+    expect(within(proof).getByText('MME/eNB/UE logs')).toBeInTheDocument();
+    expect(within(proof).getByText('ping -I tun_srsue')).toBeInTheDocument();
+    expect(within(proof).getByText(/running container alone never proves registration/i)).toBeInTheDocument();
+    await userEvent.click(within(proof).getByRole('button', { name: 'Run evidence check' }));
+    await waitFor(() => expect(fetch).toHaveBeenCalledWith('/api/deployments/4g-lte-sim/validate', expect.objectContaining({ method: 'POST' })));
+    await userEvent.click(within(proof).getByRole('button', { name: 'Inspect live logs' }));
+    expect(await screen.findByRole('button', { name: 'Fetch logs' })).toBeInTheDocument();
   });
   it('requires the RF checklist and exact phrase before starting core plus RF', async () => {
     stubScenarioFetch(); renderRoute('/scenarios/:scenarioId', <ScenarioDetailPage />, '/scenarios/4g-lte-x310');

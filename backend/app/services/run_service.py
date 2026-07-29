@@ -59,6 +59,11 @@ class RunService:
         if not isinstance(metadata, dict):
             return None
         validation = self._read_optional_json(run_dir / "validation.json")
+        if isinstance(validation, dict):
+            validation = dict(validation)
+            derived_status = self._validation_status(validation)
+            if derived_status:
+                validation["status"] = derived_status
         metrics = self._read_optional_json(run_dir / "metrics.json")
         return RunDetail(
             run_id=str(metadata.get("run_id", run_id)),
@@ -91,20 +96,18 @@ class RunService:
     def _validation_status(validation: dict[str, Any] | None) -> str | None:
         if not validation:
             return None
-        status = validation.get("status")
-        if isinstance(status, str) and status:
-            return status
         checks = validation.get("checks")
-        if not isinstance(checks, list) or not checks:
-            return None
-        statuses = [check.get("status") for check in checks if isinstance(check, dict)]
-        if "FAIL" in statuses:
-            return "FAIL"
-        if "WARNING" in statuses:
-            return "WARNING"
-        if statuses and all(item == "PASS" for item in statuses):
-            return "PASS"
-        return "NOT_TESTED"
+        if isinstance(checks, list) and checks:
+            statuses = [check.get("status") for check in checks if isinstance(check, dict)]
+            if "FAIL" in statuses:
+                return "FAIL"
+            if "WARNING" in statuses:
+                return "WARNING"
+            if statuses and all(item == "PASS" for item in statuses):
+                return "PASS"
+            return "NOT_TESTED"
+        status = validation.get("status")
+        return status if isinstance(status, str) and status else None
 
     @staticmethod
     def _summary_sort_key(summary: RunSummary) -> str:

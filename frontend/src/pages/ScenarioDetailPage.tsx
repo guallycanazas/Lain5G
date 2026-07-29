@@ -9,6 +9,7 @@ import { ContainerStatusTable } from '../components/ContainerStatusTable';
 import { ErrorAlert } from '../components/ErrorAlert';
 import { LoadingState } from '../components/LoadingState';
 import { LogsViewer } from '../components/LogsViewer';
+import { OperationalProofPanel } from '../components/OperationalProofPanel';
 import { StatusBadge } from '../components/StatusBadge';
 import { RfStartDialog } from '../components/RfStartDialog';
 import { ScenarioValidationPanel } from '../components/ScenarioValidationPanel';
@@ -21,7 +22,9 @@ import { useScenario, useScenarioActions, useScenarioStatus } from '../hooks/use
 import { useProfileComponents, usePullComponents } from '../hooks/usePreparation';
 import { formatDate } from '../utils/dates';
 import { getScenarioGuidance } from '../utils/scenarioGuidance';
+import { aggregateValidationStatus } from '../utils/status';
 import type { RfStartPayload } from '../types/deployment';
+import type { ValidationCheck } from '../types/validation';
 
 const tabs = ['overview', 'topology', 'configuration', 'validation', 'logs', 'runs'] as const;
 const publicScenarios = new Set(['4g-lte-sim', '4g-lte-x310', '5g-sa', '5g-sa-x310']);
@@ -45,13 +48,13 @@ export function ScenarioDetailPage() {
   const pullComponents = usePullComponents(scenarioId);
   const runs = useQuery({ queryKey: ['runs', scenarioId], queryFn: () => runsApi.list({ scenario: scenarioId, limit: 10 }), enabled: Boolean(scenarioId) });
   const latestRun = useQuery({ queryKey: ['run', runs.data?.[0]?.run_id], queryFn: () => runsApi.detail(runs.data?.[0]?.run_id || ''), enabled: Boolean(runs.data?.[0]?.run_id) });
-  const latestValidationSummary = runs.data?.find((run) => ['PASS', 'FAIL', 'PARTIAL', 'WARNING'].includes(String(run.status || '').toUpperCase()));
+  const latestValidationSummary = runs.data?.find((run) => ['PASS', 'FAIL', 'PARTIAL', 'WARNING', 'NOT_TESTED'].includes(String(run.status || '').toUpperCase()));
   const latestValidationRun = useQuery({ queryKey: ['run', latestValidationSummary?.run_id], queryFn: () => runsApi.detail(latestValidationSummary?.run_id || ''), enabled: Boolean(latestValidationSummary?.run_id) });
   const logs = useQuery({ queryKey: ['logs', scenarioId, container], queryFn: () => deploymentsApi.logs(container === 'all' ? null : container, 300, scenarioId), enabled: false });
   const deployment = scenario.data;
   const guidance = getScenarioGuidance(scenarioId);
-  const checks = Array.isArray(latestValidationRun.data?.validation?.checks) ? latestValidationRun.data.validation.checks as { id: string; status: any; detail: string | null }[] : [];
-  const validationStatus = String(latestValidationRun.data?.validation?.status || latestValidationSummary?.status || 'NOT_TESTED');
+  const checks = Array.isArray(latestValidationRun.data?.validation?.checks) ? latestValidationRun.data.validation.checks as ValidationCheck[] : [];
+  const validationStatus = checks.length ? aggregateValidationStatus(checks) : String(latestValidationRun.data?.validation?.status || latestValidationSummary?.status || 'NOT_TESTED');
   const validationCheckedAt = String(latestValidationRun.data?.validation?.checked_at || latestValidationRun.data?.metadata.finished_at || '');
   const busy = Object.values(actions).some((action) => action.isPending) || pullComponents.isPending;
   const actionError = Object.values(actions).find((action) => action.error)?.error;
@@ -115,7 +118,7 @@ export function ScenarioDetailPage() {
       {deployment?.supported_actions.includes('emergency-stop') ? <ActionButton variant="danger" disabled={busy} onClick={() => setConfirm('emergency')}>Emergency stop</ActionButton> : null}
     </div></section>
     <section className="panel wide"><div className="tab-list" role="tablist">{tabs.map((item) => <button key={item} type="button" className={tab === item ? 'active' : ''} onClick={() => setTab(item)} role="tab" aria-selected={tab === item}>{item}</button>)}</div>
-      {tab === 'overview' ? <div className="page-grid scenario-overview-grid"><section><h3>Service inventory</h3><p className="muted-text scenario-section-intro">Expected profile services are compared with containers currently detected by Docker.</p><ContainerStatusTable containers={status.data?.containers || []} expectedServices={deployment?.components || []} conditionalServices={deployment?.conditional_components || []} deploymentState={status.data?.status || 'unknown'} /></section><section className="scenario-validation-column"><div><h3>Operational validation</h3><p className="muted-text scenario-section-intro">Protocol, UE, user-plane and hardware evidence from the latest completed validation.</p><ScenarioValidationPanel expectedChecks={deployment?.validation_checks || []} checks={checks} status={validationStatus} checkedAt={validationCheckedAt} runId={latestValidationSummary?.run_id} loading={actions.validate.isPending} onValidate={() => actions.validate.mutate()} /></div><div className="scenario-latest-run"><h3>Latest execution</h3>{latestRun.data ? <dl className="facts"><dt>Run ID</dt><dd><Link to={`/runs/${latestRun.data.run_id}`}>{latestRun.data.run_id}</Link></dd><dt>Result</dt><dd><StatusBadge status={String(latestRun.data.validation?.status || latestRun.data.metadata.status || 'unknown')} kind="validation" /></dd><dt>Finished</dt><dd>{formatDate(String(latestRun.data.metadata.finished_at || latestRun.data.metadata.started_at || ''))}</dd><dt>Commit</dt><dd><code>{String(latestRun.data.metadata.git_commit || 'Not recorded')}</code></dd></dl> : <div className="empty-state"><h3>No runs recorded</h3><p>Run validation to generate immutable evidence.</p></div>}</div></section></div> : null}
+      {tab === 'overview' ? <div className="page-grid scenario-overview-grid"><OperationalProofPanel scenarioId={scenarioId} rfCapable={Boolean(deployment?.rf_capable)} checks={checks} checkedAt={validationCheckedAt} runId={latestValidationSummary?.run_id} loading={actions.validate.isPending} onValidate={() => actions.validate.mutate()} onOpenLogs={() => setTab('logs')} /><section><h3>Service inventory</h3><p className="muted-text scenario-section-intro">Expected profile services are compared with containers currently detected by Docker.</p><ContainerStatusTable containers={status.data?.containers || []} expectedServices={deployment?.components || []} conditionalServices={deployment?.conditional_components || []} deploymentState={status.data?.status || 'unknown'} /></section><section className="scenario-validation-column"><div><h3>Operational validation</h3><p className="muted-text scenario-section-intro">Protocol, UE, user-plane and hardware evidence from the latest completed validation.</p><ScenarioValidationPanel expectedChecks={deployment?.validation_checks || []} checks={checks} status={validationStatus} checkedAt={validationCheckedAt} runId={latestValidationSummary?.run_id} loading={actions.validate.isPending} onValidate={() => actions.validate.mutate()} /></div><div className="scenario-latest-run"><h3>Latest execution</h3>{latestRun.data ? <dl className="facts"><dt>Run ID</dt><dd><Link to={`/runs/${latestRun.data.run_id}`}>{latestRun.data.run_id}</Link></dd><dt>Result</dt><dd><StatusBadge status={String(latestRun.data.validation?.status || latestRun.data.metadata.status || 'unknown')} kind="validation" /></dd><dt>Finished</dt><dd>{formatDate(String(latestRun.data.metadata.finished_at || latestRun.data.metadata.started_at || ''))}</dd><dt>Commit</dt><dd><code>{String(latestRun.data.metadata.git_commit || 'Not recorded')}</code></dd></dl> : <div className="empty-state"><h3>No runs recorded</h3><p>Run validation to generate immutable evidence.</p></div>}</div></section></div> : null}
       {tab === 'topology' ? <TopologyPanel containers={status.data?.containers || []} checks={checks} checkedAt={status.data?.checked_at} title={`${deployment?.name || scenarioId} topology`} /> : null}
       {tab === 'configuration' ? <div className="empty-state"><h3>Permanent configuration workspace</h3><p>Profiles are edited under Deployments. Generated run evidence remains under runs/ and is never edited here.</p><Link className="action-link" to="/deployments">Open deployments</Link></div> : null}
       {tab === 'validation' ? <ValidationTable checks={checks} expectedChecks={deployment?.validation_checks || []} checkedAt={validationCheckedAt} /> : null}

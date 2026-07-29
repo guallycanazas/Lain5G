@@ -37,6 +37,18 @@ Cada comprobación devuelve uno de estos estados:
 - `WARNING`
 - `NOT_TESTED`
 
+La aplicación agrupa esas comprobaciones en una cadena visual de evidencia. En
+simulación, las etapas son core, enlace RAN, registro/sesión UE, interfaz/IP y
+ping enlazado al túnel UE. Una etapa solo aparece verde cuando todos sus checks
+requeridos tienen evidencia `PASS`; un contenedor activo no se interpreta como
+registro UE ni tráfico de usuario. El estado global también se deriva de los
+checks y no confía en un `PASS` grabado por un script antiguo.
+
+En perfiles X310, la cadena separa detección UHD, preflight, core, proceso RAN,
+enlace S1/NG y prueba UE por aire. La ejecución del eNB/gNB no demuestra por sí
+sola emisión o recepción RF. La etapa UE permanece `NOT_TESTED` hasta disponer
+de evidencia correlacionada de un equipo externo durante la sesión autorizada.
+
 ## Comprobaciones 5G SA
 
 - MongoDB activo.

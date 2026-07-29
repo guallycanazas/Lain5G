@@ -731,6 +731,37 @@ button.row-action.danger:hover:not(:disabled) { color: #a8382d; background: #fff
 .scenario-validation-footer .action-button { flex: 0 0 auto; min-height: 32px; padding: 6px 9px; font-size: .64rem; }
 .scenario-latest-run { padding: 14px; background: #faf9fc; border: 1px solid var(--line); border-radius: 10px; }
 .scenario-latest-run h3 { margin-top: 0; }
+.operational-proof { grid-column: 1 / -1; overflow: hidden; border: 1px solid #d7e5f2; border-radius: 14px; background: linear-gradient(135deg, #f7fbff, #f4f8ff); }
+.operational-proof.rf { border-color: #ead4ae; background: linear-gradient(135deg, #fffaf1, #fff6e6); }
+.operational-proof-heading { display: flex; align-items: center; justify-content: space-between; gap: 18px; padding: 17px 18px 12px; }
+.operational-proof-title { display: flex; align-items: center; gap: 12px; }
+.operational-proof-title h3 { margin: 2px 0 0; color: #243047; }
+.proof-mark { display: grid; flex: 0 0 42px; width: 42px; height: 42px; place-items: center; color: #fff; background: #2563eb; border-radius: 12px; }
+.operational-proof.rf .proof-mark { color: #6b3b00; background: #f5c66d; }
+.operational-proof-result { display: flex; align-items: center; gap: 10px; color: #344054; font-size: .76rem; }
+.proof-trust-note { margin: 0; padding: 0 18px 15px; color: #53647a; font-size: .71rem; line-height: 1.5; }
+.proof-chain { display: flex; align-items: stretch; gap: 8px; padding: 0 18px 18px; overflow-x: auto; }
+.proof-stage { display: grid; flex: 1 0 175px; min-width: 175px; max-width: 240px; gap: 8px; padding: 12px; background: #fff; border: 1px solid #dce5ef; border-top: 3px solid #94a3b8; border-radius: 10px; box-shadow: 0 5px 14px rgba(29, 40, 64, .05); }
+.proof-stage.pass { border-top-color: #16a34a; }
+.proof-stage.warning { border-top-color: #d97706; background: #fffdf6; }
+.proof-stage.fail { border-top-color: #dc2626; background: #fff8f7; }
+.proof-stage.not_tested { border-top-color: #94a3b8; background: #fafbfc; }
+.proof-stage-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.proof-stage-top > span:first-child { display: grid; width: 24px; height: 24px; place-items: center; color: #526178; background: #eef2f7; border-radius: 7px; font-family: "JetBrains Mono", monospace; font-size: .63rem; font-weight: 900; }
+.proof-stage > strong { color: #263349; font-size: .76rem; }
+.proof-stage > p { min-height: 45px; margin: 0; color: #66758a; font-size: .64rem; line-height: 1.45; }
+.proof-stage dl { display: grid; grid-template-columns: auto 1fr; gap: 3px 7px; margin: 0; padding-top: 7px; border-top: 1px solid #edf0f4; font-size: .58rem; }
+.proof-stage dt { color: #8b96a8; }
+.proof-stage dd { margin: 0; color: #526178; font-weight: 750; }
+.proof-signal-list { display: flex; flex-wrap: wrap; gap: 4px; margin-top: auto; }
+.proof-signal-list span { padding: 3px 5px; color: #68758a; background: #eef2f6; border-radius: 5px; font-family: "JetBrains Mono", monospace; font-size: .49rem; }
+.proof-signal-list span.pass { color: #136c3a; background: #e7f7ed; }
+.proof-signal-list span.warning { color: #935b0b; background: #fff1d8; }
+.proof-signal-list span.fail { color: #a32a23; background: #fee8e6; }
+.proof-arrow { flex: 0 0 18px; align-self: center; color: #8aa0b8; }
+.operational-proof-footer { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 11px 18px; color: #65758a; background: rgba(255, 255, 255, .62); border-top: 1px solid rgba(184, 200, 216, .65); font-size: .62rem; }
+.operational-proof-footer .actions-row { margin: 0; }
+.operational-proof-footer .action-button { min-height: 32px; padding: 6px 9px; font-size: .64rem; }
 
 @media (max-width: 700px) {
   .rf-quick-start, .simulation-quick-start { align-items: flex-start; flex-direction: column; }
@@ -751,6 +782,12 @@ button.row-action.danger:hover:not(:disabled) { color: #a8382d; background: #fff
   .diagnostic-grid { grid-template-columns: 1fr; }
   .component-profile-heading, .component-download, .scenario-components { align-items: flex-start; flex-direction: column; }
   .service-inventory-summary, .scenario-validation-footer { align-items: flex-start; flex-direction: column; }
+  .operational-proof-heading, .operational-proof-footer { align-items: flex-start; flex-direction: column; }
+  .operational-proof-result { width: 100%; justify-content: space-between; }
+  .proof-chain { align-items: stretch; flex-direction: column; overflow: visible; }
+  .proof-stage { width: auto; max-width: none; min-width: 0; }
+  .proof-stage > p { min-height: 0; }
+  .proof-arrow { align-self: center; transform: rotate(90deg); }
   .dashboard-hero-content, .console-page-hero-copy { padding: 24px 20px; }
   .dashboard-hero-visual, .console-page-hero figure { min-height: 230px; }
   .dashboard-hero-visual figcaption, .console-page-hero figcaption { right: 12px; bottom: 12px; left: 12px; }
@@ -867,6 +904,16 @@ html[data-theme="dark"] :is(.service-inventory-summary, .scenario-validation-sum
 html[data-theme="dark"] .service-missing, html[data-theme="dark"] .scenario-check-list article.fail { background: #2d181d; }
 html[data-theme="dark"] :is(.service-inventory-summary strong, .scenario-validation-summary strong, .scenario-check-list article strong) { color: var(--ink-800); }
 html[data-theme="dark"] .scenario-check-list article { border-color: var(--line); }
+html[data-theme="dark"] .operational-proof { background: linear-gradient(135deg, #111936, #151a39); border-color: var(--line); }
+html[data-theme="dark"] .operational-proof.rf { background: linear-gradient(135deg, #241d17, #1b1925); border-color: #54452d; }
+html[data-theme="dark"] :is(.operational-proof-title h3, .operational-proof-result, .proof-stage > strong) { color: var(--ink-900); }
+html[data-theme="dark"] :is(.proof-trust-note, .proof-stage > p, .proof-stage dd, .operational-proof-footer) { color: var(--muted); }
+html[data-theme="dark"] .proof-stage { background: #151a39; border-color: var(--line); box-shadow: none; }
+html[data-theme="dark"] .proof-stage.warning { background: #252013; }
+html[data-theme="dark"] .proof-stage.fail { background: #281719; }
+html[data-theme="dark"] .proof-stage.not_tested { background: #171b2c; }
+html[data-theme="dark"] .proof-stage dl { border-color: var(--line); }
+html[data-theme="dark"] .operational-proof-footer { background: rgba(12, 16, 34, .5); border-color: var(--line); }
 
 @media (max-width: 1000px) {
   .settings-preferences { grid-template-columns: 1fr; }

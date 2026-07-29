@@ -21,7 +21,7 @@ current stable version is the source-only release [`1.0.0`](VERSION).
 > **Tested and functional software release.** All supported software-only network
 > workflows pass their complete validation suites: 4G LTE (14/14) and 5G SA
 > (15/15). The repository-wide
-> `make softwarex-check` also passes 314 backend tests, 50 frontend tests, the
+> `make softwarex-check` also passes 321 backend tests, 51 frontend tests, the
 > production build, source and Compose verification, release metadata checks,
 > and sensitive-file controls.
 
@@ -47,7 +47,7 @@ cd Lain5G
 make softwarex-check
 ```
 
-Expected result: 314 backend tests, 50 frontend tests, 78% backend line
+Expected result: 321 backend tests, 51 frontend tests, 78% backend line
 coverage, a production frontend build, safe rendering of every Compose model,
 and successful profile, metadata, link, public-result, and secret checks. CI
 runs this exact command on Ubuntu 24.04. Reviewed evidence is under
@@ -100,6 +100,12 @@ RF profiles. It downloads components and runs the available actions. Starting a 
 automatically prepares its private synthetic credentials; RF profiles retain all
 mandatory safety controls.
 
+Each scenario overview includes an operational proof chain. It separates
+container health from protocol evidence and shows core, RAN, UE/session, IP and
+user-plane stages for simulations. RF profiles separately show X310/UHD,
+preflight, core, RAN and over-air UE evidence; an active eNB/gNB is never
+presented as proof that a UE received RF.
+
 The safe observation-only app is available through `./lain5g app start --open`.
 Credentials are stored in ignored local files with `0600` permissions; they are
 never printed or committed. See [Installation](docs/installation.md),
@@ -134,7 +140,7 @@ make softwarex-check
 ```
 
 `make softwarex-check` is the single release-verification command used by CI. It
-passes 314 backend tests with 78% line coverage and 50 frontend tests, followed
+passes 321 backend tests with 78% line coverage and 51 frontend tests, followed
 by TypeScript checking, the production build, Compose and profile validation,
 metadata verification, internal-link checks, public-result verification, and
 sensitive-file controls.

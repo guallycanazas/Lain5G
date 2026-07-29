@@ -45,6 +45,10 @@ run_exec() {
   compose exec -T "$service" "$@" >/tmp/lain5g-validate.$$ 2>&1
 }
 
+registration_ready() {
+  logs_have ue 'Initial Registration is successful|Registration is successful|Registration.*successful|5GMM.*Registered'
+}
+
 if [ "${LAIN5G_DRY_RUN:-false}" = "true" ]; then
   for id in mongo nrf amf smf upf ausf udm udr pcf ng_setup ue_registration pdu_session ue_tun ue_ip ping; do
     add_check "$id" "NOT_TESTED" "dry-run mode"
@@ -63,6 +67,13 @@ else
       add_check "$service" "FAIL" "container is not running"
     fi
   done
+
+  if is_running ue; then
+    for _ in 1 2 3 4 5 6; do
+      registration_ready && break
+      sleep 5
+    done
+  fi
 
   if logs_have gnb 'NG Setup procedure is successful|NG Setup.*successful|NG-Setup.*successful'; then
     add_check "ng_setup" "PASS" "gNB reports successful NG setup"
@@ -119,7 +130,11 @@ fi
 
 rm -f /tmp/lain5g-validate.$$
 
-latest_run="$(find "$repo_dir/runs" -mindepth 1 -maxdepth 1 -type d -name 'run-*' | sort | tail -n 1 || true)"
+latest_run=""
+for metadata in "$repo_dir"/runs/run-*/metadata.json; do
+  [ -f "$metadata" ] || continue
+  grep -Eq '"scenario"[[:space:]]*:[[:space:]]*"5g-sa"' "$metadata" && latest_run="$(dirname "$metadata")"
+done
 if [ -z "$latest_run" ]; then
   run_id="run-$(date -u +%Y%m%d-%H%M%S)"
   latest_run="$repo_dir/runs/$run_id"

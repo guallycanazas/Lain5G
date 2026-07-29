@@ -109,3 +109,22 @@ def test_lte_simulation_validation_bounds_growing_logs():
     validate = (DEPLOY / "scripts" / "validate.sh").read_text(encoding="utf-8")
     assert "timeout 10s docker compose" in validate
     assert "grep -Eiq -m1" in validate
+
+
+def test_lte_simulation_validation_waits_for_attach_and_proves_user_plane():
+    validate = (DEPLOY / "scripts" / "validate.sh").read_text(encoding="utf-8")
+
+    assert "for _ in 1 2 3 4 5 6" in validate
+    assert "Number of MME-Sessions is now [1-9][0-9]*" in validate
+    assert "ip -o -4 addr show dev tun_srsue" in validate
+    assert "ip link show dev tun_srsue" in validate
+    assert "ping -I tun_srsue -c 3" in validate
+
+
+def test_5g_simulation_validation_uses_scenario_run_and_waits_for_registration():
+    validate = (ROOT / "deployments/5g-sa/scripts/validate.sh").read_text(encoding="utf-8")
+
+    assert "for _ in 1 2 3 4 5 6" in validate
+    assert "registration_ready" in validate
+    assert "\"scenario\"[[:space:]]*:[[:space:]]*\"5g-sa\"" in validate
+    assert 'find "$repo_dir/runs"' not in validate

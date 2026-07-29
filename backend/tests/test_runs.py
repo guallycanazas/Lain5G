@@ -37,6 +37,31 @@ def test_get_run_tolerates_missing_metrics(run_service):
     assert run.logs == ["partial.log"]
 
 
+def test_run_status_is_derived_from_checks(run_service, project_root):
+    validation_path = project_root / "runs/run-valid/validation.json"
+    validation = json.loads(validation_path.read_text(encoding="utf-8"))
+    validation["status"] = "PASS"
+    validation["checks"][0]["status"] = "WARNING"
+    validation_path.write_text(json.dumps(validation), encoding="utf-8")
+
+    listed = run_service.list_runs(scenario="5g-sa")
+    detail = run_service.get_run("run-valid")
+
+    assert listed[0].status == "WARNING"
+    assert detail is not None
+    assert detail.validation["status"] == "WARNING"
+
+    validation["checks"][0]["status"] = "NOT_TESTED"
+    validation_path.write_text(json.dumps(validation), encoding="utf-8")
+
+    listed = run_service.list_runs(scenario="5g-sa")
+    detail = run_service.get_run("run-valid")
+
+    assert listed[0].status == "NOT_TESTED"
+    assert detail is not None
+    assert detail.validation["status"] == "NOT_TESTED"
+
+
 def test_list_runs_ignores_corrupt_directories(run_service):
     run_ids = {run.run_id for run in run_service.list_runs()}
 
