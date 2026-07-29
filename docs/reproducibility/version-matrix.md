@@ -121,8 +121,10 @@ dependency upgrades and was not applied as an unreviewed release change.
   production dependency audit is clean, and the vulnerable Vitest UI mode is
   not used by the release test command, but the test toolchain still requires a
   separately reviewed major upgrade.
-- Software 4G LTE/VoLTE, 5G SA, and VoNR scenarios were validated. RF hardware
-  and commercial-UE behavior remain outside this source-release verification.
+- Public sanitized summaries cover passing software 4G LTE/VoLTE and 5G SA.
+  The available public VoNR attempt is blocked and not validated; a later local
+  passing run is reported but not publicly archived. RF hardware and
+  commercial-UE behavior remain outside this source-release verification.
 
 ## Static Validation
 

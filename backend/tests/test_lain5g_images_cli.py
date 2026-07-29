@@ -141,7 +141,7 @@ def test_bootstrap_dry_run_installs_tools_and_downloads_everything():
     venv_package = f"python{sys.version_info.major}.{sys.version_info.minor}-venv"
     env = {
         **os.environ,
-        "LAIN5G_BOOTSTRAP_FORCE_MISSING": "venv,git,make,docker,util-linux,compose",
+        "LAIN5G_BOOTSTRAP_FORCE_MISSING": "venv,node,npm,git,make,docker,util-linux,compose",
         "LAIN5G_BOOTSTRAP_PACKAGE_MANAGER": "apt-get",
     }
 
@@ -155,7 +155,7 @@ def test_bootstrap_dry_run_installs_tools_and_downloads_everything():
     )
 
     assert result.returncode == 0
-    assert f"apt-get install -y {venv_package} git make docker.io util-linux docker-compose-v2" in result.stdout
+    assert f"apt-get install -y {venv_package} nodejs npm git make docker.io util-linux docker-compose-v2" in result.stdout
     assert "systemctl enable --now docker" in result.stdout
     assert "./lain5g scenario setup 4g-lte-sim" in result.stdout
     assert "./lain5g scenario setup 5g-sa-x310" in result.stdout

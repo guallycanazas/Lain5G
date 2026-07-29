@@ -379,6 +379,10 @@ def _bootstrap_install_commands(manager: str, features: set[str], privileged: li
             packages.append("python3")
         if "venv" in features:
             packages.append(_apt_venv_package(dry_run=dry_run))
+        if "node" in features:
+            packages.append("nodejs")
+        if "npm" in features:
+            packages.append("npm")
         if "git" in features:
             packages.append("git")
         if "make" in features:
@@ -391,11 +395,11 @@ def _bootstrap_install_commands(manager: str, features: set[str], privileged: li
             packages.append(_apt_compose_package(dry_run=dry_run))
         return [[*privileged, "apt-get", "update"], [*privileged, "apt-get", "install", "-y", *packages]]
     mappings = {
-        "dnf": {"python": "python3", "venv": "python3", "git": "git", "make": "make", "docker": "moby-engine", "util-linux": "util-linux", "compose": "docker-compose-plugin"},
-        "pacman": {"python": "python", "venv": "python", "git": "git", "make": "make", "docker": "docker", "util-linux": "util-linux", "compose": "docker-compose"},
-        "zypper": {"python": "python3", "venv": "python3-venv", "git": "git", "make": "make", "docker": "docker", "util-linux": "util-linux", "compose": "docker-compose"},
+        "dnf": {"python": "python3", "venv": "python3", "node": "nodejs", "npm": "npm", "git": "git", "make": "make", "docker": "moby-engine", "util-linux": "util-linux", "compose": "docker-compose-plugin"},
+        "pacman": {"python": "python", "venv": "python", "node": "nodejs", "npm": "npm", "git": "git", "make": "make", "docker": "docker", "util-linux": "util-linux", "compose": "docker-compose"},
+        "zypper": {"python": "python3", "venv": "python3-venv", "node": "nodejs", "npm": "npm", "git": "git", "make": "make", "docker": "docker", "util-linux": "util-linux", "compose": "docker-compose"},
     }
-    ordered_features = ("python", "venv", "git", "make", "docker", "util-linux", "compose")
+    ordered_features = ("python", "venv", "node", "npm", "git", "make", "docker", "util-linux", "compose")
     packages = list(dict.fromkeys(mappings.get(manager, {}).get(feature, feature) for feature in ordered_features if feature in features))
     if manager == "dnf":
         return [[*privileged, "dnf", "install", "-y", *packages]]
@@ -441,6 +445,10 @@ def _bootstrap_machine(service: ProfileConfigService, *, assume_yes: bool = Fals
     ).returncode == 0
     if not venv_present:
         features.add("venv")
+    if shutil.which("node") is None or "node" in forced_missing:
+        features.add("node")
+    if shutil.which("npm") is None or "npm" in forced_missing:
+        features.add("npm")
     if shutil.which("git") is None or "git" in forced_missing:
         features.add("git")
     if shutil.which("make") is None or "make" in forced_missing:
@@ -477,6 +485,10 @@ def _bootstrap_machine(service: ProfileConfigService, *, assume_yes: bool = Fals
         ).returncode != 0:
             print("ERROR: Python sigue sin soporte venv despues de instalar dependencias.", file=sys.stderr)
             return 1
+        if not dry_run and ("node" in features or "npm" in features):
+            if shutil.which("node") is None or shutil.which("npm") is None:
+                print("ERROR: Node.js o npm siguen ausentes despues de instalar dependencias.", file=sys.stderr)
+                return 1
     else:
         print("\nDependencias base: OK")
 

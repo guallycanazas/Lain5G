@@ -8,9 +8,8 @@ el commit fuente `12c4a38404bbaf240c698a056e3f47182081ab5c`; el commit posterior
 `060e669d3f65e1844a702b1b5264be6933ef45c2` publica los artefactos anonimizados
 sin representar una nueva ejecución.
 
-La evidencia validada para la línea estable `1.0.0` comprende resultados
-públicos sanitizados, que conservan su versión histórica de captura, y la
-ejecución operacional VoNR más reciente:
+La evidencia pública para la línea estable `1.0.0` comprende resultados
+sanitizados que conservan su versión histórica de captura:
 
 - [5G SA software](../results/public/5g-sa-sim/run-20260723-054913.json):
   15/15 comprobaciones `PASS`, `SIMULATION_ONLY`.
@@ -19,10 +18,9 @@ ejecución operacional VoNR más reciente:
 - [VoLTE/IMS 4G software](../results/public/4g-ims-sim/run-20260723-055149.json):
   22/22 comprobaciones `PASS`, `SIMULATION_ONLY`; valida LTE, EPC, IMS, datos y
   registro SIP autenticado de laboratorio.
-- VoNR software: la ejecución operacional `run-20260725-213427` completó 25/25
-  comprobaciones `PASS`. El
-  [intento público anterior](../results/public/5g-vonr-sim/run-20260723-055328.json)
-  se conserva como registro histórico del timeout inicial, no como estado actual.
+- [VoNR software](../results/public/5g-vonr-sim/run-20260723-055328.json):
+  intento `BLOCKED` y `NOT_VALIDATED`; una ejecución local posterior fue
+  reportada con 25/25, pero no tiene artefacto público revisable.
 
 La validación automática está en `deployments/5g-sa/scripts/validate.sh` y se ejecuta con:
 
