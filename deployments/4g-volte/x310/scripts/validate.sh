@@ -37,6 +37,10 @@ grep -q 'ethernet_link.*PASS' "$run_dir/logs/hardware-check.log" && add ethernet
 "$(dirname "${BASH_SOURCE[0]}")/fpga-check.sh" "$run_dir/logs/uhd-check.log" >"$run_dir/logs/fpga-check.log" 2>&1 && add uhd_fpga_compatible PASS "FPGA compatible" || add uhd_fpga_compatible FAIL "FPGA compatibility unknown"
 for svc in mme hss sgwc sgwu pgwc pgwu pcrf; do running "$svc" || epc_fail=1; done; [ "${epc_fail:-0}" = 0 ] && add epc_services PASS "EPC services running" || add epc_services FAIL "EPC incomplete"
 running mme && add mme_ready PASS "MME running" || add mme_ready FAIL "MME not running"
+for svc in ims-database pcscf icscf scscf dns; do running "$svc" || ims_fail=1; done; [ "${ims_fail:-0}" = 0 ] && add ims_services PASS "Compact IMS infrastructure services running" || add ims_services FAIL "Compact IMS infrastructure incomplete"
+add ims_registration NOT_TESTED "No physical UE IMS registration was attempted"
+add volte_call NOT_TESTED "No VoLTE call dialog was attempted"
+add rtp_media NOT_TESTED "No RTP media path was exercised"
 REQUIRE_RF_READY=true LAIN5G_RUN_ID="$run_id" "$(dirname "${BASH_SOURCE[0]}")/preflight.sh" >"$run_dir/logs/preflight.log" 2>&1 && add rf_preflight PASS "RF preflight passed" || add rf_preflight FAIL "RF preflight failed; inspect preflight.log"
 if running enb-x310; then
   add enb_started PASS "enb-x310 is currently running"

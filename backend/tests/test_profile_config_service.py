@@ -76,6 +76,7 @@ def make_profile_project(tmp_path: Path) -> Path:
         encoding="utf-8",
     )
     shutil.copyfile(ROOT / "deployments/5g-sa/.env.example", root / "deployments/5g-sa/.env.example")
+    shutil.copyfile(ROOT / "deployments/5g-sa-x310/.env.example", root / "deployments/5g-sa-x310/.env.example")
     shutil.copyfile(ROOT / "deployments/4g-volte/common/.env.example", root / "deployments/4g-volte/common/.env.example")
     (root / "deployments/5g-sa/.env").write_text("SUBSCRIBER_KEY=SECRETKEY\nSUBSCRIBER_OPC=SECRETOPC\nSUBSCRIBER_SQN=SECRETSEQ\n", encoding="utf-8")
     (root / "deployments/5g-vonr/.env").write_text("SUBSCRIBER_KEY=SECRETKEY\nSUBSCRIBER_OPC=SECRETOPC\nSUBSCRIBER_SQN=SECRETSEQ\nIMS_AUTH_PASSWORD=SECRETIMS\n", encoding="utf-8")
@@ -450,6 +451,8 @@ def test_5g_x310_apply_updates_effective_core_radio_and_safety_files(tmp_path: P
     }
     assert "TAC=9" in (root / "deployments/5g-sa-x310/.env").read_text(encoding="utf-8")
     assert "SAMPLE_RATE_MHZ=23.04" in (root / "deployments/5g-sa-x310/.env").read_text(encoding="utf-8")
+    assert "IMS_DOMAIN=ims.mnc001.mcc001.3gppnetwork.org" in (root / "deployments/5g-sa-x310/.env").read_text(encoding="utf-8")
+    assert "IMS_AUTH_PASSWORD=" in (root / "deployments/5g-sa-x310/.env").read_text(encoding="utf-8")
     assert "tac: 9" in (root / "deployments/5g-sa-x310/open5gs/amf.yaml").read_text(encoding="utf-8")
     assert "dnn: x310net" in (root / "deployments/5g-sa-x310/open5gs/smf.yaml").read_text(encoding="utf-8")
     channel = (root / "deployments/5g-sa-x310/rf/channel-plan.yaml").read_text(encoding="utf-8")

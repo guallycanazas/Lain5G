@@ -10,7 +10,11 @@ All notable changes to Lain5G-Lab are recorded in this file.
   into the `lain5g` CLI, including an explicit operations mode for software and
   guarded RF workflows.
 - Added private local scenario setup with generated synthetic credentials for
-  the supported software profiles.
+  the supported software and guarded RF profiles.
+- Added asynchronous component downloads with per-image progress, a confirmed
+  download-all action, and download-before-start flows for software and guarded RF.
+- Added always-on compact IMS infrastructure to both public X310 profiles,
+  while keeping physical IMS registration, voice calls, and RTP explicitly unvalidated.
 - Made web and interactive CLI starts prepare the selected 4G or 5G software
   environment automatically, without exposing generated credentials.
 - Serialized guarded RF starts across profiles and kept emergency-stop access

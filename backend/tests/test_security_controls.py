@@ -60,6 +60,7 @@ class BlockedService:
         ("POST", "/api/profiles/5g-sa/apply", None, get_profile_config_service),
         ("POST", "/api/profiles/5g-sa/restore", None, get_profile_config_service),
         ("POST", "/api/preparation/profiles/5g-sa/pull", {"core_only": False}, get_preparation_service),
+        ("POST", "/api/preparation/profiles/all/pull", {"core_only": False}, get_preparation_service),
         ("POST", "/api/subscribers", SUBSCRIBER, get_subscriber_service),
         ("PATCH", "/api/subscribers/001010000000001", {"msisdn": "15551234568"}, get_subscriber_service),
         (

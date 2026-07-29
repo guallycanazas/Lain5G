@@ -586,11 +586,11 @@ def _scenario_command(service: ProfileConfigService, argv: list[str]) -> int:
         return 2
     action, profile_id = argv
     profile_id = "5g-vonr" if profile_id == "5g-vonr-sim" else profile_id
+    if action == "setup" and profile_id in PUBLIC_PROFILE_IDS:
+        return 0 if _prepare_scenario_environment(service, profile_id) else 1
     if profile_id not in PUBLIC_PROFILE_IDS or profile_id not in SIM_ACTIONS:
         print("La operacion directa solo admite perfiles software; usa el asistente para RF.", file=sys.stderr)
         return 2
-    if action == "setup":
-        return 0 if _prepare_scenario_environment(service, profile_id) else 1
     action_choice = {"start": "1", "status": "2", "validate": "3", "stop": "6"}
     if action == "logs":
         suffix = "5g-vonr-sim" if profile_id == "5g-vonr" else profile_id

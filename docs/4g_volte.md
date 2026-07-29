@@ -12,7 +12,8 @@ Perfiles disponibles:
 - `4g-lte-sim`: EPC + srsENB + srsUE por ZMQ, sin servicios IMS.
 - `4g-volte-sim`: EPC + IMS + srsRAN 4G en modo software.
 - `4g-lte-x310`: EPC + eNB srsRAN 4G para hardware X-Series compatible,
-  con RF bloqueada por defecto. El nombre histórico del perfil se conserva.
+  infraestructura IMS compacta siempre activa y RF bloqueada por defecto. El
+  nombre histórico del perfil se conserva.
 
 Para el commit fuente `12c4a38404bbaf240c698a056e3f47182081ab5c`, el
 [resultado LTE público](../results/public/4g-lte-sim/run-20260723-055025.json)
@@ -37,6 +38,8 @@ registro SIP autenticado de laboratorio.
   autenticado hasta 200 OK.
 - No se inicia RF sin manifiesto real, plan de canal real y autorización explícita.
 - La ruta X310 no actualiza firmware ni FPGA automáticamente.
+- En X310, servicios IMS activos no prueban registro IMS de un UE físico,
+  llamada VoLTE ni RTP; esos checks permanecen `NOT_TESTED`.
 
 Las métricas de audio, el diálogo de llamada y el rendimiento RTP se tratan como
 pruebas de medios separadas y no cambian la clasificación validada de la red y

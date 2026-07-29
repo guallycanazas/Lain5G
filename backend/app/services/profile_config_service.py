@@ -359,8 +359,9 @@ class ProfileConfigService:
         sl = n["slice"]
         sample_rates = {5.0: 15.36, 10.0: 15.36, 15.0: 23.04, 20.0: 23.04, 40.0: 46.08, 50.0: 61.44, 100.0: 122.88}
         sample_rate = sample_rates[float(r["bandwidth_mhz"])]
-        _, env_current = self._read_environment("deployments/5g-sa-x310/.env")
-        env = _update_env(env_current, {
+        env_path, env_current = self._read_environment("deployments/5g-sa-x310/.env")
+        _, env_example = self._read_environment("deployments/5g-sa-x310/.env.example")
+        env = _update_env(env_current or env_example, {
             "AMF_ADDR": c["amf_addr"], "GNB_BIND_ADDR": c["gnb_bind_addr"], "N3_BIND_ADDR": c["n3_bind_addr"],
             "USRP_ADDR": r["usrp_addr"], "USRP_TYPE": r["device"], "USRP_CLOCK_SOURCE": r["clock_source"], "USRP_TIME_SOURCE": r["time_source"],
             "MCC": n["mcc"], "MNC": n["mnc"], "TAC": n["tac"], "SST": sl["sst"], "SD": sl["sd"],
@@ -379,7 +380,7 @@ class ProfileConfigService:
             "auto_stop": safety["auto_stop"], "capture_logs": True, "operator_note": safety["operator_note"],
         })
         return [
-            self._change("deployments/5g-sa-x310/.env", env),
+            PlannedChange(env_path, env_current, env),
             self._change("deployments/5g-sa-x310/open5gs/amf.yaml", _patch_5g_amf(_read(self.root / "deployments/5g-sa-x310/open5gs/amf.yaml"), n)),
             self._change("deployments/5g-sa-x310/open5gs/smf.yaml", _patch_5g_smf(_read(self.root / "deployments/5g-sa-x310/open5gs/smf.yaml"), n["dnn"], None, sl)),
             self._change(channel_rel, _dumps_yaml(channel_data)),

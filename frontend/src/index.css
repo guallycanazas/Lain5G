@@ -878,3 +878,13 @@ html[data-theme="dark"] .scenario-check-list article { border-color: var(--line)
   .preference-card { grid-template-columns: 1fr; }
   .settings-preview > div { align-items: flex-start; flex-direction: column; }
 }
+.component-pull-progress { margin-top: 1rem; padding: 1rem; border: 1px solid #dce1ec; border-radius: 14px; background: #f8f9fc; }
+.component-pull-progress-heading { display: flex; justify-content: space-between; gap: 1rem; align-items: center; }
+.component-pull-progress-heading div { display: grid; gap: .2rem; }
+.component-pull-progress-heading span { color: #666e85; font-size: .78rem; }
+.component-pull-track { height: 8px; margin: .8rem 0; overflow: hidden; border-radius: 999px; background: #e1e5ef; }
+.component-pull-track span { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg, #5d4fd7, #17a9a1); transition: width .3s ease; }
+.component-pull-progress ul { display: grid; gap: .35rem; margin: 0; padding: 0; list-style: none; }
+.component-pull-progress li { display: flex; justify-content: space-between; gap: 1rem; font-size: .78rem; color: #666e85; }
+.component-pull-progress li.succeeded small { color: #18845c; }
+.component-pull-progress li.failed small, .component-pull-error { color: #b4233d; }

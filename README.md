@@ -21,7 +21,7 @@ current stable version is the source-only release [`1.0.0`](VERSION).
 > **Tested and functional software release.** All supported software-only network
 > workflows pass their complete validation suites: 4G LTE (14/14) and 5G SA
 > (15/15). The repository-wide
-> `make softwarex-check` also passes 305 backend tests, 47 frontend tests, the
+> `make softwarex-check` also passes 314 backend tests, 50 frontend tests, the
 > production build, source and Compose verification, release metadata checks,
 > and sensitive-file controls.
 
@@ -35,17 +35,30 @@ current stable version is the source-only release [`1.0.0`](VERSION).
 - Scenario validators and sanitized public result records.
 - RF safeguards with explicit authorization, finite duration, and emergency stop.
 
-## Quick start
+## SoftwareX reviewer quick path
 
-Requirements: GNU/Linux x86_64, Docker Engine, Docker Compose v2, Git, GNU Make,
-util-linux `flock`, SCTP support, and `/dev/net/tun`.
+The safe review gate requires Git, GNU Make, Python 3.12, Node.js 22, and the
+Docker Compose v2 parser. It does not start telecom containers, access SDR
+hardware, or transmit RF.
 
 ```bash
 git clone https://github.com/guallycanazas/Lain5G.git
 cd Lain5G
+make softwarex-check
 ```
 
-### Option A: web application
+Expected result: 314 backend tests, 50 frontend tests, 78% backend line
+coverage, a production frontend build, safe rendering of every Compose model,
+and successful profile, metadata, link, public-result, and secret checks. CI
+runs this exact command on Ubuntu 24.04. Reviewed evidence is under
+[`results/public/`](results/public/README.md).
+
+## Run the laboratory
+
+Operational requirements: GNU/Linux x86_64, Docker Engine, Docker Compose v2,
+Git, GNU Make, util-linux `flock`, SCTP support, and `/dev/net/tun`.
+
+### Web application
 
 Launch the operational interface:
 
@@ -61,7 +74,7 @@ profile, the safety checklist, exact confirmation phrase, finite duration, and
 emergency stop. Stop the interface with `./lain5g app stop` after any active RF
 session has ended.
 
-### Option B: CLI only
+### Interactive CLI
 
 ```bash
 ./lain5g
@@ -86,16 +99,16 @@ never printed or committed. See [Installation](docs/installation.md),
 | `4g-lte-sim` | Open5GS EPC + srsRAN ZMQ LTE data | **PASS (14/14)** |
 | `5g-sa-sim` | Open5GS 5GC + UERANSIM 5G SA data | **PASS (15/15)** |
 
-Historical signaling evidence remains available under `results/public/`, but
-those implementations are not part of the public launch catalog. See
+Historical end-to-end signaling evidence remains available under `results/public/`,
+but those complete signaling scenarios are not part of the public launch catalog. See
 [Validation](docs/validation.md) and [Public results](results/public/README.md).
 
 ### Guarded hardware profiles
 
 | Profile | Purpose | Availability |
 | --- | --- | --- |
-| `4g-lte-x310` | 4G LTE with a compatible X300/X310 eNB | Guarded RF workflow; requires authorized hardware |
-| `5g-sa-x310` | 5G SA with a compatible X300/X310 gNB | Guarded RF workflow available; hardware-dependent |
+| `4g-lte-x310` | 4G LTE plus always-on compact IMS infrastructure with a compatible X300/X310 eNB | Guarded RF workflow; IMS registration, VoLTE calls, and RTP are not validated |
+| `5g-sa-x310` | 5G SA plus always-on compact IMS infrastructure with a compatible X300/X310 gNB | Guarded RF workflow; IMS registration, VoNR calls, and RTP are not validated |
 
 ## Reproducibility and testing
 
@@ -106,7 +119,7 @@ make softwarex-check
 ```
 
 `make softwarex-check` is the single release-verification command used by CI. It
-passes 305 backend tests with 77% line coverage and 47 frontend tests, followed
+passes 314 backend tests with 78% line coverage and 50 frontend tests, followed
 by TypeScript checking, the production build, Compose and profile validation,
 metadata verification, internal-link checks, public-result verification, and
 sensitive-file controls.

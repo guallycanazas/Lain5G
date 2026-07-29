@@ -1,0 +1,7 @@
+.:53 {
+  errors
+  log
+  hosts /etc/coredns/ims.hosts {
+    fallthrough
+  }
+}

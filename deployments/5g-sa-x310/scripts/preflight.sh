@@ -70,7 +70,11 @@ if [ "$require_rf" = true ]; then
   [ -f "$channel" ] || add rf_channel FAIL "channel-plan.yaml required"
   [ "$auth" = true ] && add authorization PASS "authorization confirmed" || add authorization FAIL "authorization_confirmed must be true"
   [ -n "$note" ] && add operator_note PASS "operator note present" || add operator_note FAIL "operator_note required"
-  (cd "$scenario_dir" && [ -n "$(docker compose --env-file "$env_file" -f docker-compose.yml ps --status running -q amf 2>/dev/null)" ]) && add core_ready PASS "AMF running" || add core_ready FAIL "AMF must be running before RF start"
+  missing_services=()
+  for service in amf ims-database pcscf icscf scscf dns; do
+    (cd "$scenario_dir" && [ -n "$(docker compose --env-file "$env_file" -f docker-compose.yml ps --status running -q "$service" 2>/dev/null)" ]) || missing_services+=("$service")
+  done
+  [ "${#missing_services[@]}" -eq 0 ] && add core_ready PASS "5GC and compact IMS services running" || add core_ready FAIL "Required core services not running: ${missing_services[*]}"
 else
   [ "$auth" = true ] && add authorization WARNING "authorization true in active manifest; RF still blocked unless start guard is set" || add authorization PASS "authorization not confirmed; RF start remains blocked"
 fi

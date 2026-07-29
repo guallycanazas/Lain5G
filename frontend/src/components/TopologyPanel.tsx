@@ -5,6 +5,7 @@ import { StatusBadge } from './StatusBadge';
 const labels: Record<string, string> = {
   mongo: 'MongoDB', nrf: 'NRF', amf: 'AMF', smf: 'SMF', upf: 'UPF', ausf: 'AUSF', udm: 'UDM', udr: 'UDR', pcf: 'PCF',
   gnb: 'gNB', enb: 'eNB', ue: 'UE', mme: 'MME', hss: 'HSS', pgwu: 'PGW-U', pgwc: 'PGW-C', pcscf: 'P-CSCF', icscf: 'I-CSCF', scscf: 'S-CSCF',
+  'ims-database': 'IMS database', dns: 'IMS DNS',
 };
 
 function evidenceFor(service: string, checks: ValidationCheck[]) {

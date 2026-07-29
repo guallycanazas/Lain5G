@@ -18,6 +18,11 @@ def test_required_5g_x310_files_exist():
         DEPLOY / "open5gs" / "amf.yaml",
         DEPLOY / "open5gs" / "smf.yaml",
         DEPLOY / "gnb" / "gnb_x310.yml",
+        DEPLOY / "ims" / "database" / "init.sql",
+        DEPLOY / "ims" / "pcscf" / "kamailio.cfg",
+        DEPLOY / "ims" / "icscf" / "kamailio.cfg",
+        DEPLOY / "ims" / "dns" / "Corefile",
+        DEPLOY / "ims" / "dns" / "ims.hosts",
         DEPLOY / "rf" / "channel-plan.example.yaml",
         DEPLOY / "rf" / "safety-manifest.example.yaml",
         DEPLOY / "scripts" / "hardware-check.sh",
@@ -66,6 +71,7 @@ def test_env_example_does_not_commit_rf_values_or_secrets():
     forbidden = ["SUBSCRIBER_KEY", "SUBSCRIBER_OPC", "KI=", "K=", "OPC="]
     for item in forbidden:
         assert item not in env
+    assert "IMS_AUTH_PASSWORD=\n" in env
 
 
 def test_gnb_config_targets_x310_and_open5gs_mapping():
@@ -85,6 +91,8 @@ def test_rf_start_requires_guardrails_and_scripts_are_non_destructive():
     hardware = (DEPLOY / "scripts" / "hardware-check.sh").read_text(encoding="utf-8")
     assert "ip route replace" in start_core
     assert "lain5g-lab-5g-sa-x310-upf" in start_core
+    for service in ("ims-database", "ims-provisioner", "pcscf", "icscf", "scscf", "dns"):
+        assert service in start_core
     assert "LAIN5G_ALLOW_5G_RF_START" in start
     assert "sleep 5" in start
     assert ".State.Running" in start
@@ -98,6 +106,21 @@ def test_rf_start_requires_guardrails_and_scripts_are_non_destructive():
         text = script.read_text(encoding="utf-8")
         assert "docker system prune" not in text
         assert "uhd_image_loader" not in text
+
+
+def test_compact_ims_is_local_always_on_infrastructure_only():
+    compose = (DEPLOY / "docker-compose.yml").read_text(encoding="utf-8")
+    validate = (DEPLOY / "scripts" / "validate.sh").read_text(encoding="utf-8")
+
+    for service in ("ims-database", "ims-provisioner", "pcscf", "icscf", "scscf", "dns"):
+        assert f"  {service}:" in compose
+    assert "sip-register" not in compose
+    for path in (DEPLOY / "ims").rglob("*"):
+        if path.is_file():
+            assert "10.50." not in path.read_text(encoding="utf-8")
+    assert "ims_registration NOT_TESTED" in validate
+    assert "vonr_call NOT_TESTED" in validate
+    assert "rtp_media NOT_TESTED" in validate
 
 
 def test_5g_scenarios_stop_each_other_and_release_the_shared_address_space():

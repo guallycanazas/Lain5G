@@ -39,9 +39,13 @@ fi
 "$script_dir/hardware-check.sh" >"$run_dir/logs/hardware-check.log" 2>&1 && add hardware PASS "hardware check passed" || add hardware FAIL "hardware check failed"
 "$script_dir/uhd-check.sh" >"$run_dir/logs/uhd-check.log" 2>&1 && add uhd PASS "UHD check passed" || add uhd FAIL "UHD check failed"
 "$script_dir/fpga-check.sh" "$run_dir/logs/uhd-check.log" >"$run_dir/logs/fpga-check.log" 2>&1 && add fpga PASS "FPGA compatible" || add fpga FAIL "FPGA unknown or incompatible"
-if (cd "$scenario_dir" && [ -n "$(docker compose --env-file ../common/.env -f docker-compose.yml ps --status running -q mme 2>/dev/null)" ]); then
-  add epc PASS "MME running"
-elif [ "${REQUIRE_RF_READY:-false}" = true ]; then add epc FAIL "MME must be running before RF start"; else add epc WARNING "EPC not running yet"; fi
+missing_services=()
+for service in mme ims-database pcscf icscf scscf dns; do
+  (cd "$scenario_dir" && [ -n "$(docker compose --env-file ../common/.env -f docker-compose.yml ps --status running -q "$service" 2>/dev/null)" ]) || missing_services+=("$service")
+done
+if [ "${#missing_services[@]}" -eq 0 ]; then
+  add epc PASS "EPC and compact IMS services running"
+elif [ "${REQUIRE_RF_READY:-false}" = true ]; then add epc FAIL "Required core services not running: ${missing_services[*]}"; else add epc WARNING "Core not running yet: ${missing_services[*]}"; fi
 status=PASS; for c in "${checks[@]}"; do IFS='|' read -r _ st _ <<< "$c"; [ "$st" = FAIL ] && status=FAIL; done
 printf '{"scenario":"4g-lte-x310","run_id":"%s","created_at":"%s","dry_run":%s}\n' "$run_id" "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "$([ "${LAIN5G_DRY_RUN:-false}" = "true" ] && printf true || printf false)" > "$run_dir/metadata.json"
 {

@@ -1,9 +1,11 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router';
-import { AlertTriangle, CheckCircle2, RadioTower, ShieldCheck, Timer, X } from 'lucide-react';
+import { AlertTriangle, CheckCircle2, Download, RadioTower, ShieldCheck, Timer, X } from 'lucide-react';
 import type { RfStartPayload } from '../types/deployment';
+import type { ComponentImageStatus, ComponentPullJob } from '../types/preparation';
 import { profilesApi } from '../services/profilesApi';
+import { ComponentPullProgress } from './ComponentPullProgress';
 
 const acknowledgementLabels = {
   legal_authorization_valid: 'Legal and local authorization remains valid.',
@@ -14,7 +16,7 @@ const acknowledgementLabels = {
 
 type RfEnvironment = 'cabled' | 'shielded';
 
-export function RfStartDialog({ scenarioId, open, loading, onCancel, onConfirm }: { scenarioId: string; open: boolean; loading: boolean; onCancel: () => void; onConfirm: (payload: RfStartPayload) => void }) {
+export function RfStartDialog({ scenarioId, open, loading, missingImages, pullJob, onCancel, onConfirm }: { scenarioId: string; open: boolean; loading: boolean; missingImages: ComponentImageStatus[]; pullJob?: ComponentPullJob; onCancel: () => void; onConfirm: (payload: RfStartPayload) => void }) {
   const [duration, setDuration] = useState(60);
   const [note, setNote] = useState('Controlled RF session from Lain5G');
   const [phrase, setPhrase] = useState('');
@@ -25,6 +27,7 @@ export function RfStartDialog({ scenarioId, open, loading, onCancel, onConfirm }
   const [nrPathConnected, setNrPathConnected] = useState(false);
   const [frequenciesAuthorized, setFrequenciesAuthorized] = useState(false);
   const [acknowledgements, setAcknowledgements] = useState<Record<keyof RfStartPayload['acknowledgements'], boolean>>({ legal_authorization_valid: false, isolation_and_attenuation_verified: false, channel_and_gain_reviewed: false, emergency_stop_accessible: false });
+  const previousMissingCount = useRef(missingImages.length);
   const profile = useQuery({ queryKey: ['profile', scenarioId], queryFn: () => profilesApi.detail(scenarioId), enabled: open });
   const diff = useQuery({ queryKey: ['profile-diff', scenarioId], queryFn: () => profilesApi.diff(scenarioId), enabled: open });
   const expectedPhrase = `START ${scenarioId.toUpperCase()} RF`;
@@ -132,6 +135,14 @@ export function RfStartDialog({ scenarioId, open, loading, onCancel, onConfirm }
     setAuthorizationSelected(profile.data.safety?.authorization_confirmed === true);
   }, [open, profile.data, scenarioId]);
 
+  useEffect(() => {
+    if (open && previousMissingCount.current > 0 && missingImages.length === 0) {
+      setPhrase('');
+      setAcknowledgements({ legal_authorization_valid: false, isolation_and_attenuation_verified: false, channel_and_gain_reviewed: false, emergency_stop_accessible: false });
+    }
+    previousMissingCount.current = missingImages.length;
+  }, [missingImages.length, open]);
+
   if (!open) return null;
   return <div className="dialog-backdrop rf-dialog-backdrop" role="presentation">
     <section className="rf-start-dialog" role="dialog" aria-modal="true" aria-labelledby="rf-start-title">
@@ -140,6 +151,8 @@ export function RfStartDialog({ scenarioId, open, loading, onCancel, onConfirm }
       {profile.isLoading || diff.isLoading ? <div className="rf-config-state">Loading effective RF configuration...</div> : null}
       {profile.error || diff.error ? <div className="rf-config-state error">The RF configuration could not be verified. Start remains blocked.</div> : null}
       {pendingChanges ? <div className="rf-config-state warning"><strong>Configuration changes are pending.</strong><span>Validate and apply the RF authorization below, or use <Link to="/deployments" onClick={onCancel}>Deployments</Link> for advanced editing.</span></div> : null}
+      {missingImages.length ? <div className="warning-box"><strong>{missingImages.length} component{missingImages.length === 1 ? '' : 's'} missing</strong><ul>{missingImages.map((image) => <li key={image.local_image}>{image.description}</li>)}</ul><p>Download these components first. RF start requires a second explicit click with the current safety checks after the download completes.</p></div> : null}
+      {pullJob ? <ComponentPullProgress job={pullJob} /> : null}
       <div className="rf-session-summary">
         <div><span>Radio</span><strong>{radioSummary}</strong></div>
         <div><span>Bandwidth</span><strong>{radio.bandwidth_mhz ?? '—'} MHz</strong></div>
@@ -168,7 +181,7 @@ export function RfStartDialog({ scenarioId, open, loading, onCancel, onConfirm }
       </section> : null}
       <fieldset className="rf-acknowledgements"><legend><ShieldCheck size={15} />Required checks</legend>{Object.entries(acknowledgementLabels).map(([key, label]) => <label key={key}><input type="checkbox" checked={acknowledgements[key as keyof typeof acknowledgements]} onChange={(event) => setAcknowledgements((current) => ({ ...current, [key]: event.target.checked }))} /><span>{label}</span></label>)}</fieldset>
       <label className="rf-confirmation">Type <code>{expectedPhrase}</code> to authorize this session<input autoComplete="off" value={phrase} onChange={(event) => setPhrase(event.target.value)} /></label>
-      <footer><div className={`rf-launch-readiness ${valid ? 'ready' : 'blocked'}`} aria-live="polite">{valid ? <><CheckCircle2 size={15} /><span><strong>Ready to start.</strong> All profile and session guards are satisfied.</span></> : <><AlertTriangle size={15} /><span><strong>Start is blocked.</strong>{launchBlockers.map((blocker) => <small key={blocker}>{blocker}</small>)}</span></>}</div><div className="rf-dialog-actions"><button className="secondary" type="button" onClick={onCancel}>Cancel</button><button className="danger rf-launch-button" type="button" disabled={!valid || loading} title={!valid ? launchBlockers.join(' ') : undefined} onClick={() => onConfirm({ execute: true, confirmation_phrase: phrase, operator_note: note.trim(), requested_duration_seconds: duration, acknowledgements })}>{loading ? 'Starting guarded session…' : 'Start core + RF'}</button></div></footer>
+      <footer><div className={`rf-launch-readiness ${valid ? 'ready' : 'blocked'}`} aria-live="polite">{valid ? <><CheckCircle2 size={15} /><span><strong>{missingImages.length ? 'Ready to download.' : 'Ready to start.'}</strong> All profile and session guards are satisfied.</span></> : <><AlertTriangle size={15} /><span><strong>Start is blocked.</strong>{launchBlockers.map((blocker) => <small key={blocker}>{blocker}</small>)}</span></>}</div><div className="rf-dialog-actions"><button className="secondary" type="button" onClick={onCancel}>Cancel</button><button className="danger rf-launch-button" type="button" disabled={!valid || loading} title={!valid ? launchBlockers.join(' ') : undefined} onClick={() => onConfirm({ execute: true, confirmation_phrase: phrase, operator_note: note.trim(), requested_duration_seconds: duration, acknowledgements })}>{loading ? 'Preparing guarded session…' : missingImages.length ? <><Download size={15} />Download {missingImages.length} components</> : 'Start core + RF'}</button></div></footer>
     </section>
   </div>;
 }

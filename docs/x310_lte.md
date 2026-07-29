@@ -8,6 +8,7 @@ pueden iniciarse sin RF; el eNB RF está en un perfil Compose separado llamado
 ## Comandos Sin RF
 
 ```bash
+./lain5g scenario setup 4g-lte-x310
 make build-4g-lte-x310
 make check-x310
 make preflight-4g-lte-x310
@@ -37,7 +38,11 @@ El script ejecuta preflight, arranca solo `enb-x310`, espera la duración defini
 
 ## Inicio Desde La Interfaz
 
-Ejecute `make app-up` y abra `http://localhost:8080/scenarios/4g-lte-x310`. Use `Core only` para verificar el EPC sin RF. `Start core + RF` muestra el plan de canal efectivo y exige completar las guardas antes de habilitar una ejecución real; si `Execute real RF` permanece desmarcado, la acción es un dry-run que no transmite. El botón `Emergency stop` permanece disponible en el workspace.
+Ejecute `make app-up` y abra `http://localhost:8080/scenarios/4g-lte-x310`.
+Use `EPC + IMS, no RF` para verificar la infraestructura sin transmitir.
+`Start core + RF` muestra el plan de canal efectivo, descarga componentes
+faltantes con confirmación y exige completar todas las guardas. El botón
+`Emergency stop` permanece disponible en el workspace.
 
 ## Alcance de las observaciones
 

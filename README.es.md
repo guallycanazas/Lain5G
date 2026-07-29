@@ -21,7 +21,7 @@ versión estable actual es la release solo de código fuente [`1.0.0`](VERSION).
 > **Versión software probada y funcional.** Todos los flujos de red soportados
 > completamente en software aprueban sus suites de validación: 4G LTE (14/14) y
 > 5G SA (15/15). La verificación
-> global `make softwarex-check` también aprueba 305 pruebas backend, 47 pruebas
+> global `make softwarex-check` también aprueba 314 pruebas backend, 50 pruebas
 > frontend, el build de producción, la verificación de código y Compose, los
 > metadatos de publicación y los controles de archivos sensibles.
 
@@ -84,16 +84,16 @@ nunca se imprimen ni versionan. Consulte [Instalación](docs/installation.md),
 | `4g-lte-sim` | EPC Open5GS + datos LTE con srsRAN ZMQ | **PASS (14/14)** |
 | `5g-sa-sim` | 5GC Open5GS + datos 5G SA con UERANSIM | **PASS (15/15)** |
 
-La evidencia histórica de señalización permanece en `results/public/`, pero esas
-implementaciones no forman parte del catálogo público. Consulte
+La evidencia histórica de señalización extremo a extremo permanece en
+`results/public/`, pero esos escenarios completos no forman parte del catálogo público. Consulte
 [Validación](docs/validation.md) y [Resultados públicos](results/public/README.md).
 
 ### Perfiles hardware protegidos
 
 | Perfil | Propósito | Disponibilidad |
 | --- | --- | --- |
-| `4g-lte-x310` | 4G LTE con eNB X300/X310 compatible | Flujo RF protegido; requiere hardware autorizado |
-| `5g-sa-x310` | 5G SA con gNB X300/X310 compatible | Flujo RF protegido disponible; depende del hardware |
+| `4g-lte-x310` | 4G LTE e infraestructura IMS compacta siempre activa con eNB X300/X310 compatible | Flujo RF protegido; registro IMS, llamadas VoLTE y RTP no validados |
+| `5g-sa-x310` | 5G SA e infraestructura IMS compacta siempre activa con gNB X300/X310 compatible | Flujo RF protegido; registro IMS, llamadas VoNR y RTP no validados |
 
 ## Reproducibilidad y pruebas
 
@@ -104,7 +104,7 @@ make softwarex-check
 ```
 
 `make softwarex-check` es el comando único de verificación de release utilizado
-por CI. Aprueba 305 pruebas backend con 77% de cobertura de líneas y 47 pruebas
+por CI. Aprueba 314 pruebas backend con 78% de cobertura de líneas y 50 pruebas
 frontend, seguido de TypeScript, build de producción, validación Compose y de
 perfiles, metadatos, enlaces internos, resultados públicos y controles de
 archivos sensibles.

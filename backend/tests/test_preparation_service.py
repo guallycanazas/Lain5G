@@ -45,6 +45,16 @@ def service(tmp_path: Path, commands: FakeCommands) -> PreparationService:
     return PreparationService(Settings(project_root=tmp_path, image_pull_enabled=True), commands)  # type: ignore[arg-type]
 
 
+def wait_for_pull(preparation: PreparationService, job_id: str):
+    deadline = time.monotonic() + 2
+    while time.monotonic() < deadline:
+        job = preparation.pull_job(job_id)
+        if job.state in {"succeeded", "failed"}:
+            return job
+        time.sleep(0.01)
+    raise AssertionError("component download did not finish")
+
+
 def test_image_catalog_covers_every_configurable_profile(tmp_path: Path):
     assert set(PROFILE_IMAGES) == ProfileConfigService.PROFILE_IDS
 
@@ -88,10 +98,67 @@ def test_image_pull_specific_opt_in_is_required(tmp_path: Path):
 
 
 def test_core_only_does_not_require_the_rf_access_image(tmp_path: Path):
-    commands = FakeCommands({"lain5g-lab/open5gs:local", MONGO_IMAGE})
+    required = set(PROFILE_IMAGES["5g-sa-x310"]) - {"lain5g-lab/srsranproject-uhd:local"}
+    commands = FakeCommands(required)
     status = service(tmp_path, commands).profile_status("5g-sa-x310", core_only=True)
     assert status.ready is True
+    assert {image.local_image for image in status.images} == required
     assert all(image.local_image != "lain5g-lab/srsranproject-uhd:local" for image in status.images)
+
+
+@pytest.mark.parametrize(
+    ("profile", "directory", "required_secrets"),
+    (
+        ("4g-lte-x310", "deployments/4g-volte/common", {"SUBSCRIBER_KEY", "SUBSCRIBER_OPC", "IMS_AUTH_PASSWORD"}),
+        ("5g-sa-x310", "deployments/5g-sa-x310", {"IMS_AUTH_PASSWORD"}),
+    ),
+)
+def test_prepare_environment_supports_rf_ims_profiles(tmp_path: Path, profile: str, directory: str, required_secrets: set[str]):
+    environment_dir = tmp_path / directory
+    environment_dir.mkdir(parents=True)
+    (environment_dir / ".env.example").write_text("".join(f"{name}=\n" for name in sorted(required_secrets)), encoding="utf-8")
+
+    target = service(tmp_path, FakeCommands()).prepare_environment(profile)
+    values = dict(line.split("=", 1) for line in target.read_text(encoding="utf-8").splitlines())
+
+    assert all(len(values[name]) == 32 for name in required_secrets)
+    assert target.stat().st_mode & 0o777 == 0o600
+
+
+def test_async_pull_all_tracks_unique_images_to_completion(tmp_path: Path):
+    preparation = service(tmp_path, FakeCommands())
+
+    started = preparation.start_pull("all")
+    completed = wait_for_pull(preparation, started.job_id)
+
+    expected_images = set(image for profile in PUBLIC_PROFILE_IDS for image in PROFILE_IMAGES[profile])
+    assert completed.scope == "all"
+    assert completed.state == "succeeded"
+    assert completed.total_count == len(expected_images)
+    assert completed.completed_count == completed.total_count
+    assert completed.overall_percent == 100
+    assert all(image.state == "succeeded" for image in completed.images)
+    assert preparation.active_pull() is None
+
+
+def test_async_pull_exposes_a_safe_failure_without_continuing(tmp_path: Path):
+    class FailingCommands(FakeCommands):
+        def execute_command(self, command: list[str], **kwargs) -> CommandResult:
+            result = super().execute_command(command, **kwargs)
+            if command[:2] == ["docker", "pull"]:
+                return result.model_copy(update={"exit_code": 1, "stdout": "", "stderr": "registry rejected request"})
+            return result
+
+    preparation = service(tmp_path, FailingCommands())
+    started = preparation.start_pull("5g-sa")
+    completed = wait_for_pull(preparation, started.job_id)
+
+    assert completed.state == "failed"
+    assert completed.error_code == "IMAGE_PULL_FAILED"
+    assert completed.images[0].state == "failed"
+    assert completed.images[0].error_message == f"Could not download {completed.images[0].source_image}."
+    assert completed.completed_count == 0
+    assert completed.overall_percent == 0
 
 
 @pytest.mark.parametrize(

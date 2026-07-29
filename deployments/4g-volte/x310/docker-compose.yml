@@ -111,54 +111,82 @@ services:
     networks: { epc: { ipv4_address: 10.42.0.16 } }
 
   ims-database:
-    profiles: ["ims-internal"]
     image: mariadb@sha256:efb4959ef2c835cd735dbc388eb9ad6aab0c78dd64febcd51bc17481111890c4
     container_name: lain5g-lab-4g-lte-x310-ims-database
     environment: { MARIADB_ALLOW_EMPTY_ROOT_PASSWORD: "yes", MARIADB_DATABASE: ims }
     volumes: ["../common/ims/database/init.sql:/docker-entrypoint-initdb.d/00-init.sql:ro"]
     networks: { epc: { ipv4_address: 10.42.0.19 } }
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
 
   pcscf:
-    profiles: ["ims-internal"]
     image: lain5g-lab/kamailio:local
     container_name: lain5g-lab-4g-lte-x310-pcscf
     command: ["-DD", "-E", "-f", "/etc/kamailio/kamailio.cfg"]
+    depends_on:
+      ims-provisioner: { condition: service_completed_successfully }
     volumes: ["./ims/pcscf/kamailio.cfg:/etc/kamailio/kamailio.cfg:ro"]
     networks: { epc: { ipv4_address: 10.42.0.20 } }
 
   icscf:
-    profiles: ["ims-internal"]
     image: lain5g-lab/kamailio:local
     container_name: lain5g-lab-4g-lte-x310-icscf
     command: ["-DD", "-E", "-f", "/etc/kamailio/kamailio.cfg"]
+    depends_on:
+      ims-provisioner: { condition: service_completed_successfully }
     volumes: ["./ims/icscf/kamailio.cfg:/etc/kamailio/kamailio.cfg:ro"]
     networks: { epc: { ipv4_address: 10.42.0.21 } }
 
   scscf:
-    profiles: ["ims-internal"]
     image: lain5g-lab/kamailio:local
     container_name: lain5g-lab-4g-lte-x310-scscf
     command: ["-DD", "-E", "-f", "/etc/kamailio/kamailio.cfg"]
+    depends_on:
+      ims-provisioner: { condition: service_completed_successfully }
     volumes: ["./ims/scscf/kamailio.cfg:/etc/kamailio/kamailio.cfg:ro"]
     networks: { epc: { ipv4_address: 10.42.0.22 } }
 
   dns:
-    profiles: ["ims-internal"]
     image: lain5g-lab/ims-dns:local
     container_name: lain5g-lab-4g-lte-x310-dns
     command: ["-conf", "/etc/coredns/Corefile"]
+    depends_on:
+      ims-provisioner: { condition: service_completed_successfully }
     volumes:
       - ./ims/dns/Corefile:/etc/coredns/Corefile:ro
       - ./ims/dns/ims.hosts:/etc/coredns/ims.hosts:ro
     networks: { epc: { ipv4_address: 10.42.0.30 } }
 
   ims-provisioner:
-    profiles: ["ims-internal"]
     image: mariadb@sha256:efb4959ef2c835cd735dbc388eb9ad6aab0c78dd64febcd51bc17481111890c4
     container_name: lain5g-lab-4g-lte-x310-ims-provisioner
     env_file: [../common/.env]
-    depends_on: [ims-database]
-    command: ["sh", "-lc", "sleep 10; echo IMS provisioning placeholder; true"]
+    depends_on:
+      ims-database: { condition: service_healthy }
+    command:
+      - sh
+      - -lc
+      - |
+        mariadb --skip-ssl -h ims-database -uroot ims <<SQL
+        INSERT INTO subscribers (imsi, msisdn, impi, impu, domain_name, auth_ha1)
+        VALUES (
+          '$${SUBSCRIBER_IMSI}',
+          '$${SUBSCRIBER_MSISDN}',
+          '$${SUBSCRIBER_IMSI}@$${IMS_DOMAIN}',
+          'sip:$${SUBSCRIBER_MSISDN}@$${IMS_DOMAIN}',
+          '$${IMS_DOMAIN}',
+          MD5(CONCAT('$${SUBSCRIBER_IMSI}', '@', '$${IMS_DOMAIN}', ':', '$${IMS_DOMAIN}', ':', '$${IMS_AUTH_PASSWORD}'))
+        )
+        ON DUPLICATE KEY UPDATE
+          msisdn = VALUES(msisdn),
+          impi = VALUES(impi),
+          impu = VALUES(impu),
+          domain_name = VALUES(domain_name),
+          auth_ha1 = VALUES(auth_ha1);
+        SQL
     networks: { epc: { ipv4_address: 10.42.0.31 } }
     restart: "no"
 
@@ -174,7 +202,13 @@ services:
     environment:
       RF_DURATION_SECONDS: ${LAIN5G_RF_DURATION_SECONDS:-60}
     command: ["bash", "-lc", "exec timeout --signal=TERM $${RF_DURATION_SECONDS}s srsenb /etc/srsran/enb.conf --enb_files.rr_config=/etc/srsran/rr.conf --enb_files.sib_config=/etc/srsran/sib.conf --enb_files.rb_config=/etc/srsran/rb.conf"]
-    depends_on: [mme]
+    depends_on:
+      mme: { condition: service_started }
+      ims-database: { condition: service_healthy }
+      pcscf: { condition: service_started }
+      icscf: { condition: service_started }
+      scscf: { condition: service_started }
+      dns: { condition: service_started }
     volumes:
       - ./ran/enb.conf:/etc/srsran/enb.conf:ro
       - ./ran/rr.conf:/etc/srsran/rr.conf:ro

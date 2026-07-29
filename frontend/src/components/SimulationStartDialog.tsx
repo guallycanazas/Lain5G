@@ -1,11 +1,15 @@
-import { Boxes, CheckCircle2, Network, Server, Smartphone, X } from 'lucide-react';
+import { Boxes, CheckCircle2, Download, Network, Server, Smartphone, X } from 'lucide-react';
 import type { DeploymentSummary } from '../types/deployment';
+import type { ComponentImageStatus, ComponentPullJob } from '../types/preparation';
 import { ActionButton } from './ActionButton';
+import { ComponentPullProgress } from './ComponentPullProgress';
 
 interface SimulationStartDialogProps {
   deployment: DeploymentSummary;
   open: boolean;
   loading: boolean;
+  missingImages: ComponentImageStatus[];
+  pullJob?: ComponentPullJob;
   onCancel: () => void;
   onConfirm: () => void;
 }
@@ -51,7 +55,7 @@ const flows: Record<string, { label: string; summary: string; stages: { name: st
 
 const stageIcons = [Server, Network, Smartphone];
 
-export function SimulationStartDialog({ deployment, open, loading, onCancel, onConfirm }: SimulationStartDialogProps) {
+export function SimulationStartDialog({ deployment, open, loading, missingImages, pullJob, onCancel, onConfirm }: SimulationStartDialogProps) {
   if (!open) return null;
   const flow = flows[deployment.id] || {
     label: 'Software simulation',
@@ -79,8 +83,10 @@ export function SimulationStartDialog({ deployment, open, loading, onCancel, onC
             })}
           </div>
           <div className="simulation-launch-note"><strong>What happens next</strong><p>The backend creates or preserves private synthetic credentials for this profile, checks for another active scenario, starts the stack, and refreshes service status. Use <b>Validate</b> after startup to record registration, session and signaling evidence.</p></div>
+          {missingImages.length ? <div className="warning-box"><strong>{missingImages.length} component{missingImages.length === 1 ? '' : 's'} missing</strong><ul>{missingImages.map((image) => <li key={image.local_image}>{image.description}</li>)}</ul><p>Confirm to download these images first. The simulation starts only after every component is ready.</p></div> : null}
+          {pullJob ? <ComponentPullProgress job={pullJob} /> : null}
         </div>
-        <footer><ActionButton variant="secondary" disabled={loading} onClick={onCancel}>Cancel</ActionButton><ActionButton loading={loading} onClick={onConfirm}><Boxes size={15} />Start full simulation</ActionButton></footer>
+        <footer><ActionButton variant="secondary" disabled={loading} onClick={onCancel}>Cancel</ActionButton><ActionButton loading={loading} onClick={onConfirm}>{missingImages.length ? <Download size={15} /> : <Boxes size={15} />}{missingImages.length ? `Download ${missingImages.length} and start` : 'Start full simulation'}</ActionButton></footer>
       </section>
     </div>
   );

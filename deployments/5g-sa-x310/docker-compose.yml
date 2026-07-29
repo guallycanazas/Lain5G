@@ -85,6 +85,95 @@ services:
     volumes: ["./open5gs/amf.yaml:/etc/open5gs/amf.yaml:ro"]
     networks: { core: { ipv4_address: 10.20.0.5 } }
 
+  ims-database:
+    image: mariadb@sha256:efb4959ef2c835cd735dbc388eb9ad6aab0c78dd64febcd51bc17481111890c4
+    container_name: lain5g-lab-5g-sa-x310-ims-database
+    environment: { MARIADB_ALLOW_EMPTY_ROOT_PASSWORD: "yes", MARIADB_DATABASE: ims }
+    volumes: ["./ims/database/init.sql:/docker-entrypoint-initdb.d/00-init.sql:ro"]
+    networks: { core: { ipv4_address: 10.20.0.19 } }
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+
+  ims-provisioner:
+    image: mariadb@sha256:efb4959ef2c835cd735dbc388eb9ad6aab0c78dd64febcd51bc17481111890c4
+    container_name: lain5g-lab-5g-sa-x310-ims-provisioner
+    environment:
+      IMS_DOMAIN: ${IMS_DOMAIN:-ims.mnc001.mcc001.3gppnetwork.org}
+      SUBSCRIBER_IMSI: ${IMS_INFRA_IMSI:-001011234567895}
+      SUBSCRIBER_MSISDN: ${IMS_INFRA_MSISDN:-51999999999}
+      IMS_AUTH_PASSWORD: ${IMS_AUTH_PASSWORD:-}
+    depends_on:
+      ims-database: { condition: service_healthy }
+    command:
+      - sh
+      - -lc
+      - |
+        mariadb --skip-ssl -h ims-database -uroot ims <<SQL
+        INSERT INTO subscribers (imsi, msisdn, impi, impu, domain_name, auth_ha1)
+        VALUES (
+          '$${SUBSCRIBER_IMSI}',
+          '$${SUBSCRIBER_MSISDN}',
+          '$${SUBSCRIBER_IMSI}@$${IMS_DOMAIN}',
+          'sip:$${SUBSCRIBER_MSISDN}@$${IMS_DOMAIN}',
+          '$${IMS_DOMAIN}',
+          MD5(CONCAT('$${SUBSCRIBER_IMSI}', '@', '$${IMS_DOMAIN}', ':', '$${IMS_DOMAIN}', ':', '$${IMS_AUTH_PASSWORD}'))
+        )
+        ON DUPLICATE KEY UPDATE
+          msisdn = VALUES(msisdn),
+          impi = VALUES(impi),
+          impu = VALUES(impu),
+          domain_name = VALUES(domain_name),
+          auth_ha1 = VALUES(auth_ha1);
+        SQL
+    networks: { core: { ipv4_address: 10.20.0.31 } }
+    restart: "no"
+
+  pcscf:
+    image: lain5g-lab/kamailio:local
+    container_name: lain5g-lab-5g-sa-x310-pcscf
+    command: ["-DD", "-E", "-f", "/etc/kamailio/kamailio.cfg"]
+    depends_on:
+      ims-provisioner: { condition: service_completed_successfully }
+    volumes: ["./ims/pcscf/kamailio.cfg:/etc/kamailio/kamailio.cfg:ro"]
+    networks: { core: { ipv4_address: 10.20.0.20 } }
+
+  icscf:
+    image: lain5g-lab/kamailio:local
+    container_name: lain5g-lab-5g-sa-x310-icscf
+    command: ["-DD", "-E", "-f", "/etc/kamailio/kamailio.cfg"]
+    depends_on:
+      ims-provisioner: { condition: service_completed_successfully }
+    volumes: ["./ims/icscf/kamailio.cfg:/etc/kamailio/kamailio.cfg:ro"]
+    networks: { core: { ipv4_address: 10.20.0.22 } }
+
+  scscf:
+    image: lain5g-lab/ims-sip:local
+    container_name: lain5g-lab-5g-sa-x310-scscf
+    command: ["scscf_server.py"]
+    environment:
+      IMS_DOMAIN: ${IMS_DOMAIN:-ims.mnc001.mcc001.3gppnetwork.org}
+      SUBSCRIBER_IMSI: ${IMS_INFRA_IMSI:-001011234567895}
+      SUBSCRIBER_MSISDN: ${IMS_INFRA_MSISDN:-51999999999}
+      IMS_AUTH_PASSWORD: ${IMS_AUTH_PASSWORD:-}
+      SCSCF_BIND_IP: 10.20.0.23
+    depends_on:
+      ims-provisioner: { condition: service_completed_successfully }
+    networks: { core: { ipv4_address: 10.20.0.23 } }
+
+  dns:
+    image: lain5g-lab/ims-dns:local
+    container_name: lain5g-lab-5g-sa-x310-dns
+    command: ["-conf", "/etc/coredns/Corefile"]
+    depends_on:
+      ims-provisioner: { condition: service_completed_successfully }
+    volumes:
+      - ./ims/dns/Corefile:/etc/coredns/Corefile:ro
+      - ./ims/dns/ims.hosts:/etc/coredns/ims.hosts:ro
+    networks: { core: { ipv4_address: 10.20.0.30 } }
+
   gnb-x310:
     image: lain5g-lab/srsranproject-uhd:local
     container_name: lain5g-lab-5g-sa-x310-gnb
@@ -119,7 +208,13 @@ services:
       - bash
       - -lc
       - envsubst < /etc/srsran/gnb_x310.yml > /tmp/gnb_x310.yml && exec timeout --signal=TERM $${RF_DURATION_SECONDS}s gnb -c /tmp/gnb_x310.yml
-    depends_on: [amf]
+    depends_on:
+      amf: { condition: service_started }
+      ims-database: { condition: service_healthy }
+      pcscf: { condition: service_started }
+      icscf: { condition: service_started }
+      scscf: { condition: service_started }
+      dns: { condition: service_started }
     volumes:
       - ./gnb/gnb_x310.yml:/etc/srsran/gnb_x310.yml:ro
       - ./gnb/.runtime:/var/log/srsran

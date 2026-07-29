@@ -11,6 +11,9 @@ La arquitectura separa escenarios por carpetas, proyectos Compose, redes y volú
 - UERANSIM ejecuta gNB y UE software.
 - Docker Compose conecta todos los servicios en la red `lain5g-lab-5g-sa-core`.
 - `runs/` almacena resultados mínimos por ejecución, sin copiar configuraciones completas ni código.
+- `5g-sa-x310` añade MariaDB, P-CSCF, I-CSCF, S-CSCF y DNS compactos al núcleo
+  siempre activo; el gNB continúa aislado en el perfil `rf`. No añade un DNN IMS
+  ni demuestra registro IMS o VoNR desde un UE físico.
 
 ## Componentes 4G LTE/IMS
 
@@ -21,6 +24,8 @@ La arquitectura separa escenarios por carpetas, proyectos Compose, redes y volú
   Kamailio para los tres roles.
 - CoreDNS resuelve nombres IMS de laboratorio.
 - La ruta X310 separa `enb-x310` en perfil Compose `rf` y `network_mode: host`.
+- Sus servicios IMS compactos se inician siempre con el EPC; esto no constituye
+  evidencia de registro IMS, llamada VoLTE ni RTP.
 - Los manifiestos RF reales están ignorados por Git y deben crearse manualmente.
 
 ## Límites actuales

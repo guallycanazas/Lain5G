@@ -19,9 +19,9 @@ IMAGE_CATALOG = {
 PROFILE_IMAGES = {
     "4g-lte-sim": ("lain5g-lab/open5gs:local", "lain5g-lab/srsran4g-sim:local", MONGO_IMAGE),
     "4g-volte-sim": ("lain5g-lab/open5gs:local", "lain5g-lab/srsran4g-sim:local", "lain5g-lab/kamailio:local", "lain5g-lab/ims-dns:local", "lain5g-lab/ims-sip:local", MONGO_IMAGE, MARIADB_IMAGE),
-    "4g-lte-x310": ("lain5g-lab/open5gs:local", "lain5g-lab/srsran4g-uhd:local", MONGO_IMAGE),
+    "4g-lte-x310": ("lain5g-lab/open5gs:local", "lain5g-lab/srsran4g-uhd:local", "lain5g-lab/kamailio:local", "lain5g-lab/ims-dns:local", MONGO_IMAGE, MARIADB_IMAGE),
     "5g-sa": ("lain5g-lab/open5gs:local", "lain5g-lab/ueransim:local", MONGO_IMAGE),
-    "5g-sa-x310": ("lain5g-lab/open5gs:local", "lain5g-lab/srsranproject-uhd:local", MONGO_IMAGE),
+    "5g-sa-x310": ("lain5g-lab/open5gs:local", "lain5g-lab/srsranproject-uhd:local", "lain5g-lab/kamailio:local", "lain5g-lab/ims-dns:local", "lain5g-lab/ims-sip:local", MONGO_IMAGE, MARIADB_IMAGE),
     "5g-nsa-x310": ("lain5g-lab/open5gs:local", "lain5g-lab/srsran4g-uhd:local", "lain5g-lab/kamailio:local", "lain5g-lab/ims-dns:local", MONGO_IMAGE, MARIADB_IMAGE),
     "5g-vonr": ("lain5g-lab/open5gs:local", "lain5g-lab/ueransim:local", "lain5g-lab/kamailio:local", "lain5g-lab/ims-dns:local", "lain5g-lab/ims-sip:local", MONGO_IMAGE, MARIADB_IMAGE),
 }
@@ -37,7 +37,7 @@ RF_ACCESS_IMAGES = {
 
 def required_images(profile_id: str, core_only: bool = False) -> list[str]:
     if profile_id == "all":
-        images = [image for public_profile in PUBLIC_PROFILE_IDS for image in PROFILE_IMAGES[public_profile]]
+        images = [image for public_profile in PUBLIC_PROFILE_IDS for image in required_images(public_profile, core_only)]
     elif profile_id in PROFILE_IMAGES:
         images = list(PROFILE_IMAGES[profile_id])
         if core_only and profile_id in RF_ACCESS_IMAGES:

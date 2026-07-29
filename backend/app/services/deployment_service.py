@@ -107,6 +107,7 @@ class DeploymentService:
         definition = self._definition(scenario)
         self._ensure_action(definition, "start-epc")
         self._ensure_components(definition, core_only=True)
+        self._prepare_environment(definition)
         self._ensure_no_conflict(definition)
         return self._script_action(definition, "start-epc", "X310_EPC_START_FAILED", "X310 EPC could not be started.", script="start-epc")
 
@@ -114,6 +115,7 @@ class DeploymentService:
         definition = self._definition(scenario)
         self._ensure_action(definition, "start-core")
         self._ensure_components(definition, core_only=True)
+        self._prepare_environment(definition)
         self._ensure_no_conflict(definition)
         if not definition.core_start_script:
             raise ValueError(f"Core start is not configured for {scenario}")
@@ -144,6 +146,7 @@ class DeploymentService:
             script_path,
         ]
         self._ensure_components(definition)
+        self._prepare_environment(definition)
         self._ensure_no_conflict(definition)
         if not definition.core_start_script:
             raise ValueError(f"Core start is not configured for {scenario}")
@@ -344,6 +347,6 @@ class DeploymentService:
         self.preparation_service.ensure_ready(profile_id, core_only)
 
     def _prepare_environment(self, definition: DeploymentDefinition) -> None:
-        if self.preparation_service is None or self.settings.dry_run or definition.rf_capable:
+        if self.preparation_service is None or self.settings.dry_run:
             return
         self.preparation_service.prepare_environment(definition.id)

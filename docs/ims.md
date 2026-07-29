@@ -1,13 +1,17 @@
 # IMS
 
-El escenario 4G incluye un IMS mínimo para laboratorio:
+Los perfiles RF públicos incluyen infraestructura IMS compacta de laboratorio.
+Se inicia junto con el núcleo, sin habilitar RF por sí sola:
 
 - `pcscf` con Kamailio.
 - `icscf` con Kamailio.
-- `scscf` con un registrador SIP mínimo de laboratorio con Digest MD5.
+- `scscf` con Kamailio en `4g-lte-x310` y un registrador SIP mínimo con Digest
+  MD5 en `5g-sa-x310`.
 - `ims-database` con esquema SQL inicial.
 - `dns` con CoreDNS para dominios IMS de laboratorio.
-- `sip-register` como cliente de prueba bajo perfil Compose `sip`.
+
+El cliente `sip-register` pertenece a los escenarios de señalización software
+internos; no se ejecuta en los perfiles X310 públicos.
 
 ## Configuración
 
@@ -20,6 +24,16 @@ ICSCF_DOMAIN=icscf.ims.mnc001.mcc001.3gppnetwork.org
 SCSCF_DOMAIN=scscf.ims.mnc001.mcc001.3gppnetwork.org
 IMS_AUTH_PASSWORD=<secreto local de laboratorio>
 ```
+
+Para preparar secretos sintéticos locales sin copiarlos a Git:
+
+```bash
+./lain5g scenario setup 4g-lte-x310
+./lain5g scenario setup 5g-sa-x310
+```
+
+El segundo comando usa `deployments/5g-sa-x310/.env`; su identidad IMS es
+sintética y está separada de cualquier suscriptor o SIM físico.
 
 El provisionamiento inicial vive en:
 
@@ -53,3 +67,8 @@ La evidencia válida exige:
 ## Alcance
 
 IMS REGISTER exitoso no equivale a VoLTE completo. La validación completa requiere señalización SIP de llamada y RTP bidireccional; ver `docs/volte_validation.md`.
+
+En `5g-sa-x310` no existe todavía un DNN IMS, una sesión PDU IMS ni
+descubrimiento P-CSCF desde un UE físico. En ambos perfiles X310, los checks
+`ims_registration`, `volte_call`/`vonr_call` y `rtp_media` permanecen
+`NOT_TESTED`. Contenedores activos solo prueban disponibilidad de infraestructura.

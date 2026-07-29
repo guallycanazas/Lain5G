@@ -3,8 +3,9 @@ from __future__ import annotations
 import shutil
 import threading
 from datetime import UTC, datetime
+from uuid import uuid4
 
-from ..models.preparation import ComponentImageStatus, ComponentPullResponse, PreparationCheck, PreparationReport, ProfileComponentStatus
+from ..models.preparation import ComponentImageStatus, ComponentPullImageProgress, ComponentPullJob, ComponentPullResponse, PreparationCheck, PreparationReport, ProfileComponentStatus
 from ..settings import Settings
 from .command_service import CommandService
 from .image_catalog import IMAGE_CATALOG, PROFILE_IMAGES, PUBLIC_PROFILE_IDS, RF_ACCESS_IMAGES, required_images
@@ -35,6 +36,9 @@ class PreparationService:
         self.settings = settings
         self.command_service = command_service
         self._pull_lock = threading.Lock()
+        self._jobs_lock = threading.Lock()
+        self._jobs: dict[str, ComponentPullJob] = {}
+        self._active_job_id: str | None = None
 
     def report(self) -> PreparationReport:
         diagnostics = self.diagnostics()
@@ -115,6 +119,130 @@ class PreparationService:
             )
         finally:
             self._pull_lock.release()
+
+    def start_pull(self, profile_id: str, core_only: bool = False) -> ComponentPullJob:
+        if not self.settings.image_pull_enabled:
+            raise PreparationError(403, "IMAGE_PULL_DISABLED", "Image downloads are disabled by the operator.")
+        current = self.profile_status(profile_id, core_only)
+        missing = [image for image in current.images if not image.installed]
+        with self._jobs_lock:
+            if len(self._jobs) >= 100:
+                completed = sorted(
+                    (job for job in self._jobs.values() if job.state in {"succeeded", "failed"}),
+                    key=lambda job: job.finished_at or job.created_at,
+                )
+                for expired in completed[: len(self._jobs) - 99]:
+                    del self._jobs[expired.job_id]
+            active = self._jobs.get(self._active_job_id or "")
+            if active and active.state in {"queued", "running"}:
+                raise PreparationError(409, "IMAGE_PULL_BUSY", f"Component download {active.job_id} is already in progress.")
+            job = ComponentPullJob(
+                job_id=f"pull-{uuid4().hex}",
+                scope=profile_id,
+                core_only=core_only,
+                state="queued" if missing else "succeeded",
+                images=[
+                    ComponentPullImageProgress(
+                        local_image=image.local_image,
+                        source_image=image.source_image,
+                        description=image.description,
+                    )
+                    for image in missing
+                ],
+                total_count=len(missing),
+                overall_percent=0 if missing else 100,
+                created_at=datetime.now(UTC),
+                finished_at=None if missing else datetime.now(UTC),
+            )
+            self._jobs[job.job_id] = job
+            if not missing:
+                return job.model_copy(deep=True)
+            if not self._pull_lock.acquire(blocking=False):
+                del self._jobs[job.job_id]
+                raise PreparationError(409, "IMAGE_PULL_BUSY", "A component download is already in progress.")
+            self._active_job_id = job.job_id
+        worker = threading.Thread(target=self._run_pull_job, args=(job.job_id,), daemon=True, name=f"lain5g-{job.job_id}")
+        worker.start()
+        with self._jobs_lock:
+            return self._jobs[job.job_id].model_copy(deep=True)
+
+    def pull_job(self, job_id: str) -> ComponentPullJob:
+        with self._jobs_lock:
+            job = self._jobs.get(job_id)
+            if job is None:
+                raise PreparationError(404, "IMAGE_PULL_NOT_FOUND", "Component download was not found.")
+            return job.model_copy(deep=True)
+
+    def active_pull(self) -> ComponentPullJob | None:
+        with self._jobs_lock:
+            job = self._jobs.get(self._active_job_id or "")
+            return job.model_copy(deep=True) if job and job.state in {"queued", "running"} else None
+
+    def _run_pull_job(self, job_id: str) -> None:
+        try:
+            with self._jobs_lock:
+                job = self._jobs[job_id]
+                job.state = "running"
+                job.started_at = datetime.now(UTC)
+            for index in range(self._jobs[job_id].total_count):
+                with self._jobs_lock:
+                    job = self._jobs[job_id]
+                    image = job.images[index]
+                    image.state = "pulling"
+                    job.current_image = image.local_image
+                    job.current_index = index + 1
+                    source_image = image.source_image
+                    local_image = image.local_image
+                result = self.command_service.execute_command(
+                    ["docker", "pull", source_image], dry_run=False, timeout=self.settings.image_pull_timeout
+                )
+                if result.timed_out:
+                    self._fail_pull_job(job_id, index, "IMAGE_PULL_TIMEOUT", f"The download exceeded the allowed time: {source_image}")
+                    return
+                if result.exit_code != 0:
+                    self._fail_pull_job(job_id, index, "IMAGE_PULL_FAILED", f"Could not download {source_image}.")
+                    return
+                if source_image != local_image:
+                    with self._jobs_lock:
+                        self._jobs[job_id].images[index].state = "tagging"
+                    tagged = self.command_service.execute_command(
+                        ["docker", "tag", source_image, local_image], dry_run=False, timeout=30
+                    )
+                    if tagged.exit_code != 0:
+                        self._fail_pull_job(job_id, index, "IMAGE_TAG_FAILED", f"Could not prepare {local_image}.")
+                        return
+                with self._jobs_lock:
+                    job = self._jobs[job_id]
+                    job.images[index].state = "succeeded"
+                    job.pulled.append(source_image)
+                    job.completed_count = index + 1
+                    job.overall_percent = round(job.completed_count * 100 / job.total_count)
+            with self._jobs_lock:
+                job = self._jobs[job_id]
+                job.state = "succeeded"
+                job.current_image = None
+                job.finished_at = datetime.now(UTC)
+                job.overall_percent = 100
+        except Exception:
+            self._fail_pull_job(job_id, None, "IMAGE_PULL_FAILED", "The component download ended unexpectedly.")
+        finally:
+            with self._jobs_lock:
+                if self._active_job_id == job_id:
+                    self._active_job_id = None
+            self._pull_lock.release()
+
+    def _fail_pull_job(self, job_id: str, image_index: int | None, code: str, message: str) -> None:
+        with self._jobs_lock:
+            job = self._jobs[job_id]
+            job.state = "failed"
+            job.error_code = code
+            job.error_message = message
+            job.finished_at = datetime.now(UTC)
+            if image_index is not None:
+                image = job.images[image_index]
+                image.state = "failed"
+                image.error_code = code
+                image.error_message = message
 
     def ensure_ready(self, profile_id: str, core_only: bool = False) -> None:
         status = self.profile_status(profile_id, core_only)

@@ -55,6 +55,7 @@ export function validationDescription(id: string): string {
     ng_setup: 'NG Setup completed',
     s1_setup: 'S1 Setup completed',
     ims: 'IMS services available',
+    ims_services: 'Compact IMS infrastructure services active',
     ims_database: 'IMS database available',
     pcscf: 'P-CSCF active',
     icscf: 'I-CSCF active',
@@ -62,6 +63,10 @@ export function validationDescription(id: string): string {
     ims_dns: 'IMS DNS resolved through IMS path',
     pcscf_reachable_over_ims: 'P-CSCF reachable through IMS tunnel',
     sip_register: 'SIP registration observed',
+    ims_registration: 'Physical UE IMS registration',
+    volte_call: 'VoLTE call dialog established',
+    vonr_call: 'VoNR call dialog established',
+    rtp_media: 'RTP media path exercised',
     hardware: 'SDR hardware detected',
     preflight: 'Preflight passed',
   };

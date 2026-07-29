@@ -92,6 +92,39 @@ def test_x310_is_rf_controlled(client):
     assert "emergency-stop" in payload["supported_actions"]
 
 
+def test_public_x310_profiles_require_compact_ims_services(client):
+    for scenario in ("4g-lte-x310", "5g-sa-x310"):
+        payload = client.get(f"/api/deployments/{scenario}").json()
+        assert {"ims-database", "pcscf", "icscf", "scscf", "dns"}.issubset(payload["components"])
+        assert "ims_services" in payload["validation_checks"]
+        assert "rtp_media" in payload["validation_checks"]
+
+
+def test_rf_core_start_prepares_private_ims_environment(deployment_service, monkeypatch):
+    events = []
+
+    class Preparation:
+        def ensure_ready(self, profile: str, core_only: bool = False):
+            events.append(("components", profile, core_only))
+
+        def prepare_environment(self, profile: str):
+            events.append(("environment", profile))
+
+    deployment_service.settings.dry_run = False
+    deployment_service.preparation_service = Preparation()
+    monkeypatch.setattr(deployment_service, "_ensure_no_conflict", lambda definition: events.append(("conflicts", definition.id)))
+    monkeypatch.setattr(deployment_service, "_script_action", lambda definition, *args, **kwargs: events.append(("start", definition.id)))
+
+    deployment_service.start_core("5g-sa-x310")
+
+    assert events == [
+        ("components", "5g-sa-x310", True),
+        ("environment", "5g-sa-x310"),
+        ("conflicts", "5g-sa-x310"),
+        ("start", "5g-sa-x310"),
+    ]
+
+
 def test_experimental_nsa_is_not_public(client):
     catalog = client.get("/api/deployments").json()
     assert "5g-nsa-x310" not in {item["id"] for item in catalog}
