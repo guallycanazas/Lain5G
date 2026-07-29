@@ -3,6 +3,7 @@ from __future__ import annotations
 import fcntl
 import os
 import subprocess
+import sys
 from pathlib import Path
 
 import pytest
@@ -137,9 +138,10 @@ def test_main_menu_exposes_preparation_without_publishing():
 
 
 def test_bootstrap_dry_run_installs_tools_and_downloads_everything():
+    venv_package = f"python{sys.version_info.major}.{sys.version_info.minor}-venv"
     env = {
         **os.environ,
-        "LAIN5G_BOOTSTRAP_FORCE_MISSING": "git,make,docker,util-linux,compose",
+        "LAIN5G_BOOTSTRAP_FORCE_MISSING": "venv,git,make,docker,util-linux,compose",
         "LAIN5G_BOOTSTRAP_PACKAGE_MANAGER": "apt-get",
     }
 
@@ -153,13 +155,76 @@ def test_bootstrap_dry_run_installs_tools_and_downloads_everything():
     )
 
     assert result.returncode == 0
-    assert "apt-get install -y git make docker.io util-linux docker-compose-v2" in result.stdout
+    assert f"apt-get install -y {venv_package} git make docker.io util-linux docker-compose-v2" in result.stdout
     assert "systemctl enable --now docker" in result.stdout
     assert "./lain5g scenario setup 4g-lte-sim" in result.stdout
     assert "./lain5g scenario setup 5g-sa-x310" in result.stdout
     assert "docker pull gually/lain5g-open5gs" in result.stdout
     assert "docker pull gually/lain5g-srsranproject-uhd" in result.stdout
     assert "MAQUINA PREPARADA" in result.stdout
+
+
+def test_bootstrap_requires_group_activation_in_the_current_shell(tmp_path: Path):
+    bin_dir = tmp_path / "bin"
+    bin_dir.mkdir()
+    fake_id = bin_dir / "id"
+    fake_id.write_text(
+        "#!/usr/bin/env bash\n"
+        "if [ \"$#\" -gt 1 ]; then printf 'gually docker\\n'; else printf 'gually\\n'; fi\n",
+        encoding="utf-8",
+    )
+    fake_id.chmod(0o755)
+    env = {
+        **os.environ,
+        "PATH": f"{bin_dir}:{os.environ['PATH']}",
+        "LAIN5G_BOOTSTRAP_FORCE_MISSING": "docker,compose",
+        "LAIN5G_BOOTSTRAP_PACKAGE_MANAGER": "apt-get",
+    }
+
+    result = subprocess.run(
+        [str(ROOT / "lain5g"), "bootstrap", "--dry-run", "--yes"],
+        cwd=ROOT,
+        env=env,
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+
+    assert result.returncode == 0
+    assert "PASO REQUERIDO: ejecuta 'newgrp docker'" in result.stdout
+    assert "usermod" not in result.stdout
+
+
+def test_app_start_explains_inactive_docker_group(tmp_path: Path):
+    project_root = tmp_path / "project"
+    project_root.mkdir()
+    (project_root / ".env.app.example").write_text(
+        (ROOT / ".env.app.example").read_text(encoding="utf-8"),
+        encoding="utf-8",
+    )
+    env, make_log, _ = fake_app_tools(tmp_path, project_root)
+    bin_dir = Path(env["PATH"].split(":", 1)[0])
+    (bin_dir / "docker").write_text("#!/usr/bin/env bash\nexit 1\n", encoding="utf-8")
+    (bin_dir / "id").write_text(
+        "#!/usr/bin/env bash\n"
+        "if [ \"$#\" -gt 1 ]; then printf 'gually docker\\n'; else printf 'gually\\n'; fi\n",
+        encoding="utf-8",
+    )
+    (bin_dir / "docker").chmod(0o755)
+    (bin_dir / "id").chmod(0o755)
+
+    result = subprocess.run(
+        [str(ROOT / "lain5g"), "app", "start", "--operations"],
+        cwd=ROOT,
+        env=env,
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+
+    assert result.returncode == 1
+    assert "newgrp docker" in result.stderr
+    assert not make_log.exists()
 
 
 def test_shell_installer_bootstraps_python_before_cli():

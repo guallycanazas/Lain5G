@@ -64,11 +64,14 @@ On a clean GNU/Linux machine, run the guided installer first:
 ./install.sh
 ```
 
-It installs missing Python, Git, Make, Docker, Compose, and util-linux packages using
-the detected `apt-get`, `dnf`, `pacman`, or `zypper` manager; enables Docker;
-prepares private configuration; and downloads every published component. All
-system changes are shown before execution. Use `./install.sh --dry-run` to print
-the plan without changing the machine.
+It installs missing Python, Python venv support, Git, Make, Docker, Compose, and
+util-linux packages using the detected `apt-get`, `dnf`, `pacman`, or `zypper`
+manager; enables Docker; prepares private configuration; and downloads every
+published component. All system changes are shown before execution. Use
+`./install.sh --dry-run` to print the plan without changing the machine.
+
+If requested after installation, run `newgrp docker` before starting the web
+application so the current terminal can access the Docker socket.
 
 ### Web application
 

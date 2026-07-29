@@ -46,10 +46,13 @@ cd Lain5G
 ./install.sh
 ```
 
-En una máquina limpia, `install.sh` instala Python, Git, Make, Docker, Compose y
-util-linux cuando faltan, habilita Docker, prepara la configuración privada y
-descarga todos los componentes publicados. Use `./install.sh --dry-run` para
-revisar el plan sin modificar el sistema.
+En una máquina limpia, `install.sh` instala Python con soporte `venv`, Git,
+Make, Docker, Compose y util-linux cuando faltan, habilita Docker, prepara la
+configuración privada y descarga todos los componentes publicados. Use
+`./install.sh --dry-run` para revisar el plan sin modificar el sistema.
+
+Si el instalador lo solicita, ejecute `newgrp docker` antes de iniciar la
+aplicación para activar el acceso al socket Docker en la terminal actual.
 
 ### Opción A: aplicación web
 

@@ -8,11 +8,11 @@ Después de clonar el repositorio, ejecute:
 ./install.sh
 ```
 
-El instalador detecta `apt-get`, `dnf`, `pacman` o `zypper`; instala Python,
-Git, Make, Docker, Docker Compose v2 y util-linux cuando faltan; inicia Docker; agrega
-el usuario al grupo `docker`; genera configuraciones privadas; y descarga todas
-las imágenes publicadas. Cada comando privilegiado se muestra antes de usar
-`sudo`.
+El instalador detecta `apt-get`, `dnf`, `pacman` o `zypper`; instala Python con
+soporte `venv`, Git, Make, Docker, Docker Compose v2 y util-linux cuando faltan;
+inicia Docker; agrega el usuario al grupo `docker`; genera configuraciones
+privadas; y descarga todas las imágenes publicadas. Cada comando privilegiado
+se muestra antes de usar `sudo`.
 
 Para revisar todo sin modificar el equipo:
 

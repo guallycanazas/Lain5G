@@ -348,11 +348,37 @@ def _apt_compose_package(*, dry_run: bool) -> str:
     return "docker-compose-v2"
 
 
+def _apt_venv_package(*, dry_run: bool) -> str:
+    versioned = f"python{sys.version_info.major}.{sys.version_info.minor}-venv"
+    if dry_run or shutil.which("apt-cache") is None:
+        return versioned
+    for candidate in (versioned, "python3-venv"):
+        if subprocess.run(
+            ["apt-cache", "show", candidate],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            check=False,
+        ).returncode == 0:
+            return candidate
+    return "python3-venv"
+
+
+def _group_names(user: str = "") -> set[str]:
+    if shutil.which("id") is None:
+        return set()
+    command = ["id", "-nG"]
+    if user:
+        command.append(user)
+    return set(subprocess.run(command, text=True, capture_output=True, check=False).stdout.split())
+
+
 def _bootstrap_install_commands(manager: str, features: set[str], privileged: list[str], *, dry_run: bool) -> list[list[str]]:
     packages: list[str] = []
     if manager == "apt-get":
         if "python" in features:
             packages.append("python3")
+        if "venv" in features:
+            packages.append(_apt_venv_package(dry_run=dry_run))
         if "git" in features:
             packages.append("git")
         if "make" in features:
@@ -365,11 +391,11 @@ def _bootstrap_install_commands(manager: str, features: set[str], privileged: li
             packages.append(_apt_compose_package(dry_run=dry_run))
         return [[*privileged, "apt-get", "update"], [*privileged, "apt-get", "install", "-y", *packages]]
     mappings = {
-        "dnf": {"python": "python3", "git": "git", "make": "make", "docker": "moby-engine", "util-linux": "util-linux", "compose": "docker-compose-plugin"},
-        "pacman": {"python": "python", "git": "git", "make": "make", "docker": "docker", "util-linux": "util-linux", "compose": "docker-compose"},
-        "zypper": {"python": "python3", "git": "git", "make": "make", "docker": "docker", "util-linux": "util-linux", "compose": "docker-compose"},
+        "dnf": {"python": "python3", "venv": "python3", "git": "git", "make": "make", "docker": "moby-engine", "util-linux": "util-linux", "compose": "docker-compose-plugin"},
+        "pacman": {"python": "python", "venv": "python", "git": "git", "make": "make", "docker": "docker", "util-linux": "util-linux", "compose": "docker-compose"},
+        "zypper": {"python": "python3", "venv": "python3-venv", "git": "git", "make": "make", "docker": "docker", "util-linux": "util-linux", "compose": "docker-compose"},
     }
-    ordered_features = ("python", "git", "make", "docker", "util-linux", "compose")
+    ordered_features = ("python", "venv", "git", "make", "docker", "util-linux", "compose")
     packages = list(dict.fromkeys(mappings.get(manager, {}).get(feature, feature) for feature in ordered_features if feature in features))
     if manager == "dnf":
         return [[*privileged, "dnf", "install", "-y", *packages]]
@@ -407,6 +433,14 @@ def _bootstrap_machine(service: ProfileConfigService, *, assume_yes: bool = Fals
     features = set()
     if sys.version_info < (3, 10) or "python" in forced_missing:
         features.add("python")
+    venv_present = "venv" not in forced_missing and subprocess.run(
+        [sys.executable, "-c", "import ensurepip, venv"],
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+        check=False,
+    ).returncode == 0
+    if not venv_present:
+        features.add("venv")
     if shutil.which("git") is None or "git" in forced_missing:
         features.add("git")
     if shutil.which("make") is None or "make" in forced_missing:
@@ -435,6 +469,14 @@ def _bootstrap_machine(service: ProfileConfigService, *, assume_yes: bool = Fals
             if not _run_bootstrap_step(command, dry_run=dry_run):
                 print("ERROR: fallo la instalacion de dependencias.", file=sys.stderr)
                 return 1
+        if not dry_run and "venv" in features and subprocess.run(
+            [sys.executable, "-c", "import ensurepip, venv"],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            check=False,
+        ).returncode != 0:
+            print("ERROR: Python sigue sin soporte venv despues de instalar dependencias.", file=sys.stderr)
+            return 1
     else:
         print("\nDependencias base: OK")
 
@@ -454,14 +496,17 @@ def _bootstrap_machine(service: ProfileConfigService, *, assume_yes: bool = Fals
             stderr=subprocess.DEVNULL,
             check=False,
         ).returncode == 0
-    group_changed = False
+    group_activation_required = False
     if user != "root" and not normal_access:
-        groups = subprocess.run(["id", "-nG", user], text=True, capture_output=True, check=False).stdout.split() if shutil.which("id") else []
-        if "docker" not in groups:
+        configured_groups = _group_names(user)
+        active_groups = _group_names()
+        if "docker" not in configured_groups:
             print(f"\nHabilitando acceso Docker para {user}")
             if not _run_bootstrap_step([*privileged, "usermod", "-aG", "docker", user], dry_run=dry_run):
                 return 1
-            group_changed = True
+            group_activation_required = True
+        elif "docker" not in active_groups:
+            group_activation_required = True
 
     docker_command = ["docker"]
     if not dry_run:
@@ -501,9 +546,11 @@ def _bootstrap_machine(service: ProfileConfigService, *, assume_yes: bool = Fals
         return 1
 
     print("\nMAQUINA PREPARADA")
-    if group_changed:
-        print("Activa el grupo con 'newgrp docker' o vuelve a iniciar sesion.")
-    print("Siguiente paso: ./lain5g app start --operations --open")
+    if group_activation_required:
+        print("PASO REQUERIDO: ejecuta 'newgrp docker' o vuelve a iniciar sesion.")
+        print("Despues ejecuta: ./lain5g app start --operations --open")
+    else:
+        print("Siguiente paso: ./lain5g app start --operations --open")
     return 0
 
 
@@ -602,6 +649,20 @@ def _run_app_command(service: ProfileConfigService, action: str, flags: set[str]
     if action in {"setup", "start"} and app_environment.is_symlink():
         print("No se modifico .env.app porque es un enlace simbolico.", file=sys.stderr)
         return 1
+    if action not in {"setup", "open"}:
+        docker_accessible = shutil.which("docker") is not None and subprocess.run(
+            ["docker", "info"],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            check=False,
+        ).returncode == 0
+        user = os.environ.get("SUDO_USER") or getpass.getuser() or pwd.getpwuid(os.getuid()).pw_name
+        if not docker_accessible and "docker" in _group_names(user) and "docker" not in _group_names():
+            print(
+                "Docker aun no esta activo en esta terminal. Ejecuta 'newgrp docker' y repite el comando.",
+                file=sys.stderr,
+            )
+            return 1
     if action in {"setup", "start"} and not operations and app_environment.is_file():
         completed = subprocess.run(["make", "app-down-operations"], cwd=service.root, check=False)
         if completed.returncode != 0:
