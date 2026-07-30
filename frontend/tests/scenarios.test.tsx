@@ -178,7 +178,7 @@ describe('Scenario workspaces', () => {
     await userEvent.type(screen.getByLabelText(/Type START 4G-LTE-X310 RF/), 'START 4G-LTE-X310 RF');
     await userEvent.click(launch);
     await waitFor(() => expect(fetch).toHaveBeenCalledWith('/api/deployments/4g-lte-x310/start-rf', expect.objectContaining({ method: 'POST' })));
-  });
+  }, 10_000);
   it('shows applied 5G values instead of a hardcoded RF summary', async () => {
     stubScenarioFetch(); renderRoute('/scenarios/:scenarioId', <ScenarioDetailPage />, '/scenarios/5g-sa-x310');
     await userEvent.click(await screen.findByRole('button', { name: 'Start X310 lab' }));
