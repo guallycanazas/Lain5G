@@ -1,9 +1,12 @@
 from __future__ import annotations
 
+import json
 import os
 import shlex
 import subprocess
 from pathlib import Path
+
+import pytest
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -128,3 +131,58 @@ def test_5g_simulation_validation_uses_scenario_run_and_waits_for_registration()
     assert "registration_ready" in validate
     assert "\"scenario\"[[:space:]]*:[[:space:]]*\"5g-sa\"" in validate
     assert 'find "$repo_dir/runs"' not in validate
+
+
+@pytest.mark.parametrize(
+    ("scenario", "script_path"),
+    (
+        ("4g-lte-sim", "deployments/4g-lte-sim/scripts/stop.sh"),
+        ("5g-sa", "deployments/5g-sa/scripts/stop.sh"),
+    ),
+)
+def test_simulation_stop_closes_only_its_latest_run(tmp_path: Path, scenario: str, script_path: str):
+    project = tmp_path / "project"
+    target_run = project / "runs/run-001"
+    other_run = project / "runs/run-999"
+    target_run.mkdir(parents=True)
+    other_run.mkdir(parents=True)
+    target_metadata = {
+        "run_id": "run-001",
+        "scenario": scenario,
+        "finished_at": "",
+        "status": "started",
+    }
+    other_metadata = {
+        "run_id": "run-999",
+        "scenario": "5g-sa" if scenario == "4g-lte-sim" else "4g-lte-sim",
+        "finished_at": "",
+        "status": "started",
+    }
+    (target_run / "metadata.json").write_text(json.dumps(target_metadata), encoding="utf-8")
+    (other_run / "metadata.json").write_text(json.dumps(other_metadata), encoding="utf-8")
+    source = ROOT / script_path
+    copied_script = project / script_path
+    copied_script.parent.mkdir(parents=True)
+    copied_script.write_text(source.read_text(encoding="utf-8"), encoding="utf-8")
+    copied_script.chmod(0o755)
+    bin_dir = tmp_path / "bin"
+    bin_dir.mkdir()
+    docker = bin_dir / "docker"
+    docker.write_text("#!/usr/bin/env bash\nexit 0\n", encoding="utf-8")
+    docker.chmod(0o755)
+
+    result = subprocess.run(
+        [str(copied_script)],
+        cwd=project,
+        env={**os.environ, "PATH": f"{bin_dir}:{os.environ['PATH']}"},
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+
+    assert result.returncode == 0, result.stderr
+    closed = json.loads((target_run / "metadata.json").read_text(encoding="utf-8"))
+    untouched = json.loads((other_run / "metadata.json").read_text(encoding="utf-8"))
+    assert closed["status"] == "stopped"
+    assert closed["finished_at"]
+    assert untouched == other_metadata

@@ -12,7 +12,11 @@ fi
 
 (cd "$scenario_dir" && docker compose --env-file .env -f docker-compose.yml down --remove-orphans)
 
-latest_run="$(find "$repo_dir/runs" -mindepth 1 -maxdepth 1 -type d -name 'run-*' | sort | tail -n 1 || true)"
+latest_run=""
+for metadata in "$repo_dir"/runs/run-*/metadata.json; do
+  [ -f "$metadata" ] || continue
+  grep -Eq '"scenario"[[:space:]]*:[[:space:]]*"5g-sa"' "$metadata" && latest_run="$(dirname "$metadata")"
+done
 if [ -n "$latest_run" ] && [ -f "$latest_run/metadata.json" ]; then
   finished_at="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
   tmp_file="$(mktemp)"
