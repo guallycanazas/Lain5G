@@ -1,0 +1,70 @@
+{
+  "artifact_type": "public-check-summary",
+  "checks": [
+    {
+      "id": "amf",
+      "status": "PASS"
+    },
+    {
+      "id": "ausf",
+      "status": "PASS"
+    },
+    {
+      "id": "mongo",
+      "status": "PASS"
+    },
+    {
+      "id": "ng_setup",
+      "status": "PASS"
+    },
+    {
+      "id": "nrf",
+      "status": "PASS"
+    },
+    {
+      "id": "pcf",
+      "status": "PASS"
+    },
+    {
+      "id": "pdu_session",
+      "status": "PASS"
+    },
+    {
+      "id": "ping",
+      "status": "PASS"
+    },
+    {
+      "id": "smf",
+      "status": "PASS"
+    },
+    {
+      "id": "udm",
+      "status": "PASS"
+    },
+    {
+      "id": "udr",
+      "status": "PASS"
+    },
+    {
+      "id": "ue_ip",
+      "status": "PASS"
+    },
+    {
+      "id": "ue_registration",
+      "status": "PASS"
+    },
+    {
+      "id": "ue_tun",
+      "status": "PASS"
+    },
+    {
+      "id": "upf",
+      "status": "PASS"
+    }
+  ],
+  "execution_status": "PASS",
+  "result_classification": "SIMULATION_ONLY",
+  "run_id": "run-20260730-021914",
+  "scenario": "5g-sa-sim",
+  "source_commit": "59471947da95783c1a85a4d18284360e4b6d898b"
+}

@@ -1,0 +1,66 @@
+{
+  "artifact_type": "public-check-summary",
+  "checks": [
+    {
+      "id": "data_ping",
+      "status": "PASS"
+    },
+    {
+      "id": "default_bearer",
+      "status": "PASS"
+    },
+    {
+      "id": "hss",
+      "status": "PASS"
+    },
+    {
+      "id": "mme",
+      "status": "PASS"
+    },
+    {
+      "id": "mongo",
+      "status": "PASS"
+    },
+    {
+      "id": "pcrf",
+      "status": "PASS"
+    },
+    {
+      "id": "pgwc",
+      "status": "PASS"
+    },
+    {
+      "id": "pgwu",
+      "status": "PASS"
+    },
+    {
+      "id": "s1_setup",
+      "status": "PASS"
+    },
+    {
+      "id": "sgwc",
+      "status": "PASS"
+    },
+    {
+      "id": "sgwu",
+      "status": "PASS"
+    },
+    {
+      "id": "ue_ip",
+      "status": "PASS"
+    },
+    {
+      "id": "ue_registration",
+      "status": "PASS"
+    },
+    {
+      "id": "ue_tun",
+      "status": "PASS"
+    }
+  ],
+  "execution_status": "PASS",
+  "result_classification": "SIMULATION_ONLY",
+  "run_id": "run-20260730-021702",
+  "scenario": "4g-lte-sim",
+  "source_commit": "59471947da95783c1a85a4d18284360e4b6d898b"
+}

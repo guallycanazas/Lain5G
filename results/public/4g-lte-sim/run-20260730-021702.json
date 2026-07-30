@@ -1,0 +1,85 @@
+{
+  "artifact_type": "public-scenario-result",
+  "associated_files": [
+    {
+      "reference": "results/public/summaries/run-20260730-021702-checks.json",
+      "sha256": "815ccaac6d6d2c25c412560e5469fadb487476e795d9b53fc87d5cf8ad8fc37d"
+    }
+  ],
+  "command_label": "Clean VM LTE ZMQ simulation validation",
+  "duration_seconds": 124,
+  "ended_at_utc": "2026-07-30T02:19:06Z",
+  "environment_reference": "results/public/environment/clean-vm-20260730.json",
+  "execution_status": "PASS",
+  "limitations": [
+    "Software-only ZMQ result; no SDR, commercial UE, IMS, voice, RF, or hardware claim.",
+    "The result was executed in one clean Ubuntu 24.04 virtual machine using published catalog images."
+  ],
+  "public_configurations": [
+    {
+      "reference": "config/profiles/4g-lte-sim.yaml",
+      "sha256": "6ff482055702766671f70dfb092ea162baf1e79ec153094351128c1866cf28ea"
+    },
+    {
+      "reference": "deployments/4g-lte-sim/docker-compose.yml",
+      "sha256": "f4242cd68a8a4b65cd4c2736914cf213b442fe6c6610cbbcc21435453c605c37"
+    }
+  ],
+  "release_version": "1.1.0",
+  "result_classification": "SIMULATION_ONLY",
+  "run_id": "run-20260730-021702",
+  "scenario": "4g-lte-sim",
+  "schema_version": "1.0",
+  "source_commit": "59471947da95783c1a85a4d18284360e4b6d898b",
+  "started_at_utc": "2026-07-30T02:17:02Z",
+  "success_criteria": [
+    {
+      "description": "Default bearer check passes",
+      "evidence_references": [
+        "results/public/summaries/run-20260730-021702-checks.json"
+      ],
+      "id": "default-bearer",
+      "outcome": "MET"
+    },
+    {
+      "description": "Core services pass the scenario checks",
+      "evidence_references": [
+        "results/public/summaries/run-20260730-021702-checks.json"
+      ],
+      "id": "epc-services",
+      "outcome": "MET"
+    },
+    {
+      "description": "S1 setup check passes",
+      "evidence_references": [
+        "results/public/summaries/run-20260730-021702-checks.json"
+      ],
+      "id": "s1-setup",
+      "outcome": "MET"
+    },
+    {
+      "description": "Data ping passes from the software UE",
+      "evidence_references": [
+        "results/public/summaries/run-20260730-021702-checks.json"
+      ],
+      "id": "ue-data-ping",
+      "outcome": "MET"
+    },
+    {
+      "description": "Software UE interface and address checks pass",
+      "evidence_references": [
+        "results/public/summaries/run-20260730-021702-checks.json"
+      ],
+      "id": "ue-interface",
+      "outcome": "MET"
+    },
+    {
+      "description": "Software UE registration passes",
+      "evidence_references": [
+        "results/public/summaries/run-20260730-021702-checks.json"
+      ],
+      "id": "ue-registration",
+      "outcome": "MET"
+    }
+  ]
+}

@@ -6,7 +6,7 @@
 | --- | --- | --- |
 | Lain5G-Lab | `1.1.0` | Root `VERSION` |
 | Status | Stable source release | `CHANGELOG.md` |
-| Evidence captured | `2026-07-30T01:54:36Z` | Clean-VM UTC clock after scenario verification |
+| Evidence captured | `2026-07-30T02:20:51Z` | Clean-VM UTC clock after scenario verification |
 | Verification host | Ubuntu 24.04.4 LTS, Linux `x86_64` | Clean virtual-machine environment summary |
 | Python test environment | CPython `3.12.3`, pip `25.1.1` | Clean virtual-machine tool output |
 | Node/npm environment | Node `v18.19.1`, npm `9.2.0` | Clean virtual-machine tool output |

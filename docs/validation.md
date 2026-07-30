@@ -3,21 +3,20 @@
 Esta guía define criterios y salidas e indexa los artefactos públicos sin crear
 una segunda matriz normativa. Consulte la
 [tabla canónica de capacidades](../README.md#canonical-capability-status), que
-separa evidencia pública, privada e histórica. Los resultados públicos evalúan
-el commit fuente `12c4a38404bbaf240c698a056e3f47182081ab5c`; el commit posterior
-`060e669d3f65e1844a702b1b5264be6933ef45c2` publica los artefactos anonimizados
-sin representar una nueva ejecución.
+separa evidencia pública, privada e histórica. Los resultados actuales de LTE y
+5G SA evalúan el commit fuente `59471947da95783c1a85a4d18284360e4b6d898b`
+en una VM Ubuntu 24.04 limpia. Los artefactos de julio 23 conservan su commit y
+versión pre-release históricos.
 
-La evidencia pública para la línea estable `1.0.0` comprende resultados
-sanitizados que conservan su versión histórica de captura:
+La evidencia pública para la línea estable `1.1.0` comprende:
 
-- [5G SA software](../results/public/5g-sa-sim/run-20260723-054913.json):
+- [5G SA software](../results/public/5g-sa-sim/run-20260730-021914.json):
   15/15 comprobaciones `PASS`, `SIMULATION_ONLY`.
-- [LTE software](../results/public/4g-lte-sim/run-20260723-055025.json):
+- [LTE software](../results/public/4g-lte-sim/run-20260730-021702.json):
   14/14 comprobaciones `PASS`, `SIMULATION_ONLY`.
 - [VoLTE/IMS 4G software](../results/public/4g-ims-sim/run-20260723-055149.json):
-  22/22 comprobaciones `PASS`, `SIMULATION_ONLY`; valida LTE, EPC, IMS, datos y
-  registro SIP autenticado de laboratorio.
+  resultado histórico con 22/22 comprobaciones `PASS`, `SIMULATION_ONLY`;
+  valida LTE, EPC, IMS, datos y registro SIP autenticado de laboratorio.
 - [VoNR software](../results/public/5g-vonr-sim/run-20260723-055328.json):
   intento `BLOCKED` y `NOT_VALIDATED`; una ejecución local posterior fue
   reportada con 25/25, pero no tiene artefacto público revisable.

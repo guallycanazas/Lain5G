@@ -132,16 +132,16 @@ aire, esa etapa permanece `NOT_TESTED`.
 
 | Perfil | Modo | Alcance integrado | Límite de evidencia |
 | --- | --- | --- | --- |
-| `4g-lte-sim` | Solo software | EPC Open5GS + srsENB/srsUE por ZMQ | Resumen histórico sanitizado: [14/14 `PASS`](results/public/4g-lte-sim/run-20260723-055025.json) |
-| `5g-sa` | Solo software | 5GC Open5GS + gNB/UE UERANSIM + PDU de datos | Resumen histórico sanitizado: [15/15 `PASS`](results/public/5g-sa-sim/run-20260723-054913.json) |
+| `4g-lte-sim` | Solo software | EPC Open5GS + srsENB/srsUE por ZMQ | Resumen sanitizado en VM limpia: [14/14 `PASS`](results/public/4g-lte-sim/run-20260730-021702.json) |
+| `5g-sa` | Solo software | 5GC Open5GS + gNB/UE UERANSIM + PDU de datos | Resumen sanitizado en VM limpia: [15/15 `PASS`](results/public/5g-sa-sim/run-20260730-021914.json) |
 | `4g-lte-x310` | RF protegido | EPC Open5GS + IMS compacto + eNB srsRAN + X300/X310 compatible | Flujo protegido y evidencia local; sin resultado RF extremo a extremo público |
 | `5g-sa-x310` | RF protegido | 5GC Open5GS + IMS compacto + gNB srsRAN Project + X300/X310 compatible | Flujo protegido y evidencia local; sin resultado RF extremo a extremo público |
 
-Los resultados software públicos son resúmenes históricos sanitizados, no
-trazas de protocolo. El snapshot fuente pre-release registrado no está presente
-en el historial Git público actual, por lo que no se presenta como una ejecución
-reciente de `main`. Otros registros históricos, incluido el intento VoNR público
-bloqueado, permanecen en [`results/public/`](results/public/README.md).
+Los resultados LTE y 5G SA actuales son resúmenes sanitizados de una VM Ubuntu
+24.04 limpia, no trazas de protocolo, e identifican el commit fuente `1.1.0`
+ejecutado. Otros registros históricos, incluido el intento VoNR público bloqueado
+y snapshots pre-release anteriores, permanecen en
+[`results/public/`](results/public/README.md).
 
 Los resultados software no deben extrapolarse a SDR, UE comerciales, medios de
 voz ni rendimiento RF. La operación RF exige autorización legal, entorno aislado
@@ -174,7 +174,7 @@ flowchart TB
 | [`frontend/`](frontend/) | Interfaz React y visualización de evidencia |
 | [`deployments/`](deployments/) | Compose, configuración de red y scripts protegidos |
 | [`config/profiles/`](config/profiles/) | Entradas declarativas software y RF |
-| [`results/public/`](results/public/README.md) | Resúmenes históricos revisados, sanitizados y validados por esquema |
+| [`results/public/`](results/public/README.md) | Resúmenes revisados, sanitizados y validados por esquema |
 | `runs/` | Registros operacionales locales ignorados que pueden ser sensibles |
 
 ## 6. Ruta para Revisores de SoftwareX

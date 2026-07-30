@@ -139,16 +139,15 @@ evidence remains `NOT_TESTED`.
 
 | Profile | Mode | Integrated scope | Evidence boundary |
 | --- | --- | --- | --- |
-| `4g-lte-sim` | Software only | Open5GS EPC + srsENB/srsUE over ZMQ | Historical sanitized summary: [14/14 `PASS`](results/public/4g-lte-sim/run-20260723-055025.json) |
-| `5g-sa` | Software only | Open5GS 5GC + UERANSIM gNB/UE + data PDU session | Historical sanitized summary: [15/15 `PASS`](results/public/5g-sa-sim/run-20260723-054913.json) |
+| `4g-lte-sim` | Software only | Open5GS EPC + srsENB/srsUE over ZMQ | Clean-VM sanitized summary: [14/14 `PASS`](results/public/4g-lte-sim/run-20260730-021702.json) |
+| `5g-sa` | Software only | Open5GS 5GC + UERANSIM gNB/UE + data PDU session | Clean-VM sanitized summary: [15/15 `PASS`](results/public/5g-sa-sim/run-20260730-021914.json) |
 | `4g-lte-x310` | Guarded RF | Open5GS EPC + compact IMS infrastructure + srsRAN eNB + compatible X300/X310 | Guarded workflow and local run evidence; no public end-to-end RF result |
 | `5g-sa-x310` | Guarded RF | Open5GS 5GC + compact IMS infrastructure + srsRAN Project gNB + compatible X300/X310 | Guarded workflow and local run evidence; no public end-to-end RF result |
 
-The public software summaries are historical, sanitized validator records rather
-than raw protocol traces. Their recorded pre-release source snapshot is not
-present in the current public Git history, so they must not be represented as a
-fresh execution of the default branch. Additional historical signaling records,
-including the blocked public VoNR attempt, remain under
+The current LTE and 5G SA summaries are sanitized validator records from a clean
+Ubuntu 24.04 virtual machine, not raw protocol traces. They identify the exact
+`1.1.0` source commit executed. Historical signaling records, including the
+blocked public VoNR attempt and older pre-release snapshots, remain under
 [`results/public/`](results/public/README.md).
 
 Software results must not be extrapolated to SDR hardware, commercial UEs, voice
@@ -182,7 +181,7 @@ flowchart TB
 | [`frontend/`](frontend/) | React operator interface and evidence visualization |
 | [`deployments/`](deployments/) | Isolated Compose models, network configuration, and guarded scripts |
 | [`config/profiles/`](config/profiles/) | Declarative software and RF profile inputs |
-| [`results/public/`](results/public/README.md) | Reviewed, schema-validated, sanitized historical summaries |
+| [`results/public/`](results/public/README.md) | Reviewed, schema-validated, sanitized summaries |
 | `runs/` | Ignored local operational records that may contain sensitive information |
 
 ## 6. SoftwareX Reviewer Route

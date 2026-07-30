@@ -4,12 +4,10 @@
 
 El estado científico se mantiene en la
 [tabla canónica de capacidades](../README.md#canonical-capability-status). La
-[ejecución pública `run-20260723-054913`](../results/public/5g-sa-sim/run-20260723-054913.json)
+[ejecución pública `run-20260730-021914`](../results/public/5g-sa-sim/run-20260730-021914.json)
 registra 15/15 comprobaciones `PASS` y clasificación `SIMULATION_ONLY` para el
-commit fuente `12c4a38404bbaf240c698a056e3f47182081ab5c`. El artefacto anonimizado
-fue añadido por el commit posterior
-`060e669d3f65e1844a702b1b5264be6933ef45c2`; ese commit publica el resultado y
-no representa otra ejecución.
+commit fuente `59471947da95783c1a85a4d18284360e4b6d898b`, ejecutado en una VM
+Ubuntu 24.04 limpia. El resultado de julio 23 permanece como registro histórico.
 
 ## Comandos
 

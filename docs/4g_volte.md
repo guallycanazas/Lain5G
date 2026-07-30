@@ -15,14 +15,13 @@ Perfiles disponibles:
   infraestructura IMS compacta siempre activa y RF bloqueada por defecto. El
   nombre histórico del perfil se conserva.
 
-Para el commit fuente `12c4a38404bbaf240c698a056e3f47182081ab5c`, el
-[resultado LTE público](../results/public/4g-lte-sim/run-20260723-055025.json)
-registra 14/14 comprobaciones `PASS` y el
+El [resultado LTE público actual](../results/public/4g-lte-sim/run-20260730-021702.json)
+registra 14/14 comprobaciones `PASS` para el commit fuente
+`59471947da95783c1a85a4d18284360e4b6d898b` en una VM Ubuntu 24.04 limpia. El
 [resultado IMS 4G público](../results/public/4g-ims-sim/run-20260723-055149.json)
-registra 22/22. Ambos son `SIMULATION_ONLY` y fueron publicados en el commit
-`060e669d3f65e1844a702b1b5264be6933ef45c2`. El segundo corresponde al perfil
-`4g-volte-sim` y valida LTE, EPC, datos, servicios IMS, DNS, provisionamiento y
-registro SIP autenticado de laboratorio.
+es histórico y registra 22/22. Ambos son `SIMULATION_ONLY`. El segundo
+corresponde al perfil `4g-volte-sim` y valida LTE, EPC, datos, servicios IMS,
+DNS, provisionamiento y registro SIP autenticado de laboratorio.
 
 ## Alcance Actual
 
