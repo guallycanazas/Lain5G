@@ -5,7 +5,7 @@
 **Evidence-oriented orchestration for software 4G/5G networks and guarded X300/X310 laboratory workflows**
 
 [![CI](https://github.com/guallycanazas/Lain5G/actions/workflows/ci.yml/badge.svg)](https://github.com/guallycanazas/Lain5G/actions/workflows/ci.yml)
-[![Release](https://img.shields.io/badge/release-v1.0.0-4051b5.svg)](https://github.com/guallycanazas/Lain5G/releases/tag/v1.0.0)
+[![Release](https://img.shields.io/badge/release-v1.1.0-4051b5.svg)](https://github.com/guallycanazas/Lain5G/releases/tag/v1.1.0)
 [![Project source: MIT](https://img.shields.io/badge/project_source-MIT-d9a441.svg)](LICENSE)
 [![Platform](https://img.shields.io/badge/platform-GNU%2FLinux_x86__64-2f6f62.svg)](docs/installation.md)
 [![Python](https://img.shields.io/badge/Python-%E2%89%A53.10-3776ab.svg)](backend/requirements.txt)
@@ -26,11 +26,11 @@ project-authored contribution is the integration, orchestration, validation,
 traceability, operator workflow, and safety layer around Open5GS, UERANSIM,
 srsRAN, Kamailio, UHD, and related independently licensed software.
 
-> **Release status:** [`v1.0.0`](https://github.com/guallycanazas/Lain5G/tree/v1.0.0)
-> is the latest immutable source release. The default branch contains documented
-> post-release improvements, including the clean-machine installer and visual
-> proof chain. A SoftwareX submission archive and DOI must identify one exact
-> future release; this repository does not claim an accepted article or DOI.
+> **Release status:** [`v1.1.0`](https://github.com/guallycanazas/Lain5G/tree/v1.1.0)
+> is the latest immutable source release. It includes the clean-machine installer,
+> generated private setup, and visual proof chain. A SoftwareX submission archive
+> and DOI must identify one exact release; this repository does not claim an
+> accepted article or DOI.
 
 ## 1. Install First
 
@@ -193,7 +193,7 @@ After running the installer, execute the repository-wide safe gate:
 make softwarex-check
 ```
 
-The current gate passes **321 backend tests**, **51 frontend tests**, and **78%
+The current gate passes **323 backend tests**, **51 frontend tests**, and **78%
 backend line coverage**, followed by TypeScript checking, a production frontend
 build, safe Compose rendering, profile validation, version and citation metadata
 checks, internal-link validation, public-result schema checks, release-artifact
@@ -208,7 +208,7 @@ separately by the scenario validators.
 
 | SoftwareX item | Repository value |
 | --- | --- |
-| Current immutable release | [`v1.0.0`](https://github.com/guallycanazas/Lain5G/releases/tag/v1.0.0) |
+| Current immutable release | [`v1.1.0`](https://github.com/guallycanazas/Lain5G/releases/tag/v1.1.0) |
 | Version control | Git and GitHub |
 | Project-source license | [MIT](LICENSE), with separate upstream terms |
 | Languages | Python, TypeScript, and Shell |

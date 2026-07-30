@@ -5,7 +5,7 @@
 **Orquestación basada en evidencia para redes software 4G/5G y laboratorios X300/X310 protegidos**
 
 [![CI](https://github.com/guallycanazas/Lain5G/actions/workflows/ci.yml/badge.svg)](https://github.com/guallycanazas/Lain5G/actions/workflows/ci.yml)
-[![Release](https://img.shields.io/badge/release-v1.0.0-4051b5.svg)](https://github.com/guallycanazas/Lain5G/releases/tag/v1.0.0)
+[![Release](https://img.shields.io/badge/release-v1.1.0-4051b5.svg)](https://github.com/guallycanazas/Lain5G/releases/tag/v1.1.0)
 [![Código propio: MIT](https://img.shields.io/badge/c%C3%B3digo_propio-MIT-d9a441.svg)](LICENSE)
 [![Plataforma](https://img.shields.io/badge/plataforma-GNU%2FLinux_x86__64-2f6f62.svg)](docs/installation.md)
 [![Python](https://img.shields.io/badge/Python-%E2%89%A53.10-3776ab.svg)](backend/requirements.txt)
@@ -26,11 +26,11 @@ contribución propia es la integración, orquestación, validación, trazabilida
 experiencia del operador y capa de seguridad alrededor de Open5GS, UERANSIM,
 srsRAN, Kamailio, UHD y software relacionado con licencias independientes.
 
-> **Estado de publicación:** [`v1.0.0`](https://github.com/guallycanazas/Lain5G/tree/v1.0.0)
-> es la última release inmutable. La rama por defecto contiene mejoras
-> posteriores, incluido el instalador de máquina limpia y la cadena visual de
-> evidencia. Una futura entrega a SoftwareX deberá identificar una release y un
-> archivo/DOI exactos; aquí no se afirma un artículo aceptado ni un DOI.
+> **Estado de publicación:** [`v1.1.0`](https://github.com/guallycanazas/Lain5G/tree/v1.1.0)
+> es la última release inmutable. Incluye el instalador de máquina limpia, la
+> configuración privada generada y la cadena visual de evidencia. Una entrega a
+> SoftwareX deberá identificar una release y un archivo/DOI exactos; aquí no se
+> afirma un artículo aceptado ni un DOI.
 
 ## 1. Instalar Primero
 
@@ -185,7 +185,7 @@ Después del instalador, ejecute el gate seguro del repositorio:
 make softwarex-check
 ```
 
-El gate actual aprueba **321 pruebas backend**, **51 pruebas frontend** y **78%
+El gate actual aprueba **323 pruebas backend**, **51 pruebas frontend** y **78%
 de cobertura backend**, además de TypeScript, build de producción, render seguro
 de Compose, perfiles, versión y metadatos de citación, enlaces internos,
 resultados públicos, artefactos de release y archivos sensibles.
@@ -199,7 +199,7 @@ validadores de escenario.
 
 | Elemento | Valor del repositorio |
 | --- | --- |
-| Release inmutable | [`v1.0.0`](https://github.com/guallycanazas/Lain5G/releases/tag/v1.0.0) |
+| Release inmutable | [`v1.1.0`](https://github.com/guallycanazas/Lain5G/releases/tag/v1.1.0) |
 | Control de versiones | Git y GitHub |
 | Licencia de código propio | [MIT](LICENSE), con términos upstream separados |
 | Lenguajes | Python, TypeScript y Shell |

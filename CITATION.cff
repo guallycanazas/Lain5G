@@ -1,11 +1,11 @@
 cff-version: "1.2.0"
 message: >-
-  If you use Lain5G-Lab 1.0.0, cite the software metadata in this file.
+  If you use Lain5G-Lab 1.1.0, cite the software metadata in this file.
   No journal article or archival DOI is associated with this source release.
 title: "Lain5G-Lab"
 type: software
-version: "1.0.0"
-date-released: "2026-07-27"
+version: "1.1.0"
+date-released: "2026-07-30"
 authors:
   - family-names: "Canazas Rosas"
     given-names: "Willian Roy"

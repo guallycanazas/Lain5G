@@ -4,8 +4,13 @@ All notable changes to Lain5G-Lab are recorded in this file.
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-07-30
+
 ### Added
 
+- Added a clean-machine installer that provisions required tooling, generates
+  private synthetic scenario configuration, and pulls the complete public image
+  catalog without compiling images locally.
 - Integrated web application and direct software-scenario lifecycle commands
   into the `lain5g` CLI, including an explicit operations mode for software and
   guarded RF workflows.
@@ -19,18 +24,24 @@ All notable changes to Lain5G-Lab are recorded in this file.
   environment automatically, without exposing generated credentials.
 - Serialized guarded RF starts across profiles and kept emergency-stop access
   available by refusing app shutdown or downgrade during an active RF session.
+- Added an evidence-backed scenario panel that distinguishes core readiness,
+  RAN setup, UE registration/session, tunnel assignment, and data-plane proof.
 
 ### Changed
 
 - Narrowed the public web, preparation, profile, and interactive CLI catalogs to
   4G LTE ZMQ, 5G SA UERANSIM, and the guarded 4G/5G RF profiles. Signaling
   implementations and historical evidence remain internal.
+- Reorganized the English and Spanish reviewer path around installation,
+  architecture, executable validation, evidence limits, and SoftwareX scope.
 
 ### Fixed
 
 - Rendered the 5G SA UE credentials from the private local environment so
   UERANSIM and the provisioned Open5GS subscriber use the same authentication
   values.
+- Closed run metadata only for the scenario being stopped when 4G and 5G run
+  records coexist.
 
 ## [1.0.0] - 2026-07-27
 

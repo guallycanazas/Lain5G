@@ -3,8 +3,8 @@
   "@type": "SoftwareSourceCode",
   "name": "Lain5G-Lab",
   "description": "Lain5G-Lab is a reproducible research environment for deploying, managing, and validating integrated laboratory 4G LTE/VoLTE and 5G SA/VoNR networks, plus an experimental 5G NSA profile. It integrates existing open-source components with configuration, orchestration, validation, run traceability, RF safeguards, and a FastAPI/React interface.",
-  "version": "1.0.0",
-  "datePublished": "2026-07-27",
+  "version": "1.1.0",
+  "datePublished": "2026-07-30",
   "codeRepository": "https://github.com/guallycanazas/Lain5G",
   "url": "https://github.com/guallycanazas/Lain5G",
   "license": "https://spdx.org/licenses/MIT",
@@ -46,5 +46,5 @@
   ],
   "developmentStatus": "https://www.repostatus.org/#active",
   "issueTracker": "https://github.com/guallycanazas/Lain5G/issues",
-  "releaseNotes": "https://github.com/guallycanazas/Lain5G/releases/tag/v1.0.0"
+  "releaseNotes": "https://github.com/guallycanazas/Lain5G/releases/tag/v1.1.0"
 }

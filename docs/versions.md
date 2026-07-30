@@ -1,7 +1,7 @@
 # Versiones y trazabilidad
 
 La versión autoritativa de Lain5G-Lab está en `VERSION`. La release estable actual
-es `1.0.0`. La API, el frontend, las etiquetas OCI, las imágenes derivadas y
+es `1.1.0`. La API, el frontend, las etiquetas OCI, las imágenes derivadas y
 el changelog se comprueban contra esa fuente con:
 
 ```bash

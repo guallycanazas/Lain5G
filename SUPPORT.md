@@ -1,6 +1,6 @@
 # Support
 
-Support for `1.0.0` is community-based and best effort. This release has no
+Support for `1.1.0` is community-based and best effort. This release has no
 guaranteed response time, service-level agreement, production support, or
 RF-operational support.
 

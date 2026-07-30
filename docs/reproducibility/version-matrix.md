@@ -4,13 +4,13 @@
 
 | Item | Exact value | Authority |
 | --- | --- | --- |
-| Lain5G-Lab | `1.0.0` | Root `VERSION` |
+| Lain5G-Lab | `1.1.0` | Root `VERSION` |
 | Status | Stable source release | `CHANGELOG.md` |
-| Evidence captured | `2026-07-27T02:45:52Z` | Local UTC clock during final verification |
-| Verification host | Linux `x86_64` | `uname -m` |
-| Python test environment | CPython `3.14.4`, pip `25.1.1` | `.venv/bin/python --version`, `.venv/bin/pip --version` |
-| Node/npm environment | Node `v22.22.1`, npm `9.2.0` | `node --version`, `npm --version` |
-| Docker tooling | Docker client `29.1.3`, Compose `2.40.3+ds1-0ubuntu1` | Local CLI version output |
+| Evidence captured | `2026-07-30T01:54:36Z` | Clean-VM UTC clock after scenario verification |
+| Verification host | Ubuntu 24.04.4 LTS, Linux `x86_64` | Clean virtual-machine environment summary |
+| Python test environment | CPython `3.12.3`, pip `25.1.1` | Clean virtual-machine tool output |
+| Node/npm environment | Node `v18.19.1`, npm `9.2.0` | Clean virtual-machine tool output |
+| Docker tooling | Docker client `29.1.3`, Compose `2.40.3` | Clean virtual-machine tool output |
 | Dockerfile linter | Hadolint `v2.14.0`, linux/amd64 manifest `sha256:e9dbf5113239ef2bf696d20c8f28d3019a47c26a38c98b89344d3e2846c4d5f8` | Official `hadolint/hadolint` registry artifact |
 
 ## Source Builds
@@ -86,7 +86,7 @@ attestation was available. Every listed artifact is Linux/amd64-only. The local
 | Full closure | Every package and version is listed in `backend/constraints.txt`; source was `.venv/bin/pip freeze --all` before release tests |
 
 The npm transitive closure and registry integrity values remain authoritative in
-`frontend/package-lock.json`; the root package version is `1.0.0`.
+`frontend/package-lock.json`; the root package version is `1.1.0`.
 `npm audit --omit=dev` reports zero findings. The full locked tree reports five
 development findings (three moderate, one high, and one critical) in the
 build/test toolchain. npm's available complete remediation requires breaking
@@ -122,6 +122,8 @@ dependency upgrades and was not applied as an unreviewed release change.
   not used by the release test command, but the test toolchain still requires a
   separately reviewed major upgrade.
 - Public sanitized summaries cover passing software 4G LTE/VoLTE and 5G SA.
+  The 4G LTE and 5G SA workflows were repeated in a clean Ubuntu virtual machine
+  for `1.1.0`; the VoLTE result remains historical.
   The available public VoNR attempt is blocked and not validated; a later local
   passing run is reported but not publicly archived. RF hardware and
   commercial-UE behavior remain outside this source-release verification.
@@ -130,6 +132,6 @@ dependency upgrades and was not applied as an unreviewed release change.
 
 - All 11 Compose configurations resolved with `docker compose config --quiet`
   using checked-in non-secret example/default environment files.
-- All 19 tracked Dockerfiles parsed with the pinned Hadolint artifact and had
+- All 20 tracked Dockerfiles parsed with the pinned Hadolint artifact and had
   no error-severity findings. Advisory findings remain for unsnapshotted APT
   package versions and inherited shell/style practices.

@@ -11,13 +11,13 @@ Artifact:
 
 - Path: `sbom/lain5g-lab-application.cdx.json`
 - Format: CycloneDX JSON 1.7
-- Subject: `Lain5G-Lab` version `1.0.0`
-- Generated: `2026-07-27T02:28:25Z`
+- Subject: `Lain5G-Lab` version `1.1.0`
+- Generated: `2026-07-30T02:09:53Z`
 - Components: 370 libraries, comprising 361 npm package/version entries and 9
   direct PyPI package/version entries
 - Dependency graph entries: 128
 - SHA-256:
-  `0137246e16316032d503c23c40c7200d106156be42d2d674008e613e6e4dd658`
+  `2cabe51ca2fb7a90ec2f7395c84933b213c9f6220a0e21d96ada31ee04236599`
 
 ## Generator
 
@@ -93,7 +93,7 @@ docker run --rm --network none \
   --mount type=bind,source="$PWD",target=/src,readonly \
   anchore/syft:v1.49.0@sha256:13b53ebabe3d215268c90cf8fb9b875f0183908245f376fd4b3a2cb69d21d484 \
   scan dir:/src --base-path /src \
-  --source-name Lain5G-Lab --source-version 1.0.0 \
+  --source-name Lain5G-Lab --source-version 1.1.0 \
   --exclude './.git' --exclude './.git/**' \
   --exclude './.github' --exclude './.github/**' \
   --exclude './.venv' --exclude './.venv/**' \
@@ -158,7 +158,7 @@ template:
 
 ```bash
 image_id="$(docker image inspect --format '{{.Id}}' \
-  lain5g-lab/backend:1.0.0)"
+  lain5g-lab/backend:1.1.0)"
 docker save --output /reviewed/lain5g-lab-backend.tar \
   "$image_id"
 sha256sum /reviewed/lain5g-lab-backend.tar \
@@ -173,7 +173,7 @@ docker run --rm --network none \
   --mount type=bind,source="$PWD/sbom",target=/out \
   anchore/syft:v1.49.0@sha256:13b53ebabe3d215268c90cf8fb9b875f0183908245f376fd4b3a2cb69d21d484 \
   scan docker-archive:/input/backend.tar \
-  --source-name lain5g-lab/backend --source-version 1.0.0 \
+  --source-name lain5g-lab/backend --source-version 1.1.0 \
   --output cyclonedx-json=/out/lain5g-lab-backend-image.cdx.json
 ```
 
