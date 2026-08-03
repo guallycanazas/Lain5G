@@ -14,17 +14,13 @@
 
 </div>
 
-OpenLain5G es una integración de laboratorio orientada a reproducibilidad sobre
-GNU/Linux y Docker Compose. Expone dos perfiles públicos de datos completamente
-software, 4G LTE y 5G SA, y dos perfiles RF protegidos con USRP X-Series. Integra
-componentes de red consolidados con aislamiento de escenarios, configuración
-declarativa, operación guiada, validadores, registros locales, una API FastAPI,
-una interfaz React y controles RF fail-closed.
-
-OpenLain5G **no** reimplementa un core móvil, RAN, IMS ni base de datos. La
-contribución propia es la integración, orquestación, validación, trazabilidad,
-experiencia del operador y capa de seguridad alrededor de Open5GS, UERANSIM,
-srsRAN, Kamailio, UHD y software relacionado con licencias independientes.
+OpenLain5G es un framework modular para laboratorios reproducibles de redes
+móviles 4G LTE y 5G SA. Despliega y administra componentes open source de RAN,
+core, IMS y simulación mediante Docker Compose, una interfaz de línea de comandos
+y una aplicación web. Está diseñado para investigación, pruebas y educación, y
+ofrece un entorno personalizable con escenarios completamente software, flujos
+USRP X-Series protegidos, configuración declarativa, validación automatizada y
+evidencia trazable de cada ejecución.
 
 > **Estado de publicación:** [`v1.1.1`](https://github.com/guallycanazas/Lain5G/tree/v1.1.1)
 > es la última release inmutable.
@@ -243,19 +239,6 @@ validadores de escenario.
 - [Despliegue local seguro](docs/security/local-deployment.md)
 - [Solución de problemas](docs/troubleshooting.md)
 - [Changelog](CHANGELOG.md)
-
-## Limitaciones
-
-- Es un entorno de investigación y educación, no una red de producción,
-  implementación de referencia 3GPP ni plataforma de conformidad.
-- Los artefactos públicos son resúmenes sanitizados, no trazas o capturas de
-  protocolo independientemente revisables.
-- No existe artefacto público que valide USRP protegido, RF, interoperabilidad con UE
-  comerciales, llamadas completas, audio o RTP.
-- Las imágenes del catálogo son inputs pull-only; no se afirma autorización de
-  republicación binaria ni atestación fuente.
-- Algunos repositorios de paquetes/build no son snapshots y su cierre exacto
-  puede depender del tiempo.
 
 ## Autores
 

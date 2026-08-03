@@ -14,17 +14,13 @@
 
 </div>
 
-OpenLain5G is a reproducibility-oriented GNU/Linux and Docker Compose laboratory
-integration for two public software data-network profiles, 4G LTE and 5G SA,
-and two guarded X-Series USRP RF profiles. It combines established upstream mobile
-network components with scenario isolation, declarative configuration, guided
-operation, validators, local run records, a FastAPI backend, a React interface,
-and fail-closed RF safety controls.
-
-OpenLain5G does **not** reimplement a mobile core, RAN, IMS, or database. The
-project-authored contribution is the integration, orchestration, validation,
-traceability, operator workflow, and safety layer around Open5GS, UERANSIM,
-srsRAN, Kamailio, UHD, and related independently licensed software.
+OpenLain5G is a modular framework for reproducible 4G LTE and 5G SA mobile
+network laboratories. It deploys and manages open-source RAN, core, IMS, and
+simulation components through Docker Compose, a command-line interface, and a
+web application. Designed for research, testing, and education, it provides a
+customizable environment with software-only scenarios, guarded X-Series USRP
+workflows, declarative configuration, automated validation, and traceable run
+evidence.
 
 > **Release status:** [`v1.1.1`](https://github.com/guallycanazas/Lain5G/tree/v1.1.1)
 > is the latest immutable source release.
@@ -250,19 +246,6 @@ separately by the scenario validators.
 - [Secure local deployment](docs/security/local-deployment.md)
 - [Troubleshooting](docs/troubleshooting.md)
 - [Changelog](CHANGELOG.md)
-
-## Limitations
-
-- This is a research and education environment, not a production network, a
-  3GPP reference implementation, or a conformance platform.
-- Public artifacts are sanitized summaries, not independently reviewable raw
-  protocol traces or packet captures.
-- No public artifact validates guarded-USRP execution, RF behavior, commercial UE
-  interoperability, complete voice calls, audio quality, or RTP performance.
-- Existing catalog images are pull-only inputs and are not asserted to be
-  approved for binary republication or accompanied by source attestations.
-- Package-manager and some image-build inputs are not snapshot repositories;
-  exact dependency closure can remain time-dependent.
 
 ## Authors
 

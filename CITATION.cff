@@ -16,11 +16,11 @@ authors:
     given-names: "Alberth Ronal"
     affiliation: "National University of San Agustin of Arequipa"
 abstract: >-
-  OpenLain5G is a reproducible research environment for deploying, managing,
-  and validating software 4G LTE and 5G SA data networks plus guarded X-Series
-  USRP laboratory workflows. It integrates existing open-source components with
-  configuration, orchestration, validation, run traceability, RF safeguards,
-  and a FastAPI/React interface.
+  OpenLain5G is a modular framework for reproducible 4G LTE and 5G SA mobile
+  network laboratories. It deploys and manages open-source RAN, core, IMS, and
+  simulation components through Docker Compose, command-line, and web
+  interfaces, with customizable software scenarios, guarded X-Series USRP
+  workflows, automated validation, and traceable run evidence.
 repository-code: "https://github.com/guallycanazas/Lain5G"
 url: "https://github.com/guallycanazas/Lain5G"
 license: MIT
