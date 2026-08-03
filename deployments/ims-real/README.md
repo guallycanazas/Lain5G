@@ -1,4 +1,4 @@
-# Lain5G-Lab Real IMS Package
+# OpenLain5G Real IMS Package
 
 This directory contains the target-owned Compose and provenance layer for a
 real Open5GS, Kamailio, and pyHSS IMS core. The images are built from

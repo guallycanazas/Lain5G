@@ -1,4 +1,4 @@
-# Lain5G-Lab
+# OpenLain5G
 
 <div align="center">
 
@@ -14,14 +14,14 @@
 
 </div>
 
-Lain5G-Lab is a reproducibility-oriented GNU/Linux and Docker Compose laboratory
+OpenLain5G is a reproducibility-oriented GNU/Linux and Docker Compose laboratory
 integration for two public software data-network profiles, 4G LTE and 5G SA,
 and two guarded X300/X310 RF profiles. It combines established upstream mobile
 network components with scenario isolation, declarative configuration, guided
 operation, validators, local run records, a FastAPI backend, a React interface,
 and fail-closed RF safety controls.
 
-Lain5G-Lab does **not** reimplement a mobile core, RAN, IMS, or database. The
+OpenLain5G does **not** reimplement a mobile core, RAN, IMS, or database. The
 project-authored contribution is the integration, orchestration, validation,
 traceability, operator workflow, and safety layer around Open5GS, UERANSIM,
 srsRAN, Kamailio, UHD, and related independently licensed software.

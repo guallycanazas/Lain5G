@@ -4,7 +4,7 @@
 
 | Item | Exact value | Authority |
 | --- | --- | --- |
-| Lain5G-Lab | `1.1.0` | Root `VERSION` |
+| OpenLain5G | `1.1.0` | Root `VERSION` |
 | Status | Stable source release | `CHANGELOG.md` |
 | Evidence captured | `2026-07-30T02:20:51Z` | Clean-VM UTC clock after scenario verification |
 | Verification host | Ubuntu 24.04.4 LTS, Linux `x86_64` | Clean virtual-machine environment summary |

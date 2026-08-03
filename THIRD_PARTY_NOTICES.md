@@ -1,6 +1,6 @@
 # Third-Party Notices
 
-Lain5G-Lab does not implement a mobile core, radio access network, SIP core,
+OpenLain5G does not implement a mobile core, radio access network, SIP core,
 media relay, DNS server, or database server. It provides an independently
 licensed deployment, configuration, administration, validation, and
 visualisation layer around the third-party works identified below.

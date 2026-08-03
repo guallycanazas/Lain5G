@@ -1,8 +1,8 @@
 # Hardened pyHSS Runtime
 
 This small derivative uses a digest-locked pyHSS 1.0.2 base image, packages
-the reviewed runtime configuration in the Lain5G-Lab image context and removes
-API request-body logging. Lain5G-Lab also
+the reviewed runtime configuration in the OpenLain5G image context and removes
+API request-body logging. OpenLain5G also
 generates a runtime configuration that:
 
 - enables the provisioning key;

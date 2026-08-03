@@ -1,6 +1,6 @@
 # Archived Real IMS Design
 
-Lain5G-Lab packages a real IMS core separately from its simulated and X310
+OpenLain5G packages a real IMS core separately from its simulated and X310
 scenarios. The package includes Open5GS packet core roles, MongoDB, MySQL,
 Kamailio P/I/S-CSCF, pyHSS, DNS, and RTPengine. It does not include a RAN, RF
 control, UERANSIM, or an Open5GS WebUI.

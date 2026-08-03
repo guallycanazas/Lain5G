@@ -1,4 +1,4 @@
-# Lain5G-Lab Backend
+# OpenLain5G Backend
 
 Backend FastAPI para preparar, operar y validar las redes de laboratorio 4G
 LTE/VoLTE y 5G SA/VoNR, junto con los perfiles RF controlados X-Series y el

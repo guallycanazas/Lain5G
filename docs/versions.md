@@ -1,6 +1,6 @@
 # Versiones y trazabilidad
 
-La versión autoritativa de Lain5G-Lab está en `VERSION`. La release estable actual
+La versión autoritativa de OpenLain5G está en `VERSION`. La release estable actual
 es `1.1.0`. La API, el frontend, las etiquetas OCI, las imágenes derivadas y
 el changelog se comprueban contra esa fuente con:
 
@@ -56,7 +56,7 @@ La imagen local `lain5g-lab/open5gs:local` contiene los binarios EPC
 `open5gs-pgwcd` ni `open5gs-pgwud`; los servicios 4G `pgwc` y `pgwu` ejecutan
 `open5gs-smfd` y `open5gs-upfd`.
 
-Antes de publicar resultados, archive el commit de Lain5G-Lab, la salida de
+Antes de publicar resultados, archive el commit de OpenLain5G, la salida de
 `make version-check`, los argumentos de construcción y `docker image inspect`
 de cada imagen final. Un tag `:local` no sustituye el digest de la imagen ni un
 artefacto archivado con DOI.

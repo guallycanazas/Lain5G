@@ -2,7 +2,7 @@
 
 ## Release Authority
 
-The repository-root `VERSION` file is the authoritative Lain5G-Lab release
+The repository-root `VERSION` file is the authoritative OpenLain5G release
 version. Backend API metadata reads that file at runtime. Frontend package,
 lockfile, UI fallback, OCI labels, changelog, documentation, and derived image
 tags are synchronized copies checked by:

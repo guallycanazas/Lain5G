@@ -1,6 +1,6 @@
 # React Frontend
 
-The frontend is a React and TypeScript application for operating Lain5G-Lab
+The frontend is a React and TypeScript application for operating OpenLain5G
 through the FastAPI backend. The operator interface is English-only; browser
 preferences cover appearance, text size, and font style, not language.
 

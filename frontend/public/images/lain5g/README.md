@@ -1,4 +1,4 @@
-# Lain5G Visual Assets
+# OpenLain5G Visual Assets
 
 Web-delivery assets in this directory were derived from the PNG artwork in the
 user-supplied `lain5g-landing-assets-v2` package. The original PNG files remain
@@ -17,5 +17,5 @@ Console placements:
 - `isolation-concept.webp`: isolation artwork; actual enforcement remains in
   local manifests, preflight checks, and backend guardrails.
 
-`lain-avatar.webp` is the user-selected Lain5G emblem. Third-party project marks
+`lain-avatar.webp` is the user-selected OpenLain5G emblem. Third-party project marks
 are documented separately in `logos/README.md`.

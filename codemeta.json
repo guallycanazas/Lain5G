@@ -1,8 +1,8 @@
 {
   "@context": "https://w3id.org/codemeta/3.0",
   "@type": "SoftwareSourceCode",
-  "name": "Lain5G-Lab",
-  "description": "Lain5G-Lab is a reproducible research environment for deploying, managing, and validating integrated laboratory 4G LTE/VoLTE and 5G SA/VoNR networks, plus an experimental 5G NSA profile. It integrates existing open-source components with configuration, orchestration, validation, run traceability, RF safeguards, and a FastAPI/React interface.",
+  "name": "OpenLain5G",
+  "description": "OpenLain5G is a reproducible research environment for deploying, managing, and validating integrated laboratory 4G LTE/VoLTE and 5G SA/VoNR networks, plus an experimental 5G NSA profile. It integrates existing open-source components with configuration, orchestration, validation, run traceability, RF safeguards, and a FastAPI/React interface.",
   "version": "1.1.0",
   "datePublished": "2026-07-30",
   "codeRepository": "https://github.com/guallycanazas/Lain5G",

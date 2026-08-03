@@ -22,7 +22,7 @@ describe('DashboardPage', () => {
   it('shows operational summary from backend status and validation evidence', async () => {
     stubDashboard();
     renderWithClient(<DashboardPage />);
-    expect(await screen.findByRole('heading', { name: 'Lain5G' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'OpenLain5G' })).toBeInTheDocument();
     expect(screen.getByText('Active services')).toBeInTheDocument();
     expect(screen.getByText('Validation pass rate')).toBeInTheDocument();
     expect(screen.getByText('Deployment stopped')).toBeInTheDocument();

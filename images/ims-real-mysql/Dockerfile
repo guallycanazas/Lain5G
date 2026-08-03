@@ -4,7 +4,7 @@ FROM ${BASE_IMAGE}
 ARG LAIN5G_VERSION=1.1.0
 
 LABEL org.opencontainers.image.version="${LAIN5G_VERSION}" \
-      org.opencontainers.image.title="Lain5G-Lab Real IMS MySQL" \
+      org.opencontainers.image.title="OpenLain5G Real IMS MySQL" \
       org.opencontainers.image.source="https://github.com/guallycanazas/Lain5G" \
       org.opencontainers.image.licenses="MIT AND GPL-2.0-only AND BSD-2-Clause"
 

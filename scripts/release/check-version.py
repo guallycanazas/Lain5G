@@ -273,7 +273,7 @@ def check(root: Path) -> list[str]:
 
 
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(description="Check Lain5G-Lab release and dependency consistency")
+    parser = argparse.ArgumentParser(description="Check OpenLain5G release and dependency consistency")
     parser.add_argument(
         "--root",
         type=Path,

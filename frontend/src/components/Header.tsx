@@ -29,7 +29,7 @@ export function Header() {
   const activeId = location.pathname.startsWith('/scenarios/') ? location.pathname.split('/')[2] : '5g-sa';
   const availableCommands = commands.filter((command) => t(command.label).toLowerCase().includes(query.toLowerCase()));
   const rfAuthorized = profiles.data?.some((profile) => profile.profile === activeId && profile.rf_allowed);
-  const pageName = pageNames[location.pathname] ? t(pageNames[location.pathname]) : (location.pathname.startsWith('/scenarios/') ? t('nav.scenarios') : 'Lain5G');
+  const pageName = pageNames[location.pathname] ? t(pageNames[location.pathname]) : (location.pathname.startsWith('/scenarios/') ? t('nav.scenarios') : 'OpenLain5G');
   return (
     <header className="topbar">
       <Link className="topbar-identity" to="/"><span className="topbar-kicker">{t('shell.controlPlane')}</span><strong>{pageName}</strong></Link>

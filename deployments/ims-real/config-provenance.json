@@ -2,7 +2,7 @@
   "source": "https://github.com/herlesupreeth/docker_open5gs",
   "source_commit": "3685b58aa0c7c28b2fecc6b9533f128285bf8dda",
   "license": "BSD-2-Clause",
-  "note": "Vendored and packaged by Lain5G-Lab; preserve upstream notices in imported files. Private key material is excluded and generated at runtime.",
+  "note": "Vendored and packaged by OpenLain5G; preserve upstream notices in imported files. Private key material is excluded and generated at runtime.",
   "files": [
     {
       "path": "images/ims-real-open5gs/roles/amf/amf.yaml",

@@ -1,6 +1,6 @@
-# Lain5G Frontend
+# OpenLain5G Frontend
 
-React and TypeScript frontend for operating Lain5G through the FastAPI API.
+React and TypeScript frontend for operating OpenLain5G through the FastAPI API.
 The operator interface is English-only.
 
 ## Development

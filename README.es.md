@@ -1,4 +1,4 @@
-# Lain5G-Lab
+# OpenLain5G
 
 <div align="center">
 
@@ -14,14 +14,14 @@
 
 </div>
 
-Lain5G-Lab es una integración de laboratorio orientada a reproducibilidad sobre
+OpenLain5G es una integración de laboratorio orientada a reproducibilidad sobre
 GNU/Linux y Docker Compose. Expone dos perfiles públicos de datos completamente
 software, 4G LTE y 5G SA, y dos perfiles RF protegidos para X300/X310. Integra
 componentes de red consolidados con aislamiento de escenarios, configuración
 declarativa, operación guiada, validadores, registros locales, una API FastAPI,
 una interfaz React y controles RF fail-closed.
 
-Lain5G-Lab **no** reimplementa un core móvil, RAN, IMS ni base de datos. La
+OpenLain5G **no** reimplementa un core móvil, RAN, IMS ni base de datos. La
 contribución propia es la integración, orquestación, validación, trazabilidad,
 experiencia del operador y capa de seguridad alrededor de Open5GS, UERANSIM,
 srsRAN, Kamailio, UHD y software relacionado con licencias independientes.

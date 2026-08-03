@@ -4,9 +4,9 @@ FROM ${BASE_IMAGE}
 ARG LAIN5G_VERSION=1.1.0
 
 LABEL org.opencontainers.image.version="${LAIN5G_VERSION}" \
-      org.opencontainers.image.title="Lain5G-Lab Real IMS Kamailio" \
+      org.opencontainers.image.title="OpenLain5G Real IMS Kamailio" \
       org.opencontainers.image.source="https://github.com/guallycanazas/Lain5G" \
       org.opencontainers.image.licenses="MIT AND GPL-2.0-only AND BSD-2-Clause" \
-      org.opencontainers.image.description="Pinned Kamailio binaries with Lain5G-Lab-packaged P/I/S-CSCF configurations"
+      org.opencontainers.image.description="Pinned Kamailio binaries with OpenLain5G-packaged P/I/S-CSCF configurations"
 
 COPY roles/ /mnt/

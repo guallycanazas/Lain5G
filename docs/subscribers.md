@@ -1,6 +1,6 @@
 # Gestión de Suscriptores Open5GS
 
-Lain5G-Lab administra documentos de suscriptores compatibles con Open5GS. No implementa el algoritmo de autenticación 5G ni sustituye las funciones AUSF, UDM o UDR.
+OpenLain5G administra documentos de suscriptores compatibles con Open5GS. No implementa el algoritmo de autenticación 5G ni sustituye las funciones AUSF, UDM o UDR.
 
 ## Arquitectura
 

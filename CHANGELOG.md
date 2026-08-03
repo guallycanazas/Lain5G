@@ -1,8 +1,14 @@
 # Changelog
 
-All notable changes to Lain5G-Lab are recorded in this file.
+All notable changes to OpenLain5G are recorded in this file.
 
 ## [Unreleased]
+
+### Changed
+
+- Renamed the visible project brand and software metadata from Lain5G-Lab to
+  OpenLain5G while preserving existing repository, command, image, and
+  configuration identifiers.
 
 ## [1.1.0] - 2026-07-30
 

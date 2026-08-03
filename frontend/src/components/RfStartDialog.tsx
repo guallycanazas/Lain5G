@@ -18,7 +18,7 @@ type RfEnvironment = 'cabled' | 'shielded';
 
 export function RfStartDialog({ scenarioId, open, loading, missingImages, pullJob, onCancel, onConfirm }: { scenarioId: string; open: boolean; loading: boolean; missingImages: ComponentImageStatus[]; pullJob?: ComponentPullJob; onCancel: () => void; onConfirm: (payload: RfStartPayload) => void }) {
   const [duration, setDuration] = useState(60);
-  const [note, setNote] = useState('Controlled RF session from Lain5G');
+  const [note, setNote] = useState('Controlled RF session from OpenLain5G');
   const [phrase, setPhrase] = useState('');
   const [authorizationSelected, setAuthorizationSelected] = useState(false);
   const [environment, setEnvironment] = useState<RfEnvironment>('cabled');
@@ -125,7 +125,7 @@ export function RfStartDialog({ scenarioId, open, loading, missingImages, pullJo
     if (!open || !profile.data) return;
     const limit = Number(profile.data.safety?.maximum_duration_seconds) || 60;
     setDuration(Math.min(60, limit));
-    setNote(profile.data.safety?.operator_note || 'Controlled RF session from Lain5G');
+    setNote(profile.data.safety?.operator_note || 'Controlled RF session from OpenLain5G');
     const configuredEnvironment = profile.data.safety?.environment === 'shielded' ? 'shielded' : 'cabled';
     setEnvironment(configuredEnvironment);
     setAttenuation(Number(profile.data.safety?.attenuation_db) || 60);

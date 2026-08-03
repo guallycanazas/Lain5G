@@ -11,13 +11,13 @@ Artifact:
 
 - Path: `sbom/lain5g-lab-application.cdx.json`
 - Format: CycloneDX JSON 1.7
-- Subject: `Lain5G-Lab` version `1.1.0`
-- Generated: `2026-07-30T02:09:53Z`
+- Subject: `OpenLain5G` version `1.1.0`
+- Generated: `2026-08-03T06:38:57Z`
 - Components: 370 libraries, comprising 361 npm package/version entries and 9
   direct PyPI package/version entries
 - Dependency graph entries: 128
 - SHA-256:
-  `2cabe51ca2fb7a90ec2f7395c84933b213c9f6220a0e21d96ada31ee04236599`
+  `7d10b09dc131fffcac4706a7d466c7d3440ec10c423286359be8095caf2bf732`
 
 ## Generator
 
@@ -93,7 +93,7 @@ docker run --rm --network none \
   --mount type=bind,source="$PWD",target=/src,readonly \
   anchore/syft:v1.49.0@sha256:13b53ebabe3d215268c90cf8fb9b875f0183908245f376fd4b3a2cb69d21d484 \
   scan dir:/src --base-path /src \
-  --source-name Lain5G-Lab --source-version 1.1.0 \
+  --source-name OpenLain5G --source-version 1.1.0 \
   --exclude './.git' --exclude './.git/**' \
   --exclude './.github' --exclude './.github/**' \
   --exclude './.venv' --exclude './.venv/**' \

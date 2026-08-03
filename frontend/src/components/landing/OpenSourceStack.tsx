@@ -12,7 +12,7 @@ export function OpenSourceStack() {
   return (
     <section className="landing-section border-y border-[#e7e4f1] bg-white/55" id="stack">
       <div className="landing-container">
-        <div className="mb-9 flex flex-col justify-between gap-4 md:flex-row md:items-end"><div><span className="landing-eyebrow">Open-source stack</span><h2 className="landing-display mb-0 mt-3 text-[clamp(2.1rem,3.7vw,3.15rem)] font-medium">Established projects, one coherent lab.</h2></div><p className="landing-copy mb-0 max-w-[420px] text-sm">Lain5G integrates these projects; it does not replace or reimplement them.</p></div>
+        <div className="mb-9 flex flex-col justify-between gap-4 md:flex-row md:items-end"><div><span className="landing-eyebrow">Open-source stack</span><h2 className="landing-display mb-0 mt-3 text-[clamp(2.1rem,3.7vw,3.15rem)] font-medium">Established projects, one coherent lab.</h2></div><p className="landing-copy mb-0 max-w-[420px] text-sm">OpenLain5G integrates these projects; it does not replace or reimplement them.</p></div>
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {projects.map((project, index) => (
             <motion.a className="landing-card stack-project-card" href={project.href} target="_blank" rel="noreferrer" aria-label={`Open the ${project.name} project website`} key={project.name} initial={{ opacity: 0, scale: .98 }} whileInView={{ opacity: 1, scale: 1 }} viewport={{ once: true }} transition={{ delay: index * .04 }}>

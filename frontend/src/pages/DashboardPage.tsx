@@ -44,7 +44,7 @@ export function DashboardPage() {
       <section className="hero-panel dashboard-hero panel wide">
         <div className="dashboard-hero-content">
           <span className="eyebrow">✨ {t('dashboard.eyebrow')}</span>
-          <h1 className="hero-title">Lain5G</h1>
+          <h1 className="hero-title">OpenLain5G</h1>
           <p className="page-subtitle">{t('dashboard.subtitle')}</p>
           <div className="hero-actions">
             {status.data ? <StatusBadge status={status.data.status} /> : <StatusBadge status="unknown" />}

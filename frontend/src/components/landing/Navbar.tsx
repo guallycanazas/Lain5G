@@ -16,9 +16,9 @@ export function Navbar() {
   return (
     <motion.header className="landing-nav-shell sticky top-0 z-50" initial={{ y: -20, opacity: 0 }} animate={{ y: 0, opacity: 1 }}>
       <div className="landing-container flex h-[74px] items-center justify-between gap-6">
-        <a className="flex items-center gap-3" href="#top" aria-label="Lain5G home">
+        <a className="flex items-center gap-3" href="#top" aria-label="OpenLain5G home">
           <span className="landing-brand-avatar"><img src="/images/lain5g/lain-avatar.webp" width="512" height="512" alt="" /></span>
-          <span className="grid leading-tight"><strong className="text-[1.05rem] tracking-[-.03em]">Lain5G</strong><small className="text-[.58rem] font-bold uppercase tracking-[.15em] text-violet">Open · Modular · Yours</small></span>
+          <span className="grid leading-tight"><strong className="text-[1.05rem] tracking-[-.03em]">OpenLain5G</strong><small className="text-[.58rem] font-bold uppercase tracking-[.15em] text-violet">Open · Modular · Yours</small></span>
         </a>
 
         <nav className="hidden items-center gap-8 lg:flex" aria-label="Landing navigation">

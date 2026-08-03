@@ -9,7 +9,7 @@ RUN apt-get update && \
     rm -rf /var/lib/apt/lists/*
 
 LABEL org.opencontainers.image.version="${LAIN5G_VERSION}" \
-      org.opencontainers.image.title="Lain5G-Lab Real IMS DNS" \
+      org.opencontainers.image.title="OpenLain5G Real IMS DNS" \
       org.opencontainers.image.source="https://github.com/guallycanazas/Lain5G" \
       org.opencontainers.image.licenses="MIT AND BSD-2-Clause"
 

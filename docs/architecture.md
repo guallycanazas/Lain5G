@@ -1,6 +1,6 @@
 # Architecture
 
-Lain5G-Lab no implementa un núcleo 4G/5G propio. Utiliza componentes externos y aporta una capa propia de despliegue, configuración, administración, validación y visualización.
+OpenLain5G no implementa un núcleo 4G/5G propio. Utiliza componentes externos y aporta una capa propia de despliegue, configuración, administración, validación y visualización.
 
 La arquitectura separa escenarios por carpetas, proyectos Compose, redes y volúmenes para evitar interferencia entre 5G SA y 4G LTE/IMS.
 

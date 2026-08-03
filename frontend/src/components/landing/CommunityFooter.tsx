@@ -20,7 +20,7 @@ export function CommunityFooter() {
           </div>
         </div>
       </div>
-      <div className="relative z-10 border-t border-[#dcd9ed]"><div className="landing-container flex flex-col justify-between gap-2 py-5 text-[.61rem] text-[#777c9d] sm:flex-row"><span>Lain5G · Open research software</span><span>Built for transparent, bounded claims</span></div></div>
+      <div className="relative z-10 border-t border-[#dcd9ed]"><div className="landing-container flex flex-col justify-between gap-2 py-5 text-[.61rem] text-[#777c9d] sm:flex-row"><span>OpenLain5G · Open research software</span><span>Built for transparent, bounded claims</span></div></div>
     </footer>
   );
 }

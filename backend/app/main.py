@@ -20,9 +20,9 @@ from .version import VERSION
 def create_app() -> FastAPI:
     settings = get_settings()
     app = FastAPI(
-        title="Lain5G-Lab API",
+        title="OpenLain5G API",
         version=VERSION,
-        description="Backend API for operating the validated Lain5G-Lab 5G SA deployment.",
+        description="Backend API for operating the validated OpenLain5G 5G SA deployment.",
     )
 
     app.add_middleware(

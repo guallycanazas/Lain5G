@@ -37,7 +37,7 @@ export function Sidebar({ collapsed, onCollapse }: { collapsed: boolean; onColla
   return (
     <aside className="sidebar" aria-label="Main navigation">
       <div className="sidebar-top">
-        <Link className="brand" to="/" title="Back to the Lain5G website"><span className="brand-mark"><img src="/images/lain5g/lain-avatar.webp" width="512" height="512" alt="" /></span><span className="brand-copy"><strong>Lain5G</strong><small>CONTROL PLANE</small></span></Link>
+        <Link className="brand" to="/" title="Back to the OpenLain5G website"><span className="brand-mark"><img src="/images/lain5g/lain-avatar.webp" width="512" height="512" alt="" /></span><span className="brand-copy"><strong>OpenLain5G</strong><small>CONTROL PLANE</small></span></Link>
         <button className="sidebar-collapse" type="button" onClick={onCollapse} aria-label={collapsed ? t('shell.expandNavigation') : t('shell.collapseNavigation')}>{collapsed ? <PanelLeftOpen size={17} /> : <PanelLeftClose size={17} />}</button>
       </div>
       <div className="nav-groups">
@@ -55,7 +55,7 @@ export function Sidebar({ collapsed, onCollapse }: { collapsed: boolean; onColla
         ))}
       </div>
       <div className="sidebar-utilities" aria-label="Project links">
-        <Link to="/" title="Back to the Lain5G website"><House size={17} /><span className="utility-label">Website</span></Link>
+        <Link to="/" title="Back to the OpenLain5G website"><House size={17} /><span className="utility-label">Website</span></Link>
         <a href="https://github.com/guallycanazas/Lain5G/tree/main/docs" target="_blank" rel="noreferrer" title="Open the documentation"><BookOpen size={17} /><span className="utility-label">Docs</span></a>
         <a href="https://github.com/guallycanazas/Lain5G" target="_blank" rel="noreferrer" title="Open the GitHub repository"><Github size={17} /><span className="utility-label">GitHub</span></a>
       </div>

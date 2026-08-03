@@ -142,7 +142,7 @@ def build_register(cseq: int, local_ip: str, branch: str, authorization: str | N
         f"CSeq: {cseq} REGISTER",
         f"Contact: <sip:{IMPI}@{local_ip}:5062>",
         "Expires: 3600",
-        "User-Agent: Lain5G-Lab-SIP-Probe",
+        "User-Agent: OpenLain5G-SIP-Probe",
     ]
     if authorization:
         lines.append(f"Authorization: {authorization}")

@@ -18,7 +18,7 @@ RUN apt-get update && \
     rm -rf /var/lib/apt/lists/*
 
 LABEL org.opencontainers.image.version="${LAIN5G_VERSION}" \
-      org.opencontainers.image.title="Lain5G-Lab Real IMS RTPengine" \
+      org.opencontainers.image.title="OpenLain5G Real IMS RTPengine" \
       org.opencontainers.image.source="https://github.com/guallycanazas/Lain5G" \
       org.opencontainers.image.licenses="MIT AND GPL-3.0-only AND BSD-2-Clause"
 

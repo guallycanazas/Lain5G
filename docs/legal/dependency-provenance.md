@@ -2,7 +2,7 @@
 
 ## Purpose and Scope
 
-This document records how Lain5G-Lab release `1.1.0` identifies the
+This document records how OpenLain5G release `1.1.0` identifies the
 origin and version of third-party inputs. It covers source-built network
 components, registry images, application package manifests, base images, and
 imported configuration. It does not claim that a digest, lock file, or SBOM is
