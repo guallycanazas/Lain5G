@@ -322,7 +322,7 @@ No npm tarball or `node_modules` directory is vendored.
 | `postcss` | `8.5.23` | [postcss/postcss](https://github.com/postcss/postcss); [npm metadata](https://registry.npmjs.org/postcss/8.5.23) | `MIT` | CSS transformation | Development/build download only; retain notice if conveyed. |
 | `tailwindcss` | `3.4.17` | [tailwindlabs/tailwindcss](https://github.com/tailwindlabs/tailwindcss); [npm metadata](https://registry.npmjs.org/tailwindcss/3.4.17) | `MIT` | Utility CSS generation | Development/build download only; retain notice if conveyed. |
 | `typescript` | `5.9.3` | [microsoft/TypeScript](https://github.com/microsoft/TypeScript); [npm metadata](https://registry.npmjs.org/typescript/5.9.3) | `Apache-2.0` | Type checking and compilation | Development/build download; retain Apache 2.0 and applicable NOTICE material if conveyed. |
-| `vitest` | `2.1.9` | [vitest-dev/vitest](https://github.com/vitest-dev/vitest); [npm metadata](https://registry.npmjs.org/vitest/2.1.9) | `MIT` | Frontend test runner | Development download only; retain notice if conveyed. |
+| `vitest` | `4.1.10` | [vitest-dev/vitest](https://github.com/vitest-dev/vitest); [npm metadata](https://registry.npmjs.org/vitest/4.1.10) | `MIT` | Frontend test runner | Development download only; retain notice if conveyed. |
 
 The npm lock contains the transitive production and development trees and
 registry integrity values. A generated license bundle is not currently copied

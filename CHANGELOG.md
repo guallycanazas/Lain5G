@@ -23,6 +23,8 @@ All notable changes to OpenLain5G are recorded in this file.
   project facts and actionable guidance.
 - Generalized installation and troubleshooting guidance across supported host
   conditions while labeling concrete addresses as checked-in profile defaults.
+- Updated Vitest to `4.1.10`, removing all findings from the locked npm
+  dependency audit while preserving the frontend test contract.
 
 ### Removed
 
@@ -139,9 +141,7 @@ All notable changes to OpenLain5G are recorded in this file.
   portability to other architectures is not asserted.
 - Python package artifacts are exact-version constrained but do not have a
   generated hash lock; no unverified hashes were added.
-- `npm audit --omit=dev` reports no production findings. The full locked tree
-  reports five test-tool findings (three moderate, one high, and one critical)
-  through Vitest/Vite; npm's available fix requires a Vitest major upgrade.
+- The complete locked npm dependency tree reports no audit findings.
 - The `1.0.0` Real-IMS derived images are local build tags and have not
   been asserted as published registry artifacts.
 - Removed private-key paths are absent from the published clean release history;

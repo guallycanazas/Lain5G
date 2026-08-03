@@ -92,10 +92,8 @@ attestation was available. Every listed artifact is Linux/amd64-only. The local
 
 The npm transitive closure and registry integrity values remain authoritative in
 `frontend/package-lock.json`; the root package version is `1.1.1`.
-`npm audit --omit=dev` reports zero findings. The full locked tree reports five
-development findings (three moderate, one high, and one critical) in the
-build/test toolchain. npm's available complete remediation requires breaking
-dependency upgrades and was not applied as an unreviewed release change.
+`npm audit` reports zero findings across the complete locked production and
+development dependency tree after the reviewed Vitest `4.1.10` upgrade.
 
 ## RTPengine Evidence
 
@@ -122,10 +120,6 @@ dependency upgrades and was not applied as an unreviewed release change.
   digest. Archive final image digests with experiment evidence.
 - Catalogued registry digests are not linked to the current source commits by a
   verifiable build record and are blocked for binary republication.
-- The locked frontend development tree has five npm audit findings. The
-  production dependency audit is clean, and the vulnerable Vitest UI mode is
-  not used by the release test command, but the test toolchain still requires a
-  separately reviewed major upgrade.
 - Public sanitized summaries cover passing software 4G LTE/VoLTE and 5G SA.
   The 4G LTE and 5G SA workflows were repeated in a clean Ubuntu virtual machine
   for `1.1.0`; the VoLTE result remains historical.

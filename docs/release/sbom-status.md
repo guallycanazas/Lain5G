@@ -12,12 +12,12 @@ Artifact:
 - Path: `sbom/lain5g-lab-application.cdx.json`
 - Format: CycloneDX JSON 1.7
 - Subject: `OpenLain5G` version `1.1.1`
-- Generated: `2026-08-03T07:40:05Z`
-- Components: 370 libraries, comprising 361 npm package/version entries and 9
+- Generated: `2026-08-03T14:37:28Z`
+- Components: 340 libraries, comprising 331 npm package/version entries and 9
   direct PyPI package/version entries
-- Dependency graph entries: 128
+- Dependency graph entries: 125
 - SHA-256:
-  `fa60ec32014b707772784bda9ce7634ed7f03a9dfd7bfc2c309f8620bfa52457`
+  `574251d1350325747f8d7f21b5a6229dc89f25fe1b70f31fb83c39efa0cefa21`
 
 ## Generator
 
@@ -73,8 +73,8 @@ The artifact is therefore a partial application dependency SBOM, not a complete
 release, deployment, or container SBOM.
 
 The generated BOM does not encode that partiality through a CycloneDX
-`composition` declaration. Its dependency graph contains 128 entries and leaves
-87 components disconnected, including all nine direct PyPI entries. The
+`composition` declaration. Its dependency graph contains 125 entries and leaves
+64 components disconnected, including all nine direct PyPI entries. The
 sidecar status in this document is therefore required to interpret its scope;
 the artifact must not be used as a complete dependency graph.
 
