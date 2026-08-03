@@ -267,10 +267,11 @@ availability statements. These values are intentionally not inferred here.
 
 - **Willian Roy Canazas Rosas**
 - **Manuel Ismael Prieto Tito**
+- **Alberth Ronal Tamo Calla**
 
-Software-release affiliation: **National University of San Agustin of
-Arequipa**. Article authorship and order require separate approval; see
-[`AUTHORS.md`](AUTHORS.md).
+Software-release affiliation for all authors: **National University of San Agustin of
+Arequipa**. These three names are the complete confirmed author list for this
+project and any future article; see [`AUTHORS.md`](AUTHORS.md).
 
 ## Citation
 

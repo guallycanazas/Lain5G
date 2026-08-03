@@ -258,10 +258,11 @@ declaraciones de disponibilidad. Estos valores no se inventan ni se infieren.
 
 - **Willian Roy Canazas Rosas**
 - **Manuel Ismael Prieto Tito**
+- **Alberth Ronal Tamo Calla**
 
-Afiliación de la release: **Universidad Nacional de San Agustín de Arequipa**.
-La autoría del artículo requiere aprobación independiente; consulte
-[`AUTHORS.md`](AUTHORS.md).
+Afiliación de todos los autores: **Universidad Nacional de San Agustín de Arequipa**.
+Estos tres nombres conforman la lista completa y confirmada de autores del
+proyecto y de cualquier artículo futuro; consulte [`AUTHORS.md`](AUTHORS.md).
 
 ## Citación
 

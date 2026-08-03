@@ -4,11 +4,12 @@
 
 - **Willian Roy Canazas Rosas**
 - **Manuel Ismael Prieto Tito**
+- **Alberth Ronal Tamo Calla**
 
-These names and this order are confirmed for the software release
-metadata. Authorship for a future article must still be approved separately.
+These names and this order are the complete, confirmed author list for the
+software release metadata and any future article.
 
-Affiliation for both authors: **National University of San Agustin of
+Affiliation for all authors: **National University of San Agustin of
 Arequipa**.
 
 ## Pending metadata
@@ -16,7 +17,6 @@ Arequipa**.
 - TODO: Add ORCIDs only after the owners verify and approve them.
 - TODO: Confirm the corresponding author and a public contact channel.
 - TODO: Record funding and conflict-of-interest statements after confirmation.
-- TODO: Approve a separate author list for any future SoftwareX article.
 
-No personal email address, ORCID, funding source, DOI, or article authorship is
-asserted in this software release metadata.
+No personal email address, ORCID, funding source, or DOI is asserted in this
+software release metadata.
