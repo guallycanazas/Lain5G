@@ -11,13 +11,13 @@ Artifact:
 
 - Path: `sbom/lain5g-lab-application.cdx.json`
 - Format: CycloneDX JSON 1.7
-- Subject: `OpenLain5G` version `1.1.1`
-- Generated: `2026-08-03T14:37:28Z`
+- Subject: `OpenLain5G` version `1.1.2`
+- Generated: `2026-08-03T14:59:38Z`
 - Components: 340 libraries, comprising 331 npm package/version entries and 9
   direct PyPI package/version entries
 - Dependency graph entries: 125
 - SHA-256:
-  `574251d1350325747f8d7f21b5a6229dc89f25fe1b70f31fb83c39efa0cefa21`
+  `04336c9c1be653e60fb92e14b69c47ed9fc71dc300e3fa63468137fe6f87c2c1`
 
 ## Generator
 
@@ -93,7 +93,7 @@ docker run --rm --network none \
   --mount type=bind,source="$PWD",target=/src,readonly \
   anchore/syft:v1.49.0@sha256:13b53ebabe3d215268c90cf8fb9b875f0183908245f376fd4b3a2cb69d21d484 \
   scan dir:/src --base-path /src \
-  --source-name OpenLain5G --source-version 1.1.1 \
+  --source-name OpenLain5G --source-version 1.1.2 \
   --exclude './.git' --exclude './.git/**' \
   --exclude './.github' --exclude './.github/**' \
   --exclude './.venv' --exclude './.venv/**' \
@@ -179,7 +179,7 @@ docker run --rm --network none \
   --mount type=bind,source="$PWD/sbom",target=/out \
   anchore/syft:v1.49.0@sha256:13b53ebabe3d215268c90cf8fb9b875f0183908245f376fd4b3a2cb69d21d484 \
   scan docker-archive:/input/backend.tar \
-  --source-name lain5g-lab/backend --source-version 1.1.1 \
+  --source-name lain5g-lab/backend --source-version 1.1.2 \
   --output cyclonedx-json=/out/lain5g-lab-backend-image.cdx.json
 ```
 

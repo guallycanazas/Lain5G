@@ -4,6 +4,14 @@ All notable changes to OpenLain5G are recorded in this file.
 
 ## [Unreleased]
 
+## [1.1.2] - 2026-08-03
+
+### Changed
+
+- Prepared an immutable archival release after enabling the Zenodo GitHub
+  integration, with synchronized citation, package, OCI, Compose, and SBOM
+  version metadata.
+
 ## [1.1.1] - 2026-08-03
 
 ### Added

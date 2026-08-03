@@ -5,7 +5,7 @@
 **Evidence-oriented orchestration for software 4G/5G networks and guarded X-Series USRP laboratory workflows**
 
 [![CI](https://github.com/guallycanazas/Lain5G/actions/workflows/ci.yml/badge.svg)](https://github.com/guallycanazas/Lain5G/actions/workflows/ci.yml)
-[![Release](https://img.shields.io/badge/release-v1.1.1-4051b5.svg)](https://github.com/guallycanazas/Lain5G/releases/tag/v1.1.1)
+[![Release](https://img.shields.io/badge/release-v1.1.2-4051b5.svg)](https://github.com/guallycanazas/Lain5G/releases/tag/v1.1.2)
 [![Project source: MIT](https://img.shields.io/badge/project_source-MIT-d9a441.svg)](LICENSE)
 [![Platform](https://img.shields.io/badge/platform-GNU%2FLinux_x86__64-2f6f62.svg)](docs/installation.md)
 [![Python](https://img.shields.io/badge/Python-%E2%89%A53.10-3776ab.svg)](backend/requirements.txt)
@@ -22,7 +22,7 @@ customizable environment with software-only scenarios, guarded X-Series USRP
 workflows, declarative configuration, automated validation, and traceable run
 evidence.
 
-> **Release status:** [`v1.1.1`](https://github.com/guallycanazas/Lain5G/tree/v1.1.1)
+> **Release status:** [`v1.1.2`](https://github.com/guallycanazas/Lain5G/tree/v1.1.2)
 > is the latest immutable source release.
 
 > **Naming:** OpenLain5G is the current project name. The repository URL, `lain5g`
@@ -209,7 +209,7 @@ separately by the scenario validators.
 
 | Item | Repository value |
 | --- | --- |
-| Current immutable release | [`v1.1.1`](https://github.com/guallycanazas/Lain5G/releases/tag/v1.1.1) |
+| Current immutable release | [`v1.1.2`](https://github.com/guallycanazas/Lain5G/releases/tag/v1.1.2) |
 | Version control | Git and GitHub |
 | Project-source license | [MIT](LICENSE), with separate upstream terms |
 | Languages | Python, TypeScript, and Shell |
