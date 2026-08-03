@@ -4,14 +4,19 @@
 
 | Item | Exact value | Authority |
 | --- | --- | --- |
-| OpenLain5G | `1.1.0` | Root `VERSION` |
+| OpenLain5G | `1.1.1` | Root `VERSION` |
 | Status | Stable source release | `CHANGELOG.md` |
-| Evidence captured | `2026-07-30T02:20:51Z` | Clean-VM UTC clock after scenario verification |
-| Verification host | Ubuntu 24.04.4 LTS, Linux `x86_64` | Clean virtual-machine environment summary |
-| Python test environment | CPython `3.12.3`, pip `25.1.1` | Clean virtual-machine tool output |
-| Node/npm environment | Node `v18.19.1`, npm `9.2.0` | Clean virtual-machine tool output |
-| Docker tooling | Docker client `29.1.3`, Compose `2.40.3` | Clean virtual-machine tool output |
+| Operational evidence baseline | `v1.1.0` | Immutable clean-VM scenario results |
+| Operational evidence captured | `2026-07-30T02:20:51Z` | Clean-VM UTC clock after scenario verification |
+| Operational evidence host | Ubuntu 24.04.4 LTS, Linux `x86_64` | Clean virtual-machine environment summary |
+| Operational Python environment | CPython `3.12.3`, pip `25.1.1` | Clean virtual-machine tool output |
+| Operational Node/npm environment | Node `v18.19.1`, npm `9.2.0` | Clean virtual-machine tool output |
+| Operational Docker tooling | Docker client `29.1.3`, Compose `2.40.3` | Clean virtual-machine tool output |
 | Dockerfile linter | Hadolint `v2.14.0`, linux/amd64 manifest `sha256:e9dbf5113239ef2bf696d20c8f28d3019a47c26a38c98b89344d3e2846c4d5f8` | Official `hadolint/hadolint` registry artifact |
+
+Version `1.1.1` changes documentation and metadata only. It introduces no new
+runtime or RF claim; operational evidence remains fixed to the immutable
+`v1.1.0` baseline.
 
 ## Source Builds
 
@@ -86,7 +91,7 @@ attestation was available. Every listed artifact is Linux/amd64-only. The local
 | Full closure | Every package and version is listed in `backend/constraints.txt`; source was `.venv/bin/pip freeze --all` before release tests |
 
 The npm transitive closure and registry integrity values remain authoritative in
-`frontend/package-lock.json`; the root package version is `1.1.0`.
+`frontend/package-lock.json`; the root package version is `1.1.1`.
 `npm audit --omit=dev` reports zero findings. The full locked tree reports five
 development findings (three moderate, one high, and one critical) in the
 build/test toolchain. npm's available complete remediation requires breaking

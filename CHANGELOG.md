@@ -4,11 +4,30 @@ All notable changes to OpenLain5G are recorded in this file.
 
 ## [Unreleased]
 
+## [1.1.1] - 2026-08-03
+
+### Added
+
+- Added security, contribution, issue-reporting, and pull-request guidance for
+  public collaboration.
+- Added a documentation index for operators, reviewers, and developers.
+
 ### Changed
 
 - Renamed the visible project brand and software metadata from Lain5G-Lab to
   OpenLain5G while preserving existing repository, command, image, and
   configuration identifiers.
+- Standardized active technical documentation in English, retaining
+  `README.es.md` as the explicit Spanish overview.
+- Simplified author, citation, release, and support text to include only current
+  project facts and actionable guidance.
+- Generalized installation and troubleshooting guidance across supported host
+  conditions while labeling concrete addresses as checked-in profile defaults.
+
+### Removed
+
+- Removed superseded pre-release audit reports that contradicted the current
+  release, CI, evidence, and metadata state.
 
 ## [1.1.0] - 2026-07-30
 
@@ -39,7 +58,7 @@ All notable changes to OpenLain5G are recorded in this file.
   4G LTE ZMQ, 5G SA UERANSIM, and the guarded 4G/5G RF profiles. Signaling
   implementations and historical evidence remain internal.
 - Reorganized the English and Spanish reviewer path around installation,
-  architecture, executable validation, evidence limits, and SoftwareX scope.
+  architecture, executable validation, evidence limits, and release scope.
 
 ### Fixed
 
@@ -131,5 +150,4 @@ All notable changes to OpenLain5G are recorded in this file.
 - This is a source-only release. Catalogued project image digests lack a
   verifiable source-to-build mapping and are blocked for binary republication.
 - The application SBOM is partial and does not inspect final image filesystems.
-- GitHub Private Vulnerability Reporting is enabled. Article-specific ORCIDs,
-  corresponding-author details, and declarations remain manuscript metadata.
+- GitHub Private Vulnerability Reporting is enabled.

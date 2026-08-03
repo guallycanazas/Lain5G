@@ -52,16 +52,14 @@ provenance hashes stay verifiable.
 
 A passing preflight evaluates only its packaging, Docker, image, and publication
 prerequisites. A passing service status evaluates only container and listener
-readiness. Authenticated registration requires REGISTER, challenge,
-authorization, final SIP 200, and Cx evidence in one correlated run. Audit-time
-4G observations exist only as private, mutable markers without an anonymized
-commit-linked package; the marker scan found `SUBSCRIBE`, `NOTIFY`, and
-`INVITE`, but not `MESSAGE`.
+readiness. Mutable marker scans are not validation. Authenticated registration
+requires commit-linked, run-correlated evidence covering the applicable SIP and
+Cx sequence. A call claim additionally requires final dialog completion and
+bidirectional RTP evidence from the same run.
 
-Neither preflight, service status, nor registration proves a VoLTE/VoNR call.
-The available evidence has no correlated final successful response to the
-`INVITE`, no `ACK`, no `BYE`, and no bidirectional RTP. A complete result would
-also require an IMS-capable UE and an integrated RAN path. No such UE or RAN is
-supplied by this package, and the 5G mode has only non-executing evidence.
-Accordingly, the canonical status for the 5G mode is `DRY_RUN_ONLY`; the private
-4G observations remain `PARTIALLY_VALIDATED`.
+Neither preflight, service status, nor registration proves a VoLTE/VoNR call. A
+complete result requires a correlated successful SIP dialog, teardown, and
+bidirectional RTP, plus an IMS-capable UE and integrated RAN path. This package
+does not supply that UE or RAN, and no public result establishes the complete
+call path. Accordingly, the canonical status for the 5G mode is `DRY_RUN_ONLY`;
+private 4G observations remain `PARTIALLY_VALIDATED`.

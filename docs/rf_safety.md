@@ -1,30 +1,31 @@
 # RF Safety
 
-La ruta X310 está bloqueada por defecto. Ningún target debe transmitir RF sin autorización explícita del operador del laboratorio.
+The X-Series USRP RF paths are blocked by default. No target may transmit RF
+without explicit authorization from the lab operator.
 
-## Reglas
+## Rules
 
-- No transmitir en bandas licenciadas sin permiso legal y técnico.
-- Usar entorno cabled, shielded o formalmente autorizado.
-- En modo cabled, usar atenuación adecuada; el ejemplo exige al menos 60 dB.
-- Definir duración máxima finita; el ejemplo usa 60 segundos.
-- Mantener `auto_stop: true`.
-- No ejecutar `docker system prune` como parte de estos flujos.
-- No actualizar FPGA ni firmware automáticamente.
+- Do not transmit in licensed bands without legal and technical authorization.
+- Use a cabled, shielded, or formally authorized environment.
+- In cabled mode, use appropriate attenuation; the example requires at least 60 dB.
+- Define a finite maximum duration; the example uses 60 seconds.
+- Keep `auto_stop: true`.
+- Do not run `docker system prune` as part of these workflows.
+- Do not update FPGA images or firmware automatically.
 
-## Archivos Reales No Versionados
+## Local RF Files Excluded from Version Control
 
 ```bash
 cp deployments/4g-volte/x310/rf/channel-plan.example.yaml deployments/4g-volte/x310/rf/channel-plan.yaml
 cp deployments/4g-volte/x310/rf/safety-manifest.example.yaml deployments/4g-volte/x310/rf/safety-manifest.yaml
 ```
 
-Edita ambos archivos antes de cualquier ejecución RF. Los archivos reales están ignorados por Git.
+Edit both files before any RF operation. The actual files are ignored by Git.
 
-## Parada De Emergencia
+## Emergency Stop
 
 ```bash
 make emergency-stop-4g-lte-x310
 ```
 
-Este target elimina el marcador local de RF activa y detiene solo `enb-x310`.
+This target removes the local active-RF marker and stops only `enb-x310`.

@@ -19,7 +19,7 @@ The status terms are:
 
 ## Current Assessment
 
-The `1.1.0` release boundary is source-only. Existing registry artifacts are
+The `1.1.1` release boundary is source-only. Existing registry artifacts are
 catalogued inputs for reproducibility, not binaries approved by this assessment.
 
 | Distribution unit | Current status | Basis | Required action before redistribution |

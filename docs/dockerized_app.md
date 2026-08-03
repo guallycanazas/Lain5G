@@ -1,14 +1,14 @@
-# Aplicación Dockerizada
+# Dockerized Application
 
-El stack de aplicación dockerizado ejecuta dos servicios separados de los
-escenarios 4G y 5G del laboratorio:
+The dockerized application stack runs two services independently of the lab's
+4G and 5G scenarios:
 
-- `frontend`: Nginx sirviendo la aplicación React y proxy `/api`.
-- `backend`: FastAPI; el acceso al Docker del host es un opt-in separado.
+- `frontend`: Nginx serving the React application and proxying `/api`.
+- `backend`: FastAPI; access to the host's Docker daemon requires a separate opt-in.
 
-No reemplaza los despliegues de red elegidos por el usuario.
+It does not replace the network deployments selected by the user.
 
-## Uso desde la CLI
+## CLI Usage
 
 ```bash
 ./lain5g app start --operations --open
@@ -17,21 +17,22 @@ No reemplaza los despliegues de red elegidos por el usuario.
 ./lain5g app stop
 ```
 
-`app start` crea `.env.app`, registra automáticamente la ruta absoluta del
-repositorio y restringe el archivo a permisos `0600`. `--operations` habilita
-descargas y operaciones de escenarios software y RF desde la interfaz.
+`app start` creates `.env.app`, automatically records the repository's absolute
+path, and restricts the file to `0600` permissions. `--operations` enables
+downloads and operations for software and RF scenarios from the interface.
 
-El opt-in operativo activa `LAIN5G_MUTATING_OPERATIONS_ENABLED` y
-`LAIN5G_IMAGE_PULL_ENABLED`, usa `docker-compose.app-operations.yml` y deja
-`LAIN5G_RF_WEB_CONTROL_ENABLED=true`. Esto habilita el flujo RF protegido, no una
-transmisión automática: cada sesión conserva preflight, autorización, checklist,
-frase exacta, duración finita y parada de emergencia.
+The operational opt-in enables `LAIN5G_MUTATING_OPERATIONS_ENABLED` and
+`LAIN5G_IMAGE_PULL_ENABLED`, uses `docker-compose.app-operations.yml`, and keeps
+`LAIN5G_RF_WEB_CONTROL_ENABLED=true`. This enables the protected RF workflow, not
+automatic transmission: every session continues to require preflight checks,
+authorization, the checklist, the exact phrase, a finite duration, and
+emergency-stop safeguards.
 
-El usuario elige 4G LTE, 5G SA o los perfiles RF protegidos desde **Scenarios**. Al
-iniciar la simulación elegida, el backend crea o conserva su archivo local de
-credenciales sintéticas con permisos `0600`, sin devolver los secretos a la app.
+The user selects 4G LTE, 5G SA, or the protected RF profiles under **Scenarios**.
+When the selected simulation starts, the backend creates or retains its local
+synthetic credentials file with `0600` permissions without returning secrets to the app.
 
-## Uso directo con Make
+## Direct Usage with Make
 
 ```bash
 make app-up
@@ -40,60 +41,60 @@ make app-logs
 make app-down
 ```
 
-Estos objetivos no crean `.env.app`; use primero `./lain5g app setup` o copie y
-edite `.env.app.example` manualmente.
+These targets do not create `.env.app`; first run `./lain5g app setup`, or copy and
+edit `.env.app.example` manually.
 
-Interfaz web:
+Web interface:
 
 ```text
 http://127.0.0.1:8080
 ```
 
-API expuesta para depuración local:
+API exposed for local debugging:
 
 ```text
 http://127.0.0.1:8000/api/health
 ```
 
-## Build Manual
+## Manual Build
 
 ```bash
 make app-build
 ```
 
-El build del backend usa el contexto raíz para copiar `VERSION`; sus paquetes
-Python se resuelven con `backend/constraints.txt`. El frontend instala desde el
-lockfile mediante `npm ci`.
+The backend build uses the root context to copy `VERSION`; its Python packages
+are resolved with `backend/constraints.txt`. The frontend installs from the
+lockfile using `npm ci`.
 
-Equivalente:
+Equivalent command:
 
 ```bash
 docker compose --env-file .env.app -f docker-compose.app.yml build
 ```
 
-## Modo Dry-Run
+## Dry-Run Mode
 
-Para probar la aplicación sin iniciar contenedores 5G SA reales:
+To test the application without starting actual 5G SA containers:
 
 ```env
 LAIN5G_DRY_RUN=true
 ```
 
-En este modo el backend devuelve los comandos que habría ejecutado y las validaciones aparecen como `NOT_TESTED`.
+In this mode, the backend returns the commands it would have executed, and validations appear as `NOT_TESTED`.
 
-## Seguridad Operativa
+## Operational Security
 
-- El Compose base no monta `/var/run/docker.sock`, usa el proyecto en solo lectura y publica solo en loopback.
-- `docker-compose.app-operations.yml` habilita explícitamente un proyecto escribible y el socket Docker, que equivale a control root del host.
-- Las mutaciones requieren además `LAIN5G_MUTATING_OPERATIONS_ENABLED=true`.
-- No expongas la aplicación fuera de la máquina local.
-- `.env.app`, `backend/.env`, `frontend/.env` y `deployments/5g-sa/.env` no deben versionarse.
-- No uses claves reales ni IMSI reales sin anonimizar en el laboratorio.
-- Ver `docs/security/local-deployment.md` para el comando exacto de opt-in.
+- The base Compose configuration does not mount `/var/run/docker.sock`, uses a read-only project directory, and publishes only on loopback.
+- `docker-compose.app-operations.yml` explicitly enables a writable project directory and the Docker socket, which is equivalent to root control of the host.
+- Mutations also require `LAIN5G_MUTATING_OPERATIONS_ENABLED=true`.
+- Do not expose the application outside the local machine.
+- `.env.app`, `backend/.env`, `frontend/.env`, and `deployments/5g-sa/.env` must not be committed.
+- Do not use real keys or non-anonymized IMSIs in the lab.
+- See `docs/security/local-deployment.md` for the exact opt-in command.
 
-## Relación con el Laboratorio 5G SA
+## Relationship to the 5G SA Lab
 
-El backend llama a los scripts existentes:
+The backend calls the existing scripts:
 
 ```text
 deployments/5g-sa/scripts/start.sh
@@ -104,13 +105,13 @@ deployments/5g-sa/scripts/logs.sh
 deployments/5g-sa/scripts/validate.sh
 ```
 
-El stack de aplicación vive en `docker-compose.app.yml`. El stack operativo 5G SA sigue viviendo en `deployments/5g-sa/docker-compose.yml`.
+The application stack is defined in `docker-compose.app.yml`. The operational 5G SA stack remains in `deployments/5g-sa/docker-compose.yml`.
 
-## Gestión de Suscriptores
+## Subscriber Management
 
-El backend usa `pymongo` para acceder al MongoDB de Open5GS cuando el laboratorio está activo. La app no depende de MongoDB para arrancar: si 5G SA está detenido, `/api/subscribers/connection` devuelve `disconnected` o `timeout` y el resto de la aplicación sigue funcionando.
+The backend uses `pymongo` to access Open5GS MongoDB when the lab is active. The app does not depend on MongoDB at startup: if 5G SA is stopped, `/api/subscribers/connection` returns `disconnected` or `timeout`, and the rest of the application continues to operate.
 
-La conexión se controla con:
+The connection is controlled by:
 
 ```env
 LAIN5G_OPEN5GS_MONGO_URI=mongodb://mongo:27017/open5gs
@@ -120,6 +121,12 @@ LAIN5G_OPEN5GS_DOCKER_NETWORK=lain5g-lab-5g-sa-core
 LAIN5G_OPEN5GS_DOCKER_IP=10.20.0.250
 ```
 
-El backend solo intenta unirse a una red Docker 5G SA existente cuando `LAIN5G_MUTATING_OPERATIONS_ENABLED=true`. Usa obligatoriamente la IP reservada `10.20.0.250` para no competir con MongoDB (`10.20.0.2`), `init-subscriber` (`10.20.0.3`) ni las demás direcciones estáticas del núcleo. El inicio 5G también corrige una conexión antigua antes de limpiar o levantar servicios. El modo base nunca modifica redes Docker.
+The backend attempts to join an existing 5G SA Docker network only when
+`LAIN5G_MUTATING_OPERATIONS_ENABLED=true`. In the checked-in profile,
+`10.20.0.250` is reserved to avoid its known static service addresses. A custom
+subnet must use an available address inside that subnet and update the network
+and IP variables consistently. The 5G startup process also corrects a stale
+connection before cleaning up or starting services. Base mode never modifies
+Docker networks.
 
-Ver `docs/subscribers.md`.
+See `docs/subscribers.md`.

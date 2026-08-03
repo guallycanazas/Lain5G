@@ -2,7 +2,7 @@
 
 ## Purpose and Scope
 
-This document records how OpenLain5G release `1.1.0` identifies the
+This document records how OpenLain5G release `1.1.1` identifies the
 origin and version of third-party inputs. It covers source-built network
 components, registry images, application package manifests, base images, and
 imported configuration. It does not claim that a digest, lock file, or SBOM is
@@ -100,7 +100,7 @@ separate review item.
 ## npm Packages
 
 `frontend/package-lock.json` is a lockfile version 3 record for frontend
-version `1.1.0`. It provides the exact resolved version, registry tarball,
+version `1.1.1`. It provides the exact resolved version, registry tarball,
 and Subresource Integrity value for the npm closure. The semver ranges in
 `frontend/package.json` are declarations, not the final version authority.
 

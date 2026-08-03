@@ -1,21 +1,21 @@
-# Versiones y trazabilidad
+# Versions and traceability
 
-La versión autoritativa de OpenLain5G está en `VERSION`. La release estable actual
-es `1.1.0`. La API, el frontend, las etiquetas OCI, las imágenes derivadas y
-el changelog se comprueban contra esa fuente con:
+The authoritative OpenLain5G version is stored in `VERSION`. The current stable
+release is `1.1.1`. The API, frontend, OCI tags, derived images, and changelog
+are checked against that source with:
 
 ```bash
 make version-check
 ```
 
-La matriz completa, las fuentes de evidencia, las plataformas de cada manifest
-y los riesgos no resueltos están en
-`docs/reproducibility/version-matrix.md`. La política de actualización está en
+The complete matrix, evidence sources, platforms for each manifest, and
+unresolved risks are documented in `docs/reproducibility/version-matrix.md`.
+The update policy is documented in
 `docs/reproducibility/dependency-policy.md`.
 
-## Componentes software
+## Software components
 
-| Componente | Ref legible | Commit inmutable |
+| Component | Human-readable ref | Immutable commit |
 | --- | --- | --- |
 | Open5GS | `v2.7.5` | `7dfd9a39649700c24c22f1978ed7a35541a72cca` |
 | UERANSIM | `v3.2.6` | `384636f4fcf46b8c86109790ff3e2cd242b53556` |
@@ -24,39 +24,39 @@ y los riesgos no resueltos están en
 | UHD | `v4.10.0.0` | `2af4ddb96219a99d2300804830e0971f79557b23` |
 | Kamailio | `5.8.8` | `053181eb9c3136836cb272584b582484a9a11b48` |
 
-Los tags se conservaron para lectura humana, pero cada Dockerfile descarga,
-selecciona y verifica el commit completo. CoreDNS `1.11.3`, MongoDB y MariaDB,
-así como todas las bases de Dockerfile, se fijan por digest de manifest.
+Tags are retained for human readability, but each Dockerfile downloads, checks
+out, and verifies the full commit. CoreDNS `1.11.3`, MongoDB, MariaDB, and all
+Dockerfile base images are pinned by manifest digest.
 
-Las imágenes publicadas del catálogo `gually/lain5g-*` están fijadas por digest
-y actualmente solo ofrecen Linux/amd64. Los digests de índice multi-plataforma
-se conservaron para las bases oficiales cuando el registro los ofrecía; esto no
-constituye una afirmación de que el software propio haya sido probado en todas
-esas arquitecturas.
+Published images in the `gually/lain5g-*` catalog are pinned by digest and
+currently provide Linux/amd64 only. Multi-platform index digests are retained
+for official base images when provided by the registry; this does not claim that
+the project's own software has been tested on all those architectures.
 
-## Dependencias de aplicación
+## Application dependencies
 
-- Python: requisitos directos exactos en `backend/requirements*.txt` y cierre
-  runtime/desarrollo exacto en `backend/constraints.txt`.
-- Frontend: cierre e integridades en `frontend/package-lock.json`; instalar con
-  `npm ci` mediante `make frontend-install`.
-- IMS real: bases y etiquetas derivadas en
+- Python: exact direct requirements in `backend/requirements*.txt` and exact
+  runtime/development resolution in `backend/constraints.txt`.
+- Frontend: dependency resolution and integrity hashes in
+  `frontend/package-lock.json`; install with `npm ci` through
+  `make frontend-install`.
+- Real IMS: base images and derived tags in
   `deployments/ims-real/images.lock.yaml`.
 
-## Límites de reproducción
+## Reproducibility limitations
 
-Los repositorios APT usados durante los builds no son snapshots. Por ello, los
-paquetes de sistema pueden cambiar aunque la base y el código fuente estén
-fijados. RTPengine usa el canal verificado `26.0` y valida el checksum del
-keyring, pero ese canal aún puede recibir revisiones distintas por arquitectura.
+The APT repositories used during builds are not snapshots. Therefore, system
+packages may change even when the base image and source code are pinned.
+RTPengine uses the verified `26.0` channel and validates the keyring checksum,
+but that channel may still receive architecture-specific revisions.
 
-La imagen local `lain5g-lab/open5gs:local` contiene los binarios EPC
+The local `lain5g-lab/open5gs:local` image contains the EPC binaries
 `open5gs-mmed`, `open5gs-hssd`, `open5gs-sgwcd`, `open5gs-sgwud`,
-`open5gs-pcrfd`, `open5gs-smfd` y `open5gs-upfd`. Open5GS `v2.7.5` no instala
-`open5gs-pgwcd` ni `open5gs-pgwud`; los servicios 4G `pgwc` y `pgwu` ejecutan
-`open5gs-smfd` y `open5gs-upfd`.
+`open5gs-pcrfd`, `open5gs-smfd`, and `open5gs-upfd`. Open5GS `v2.7.5` does not
+install `open5gs-pgwcd` or `open5gs-pgwud`; the 4G `pgwc` and `pgwu` services run
+`open5gs-smfd` and `open5gs-upfd`.
 
-Antes de publicar resultados, archive el commit de OpenLain5G, la salida de
-`make version-check`, los argumentos de construcción y `docker image inspect`
-de cada imagen final. Un tag `:local` no sustituye el digest de la imagen ni un
-artefacto archivado con DOI.
+Before publishing results, archive the OpenLain5G commit, the output of
+`make version-check`, the build arguments, and `docker image inspect` for each
+final image. A `:local` tag does not replace the image digest or an artifact
+archived with the release.

@@ -1,86 +1,98 @@
 # Installation
 
-## Instalación En Una Máquina Limpia
+## Automated Installation
 
-Después de clonar el repositorio, ejecute:
+Obtain the source with Git or a repository archive. Git is therefore a bootstrap
+prerequisite when using `git clone`. From the repository root, run:
 
 ```bash
 ./install.sh
 ```
 
-El instalador detecta `apt-get`, `dnf`, `pacman` o `zypper`; instala Python con
-soporte `venv`, Node.js, npm, Git, Make, Docker, Docker Compose v2 y util-linux
-cuando faltan; inicia Docker; agrega el usuario al grupo `docker`; genera
-configuraciones privadas; y descarga todas las imágenes publicadas. Cada comando
-privilegiado se muestra antes de usar `sudo`.
+The installer supports package-manager families based on `apt-get`, `dnf`,
+`pacman`, or `zypper`. It installs missing Python, Node.js, Git, Make, Docker,
+Compose, and util-linux prerequisites; conditionally starts the Docker daemon or
+configures group access when that model applies; generates private
+configuration; and downloads the published images. Each privileged command is
+displayed before `sudo` is used.
 
-Para revisar todo sin modificar el equipo:
+Other distributions, rootless Docker installations, managed workstations, and
+nonstandard init systems should satisfy the requirements below manually. The
+installer does not override host policy when daemon or group management is not
+available.
+
+To review all actions without modifying the system:
 
 ```bash
 ./install.sh --dry-run
 ```
 
-Si el instalador agregó el grupo Docker, ejecute `newgrp docker` o vuelva a
-iniciar sesión antes de abrir la aplicación.
+If the installer added the user to the Docker group, run `newgrp docker` or log
+in again before opening the application.
 
-## Requisitos Operativos
+## Operational Requirements
 
-- Docker con soporte de Compose v2.
-- `flock` de util-linux para exclusión mutua entre sesiones RF.
-- Kernel con SCTP y `/dev/net/tun` disponible.
-- Acceso a Internet para clonar y compilar Open5GS y UERANSIM durante `make build-5g-sa`.
-- Para X310: red host preparada para USRP y herramientas UHD en host si se desea validar hardware fuera del contenedor.
+- Docker with Compose v2 support.
+- The util-linux `flock` utility for mutual exclusion between RF sessions.
+- A kernel with SCTP support and `/dev/net/tun` available.
+- Internet access to clone and build Open5GS and UERANSIM during `make build-5g-sa`.
+- For compatible X-Series USRP hardware: a suitable host network and host UHD
+  tools when hardware must be validated outside the container.
 
-## Preparación Manual Alternativa
+## Alternative Manual Setup
 
-Comprueba primero que la versión y los locks no se contradicen:
+Before running repository commands, install Git, Python with `venv`, Node.js,
+npm, GNU Make, util-linux, Docker Engine, and Docker Compose v2 using the method
+appropriate for the host. Confirm that the current user can access Docker, then
+verify that the version and lock files are consistent:
 
 ```bash
 make version-check
 ```
 
-La consola es el punto de entrada recomendado. Su primera opción instala las
-dependencias faltantes y descarga todo el laboratorio; también permite operar
-escenarios y abrir la aplicación web:
+The console is the recommended entry point. Its first option installs missing
+dependencies and downloads the complete lab; it also supports scenario
+operations and launches the web application:
 
 ```bash
 ./lain5g
 ```
 
-Selecciona `PREPARAR MAQUINA Y DESCARGAR TODO` en una instalación nueva,
-`Imágenes y componentes` para administrar descargas,
-`Perfiles y operación` para configurar/iniciar/validar/detener una red o
-`Aplicación web` para preparar, iniciar, abrir y detener la interfaz. Descargar
-imágenes no compila ni inicia servicios.
+Select `PREPARAR MAQUINA Y DESCARGAR TODO` for a new installation,
+`Imagenes y componentes` to manage downloads, `Perfiles y operacion` to
+configure/start/validate/stop a network, or `Aplicacion web` to prepare, start,
+open, and stop the interface. Downloading images does not build or start
+services.
 
-La CLI prepara automáticamente `.env.app` con la ruta absoluta del repositorio.
-Para iniciar la interfaz en modo seguro de observación:
+The CLI automatically prepares `.env.app` with the absolute repository path.
+To start the interface in safe observation mode:
 
 ```bash
 ./lain5g app start --open
 ```
 
-Para permitir desde la app descargas y operaciones sobre escenarios software:
+To allow downloads and software-scenario operations from the application:
 
 ```bash
 ./lain5g app start --operations --open
 ```
 
-Este modo monta explícitamente el socket Docker y habilita escritura local y el
-control RF protegido. Debe usarse solo en una estación de laboratorio confiable.
-El usuario puede elegir perfiles software o RF 4G/5G desde la interfaz. Las
-simulaciones preparan automáticamente credenciales sintéticas privadas; RF exige
-además preflight, autorización, checklist, frase exacta, duración finita y parada
-de emergencia. Mientras exista una sesión RF activa, la CLI rechaza detener o
-degradar la app para mantener disponible la parada de emergencia web.
+This mode explicitly mounts the Docker socket and enables local writes and
+protected RF control. Use it only on a trusted lab workstation. The interface
+allows the user to select software or RF profiles for 4G/5G. Simulations
+automatically prepare private synthetic credentials; RF also requires preflight
+checks, authorization, a checklist, the exact confirmation phrase, a finite
+duration, and an emergency stop. While an RF session is active, the CLI refuses
+to stop or downgrade the application so that the web emergency stop remains
+available.
 
-La preparación queda disponible en:
+The preparation page is available at:
 
 ```text
 http://localhost:8080/preparation
 ```
 
-También se puede preparar un perfil directamente:
+A profile can also be prepared directly:
 
 ```bash
 ./lain5g doctor 4g-lte-sim
@@ -90,78 +102,81 @@ También se puede preparar un perfil directamente:
 ./lain5g scenario stop 4g-lte-sim
 ```
 
-Para descargar todos los componentes publicados:
+To download all published components:
 
 ```bash
 ./lain5g images pull all
 ```
 
-Los comandos `make images-pull`, `make app-up` y los objetivos de cada escenario
-siguen disponibles como interfaz alternativa para automatización.
+The `make images-pull` and `make app-up` commands and each scenario's targets
+remain available as an alternative automation interface.
 
-## Construcción alternativa
+## Alternative Builds
 
-La construcción local solo es necesaria para desarrollar o modificar los componentes:
+Local builds are required only when developing or modifying components:
 
 ```bash
 make build-5g-sa
 ```
 
-Para 4G software:
+For software-based 4G:
 
 ```bash
 make build-4g-lte-sim
 ```
 
-Para 4G X310:
+For 4G with a USRP:
 
 ```bash
 make build-4g-lte-x310
 ```
 
-La imagen X310 compila UHD y puede tardar bastante más que la ruta software.
+The X310 image builds UHD and can take considerably longer than the software path.
 
-La API Dockerizada se construye desde el contexto raíz para incluir el archivo
-autoritativo `VERSION`; use `docker build -f backend/Dockerfile .` si necesita
-construirla fuera de Compose.
+The containerized API is built from the root context to include the authoritative
+`VERSION` file; use `docker build -f backend/Dockerfile .` if you need to build
+it outside Compose.
 
-Esto crea las mismas etiquetas locales que la descarga automática:
+This creates the same local tags as the automatic download:
 
 - `lain5g-lab/open5gs:local`
 - `lain5g-lab/ueransim:local`
 - `lain5g-lab/srsran4g-sim:local`
 - `lain5g-lab/srsran4g-uhd:local`
 
-Las imágenes locales se construyen desde los repositorios y revisiones fijados
-en los Dockerfiles del proyecto.
+The local images are built from the repositories and revisions pinned in the
+project Dockerfiles.
 
-## Configuración inicial
+## Initial Configuration
 
-La web operativa y la consola interactiva preparan automáticamente el escenario
-software elegido. Para preparar un perfil directamente sin iniciar servicios:
+The operational web interface and interactive console automatically prepare the
+selected software scenario. To prepare a profile directly without starting
+services:
 
 ```bash
 ./lain5g scenario setup PERFIL
 ```
 
-`PERFIL` puede ser `4g-lte-sim`, `5g-sa`, `4g-lte-x310` o `5g-sa-x310`. El
-comando genera valores sintéticos aleatorios en un archivo local ignorado y
-aplica permisos `0600`.
+`PERFIL` can be `4g-lte-sim`, `5g-sa`, `4g-lte-x310`, or `5g-sa-x310`. The
+command generates random synthetic values in an ignored local file and applies
+`0600` permissions.
 
-Para configurar los valores manualmente:
+To configure the values manually:
 
 ```bash
 cp deployments/5g-sa/.env.example deployments/5g-sa/.env
-nano deployments/5g-sa/.env
 ```
 
-Define `SUBSCRIBER_KEY` y `SUBSCRIBER_OPC` con valores de laboratorio de 32 caracteres hexadecimales. No uses claves reales.
+Edit `deployments/5g-sa/.env` with an editor of your choice.
 
-Para 4G:
+Set `SUBSCRIBER_KEY` and `SUBSCRIBER_OPC` to 32-character hexadecimal lab values. Do not use real keys.
+
+For 4G:
 
 ```bash
 cp deployments/4g-volte/common/.env.example deployments/4g-volte/common/.env
-nano deployments/4g-volte/common/.env
 ```
 
-Los archivos RF reales `channel-plan.yaml` y `safety-manifest.yaml` no se versionan; ver `docs/rf_safety.md`.
+Edit `deployments/4g-volte/common/.env` with an editor of your choice.
+
+The actual RF files `channel-plan.yaml` and `safety-manifest.yaml` are not version-controlled; see `docs/rf_safety.md`.

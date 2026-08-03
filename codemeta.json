@@ -2,9 +2,9 @@
   "@context": "https://w3id.org/codemeta/3.0",
   "@type": "SoftwareSourceCode",
   "name": "OpenLain5G",
-  "description": "OpenLain5G is a reproducible research environment for deploying, managing, and validating integrated laboratory 4G LTE/VoLTE and 5G SA/VoNR networks, plus an experimental 5G NSA profile. It integrates existing open-source components with configuration, orchestration, validation, run traceability, RF safeguards, and a FastAPI/React interface.",
-  "version": "1.1.0",
-  "datePublished": "2026-07-30",
+  "description": "OpenLain5G is a reproducible research environment for deploying, managing, and validating software 4G LTE and 5G SA data networks plus guarded X-Series USRP laboratory workflows. It integrates existing open-source components with configuration, orchestration, validation, run traceability, RF safeguards, and a FastAPI/React interface.",
+  "version": "1.1.1",
+  "datePublished": "2026-08-03",
   "codeRepository": "https://github.com/guallycanazas/Lain5G",
   "url": "https://github.com/guallycanazas/Lain5G",
   "license": "https://spdx.org/licenses/MIT",
@@ -46,14 +46,14 @@
   "applicationCategory": "Research software",
   "keywords": [
     "4G LTE",
-    "5G",
-    "IMS",
-    "VoLTE",
-    "VoNR",
+    "5G SA",
+    "Open5GS",
+    "UERANSIM",
+    "USRP",
     "network experimentation",
     "reproducibility"
   ],
   "developmentStatus": "https://www.repostatus.org/#active",
   "issueTracker": "https://github.com/guallycanazas/Lain5G/issues",
-  "releaseNotes": "https://github.com/guallycanazas/Lain5G/releases/tag/v1.1.0"
+  "releaseNotes": "https://github.com/guallycanazas/Lain5G/releases/tag/v1.1.1"
 }

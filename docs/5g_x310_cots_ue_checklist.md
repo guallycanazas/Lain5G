@@ -1,51 +1,52 @@
 # 5G SA X310 COTS UE Checklist
 
-Use este checklist antes de cualquier transmisión RF con `5g-sa-x310`. No registre valores reales de IMSI, K, OPc, Ki, AMF, SQN ni contraseñas en Git.
+Use this checklist before any RF transmission with `5g-sa-x310`. Do not commit actual IMSI, K, OPc, Ki, AMF, SQN, or password values to Git.
 
-## Equipo
+## Equipment
 
-- Celular compatible con 5G SA standalone, no solo NSA.
-- Banda NR compatible con el celular, el hardware X-Series, las daughterboards
-  instaladas y la autorización local.
-- USRP X300/X310 compatible conectado por Ethernet y detectado por UHD 4.10.0.0.
-- Atenuadores/cables/cámara shielded según el manifiesto de seguridad local.
-- Wi-Fi del celular desactivado durante la prueba.
+- A handset that supports 5G SA (standalone), not only NSA.
+- An NR band supported by the handset, the X-Series hardware, the installed
+  daughterboards, and the local authorization.
+- A compatible USRP X300/X310 connected over Ethernet and detected by UHD 4.10.0.0.
+- Attenuators, cables, and a shielded enclosure as specified in the local safety manifest.
+- Handset Wi-Fi disabled during the test.
 
-## SIM y suscriptor
+## SIM and Subscriber
 
-- SIM programable configurada con MCC/MNC coincidentes con `001/01` o con el PLMN local autorizado.
-- IMSI/SUPI, K/Ki, OPc, AMF y SQN coinciden con el suscriptor en Open5GS.
-- No guardar IMSI real ni claves en logs compartidos; redactar identificadores antes de reportar.
-- Roaming habilitado si el PLMN de laboratorio no coincide con el perfil esperado por el teléfono.
-- APN `internet` configurado en el celular.
-- Suscriptor Open5GS presente antes de iniciar RF.
-- SUCI/SUPI revisado en logs AMF con identificadores redactados.
+- A programmable SIM configured with an MCC/MNC matching `001/01` or the authorized local PLMN.
+- IMSI/SUPI, K/Ki, OPc, AMF, and SQN matching the subscriber in Open5GS.
+- Do not store the actual IMSI or keys in shared logs; redact identifiers before reporting.
+- Roaming enabled if the lab PLMN does not match the profile expected by the handset.
+- The `internet` APN configured on the handset.
+- The Open5GS subscriber provisioned before starting RF.
+- SUCI/SUPI verified in AMF logs with identifiers redacted.
 
 ## Radio
 
-- Modo 5G SA disponible y seleccionado en el celular.
-- Selección manual de red disponible para el PLMN del laboratorio.
-- `DL_ARFCN`, `NR_BAND`, `TX_GAIN` y `RX_GAIN` completados solo con valores autorizados localmente.
-- `rf/channel-plan.yaml` creado desde el ejemplo y validado por el operador.
-- `rf/safety-manifest.yaml` creado desde el ejemplo con `authorization_confirmed: true`, duración finita, `auto_stop: true` y nota de operador.
+- 5G SA mode available and selected on the handset.
+- Manual network selection available for the lab PLMN.
+- `DL_ARFCN`, `NR_BAND`, `TX_GAIN`, and `RX_GAIN` populated only with locally authorized values.
+- `rf/channel-plan.yaml` created from the example and validated by the operator.
+- `rf/safety-manifest.yaml` created from the example with `authorization_confirmed: true`, a finite duration, `auto_stop: true`, and an operator note.
 
-## Logs mínimos
+## Minimum Logs
 
 - AMF: `SERVICE=amf make logs-5g-x310`.
-- IMS: `SERVICE=pcscf make logs-5g-x310`, `SERVICE=scscf make logs-5g-x310` y
-  `SERVICE=dns make logs-5g-x310`.
-- gNB: `SERVICE=gnb-x310 make logs-5g-x310` o `deployments/5g-sa-x310/gnb/.runtime/gnb-x310.log`.
-- Registrar evidencia de NG Setup, Registration Request/Accept y PDU session sin exponer claves ni IMSI completo.
+- gNB: `SERVICE=gnb-x310 make logs-5g-x310` or `deployments/5g-sa-x310/gnb/.runtime/gnb-x310.log`.
+- Record evidence of NG Setup, Registration Request/Accept, and the PDU session without exposing keys or the full IMSI.
 
-## Flujo seguro
+## Safe Workflow
 
-- Preparar el secreto IMS sintético con `./lain5g scenario setup 5g-sa-x310`.
-- Ejecutar `make check-5g-x310`.
-- Ejecutar `make preflight-5g-x310`.
-- Ejecutar `make dry-run-5g-x310`.
-- Iniciar 5GC e infraestructura IMS, sin RF, con `make start-5g-x310-core`.
-- No ejecutar `make start-5g-x310-rf` hasta contar con autorización local y `LAIN5G_ALLOW_5G_RF_START=true` en el entorno del operador.
-- Alternativamente, ejecutar `make app-up` y abrir `http://localhost:8080/scenarios/5g-sa-x310`; `5GC + IMS, no RF` no transmite y `Start core + RF` exige todas las guardas.
+- Prepare the synthetic IMS secret with `./lain5g scenario setup 5g-sa-x310`.
+- Run `make check-5g-x310`.
+- Run `make preflight-5g-x310`.
+- Run `make dry-run-5g-x310`.
+- Start the 5GC and IMS infrastructure without RF by running `make start-5g-x310-core`.
+- Do not run `make start-5g-x310-rf` until local authorization is in place and `LAIN5G_ALLOW_5G_RF_START=true` is set in the operator's environment.
+- Alternatively, run `./lain5g app start --operations --open` and open
+  `http://localhost:8080/scenarios/5g-sa-x310`; `5GC + IMS, no RF` does not
+  transmit, and `Start core + RF` requires all safeguards.
 
-Conserve la evidencia de sesión IMS, registro SIP, llamada y RTP bajo el mismo
-`run-id`, con identificadores sensibles redactados antes de compartirla.
+Retain NG setup and any separately collected, redacted UE-registration and PDU
+session evidence under the same `run-id`. IMS registration, VoNR calls, and RTP
+remain outside the supported `5g-sa-x310` scope.

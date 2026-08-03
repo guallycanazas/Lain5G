@@ -1,92 +1,93 @@
 # Validation
 
-Esta guía define criterios y salidas e indexa los artefactos públicos sin crear
-una segunda matriz normativa. Consulte la
-[tabla canónica de capacidades](../README.md#canonical-capability-status), que
-separa evidencia pública, privada e histórica. Los resultados actuales de LTE y
-5G SA evalúan el commit fuente `59471947da95783c1a85a4d18284360e4b6d898b`
-en una VM Ubuntu 24.04 limpia. Los artefactos de julio 23 conservan su commit y
-versión pre-release históricos.
+This guide defines criteria and outputs and indexes public artifacts without
+creating a second normative matrix. See the
+[canonical capability table](../README.md#canonical-capability-status), which
+separates public, private, and historical evidence. The current LTE and 5G SA
+results evaluate source commit `59471947da95783c1a85a4d18284360e4b6d898b`
+on a clean Ubuntu 24.04 VM. The July 23 artifacts retain their historical commit
+and pre-release version.
 
-La evidencia pública para la línea estable `1.1.0` comprende:
+Public evidence for the stable `1.1.0` release includes:
 
 - [5G SA software](../results/public/5g-sa-sim/run-20260730-021914.json):
-  15/15 comprobaciones `PASS`, `SIMULATION_ONLY`.
+  15/15 checks `PASS`, `SIMULATION_ONLY`.
 - [LTE software](../results/public/4g-lte-sim/run-20260730-021702.json):
-  14/14 comprobaciones `PASS`, `SIMULATION_ONLY`.
-- [VoLTE/IMS 4G software](../results/public/4g-ims-sim/run-20260723-055149.json):
-  resultado histórico con 22/22 comprobaciones `PASS`, `SIMULATION_ONLY`;
-  valida LTE, EPC, IMS, datos y registro SIP autenticado de laboratorio.
+  14/14 checks `PASS`, `SIMULATION_ONLY`.
+- [4G VoLTE/IMS software](../results/public/4g-ims-sim/run-20260723-055149.json):
+  historical result with 22/22 checks `PASS`, `SIMULATION_ONLY`; validates LTE,
+  EPC, IMS, data, and authenticated lab SIP registration.
 - [VoNR software](../results/public/5g-vonr-sim/run-20260723-055328.json):
-  intento `BLOCKED` y `NOT_VALIDATED`; una ejecución local posterior fue
-  reportada con 25/25, pero no tiene artefacto público revisable.
+  `BLOCKED` and `NOT_VALIDATED` attempt; a later local run was reported as
+  25/25, but it has no publicly reviewable artifact.
 
-La validación automática está en `deployments/5g-sa/scripts/validate.sh` y se ejecuta con:
+Automated validation is located at `deployments/5g-sa/scripts/validate.sh` and runs with:
 
 ```bash
 make validate-5g-sa
 ```
 
-Cada comprobación devuelve uno de estos estados:
+Each check returns one of these states:
 
 - `PASS`
 - `FAIL`
 - `WARNING`
 - `NOT_TESTED`
 
-La aplicación agrupa esas comprobaciones en una cadena visual de evidencia. En
-simulación, las etapas son core, enlace RAN, registro/sesión UE, interfaz/IP y
-ping enlazado al túnel UE. Una etapa solo aparece verde cuando todos sus checks
-requeridos tienen evidencia `PASS`; un contenedor activo no se interpreta como
-registro UE ni tráfico de usuario. El estado global también se deriva de los
-checks y no confía en un `PASS` grabado por un script antiguo.
+The application groups these checks into a visual evidence chain. In simulation,
+the stages are core, RAN link, UE registration/session, interface/IP, and a ping
+bound to the UE tunnel. A stage appears green only when all of its required
+checks have `PASS` evidence; a running container is not interpreted as UE
+registration or user traffic. The overall status is also derived from the checks
+and does not trust a `PASS` recorded by an old script.
 
-En perfiles X310, la cadena separa detección UHD, preflight, core, proceso RAN,
-enlace S1/NG y prueba UE por aire. La ejecución del eNB/gNB no demuestra por sí
-sola emisión o recepción RF. La etapa UE permanece `NOT_TESTED` hasta disponer
-de evidencia correlacionada de un equipo externo durante la sesión autorizada.
+For USRP profiles, the chain separates UHD detection, preflight, core, RAN
+process, S1/NG link, and over-the-air UE testing. Running the eNB/gNB alone does
+not demonstrate RF transmission or reception. The UE stage remains `NOT_TESTED`
+until correlated evidence from external equipment is available for the
+authorized session.
 
-## Comprobaciones 5G SA
+## 5G SA checks
 
-- MongoDB activo.
-- NRF activo.
-- AMF activo.
-- SMF activo.
-- UPF activo.
-- AUSF activo.
-- UDM activo.
-- UDR activo.
-- PCF activo.
-- conexión NG entre gNB y AMF.
-- registro del UE.
-- establecimiento de sesión PDU.
-- interfaz TUN `uesimtun0`.
-- IP asignada al UE.
-- ping desde el UE hacia `PING_TARGET`.
+- MongoDB running.
+- NRF running.
+- AMF running.
+- SMF running.
+- UPF running.
+- AUSF running.
+- UDM running.
+- UDR running.
+- PCF running.
+- NG connection between the gNB and AMF.
+- UE registration.
+- PDU session establishment.
+- `uesimtun0` TUN interface.
+- IP assigned to the UE.
+- ping from the UE to `PING_TARGET`.
 
-El resultado se guarda en `runs/<run-id>/validation.json`.
+The result is saved to `runs/<run-id>/validation.json`.
 
-## Comprobaciones 4G LTE
+## 4G LTE checks
 
 ```bash
 make validate-4g-lte-sim
 make validate-4g-lte-x310
 ```
 
-La ruta `4g-lte-sim` revisa EPC, marcadores S1, registro de srsUE, bearer,
-interfaz UE y ping de datos sin iniciar IMS. La evidencia histórica `4g-volte-sim`, cuyo artefacto
-público usa el nombre de alcance `4g-ims-sim`, añade servicios IMS, DNS y
-evidencia de registro SIP de laboratorio.
+The `4g-lte-sim` path checks the EPC, S1 markers, srsUE registration, bearer, UE
+interface, and data ping without starting IMS. The historical `4g-volte-sim`
+evidence, whose public artifact uses the `4g-ims-sim` scope name, adds IMS
+services, DNS, and lab SIP registration evidence.
 
-La ruta X310 separa comprobaciones de hardware, UHD, FPGA, EPC, disponibilidad
-de infraestructura IMS, preflight RF, auto-stop y logs del eNB. La evidencia
-extremo a extremo adicional se conserva bajo el `run-id` del operador. En modo
-seco no se inicia RF.
+The X310 path separates hardware, UHD, FPGA, EPC, IMS infrastructure
+availability, RF preflight, auto-stop, and eNB log checks. Additional
+end-to-end evidence must be collected separately and correlated with the
+operator's `run-id`; it is not retained automatically. Dry-run mode does not
+start RF.
 
-`5g-sa-x310` registra igualmente su evidencia local y logs correlacionados en
-`runs/`.
+`5g-sa-x310` likewise records its local evidence and correlated logs in `runs/`.
 
-La validación VoLTE vigente cubre registro LTE, bearer/APN, datos, servicios IMS,
-DNS y el intercambio REGISTER autenticado hasta 200 OK. Los criterios de audio,
-diálogo de llamada y rendimiento RTP se gestionan como pruebas de medios
-separadas; consulte [criterios VoLTE](volte_validation.md).
+Current VoLTE validation covers LTE registration, bearer/APN, data, IMS
+services, DNS, and the authenticated REGISTER exchange through 200 OK. Audio,
+call-dialog, and RTP performance criteria are handled as separate media tests;
+see [VoLTE criteria](volte_validation.md).

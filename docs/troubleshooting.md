@@ -1,34 +1,74 @@
 # Troubleshooting
 
-## `.env` faltante
-
-Ejecuta:
+Start with the selected profile's current state rather than assuming a single
+cause. Replace `PROFILE` with one of the public profile IDs:
 
 ```bash
-./lain5g scenario setup 5g-sa
+./lain5g scenario status PROFILE
+./lain5g scenario validate PROFILE
+./lain5g scenario logs PROFILE
 ```
 
-El comando crea credenciales sintéticas locales sin imprimirlas.
+Keep logs private until they have been reviewed and sanitized. Do not publish
+subscriber credentials, complete identifiers, private addresses, RF settings,
+device serials, or authorization records.
 
-## Conflicto `10.20.0.3` al iniciar 5G con la web activa
+## Local Configuration
 
-MongoDB e `init-subscriber` usan `10.20.0.2` y `10.20.0.3`. El backend web debe
-conectarse con la IP reservada `10.20.0.250`; las versiones anteriores podían
-recibir una de esas direcciones dinámicamente y bloquear el inicio. Actualiza el repositorio y recrea el backend
-con `make app-down-operations && make app-up-operations`. No es necesario
-desconectarlo manualmente ni eliminar los volúmenes del escenario.
+If a profile reports missing or incomplete local configuration, prepare it with:
 
-## gNB no conecta
+```bash
+./lain5g scenario setup PROFILE
+```
 
-Revisa que `deployments/5g-sa/ueransim/gnb.yaml` apunte al AMF `10.20.0.5:38412` y que `amf.yaml` use el mismo MCC, MNC y TAC.
+The command creates ignored local files and synthetic credentials without
+printing secret values. After manual changes, validate the profile again and
+restart the affected scenario so rendered configuration is refreshed.
 
-## UE no registra
+## Container and Service Readiness
 
-El UE renderiza IMSI, K, OPc, AMF y SQN desde `.env`. Comprueba el resultado sin
-publicar secretos mediante `./lain5g scenario logs 5g-sa` y busca errores de
-autenticación en `init-subscriber`, `amf`, `ausf` y `ue`. Reinicia todo el
-escenario después de cambiar `.env`.
+Inspect scenario status and bounded service logs. Check for unhealthy or
+restarting containers, missing images, invalid rendered configuration, port or
+volume conflicts, and host resource limits. A running container proves only
+process state; use the scenario validator for protocol and data-plane checks.
 
-## No hay ping
+## Docker Networking
 
-Revisa que el contenedor UPF tenga `/dev/net/tun`, `NET_ADMIN`, `ogstun` y NAT activo. Ejecuta `make validate-5g-sa` para ver en qué punto falla.
+Check whether the configured Docker subnet overlaps another Docker network, a
+VPN, a host route, or the local LAN. For static addressing, confirm that every
+address is unused inside the selected subnet and that all related environment
+and Compose settings agree. Recreate only the affected application or scenario
+networks after reviewing the effective configuration; do not remove unrelated
+volumes or networks as a generic remedy.
+
+## RAN and Core Signaling
+
+For S1 or NG setup failures, compare the rendered RAN endpoint with the
+MME/AMF listener and verify transport reachability. Then check PLMN, TAC, slice,
+and DNN/APN consistency. Host firewalls, SCTP support, container routing, and a
+stale process can also prevent signaling even when configuration values match.
+
+## UE Registration
+
+Review the subscriber-provisioning, core authentication, and UE logs together.
+Common categories include a missing subscriber, inconsistent PLMN or subscriber
+data, authentication or sequence-number state, unsupported slice/DNN settings,
+and stale rendered configuration. Use synthetic credentials for reproducible
+tests and never print or publish real authentication material.
+
+## Data-Plane Connectivity
+
+Use the validator to determine whether failure occurs at session establishment,
+tunnel creation, address assignment, forwarding, NAT, firewall policy, or
+target reachability. Confirm that the expected tunnel exists, has an address,
+and is used by the test traffic. Required host capabilities and `/dev/net/tun`
+availability depend on the selected profile.
+
+## Checked-In 5G SA Defaults
+
+The included `5g-sa` profile uses the `10.20.0.0/24` Docker subnet. Within that
+specific profile, MongoDB and subscriber initialization use `10.20.0.2` and
+`10.20.0.3`, the AMF endpoint is `10.20.0.5:38412`, and the application backend
+reserves `10.20.0.250` when it joins the core network. These are reproducibility
+defaults, not universal requirements. Custom deployments must choose an
+available subnet and addresses, then update every related setting consistently.

@@ -2,10 +2,10 @@
 
 <div align="center">
 
-**Evidence-oriented orchestration for software 4G/5G networks and guarded USRP laboratory workflows**
+**Evidence-oriented orchestration for software 4G/5G networks and guarded X-Series USRP laboratory workflows**
 
 [![CI](https://github.com/guallycanazas/Lain5G/actions/workflows/ci.yml/badge.svg)](https://github.com/guallycanazas/Lain5G/actions/workflows/ci.yml)
-[![Release](https://img.shields.io/badge/release-v1.1.0-4051b5.svg)](https://github.com/guallycanazas/Lain5G/releases/tag/v1.1.0)
+[![Release](https://img.shields.io/badge/release-v1.1.1-4051b5.svg)](https://github.com/guallycanazas/Lain5G/releases/tag/v1.1.1)
 [![Project source: MIT](https://img.shields.io/badge/project_source-MIT-d9a441.svg)](LICENSE)
 [![Platform](https://img.shields.io/badge/platform-GNU%2FLinux_x86__64-2f6f62.svg)](docs/installation.md)
 [![Python](https://img.shields.io/badge/Python-%E2%89%A53.10-3776ab.svg)](backend/requirements.txt)
@@ -16,7 +16,7 @@
 
 OpenLain5G is a reproducibility-oriented GNU/Linux and Docker Compose laboratory
 integration for two public software data-network profiles, 4G LTE and 5G SA,
-and two guarded USRP RF profiles. It combines established upstream mobile
+and two guarded X-Series USRP RF profiles. It combines established upstream mobile
 network components with scenario isolation, declarative configuration, guided
 operation, validators, local run records, a FastAPI backend, a React interface,
 and fail-closed RF safety controls.
@@ -26,15 +26,17 @@ project-authored contribution is the integration, orchestration, validation,
 traceability, operator workflow, and safety layer around Open5GS, UERANSIM,
 srsRAN, Kamailio, UHD, and related independently licensed software.
 
-> **Release status:** [`v1.1.0`](https://github.com/guallycanazas/Lain5G/tree/v1.1.0)
-> is the latest immutable source release. It includes the clean-machine installer,
-> generated private setup, and visual proof chain. A SoftwareX submission archive
-> and DOI must identify one exact release; this repository does not claim an
-> accepted article or DOI.
+> **Release status:** [`v1.1.1`](https://github.com/guallycanazas/Lain5G/tree/v1.1.1)
+> is the latest immutable source release.
+
+> **Naming:** OpenLain5G is the current project name. The repository URL, `lain5g`
+> CLI, `LAIN5G_*` environment variables, profile IDs, and image names retain their
+> existing identifiers for compatibility.
 
 ## 1. Install First
 
-The supported entry point on a clean GNU/Linux x86_64 machine is:
+On a GNU/Linux x86_64 host, obtain the source first. The command below requires
+Git; an archive download is an alternative when Git is not yet installed:
 
 ```bash
 git clone https://github.com/guallycanazas/Lain5G.git
@@ -48,20 +50,22 @@ Before changing the machine, the complete plan can be inspected with:
 ./install.sh --dry-run
 ```
 
-The installer detects `apt-get`, `dnf`, `pacman`, or `zypper` and prepares the
-complete local environment:
+The installer automatically provisions hosts using `apt-get`, `dnf`, `pacman`,
+or `zypper`. Other distributions, rootless Docker installations, managed
+workstations, and nonstandard init systems must satisfy the documented
+prerequisites manually.
 
 | Installer step | Result |
 | --- | --- |
 | Development tools | Python 3 with `venv`, Node.js, npm, Git, GNU Make, and util-linux |
-| Container runtime | Docker Engine and Docker Compose v2 installed and enabled |
-| User access | Docker group membership configured when required |
+| Container runtime | Docker Engine and Docker Compose v2 installed; daemon startup attempted where supported |
+| User access | Docker group membership configured only when the host uses that access model |
 | Private state | Ignored profile and application files created with restrictive permissions |
 | Components | All unique images required by the four public profiles downloaded |
 | RF behavior | No RF transmission; hardware operation remains separately authorized and fail-closed |
 
-If the installer prints `PASO REQUERIDO`, activate the Docker group before
-continuing:
+If setup changed Docker-group membership and the current shell still lacks
+Docker access, log in again or start a shell with the updated group:
 
 ```bash
 newgrp docker
@@ -128,10 +132,10 @@ flowchart LR
 
 Each stage becomes `PASS` only when all required checks report evidence. A
 running container never proves UE registration, an assigned address, user-plane
-traffic, RF emission, or over-air reception. For guarded USRP profiles, the visual chain
-separates hardware/UHD detection, RF preflight, core readiness, the time-limited
-eNB/gNB process, S1/NG evidence, and external UE evidence. Missing over-air UE
-evidence remains `NOT_TESTED`.
+traffic, RF emission, or over-air reception. For guarded USRP profiles, the
+visual chain separates hardware/UHD detection, RF preflight, core readiness, the
+time-limited eNB/gNB process, S1/NG evidence, and external UE evidence. Missing
+over-air UE evidence remains `NOT_TESTED`.
 
 <a id="canonical-capability-status"></a>
 
@@ -141,13 +145,14 @@ evidence remains `NOT_TESTED`.
 | --- | --- | --- | --- |
 | `4g-lte-sim` | Software only | Open5GS EPC + srsENB/srsUE over ZMQ | Clean-VM sanitized summary: [14/14 `PASS`](results/public/4g-lte-sim/run-20260730-021702.json) |
 | `5g-sa` | Software only | Open5GS 5GC + UERANSIM gNB/UE + data PDU session | Clean-VM sanitized summary: [15/15 `PASS`](results/public/5g-sa-sim/run-20260730-021914.json) |
-| `4g-lte-x310` | Guarded RF | Open5GS EPC + compact IMS infrastructure + srsRAN eNB + USRP | Guarded workflow and local run evidence; no public end-to-end RF result |
-| `5g-sa-x310` | Guarded RF | Open5GS 5GC + compact IMS infrastructure + srsRAN Project gNB + USRP | Guarded workflow and local run evidence; no public end-to-end RF result |
+| `4g-lte-x310` | Guarded RF | Open5GS EPC + compact IMS infrastructure + srsRAN eNB + compatible X-Series USRP | Guarded workflow and local run evidence; no public end-to-end RF result |
+| `5g-sa-x310` | Guarded RF | Open5GS 5GC + compact IMS infrastructure + srsRAN Project gNB + compatible X-Series USRP | Guarded workflow and local run evidence; no public end-to-end RF result |
 
 The current LTE and 5G SA summaries are sanitized validator records from a clean
-Ubuntu 24.04 virtual machine, not raw protocol traces. They identify the exact
-`1.1.0` source commit executed. Historical signaling records, including the
-blocked public VoNR attempt and older pre-release snapshots, remain under
+Ubuntu 24.04 virtual machine, not raw protocol traces. They identify
+[`59471947`](https://github.com/guallycanazas/Lain5G/commit/59471947da95783c1a85a4d18284360e4b6d898b)
+as the source commit executed. Historical signaling records, including the
+blocked public VoNR attempt and older snapshots, remain under
 [`results/public/`](results/public/README.md).
 
 Software results must not be extrapolated to SDR hardware, commercial UEs, voice
@@ -184,7 +189,7 @@ flowchart TB
 | [`results/public/`](results/public/README.md) | Reviewed, schema-validated, sanitized summaries |
 | `runs/` | Ignored local operational records that may contain sensitive information |
 
-## 6. SoftwareX Reviewer Route
+## 6. Repository Verification
 
 After running the installer, execute the repository-wide safe gate:
 
@@ -203,11 +208,11 @@ GitHub Actions runs the same command on Ubuntu 24.04 with Python 3.12 and Node.j
 or reproduce historical network experiments. Operational evidence is generated
 separately by the scenario validators.
 
-### Submission metadata snapshot
+### Release metadata
 
-| SoftwareX item | Repository value |
+| Item | Repository value |
 | --- | --- |
-| Current immutable release | [`v1.1.0`](https://github.com/guallycanazas/Lain5G/releases/tag/v1.1.0) |
+| Current immutable release | [`v1.1.1`](https://github.com/guallycanazas/Lain5G/releases/tag/v1.1.1) |
 | Version control | Git and GitHub |
 | Project-source license | [MIT](LICENSE), with separate upstream terms |
 | Languages | Python, TypeScript, and Shell |
@@ -233,6 +238,7 @@ separately by the scenario validators.
 
 ## Documentation
 
+- [Documentation index](docs/README.md)
 - [Installation](docs/installation.md)
 - [4G software simulation](docs/4g_simulation.md)
 - [5G SA software simulation](docs/5g_sa.md)
@@ -269,9 +275,8 @@ Arequipa**. See [`AUTHORS.md`](AUTHORS.md).
 
 ## Citation
 
-Citation metadata is available in [`CITATION.cff`](CITATION.cff). A software DOI
-and SoftwareX article citation will be added only after archival publication. No
-DOI or accepted SoftwareX article is currently claimed.
+Citation metadata is available in [`CITATION.cff`](CITATION.cff) and
+[`codemeta.json`](codemeta.json).
 
 ## License
 

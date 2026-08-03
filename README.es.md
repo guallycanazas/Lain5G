@@ -2,10 +2,10 @@
 
 <div align="center">
 
-**Orquestación basada en evidencia para redes software 4G/5G y laboratorios USRP protegidos**
+**Orquestación basada en evidencia para redes software 4G/5G y laboratorios USRP X-Series protegidos**
 
 [![CI](https://github.com/guallycanazas/Lain5G/actions/workflows/ci.yml/badge.svg)](https://github.com/guallycanazas/Lain5G/actions/workflows/ci.yml)
-[![Release](https://img.shields.io/badge/release-v1.1.0-4051b5.svg)](https://github.com/guallycanazas/Lain5G/releases/tag/v1.1.0)
+[![Release](https://img.shields.io/badge/release-v1.1.1-4051b5.svg)](https://github.com/guallycanazas/Lain5G/releases/tag/v1.1.1)
 [![Código propio: MIT](https://img.shields.io/badge/c%C3%B3digo_propio-MIT-d9a441.svg)](LICENSE)
 [![Plataforma](https://img.shields.io/badge/plataforma-GNU%2FLinux_x86__64-2f6f62.svg)](docs/installation.md)
 [![Python](https://img.shields.io/badge/Python-%E2%89%A53.10-3776ab.svg)](backend/requirements.txt)
@@ -16,7 +16,7 @@
 
 OpenLain5G es una integración de laboratorio orientada a reproducibilidad sobre
 GNU/Linux y Docker Compose. Expone dos perfiles públicos de datos completamente
-software, 4G LTE y 5G SA, y dos perfiles RF protegidos con USRP. Integra
+software, 4G LTE y 5G SA, y dos perfiles RF protegidos con USRP X-Series. Integra
 componentes de red consolidados con aislamiento de escenarios, configuración
 declarativa, operación guiada, validadores, registros locales, una API FastAPI,
 una interfaz React y controles RF fail-closed.
@@ -26,15 +26,18 @@ contribución propia es la integración, orquestación, validación, trazabilida
 experiencia del operador y capa de seguridad alrededor de Open5GS, UERANSIM,
 srsRAN, Kamailio, UHD y software relacionado con licencias independientes.
 
-> **Estado de publicación:** [`v1.1.0`](https://github.com/guallycanazas/Lain5G/tree/v1.1.0)
-> es la última release inmutable. Incluye el instalador de máquina limpia, la
-> configuración privada generada y la cadena visual de evidencia. Una entrega a
-> SoftwareX deberá identificar una release y un archivo/DOI exactos; aquí no se
-> afirma un artículo aceptado ni un DOI.
+> **Estado de publicación:** [`v1.1.1`](https://github.com/guallycanazas/Lain5G/tree/v1.1.1)
+> es la última release inmutable.
+
+> **Nombres:** OpenLain5G es el nombre actual del proyecto. La URL del
+> repositorio, la CLI `lain5g`, las variables `LAIN5G_*`, los IDs de perfiles y
+> los nombres de imágenes se conservan por compatibilidad.
 
 ## 1. Instalar Primero
 
-En una máquina GNU/Linux x86_64 limpia, use la ruta soportada:
+En un equipo GNU/Linux x86_64, obtenga primero el código fuente. El comando
+siguiente requiere Git; si todavía no está instalado, también puede descargar
+un archivo del repositorio:
 
 ```bash
 git clone https://github.com/guallycanazas/Lain5G.git
@@ -48,18 +51,21 @@ Para revisar el plan completo antes de modificar el equipo:
 ./install.sh --dry-run
 ```
 
-El instalador detecta `apt-get`, `dnf`, `pacman` o `zypper` y prepara el entorno:
+El instalador prepara automáticamente sistemas con `apt-get`, `dnf`, `pacman` o
+`zypper`. Otras distribuciones, Docker rootless, equipos administrados y sistemas
+de inicio no estándar deben satisfacer los requisitos documentados manualmente.
 
 | Etapa | Resultado |
 | --- | --- |
 | Herramientas | Python 3 con `venv`, Node.js, npm, Git, GNU Make y util-linux |
-| Contenedores | Docker Engine y Docker Compose v2 instalados y habilitados |
-| Acceso | Membresía del grupo Docker configurada cuando sea necesaria |
+| Contenedores | Docker Engine y Docker Compose v2 instalados; el daemon se inicia cuando el sistema lo permite |
+| Acceso | Membresía del grupo Docker configurada solo si el equipo usa ese modelo |
 | Estado privado | Perfiles y configuración local ignorados, con permisos restrictivos |
 | Componentes | Todas las imágenes únicas de los cuatro perfiles públicos descargadas |
 | RF | Ninguna transmisión; la operación de hardware sigue separada, autorizada y bloqueada por defecto |
 
-Si aparece `PASO REQUERIDO`, active el grupo Docker:
+Si la instalación cambió la membresía del grupo Docker y la sesión actual aún no
+tiene acceso, vuelva a iniciar sesión o abra un shell con el grupo actualizado:
 
 ```bash
 newgrp docker
@@ -122,9 +128,9 @@ flowchart LR
 
 Una etapa solo es `PASS` cuando todos sus checks requeridos tienen evidencia.
 Un contenedor activo no demuestra registro UE, IP, tráfico, emisión RF ni
-recepción por aire. En perfiles USRP protegidos se separan detección UHD, preflight, core, proceso
-eNB/gNB con tiempo limitado, S1/NG y evidencia de UE externo. Sin prueba por
-aire, esa etapa permanece `NOT_TESTED`.
+recepción por aire. En perfiles USRP protegidos se separan detección UHD,
+preflight, core, proceso eNB/gNB con tiempo limitado, S1/NG y evidencia de UE
+externo. Sin prueba por aire, esa etapa permanece `NOT_TESTED`.
 
 <a id="canonical-capability-status"></a>
 
@@ -134,13 +140,14 @@ aire, esa etapa permanece `NOT_TESTED`.
 | --- | --- | --- | --- |
 | `4g-lte-sim` | Solo software | EPC Open5GS + srsENB/srsUE por ZMQ | Resumen sanitizado en VM limpia: [14/14 `PASS`](results/public/4g-lte-sim/run-20260730-021702.json) |
 | `5g-sa` | Solo software | 5GC Open5GS + gNB/UE UERANSIM + PDU de datos | Resumen sanitizado en VM limpia: [15/15 `PASS`](results/public/5g-sa-sim/run-20260730-021914.json) |
-| `4g-lte-x310` | RF protegido | EPC Open5GS + IMS compacto + eNB srsRAN + USRP | Flujo protegido y evidencia local; sin resultado RF extremo a extremo público |
-| `5g-sa-x310` | RF protegido | 5GC Open5GS + IMS compacto + gNB srsRAN Project + USRP | Flujo protegido y evidencia local; sin resultado RF extremo a extremo público |
+| `4g-lte-x310` | RF protegido | EPC Open5GS + IMS compacto + eNB srsRAN + USRP X-Series compatible | Flujo protegido y evidencia local; sin resultado RF extremo a extremo público |
+| `5g-sa-x310` | RF protegido | 5GC Open5GS + IMS compacto + gNB srsRAN Project + USRP X-Series compatible | Flujo protegido y evidencia local; sin resultado RF extremo a extremo público |
 
 Los resultados LTE y 5G SA actuales son resúmenes sanitizados de una VM Ubuntu
-24.04 limpia, no trazas de protocolo, e identifican el commit fuente `1.1.0`
-ejecutado. Otros registros históricos, incluido el intento VoNR público bloqueado
-y snapshots pre-release anteriores, permanecen en
+24.04 limpia, no trazas de protocolo, e identifican
+[`59471947`](https://github.com/guallycanazas/Lain5G/commit/59471947da95783c1a85a4d18284360e4b6d898b)
+como el commit fuente ejecutado. Otros registros históricos, incluido el intento
+VoNR público bloqueado y snapshots anteriores, permanecen en
 [`results/public/`](results/public/README.md).
 
 Los resultados software no deben extrapolarse a SDR, UE comerciales, medios de
@@ -177,7 +184,7 @@ flowchart TB
 | [`results/public/`](results/public/README.md) | Resúmenes revisados, sanitizados y validados por esquema |
 | `runs/` | Registros operacionales locales ignorados que pueden ser sensibles |
 
-## 6. Ruta para Revisores de SoftwareX
+## 6. Verificación del Repositorio
 
 Después del instalador, ejecute el gate seguro del repositorio:
 
@@ -195,11 +202,11 @@ GitHub Actions ejecuta el mismo comando en Ubuntu 24.04 con Python 3.12 y Node.j
 reproduce experimentos históricos; la evidencia operacional se genera con los
 validadores de escenario.
 
-### Resumen de metadatos de entrega
+### Metadatos de la release
 
 | Elemento | Valor del repositorio |
 | --- | --- |
-| Release inmutable | [`v1.1.0`](https://github.com/guallycanazas/Lain5G/releases/tag/v1.1.0) |
+| Release inmutable | [`v1.1.1`](https://github.com/guallycanazas/Lain5G/releases/tag/v1.1.1) |
 | Control de versiones | Git y GitHub |
 | Licencia de código propio | [MIT](LICENSE), con términos upstream separados |
 | Lenguajes | Python, TypeScript y Shell |
@@ -224,6 +231,7 @@ validadores de escenario.
 
 ## Documentación
 
+- [Índice de documentación](docs/README.md)
 - [Instalación](docs/installation.md)
 - [Simulación 4G](docs/4g_simulation.md)
 - [Simulación 5G SA](docs/5g_sa.md)
@@ -260,9 +268,8 @@ Consulte [`AUTHORS.md`](AUTHORS.md).
 
 ## Citación
 
-Los metadatos están en [`CITATION.cff`](CITATION.cff). El DOI del software y la
-cita SoftwareX se añadirán después de un archivo/publicación real. Actualmente
-no se afirma un DOI ni un artículo aceptado.
+Los metadatos de citación están en [`CITATION.cff`](CITATION.cff) y
+[`codemeta.json`](codemeta.json).
 
 ## Licencia
 

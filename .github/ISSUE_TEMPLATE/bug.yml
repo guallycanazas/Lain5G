@@ -1,0 +1,64 @@
+name: Bug report
+description: Report a reproducible, non-sensitive defect
+title: "[Bug]: "
+labels:
+  - bug
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Do not include credentials, subscriber identifiers, private addresses, RF plans, hardware serials, authorization records, packet captures, or unreviewed logs. Report vulnerabilities through Private Vulnerability Reporting.
+  - type: input
+    id: version
+    attributes:
+      label: Version or commit
+      placeholder: v1.1.1 or full commit SHA
+    validations:
+      required: true
+  - type: dropdown
+    id: profile
+    attributes:
+      label: Profile
+      options:
+        - 4g-lte-sim
+        - 5g-sa
+        - 4g-lte-x310
+        - 5g-sa-x310
+        - Repository tooling or documentation
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: Provide OS, architecture, Docker, Compose, Python, and Node versions as relevant.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Reproduction steps
+      description: Use sanitized commands and inputs. Do not run RF only to reproduce an issue.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+    validations:
+      required: true
+  - type: checkboxes
+    id: sanitized
+    attributes:
+      label: Data safety
+      options:
+        - label: I removed secrets, subscriber data, private addresses, RF details, hardware identifiers, and unreviewed logs.
+          required: true
+        - label: This is not a security vulnerability.
+          required: true

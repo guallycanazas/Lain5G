@@ -1,11 +1,10 @@
 # X310 LTE
 
-`4g-lte-x310` prepara un eNB LTE con srsRAN 4G y UHD para hardware USRP
-X-Series compatible. El nombre histórico del perfil se conserva. El EPC e IMS
-pueden iniciarse sin RF; el eNB RF está en un perfil Compose separado llamado
-`rf`.
+`4g-lte-x310` prepares an LTE eNB with srsRAN 4G and UHD for compatible USRP
+X-Series hardware. The historical profile name is retained. The EPC and IMS can
+be started without RF; the RF eNB is in a separate Compose profile named `rf`.
 
-## Comandos Sin RF
+## Commands Without RF
 
 ```bash
 ./lain5g scenario setup 4g-lte-x310
@@ -17,39 +16,41 @@ make status-4g-lte-x310
 make stop-4g-lte-x310
 ```
 
-## Inicio RF
+## Starting RF
 
-No ejecutes RF hasta completar `docs/rf_safety.md`.
+Do not start RF operation until you have met the requirements in `docs/rf_safety.md`.
 
-Requisitos mínimos:
+Minimum requirements:
 
-- `deployments/4g-volte/x310/rf/channel-plan.yaml` creado desde el ejemplo y revisado.
-- `deployments/4g-volte/x310/rf/safety-manifest.yaml` creado desde el ejemplo y con `authorization_confirmed: true`.
-- `LAIN5G_ALLOW_RF_START=true` definido solo para la ejecución autorizada.
-- Duración finita mediante `maximum_duration_seconds`.
+- `deployments/4g-volte/x310/rf/channel-plan.yaml` created from the example and reviewed.
+- `deployments/4g-volte/x310/rf/safety-manifest.yaml` created from the example and set to `authorization_confirmed: true`.
+- `LAIN5G_ALLOW_RF_START=true` set only for the authorized operation.
+- A finite duration specified by `maximum_duration_seconds`.
 
-Comando:
+Command:
 
 ```bash
 LAIN5G_ALLOW_RF_START=true make start-4g-lte-x310-rf
 ```
 
-El script ejecuta preflight, arranca solo `enb-x310`, espera la duración definida y ejecuta auto-stop.
+The script runs the preflight checks, starts only `enb-x310`, waits for the specified duration, and performs an automatic stop.
 
-## Inicio Desde La Interfaz
+## Starting from the Interface
 
-Ejecute `make app-up` y abra `http://localhost:8080/scenarios/4g-lte-x310`.
-Use `EPC + IMS, no RF` para verificar la infraestructura sin transmitir.
-`Start core + RF` muestra el plan de canal efectivo, descarga componentes
-faltantes con confirmación y exige completar todas las guardas. El botón
-`Emergency stop` permanece disponible en el workspace.
+Run `./lain5g app start --operations --open` and open
+`http://localhost:8080/scenarios/4g-lte-x310`.
+Use `EPC + IMS, no RF` to verify the infrastructure without transmitting.
+`Start core + RF` displays the effective channel plan, downloads missing
+components after confirmation, and requires all safeguards to be completed. The
+`Emergency stop` button remains available in the workspace.
 
-## Alcance de las observaciones
+## Scope of Observations
 
-Una auditoría histórica no encontró las herramientas UHD del host en `PATH` y
-no pudo inspeccionar hardware en esa sesión. Existen observaciones privadas
-posteriores, pero no son evidencia pública ligada a la release. Consulte la
-[tabla canónica](../README.md#canonical-capability-status) en lugar de inferir
-un estado actual a partir de cualquiera de esas sesiones.
+Host-side discovery depends on the installed UHD tools, network and device
+availability, and the current run. Use the current hardware check and preflight
+results rather than inferring readiness from another host or session. No public
+release artifact establishes end-to-end RF operation; consult the
+[canonical table](../README.md#canonical-capability-status) for the supported
+evidence boundary.
 
-La imagen UHD no actualiza FPGA ni firmware al iniciar.
+The UHD image does not update FPGA images or firmware at startup.

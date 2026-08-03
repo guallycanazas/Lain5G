@@ -1,34 +1,35 @@
 # Configuration
 
-## Fuentes editables
+## Editable sources
 
-- `config/profiles/*.yaml` contiene perfiles versionados. Los identificadores de
-  simulación son vectores sintéticos; los perfiles RF no constituyen una
-  autorización operativa.
-- Los `.env` de escenario son locales e ignorados por Git.
-- Los archivos bajo `deployments/*` son salidas efectivas o plantillas que deben
-  revisarse después de aplicar un perfil.
+- `config/profiles/*.yaml` contains versioned profiles. Simulation identifiers
+  are synthetic vectors; RF profiles do not constitute operational
+  authorization.
+- Scenario `.env` files are local and ignored by Git.
+- Files under `deployments/*` are effective outputs or templates that must be
+  reviewed after applying a profile.
 
-## Archivos creados por el sistema
+## System-generated files
 
 - `runs/<run-id>/metadata.json`
 - `runs/<run-id>/validation.json`
 - `runs/<run-id>/metrics.json`
-- `runs/<run-id>/logs/docker-compose.log` cuando se ejecuta `make logs-5g-sa`.
+- `runs/<run-id>/logs/docker-compose.log` when `make logs-5g-sa` is run.
 
-## Cambios comunes
+## Common changes
 
-La CLI y la API pueden validar y aplicar perfiles para mantener coherentes los
-valores compartidos entre `.env`, Open5GS y RAN/UE. Consulte primero el plan sin
-efectos y revise el diff antes de aplicar cambios. La edición manual sigue siendo
-posible, pero debe mantener la misma coherencia entre todos los archivos.
+The CLI and API can validate and apply profiles to keep values shared across
+`.env`, Open5GS, and RAN/UE consistent. First review the planned changes and inspect
+the diff before applying changes. Manual editing remains possible, but it must
+maintain the same consistency across all files.
 
-Para cambiar un identificador sintético de simulación, use preferentemente el
-perfil correspondiente. Si se edita manualmente, deben permanecer coherentes:
+To change a synthetic simulation identifier, preferably use the corresponding
+profile. If editing manually, keep the following consistent:
 
-- `SUBSCRIBER_IMSI`, `SUBSCRIBER_KEY` y `SUBSCRIBER_OPC` en el `.env` privado
-  de cada simulación.
-- La plantilla `deployments/5g-sa/ueransim/ue.yaml`, que recibe el valor de
-  esas credenciales al crear la configuración runtime dentro del contenedor UE.
-- La plantilla `deployments/4g-lte-sim/ran/ue.conf`, que recibe las mismas
-  credenciales utilizadas por el provisionador Open5GS antes de iniciar srsUE.
+- `SUBSCRIBER_IMSI`, `SUBSCRIBER_KEY`, and `SUBSCRIBER_OPC` in each simulation's
+  private `.env` file.
+- The `deployments/5g-sa/ueransim/ue.yaml` template, which receives those
+  credential values when creating the runtime configuration inside the UE
+  container.
+- The `deployments/4g-lte-sim/ran/ue.conf` template, which receives the same
+  credentials used by the Open5GS provisioner before starting srsUE.

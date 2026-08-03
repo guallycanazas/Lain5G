@@ -44,6 +44,10 @@ SUPPORT_DIRECTORIES = {"summaries", "tables"}
 REQUIRED_DIRECTORIES = {"environment"} | RESULT_DIRECTORIES | SUPPORT_DIRECTORIES
 SAFE_NAME_RE = re.compile(r"[a-z0-9][a-z0-9._-]{0,127}\Z")
 HISTORICAL_PROVENANCE = {
+    "results/public/4g-lte-sim/run-20260730-021702.json": (
+        "1.1.0",
+        "59471947da95783c1a85a4d18284360e4b6d898b",
+    ),
     "results/public/4g-ims-sim/run-20260723-055149.json": (
         "1.0.0-rc.1",
         "12c4a38404bbaf240c698a056e3f47182081ab5c",
@@ -56,6 +60,10 @@ HISTORICAL_PROVENANCE = {
         "1.0.0-rc.1",
         "12c4a38404bbaf240c698a056e3f47182081ab5c",
     ),
+    "results/public/5g-sa-sim/run-20260730-021914.json": (
+        "1.1.0",
+        "59471947da95783c1a85a4d18284360e4b6d898b",
+    ),
     "results/public/5g-vonr-sim/run-20260723-055328.json": (
         "1.0.0-rc.1",
         "12c4a38404bbaf240c698a056e3f47182081ab5c",
@@ -63,6 +71,10 @@ HISTORICAL_PROVENANCE = {
     "results/public/environment/verification-host-20260723.json": (
         "1.0.0-rc.1",
         "12c4a38404bbaf240c698a056e3f47182081ab5c",
+    ),
+    "results/public/environment/clean-vm-20260730.json": (
+        "1.1.0",
+        "59471947da95783c1a85a4d18284360e4b6d898b",
     ),
 }
 

@@ -15,7 +15,7 @@ services:
       default:
         ipv4_address: ${MONGO_IP}
   dns:
-    image: lain5g-lab/ims-real-dns:1.1.0
+    image: lain5g-lab/ims-real-dns:1.1.1
     env_file:
     - ${LAIN5G_IMS_ENV_FILE}
     expose:
@@ -24,7 +24,7 @@ services:
       default:
         ipv4_address: ${DNS_IP}
   rtpengine:
-    image: lain5g-lab/ims-real-rtpengine:1.1.0
+    image: lain5g-lab/ims-real-rtpengine:1.1.1
     privileged: true
     env_file:
     - ${LAIN5G_IMS_ENV_FILE}
@@ -45,7 +45,7 @@ services:
       default:
         ipv4_address: ${RTPENGINE_IP}
   mysql:
-    image: lain5g-lab/ims-real-mysql:1.1.0
+    image: lain5g-lab/ims-real-mysql:1.1.1
     env_file:
     - ${LAIN5G_IMS_ENV_FILE}
     volumes:
@@ -56,7 +56,7 @@ services:
       default:
         ipv4_address: ${MYSQL_IP}
   pyhss:
-    image: lain5g-lab/pyhss-secure:1.1.0
+    image: lain5g-lab/pyhss-secure:1.1.1
     dns: ${DNS_IP}
     volumes:
     - pyhss_logs:/pyhss/log
@@ -73,7 +73,7 @@ services:
       default:
         ipv4_address: ${PYHSS_IP}
   icscf:
-    image: lain5g-lab/ims-real-kamailio:1.1.0
+    image: lain5g-lab/ims-real-kamailio:1.1.1
     dns: ${DNS_IP}
     env_file:
     - ${LAIN5G_IMS_ENV_FILE}
@@ -92,7 +92,7 @@ services:
       default:
         ipv4_address: ${ICSCF_IP}
   scscf:
-    image: lain5g-lab/ims-real-kamailio:1.1.0
+    image: lain5g-lab/ims-real-kamailio:1.1.1
     dns: ${DNS_IP}
     env_file:
     - ${LAIN5G_IMS_ENV_FILE}
@@ -111,7 +111,7 @@ services:
       default:
         ipv4_address: ${SCSCF_IP}
   pcscf:
-    image: lain5g-lab/ims-real-kamailio:1.1.0
+    image: lain5g-lab/ims-real-kamailio:1.1.1
     dns: ${DNS_IP}
     privileged: true
     cap_add:
@@ -136,7 +136,7 @@ services:
       default:
         ipv4_address: ${PCSCF_IP}
   hss:
-    image: lain5g-lab/ims-real-open5gs:1.1.0
+    image: lain5g-lab/ims-real-open5gs:1.1.1
     env_file:
     - ${LAIN5G_IMS_ENV_FILE}
     environment:
@@ -155,7 +155,7 @@ services:
       default:
         ipv4_address: ${HSS_IP}
   sgwc:
-    image: lain5g-lab/ims-real-open5gs:1.1.0
+    image: lain5g-lab/ims-real-open5gs:1.1.1
     depends_on:
     - smf
     - upf
@@ -172,7 +172,7 @@ services:
       default:
         ipv4_address: ${SGWC_IP}
   sgwu:
-    image: lain5g-lab/ims-real-open5gs:1.1.0
+    image: lain5g-lab/ims-real-open5gs:1.1.1
     depends_on:
     - smf
     - upf
@@ -189,7 +189,7 @@ services:
       default:
         ipv4_address: ${SGWU_IP}
   smf:
-    image: lain5g-lab/ims-real-open5gs:1.1.0
+    image: lain5g-lab/ims-real-open5gs:1.1.1
     env_file:
     - ${LAIN5G_IMS_ENV_FILE}
     environment:
@@ -210,7 +210,7 @@ services:
       default:
         ipv4_address: ${SMF_IP}
   upf:
-    image: lain5g-lab/ims-real-open5gs:1.1.0
+    image: lain5g-lab/ims-real-open5gs:1.1.1
     depends_on:
     - smf
     env_file:
@@ -232,7 +232,7 @@ services:
       default:
         ipv4_address: ${UPF_IP}
   mme:
-    image: lain5g-lab/ims-real-open5gs:1.1.0
+    image: lain5g-lab/ims-real-open5gs:1.1.1
     depends_on:
     - hss
     - sgwc
@@ -257,7 +257,7 @@ services:
       default:
         ipv4_address: ${MME_IP}
   pcrf:
-    image: lain5g-lab/ims-real-open5gs:1.1.0
+    image: lain5g-lab/ims-real-open5gs:1.1.1
     env_file:
     - ${LAIN5G_IMS_ENV_FILE}
     environment:

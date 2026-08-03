@@ -1,31 +1,31 @@
 # OpenLain5G Backend
 
-Backend FastAPI para preparar, operar y validar las redes de laboratorio 4G
-LTE/VoLTE y 5G SA/VoNR, junto con los perfiles RF controlados X-Series y el
-perfil NSA experimental. La API reutiliza los scripts versionados de cada
-escenario bajo `deployments/` y conserva sus límites de seguridad.
+FastAPI backend for preparing, operating, and validating the 4G LTE/VoLTE and
+5G SA/VoNR lab networks, together with the controlled X-Series RF profiles and
+the experimental NSA profile. The API reuses each scenario's version-controlled
+scripts under `deployments/` and preserves their security boundaries.
 
-## Desarrollo
+## Development
 
 ```bash
 make backend-install
 make backend-dev
 ```
 
-## Pruebas
+## Tests
 
 ```bash
 make backend-test
 make backend-cov
 ```
 
-La API no inicia Docker durante el arranque. Las operaciones reales se ejecutan solo al llamar endpoints de despliegue.
+The API does not start Docker during startup. Actual operations run only when deployment endpoints are called.
 
-## Suscriptores Open5GS
+## Open5GS Subscribers
 
-El backend expone `/api/subscribers` para administrar documentos de suscriptor en MongoDB de Open5GS usando `pymongo`.
+The backend exposes `/api/subscribers` to manage subscriber documents in Open5GS MongoDB using `pymongo`.
 
-Variables relevantes:
+Relevant variables:
 
 ```env
 LAIN5G_OPEN5GS_MONGO_URI=mongodb://mongo:27017/open5gs
@@ -37,4 +37,8 @@ LAIN5G_OPEN5GS_DOCKER_NETWORK=lain5g-lab-5g-sa-core
 LAIN5G_OPEN5GS_DOCKER_IP=10.20.0.250
 ```
 
-Los endpoints no devuelven K, OP ni OPc completos. Ver `docs/subscribers.md`.
+These values match the checked-in 5G SA profile. Custom Docker networks must use
+an available address from their own subnet and update both network variables
+consistently.
+
+The endpoints do not return complete K, OP, or OPc values. See `docs/subscribers.md`.

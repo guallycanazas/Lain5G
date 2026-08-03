@@ -1,8 +1,7 @@
 # Support
 
-Support for `1.1.0` is community-based and best effort. This release has no
-guaranteed response time, service-level agreement, production support, or
-RF-operational support.
+Support is provided through GitHub Issues on a best-effort basis. No service
+level agreement, production support, or support for RF operations is provided.
 
 ## Getting help
 
@@ -17,7 +16,3 @@ operational RF settings, or authorization records. Do not run RF to gather
 support information. Do not submit security-sensitive details through a public
 issue. Use GitHub Private Vulnerability Reporting from the repository Security
 tab without disclosing the vulnerability publicly.
-
-The maintainers support reproducible source and software-simulation issues
-through GitHub Issues. No support email, institutional help desk, guaranteed
-response time, or RF operations service is asserted.

@@ -20,6 +20,10 @@ declared scope before making a claim.
 - `public-result.schema.json` is the result contract.
 - `environment-summary.schema.json` is the environment-summary contract.
 
+The supported profile ID `5g-sa` maps to the `5g-sa-sim` public-result directory.
+The longer result name is retained for compatibility with the historical evidence
+schema and does not identify a separate profile.
+
 Empty publication directories use `.gitkeep`. Remove it when the directory gains a public artifact.
 
 ## Export

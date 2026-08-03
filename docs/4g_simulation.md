@@ -1,13 +1,12 @@
 # 4G Software Simulation
 
-El catálogo público ofrece `4g-lte-sim`: Open5GS EPC, srsENB y srsUE conectados
-por ZMQ, sin IMS.
+The public catalog provides `4g-lte-sim`: Open5GS EPC, srsENB, and srsUE
+connected over ZMQ, without IMS.
 
-## Uso
+## Usage
 
 ```bash
 cp deployments/4g-volte/common/.env.example deployments/4g-volte/common/.env
-nano deployments/4g-volte/common/.env
 make build-4g-lte-sim
 make start-4g-lte-sim
 make status-4g-lte-sim
@@ -16,17 +15,26 @@ make logs-4g-lte-sim
 make stop-4g-lte-sim
 ```
 
-## Validación
+Before starting the scenario, edit the copied `.env` file with an editor of your
+choice and keep only synthetic lab credentials in it.
 
-`make validate-4g-lte-sim` revisa servicios EPC, S1 Setup, attach de srsUE, bearer predeterminado, interfaz TUN, IP y ping de datos. No inicia ni valida componentes IMS.
+## Validation
 
-Estados posibles: `PASS`, `FAIL`, `WARNING`, `NOT_TESTED`.
+`make validate-4g-lte-sim` checks EPC services, S1 Setup, srsUE attach, the
+default bearer, TUN interface, IP, and data ping. It does not start or validate
+IMS components.
 
-El resultado se guarda en `runs/<run-id>/validation.json`.
+Possible states: `PASS`, `FAIL`, `WARNING`, `NOT_TESTED`.
 
-## Notas
+The result is saved to `runs/<run-id>/validation.json`.
 
-- `pgwc` y `pgwu` son nombres de servicio Compose. En Open5GS `v2.7.5` ejecutan `open5gs-smfd` y `open5gs-upfd` porque esa versión no instala binarios `open5gs-pgwcd` ni `open5gs-pgwud`.
-- `4g-lte-sim` usa proyecto, red `10.43.0.0/24`, volumen y nombres de contenedor propios.
-- Verifique que `10.43.0.0/24` no coincida con la LAN, VPN o ruta SSH de administración; un solapamiento puede cortar temporalmente el acceso a la API.
-- Si se detiene el escenario, los contenedores de 4G se paran sin tocar `5g-sa`.
+## Notes
+
+- `pgwc` and `pgwu` are Compose service names. In Open5GS `v2.7.5`, they run
+  `open5gs-smfd` and `open5gs-upfd` because that version does not install the
+  `open5gs-pgwcd` or `open5gs-pgwud` binaries.
+- `4g-lte-sim` uses its own project, `10.43.0.0/24` network, volume, and
+  container names.
+- Verify that `10.43.0.0/24` does not overlap the LAN, VPN, or administrative
+  SSH route; an overlap can temporarily disrupt API access.
+- Stopping the scenario stops the 4G containers without affecting `5g-sa`.

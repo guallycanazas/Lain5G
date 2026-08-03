@@ -1,10 +1,10 @@
 # srsRAN 4G UHD Image
 
-Imagen para `srsenb` con soporte UHD y USRP X310.
+Image for `srsenb` with UHD and compatible X-Series USRP hardware.
 
 - srsRAN 4G: `release_23_11`
-- UHD: `v4.6.0.0`
+- UHD: `v4.10.0.0`
 
-La imagen incluye `uhd_find_devices`, `uhd_usrp_probe` y `uhd_image_loader`, pero no descarga ni actualiza FPGA automáticamente al iniciar.
+The image includes `uhd_find_devices`, `uhd_usrp_probe`, and `uhd_image_loader`, but does not automatically download or update FPGA images at startup.
 
-Cualquier actualización FPGA/FW queda fuera de esta entrega y requiere autorización explícita.
+Any FPGA/firmware update is outside the scope of this deliverable and requires explicit authorization.

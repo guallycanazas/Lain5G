@@ -1,15 +1,15 @@
 # 5G SA
 
-5G SA es la prioridad inicial del proyecto.
+5G SA is the project's initial focus.
 
-El estado científico se mantiene en la
-[tabla canónica de capacidades](../README.md#canonical-capability-status). La
-[ejecución pública `run-20260730-021914`](../results/public/5g-sa-sim/run-20260730-021914.json)
-registra 15/15 comprobaciones `PASS` y clasificación `SIMULATION_ONLY` para el
-commit fuente `59471947da95783c1a85a4d18284360e4b6d898b`, ejecutado en una VM
-Ubuntu 24.04 limpia. El resultado de julio 23 permanece como registro histórico.
+The scientific status is maintained in the
+[canonical capability table](../README.md#canonical-capability-status). The
+[public run `run-20260730-021914`](../results/public/5g-sa-sim/run-20260730-021914.json)
+records 15/15 `PASS` checks and a `SIMULATION_ONLY` classification for source
+commit `59471947da95783c1a85a4d18284360e4b6d898b`, run on a clean Ubuntu 24.04
+VM. The July 23 result remains as a historical record.
 
-## Comandos
+## Commands
 
 ```bash
 ./lain5g scenario setup 5g-sa
@@ -21,38 +21,38 @@ Ubuntu 24.04 limpia. El resultado de julio 23 permanece como registro histórico
 ./lain5g scenario stop 5g-sa
 ```
 
-## Archivos editables
+## Editable files
 
 - `deployments/5g-sa/open5gs/amf.yaml`
 - `deployments/5g-sa/open5gs/smf.yaml`
 - `deployments/5g-sa/open5gs/upf.yaml`
 - `deployments/5g-sa/ueransim/gnb.yaml`
-- `deployments/5g-sa/ueransim/ue.yaml` (plantilla sin secretos)
+- `deployments/5g-sa/ueransim/ue.yaml` (secret-free template)
 - `deployments/5g-sa/.env`
 
-El perfil se puede aplicar mediante la CLI o la API para generar una
-configuración coherente. Los archivos también se pueden editar manualmente, pero
-no deben mezclarse ambos métodos sin revisar el diff resultante. `.env` es local
-y permanece fuera de Git.
+The profile can be applied through the CLI or API to generate a consistent
+configuration. The files can also be edited manually, but the two methods should
+not be mixed without reviewing the resulting diff. `.env` is local and remains
+outside Git.
 
-Al iniciar, Compose renderiza una copia temporal del YAML del UE con IMSI, K,
-OPc, AMF y SQN tomados de `.env`. La copia runtime no se escribe en el repositorio.
+At startup, Compose renders a temporary copy of the UE YAML using the IMSI, K,
+OPc, AMF, and SQN from `.env`. The runtime copy is not written to the repository.
 
-## Evidencia esperada
+## Expected evidence
 
-El resumen público reporta 15 comprobaciones aprobadas por el validador,
-incluidas las siguientes. La validación software solo debe considerarse completa
-para ese alcance y commit si hay evidencia correlacionada de:
+The public summary reports 15 checks passed by the validator, including the
+following. Software validation should be considered complete for that scope and
+commit only when there is correlated evidence of:
 
-- Open5GS iniciado.
-- gNB conectado al AMF.
-- UE registrado.
-- sesión PDU establecida.
-- interfaz `uesimtun0` creada.
-- IP asignada al UE.
-- ping exitoso desde el UE.
+- Open5GS started.
+- gNB connected to the AMF.
+- UE registered.
+- PDU session established.
+- `uesimtun0` interface created.
+- IP assigned to the UE.
+- successful ping from the UE.
 
-Contenedores activos por sí solos no validan el escenario.
+Running containers alone do not validate the scenario.
 
-La simulación UERANSIM no se extrapola a radio real. El registro, la sesión PDU
-y los datos 5G SA con un UE comercial permanecen `NOT_VALIDATED`.
+UERANSIM simulation does not extrapolate to real radio operation. Registration,
+the PDU session, and 5G SA data with a commercial UE remain `NOT_VALIDATED`.

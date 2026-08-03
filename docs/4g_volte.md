@@ -1,59 +1,61 @@
-# Red 4G LTE y VoLTE
+# 4G LTE and VoLTE Network
 
-El escenario `deployments/4g-volte` agrega una ruta 4G aislada del despliegue `5g-sa`. No reutiliza redes, volúmenes ni nombres de proyecto Compose de 5G SA.
+The `deployments/4g-volte` scenario adds a 4G path isolated from the `5g-sa` deployment. It does not reuse 5G SA networks, volumes, or Compose project names.
 
-El estado científico se mantiene únicamente en la
-[tabla canónica de capacidades](../README.md#canonical-capability-status).
-Esta guía describe la composición, operación y evidencia de señalización VoLTE
-del escenario software.
+The scientific status is maintained exclusively in the
+[canonical capability table](../README.md#canonical-capability-status).
+This guide describes the composition, operation, and VoLTE signaling evidence
+for the software scenario.
 
-Perfiles disponibles:
+Available profiles:
 
-- `4g-lte-sim`: EPC + srsENB + srsUE por ZMQ, sin servicios IMS.
-- `4g-volte-sim`: EPC + IMS + srsRAN 4G en modo software.
-- `4g-lte-x310`: EPC + eNB srsRAN 4G para hardware X-Series compatible,
-  infraestructura IMS compacta siempre activa y RF bloqueada por defecto. El
-  nombre histórico del perfil se conserva.
+- `4g-lte-sim`: EPC + srsENB + srsUE over ZMQ, without IMS services.
+- `4g-volte-sim`: EPC + IMS + srsRAN 4G in software mode.
+- `4g-lte-x310`: EPC + srsRAN 4G eNB for compatible USRP X-Series hardware,
+  compact always-on IMS infrastructure, and RF disabled by default. The
+  historical profile name is retained.
 
-El [resultado LTE público actual](../results/public/4g-lte-sim/run-20260730-021702.json)
-registra 14/14 comprobaciones `PASS` para el commit fuente
-`59471947da95783c1a85a4d18284360e4b6d898b` en una VM Ubuntu 24.04 limpia. El
-[resultado IMS 4G público](../results/public/4g-ims-sim/run-20260723-055149.json)
-es histórico y registra 22/22. Ambos son `SIMULATION_ONLY`. El segundo
-corresponde al perfil `4g-volte-sim` y valida LTE, EPC, datos, servicios IMS,
-DNS, provisionamiento y registro SIP autenticado de laboratorio.
+The [current public LTE result](../results/public/4g-lte-sim/run-20260730-021702.json)
+records 14/14 `PASS` checks for source commit
+`59471947da95783c1a85a4d18284360e4b6d898b` on a clean Ubuntu 24.04 VM. The
+[public 4G IMS result](../results/public/4g-ims-sim/run-20260723-055149.json)
+is historical and records 22/22. Both are `SIMULATION_ONLY`. The latter
+corresponds to the `4g-volte-sim` profile and validates LTE, EPC, data, IMS
+services, DNS, provisioning, and authenticated lab SIP registration.
 
-## Alcance Actual
+## Current Scope
 
-- EPC 4G basado en Open5GS `v2.7.5`.
-- IMS mínimo con Kamailio `5.8.8` y base SQL inicial.
-- Provisionamiento de APN `internet` e `ims` para un suscriptor de laboratorio.
-- Validaciones estáticas, scripts operativos y workspaces guiados en la API/frontend.
+- Open5GS `v2.7.5`-based 4G EPC.
+- Minimal IMS with Kamailio `5.8.8` and an initial SQL database.
+- Provisioning of the `internet` and `ims` APNs for a lab subscriber.
+- Static validations, operational scripts, and guided workspaces in the API/frontend.
 
-## Alcance de Validación
+## Validation Scope
 
-- La red VoLTE software registra 22/22 comprobaciones `PASS`.
-- La evidencia incluye registro LTE, bearer/APN, conectividad, IMS y REGISTER
-  autenticado hasta 200 OK.
-- No se inicia RF sin manifiesto real, plan de canal real y autorización explícita.
-- La ruta X310 no actualiza firmware ni FPGA automáticamente.
-- En X310, la evidencia de registro IMS, señalización de llamada y medios se
-  conserva por ejecución junto con los logs del operador.
+- The software VoLTE network records 22/22 `PASS` checks.
+- The evidence includes LTE registration, bearer/APN, connectivity, IMS, and an
+  authenticated REGISTER through 200 OK.
+- RF does not start without a real manifest, real channel plan, and explicit authorization.
+- The USRP path does not update firmware or FPGA images automatically.
+- The `4g-lte-x310` validator records IMS-service availability and eNB/S1
+  evidence. IMS registration, call signaling, and media require separately
+  collected, correlated operator evidence and are not retained automatically.
 
-Las métricas de audio, el diálogo de llamada y el rendimiento RTP se tratan como
-pruebas de medios separadas y no cambian la clasificación validada de la red y
-señalización VoLTE software.
+Audio metrics, the call dialog, and RTP performance are treated as separate
+media tests and do not change the validated classification of the software
+VoLTE network and signaling.
 
-## Preparación
+## Setup
 
 ```bash
 cp deployments/4g-volte/common/.env.example deployments/4g-volte/common/.env
-nano deployments/4g-volte/common/.env
 ```
 
-Define claves de laboratorio para `SUBSCRIBER_KEY` y `SUBSCRIBER_OPC`. No uses IMSI, Ki, OPc ni MSISDN reales sin anonimizar.
+Edit the copied file with an editor of your choice. Set lab keys for
+`SUBSCRIBER_KEY` and `SUBSCRIBER_OPC`. Do not use real IMSI, Ki, OPc, or MSISDN
+values without anonymizing them.
 
-## Comandos Principales
+## Main Commands
 
 ```bash
 make build-4g-lte-sim
@@ -62,8 +64,8 @@ make validate-4g-lte-sim
 make stop-4g-lte-sim
 ```
 
-El escenario VoLTE se conserva como implementación y evidencia histórica, pero
-no forma parte de la interfaz operativa pública.
+The VoLTE scenario is retained as a historical implementation and evidence,
+but it is not part of the public operational interface.
 
 ```bash
 make build-4g-lte-x310
@@ -72,5 +74,5 @@ make preflight-4g-lte-x310
 make start-4g-lte-x310-epc
 ```
 
-El inicio RF real usa `make start-4g-lte-x310-rf` y está documentado en
-[X310 LTE](x310_lte.md) y [seguridad RF](rf_safety.md).
+Actual RF startup uses `make start-4g-lte-x310-rf` and is documented in
+[X310 LTE](x310_lte.md) and [RF safety](rf_safety.md).

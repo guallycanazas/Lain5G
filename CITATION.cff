@@ -1,11 +1,10 @@
 cff-version: "1.2.0"
 message: >-
-  If you use OpenLain5G 1.1.0, cite the software metadata in this file.
-  No journal article or archival DOI is associated with this source release.
+  If you use OpenLain5G 1.1.1, cite the software metadata in this file.
 title: "OpenLain5G"
 type: software
-version: "1.1.0"
-date-released: "2026-07-30"
+version: "1.1.1"
+date-released: "2026-08-03"
 authors:
   - family-names: "Canazas Rosas"
     given-names: "Willian Roy"
@@ -18,19 +17,18 @@ authors:
     affiliation: "National University of San Agustin of Arequipa"
 abstract: >-
   OpenLain5G is a reproducible research environment for deploying, managing,
-  and validating integrated laboratory 4G LTE/VoLTE and 5G SA/VoNR networks,
-  plus an experimental 5G NSA profile. It integrates existing open-source
-  components with configuration, orchestration, validation, run traceability,
-  RF safeguards, and a FastAPI/React interface.
+  and validating software 4G LTE and 5G SA data networks plus guarded X-Series
+  USRP laboratory workflows. It integrates existing open-source components with
+  configuration, orchestration, validation, run traceability, RF safeguards,
+  and a FastAPI/React interface.
 repository-code: "https://github.com/guallycanazas/Lain5G"
 url: "https://github.com/guallycanazas/Lain5G"
 license: MIT
 keywords:
   - "4G LTE"
-  - "5G"
-  - "IMS"
-  - "VoLTE"
-  - "VoNR"
+  - "5G SA"
+  - "Open5GS"
+  - "UERANSIM"
+  - "USRP"
   - "network experimentation"
   - "reproducibility"
-# TODO: Add a DOI only after an archive or article has issued one.

@@ -11,13 +11,13 @@ Artifact:
 
 - Path: `sbom/lain5g-lab-application.cdx.json`
 - Format: CycloneDX JSON 1.7
-- Subject: `OpenLain5G` version `1.1.0`
-- Generated: `2026-08-03T06:38:57Z`
+- Subject: `OpenLain5G` version `1.1.1`
+- Generated: `2026-08-03T07:40:05Z`
 - Components: 370 libraries, comprising 361 npm package/version entries and 9
   direct PyPI package/version entries
 - Dependency graph entries: 128
 - SHA-256:
-  `7d10b09dc131fffcac4706a7d466c7d3440ec10c423286359be8095caf2bf732`
+  `fa60ec32014b707772784bda9ce7634ed7f03a9dfd7bfc2c309f8620bfa52457`
 
 ## Generator
 
@@ -93,7 +93,7 @@ docker run --rm --network none \
   --mount type=bind,source="$PWD",target=/src,readonly \
   anchore/syft:v1.49.0@sha256:13b53ebabe3d215268c90cf8fb9b875f0183908245f376fd4b3a2cb69d21d484 \
   scan dir:/src --base-path /src \
-  --source-name OpenLain5G --source-version 1.1.0 \
+  --source-name OpenLain5G --source-version 1.1.1 \
   --exclude './.git' --exclude './.git/**' \
   --exclude './.github' --exclude './.github/**' \
   --exclude './.venv' --exclude './.venv/**' \
@@ -157,23 +157,29 @@ scan that immutable archive without mounting the Docker socket. Procedure
 template:
 
 ```bash
-image_id="$(docker image inspect --format '{{.Id}}' \
-  lain5g-lab/backend:1.1.0)"
-docker save --output /reviewed/lain5g-lab-backend.tar \
+test -f .env.app
+REVIEW_DIR="${REVIEW_DIR:-$PWD/reviewed-images}"
+mkdir -p "$REVIEW_DIR"
+
+docker compose --env-file .env.app -f docker-compose.app.yml build backend
+image_id="$(docker compose --env-file .env.app \
+  -f docker-compose.app.yml images -q backend)"
+test -n "$image_id"
+docker save --output "$REVIEW_DIR/lain5g-lab-backend.tar" \
   "$image_id"
-sha256sum /reviewed/lain5g-lab-backend.tar \
-  > /reviewed/lain5g-lab-backend.tar.sha256
-chmod 0444 /reviewed/lain5g-lab-backend.tar \
-  /reviewed/lain5g-lab-backend.tar.sha256
-sha256sum --check /reviewed/lain5g-lab-backend.tar.sha256
+sha256sum "$REVIEW_DIR/lain5g-lab-backend.tar" \
+  > "$REVIEW_DIR/lain5g-lab-backend.tar.sha256"
+chmod 0444 "$REVIEW_DIR/lain5g-lab-backend.tar" \
+  "$REVIEW_DIR/lain5g-lab-backend.tar.sha256"
+sha256sum --check "$REVIEW_DIR/lain5g-lab-backend.tar.sha256"
 
 docker run --rm --network none \
   --env SYFT_CHECK_FOR_APP_UPDATE=false \
-  --mount type=bind,source=/reviewed/lain5g-lab-backend.tar,target=/input/backend.tar,readonly \
+  --mount type=bind,source="$REVIEW_DIR/lain5g-lab-backend.tar",target=/input/backend.tar,readonly \
   --mount type=bind,source="$PWD/sbom",target=/out \
   anchore/syft:v1.49.0@sha256:13b53ebabe3d215268c90cf8fb9b875f0183908245f376fd4b3a2cb69d21d484 \
   scan docker-archive:/input/backend.tar \
-  --source-name lain5g-lab/backend --source-version 1.1.0 \
+  --source-name lain5g-lab/backend --source-version 1.1.1 \
   --output cyclonedx-json=/out/lain5g-lab-backend-image.cdx.json
 ```
 
@@ -182,6 +188,5 @@ registry artifact is the publication unit, scan by its immutable registry digest
 instead and record that digest with the generated SBOM.
 
 Equivalent archive- or registry-digest scans remain required for the frontend
-and every published telecom or Real-IMS image. They were not attempted here
-because the complete set of final local images and release digests was not available, and
-pulling or building that set would exceed a source-only legal metadata task.
+and every published telecom or Real-IMS image. This SBOM covers source manifests
+only; final-image scans remain outstanding.

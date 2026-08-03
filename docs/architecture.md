@@ -1,39 +1,46 @@
 # Architecture
 
-OpenLain5G no implementa un núcleo 4G/5G propio. Utiliza componentes externos y aporta una capa propia de despliegue, configuración, administración, validación y visualización.
+OpenLain5G does not implement its own 4G/5G core. It uses external components
+and provides its own deployment, configuration, management, validation, and
+visualization layer.
 
-La arquitectura separa escenarios por carpetas, proyectos Compose, redes y volúmenes para evitar interferencia entre 5G SA y 4G LTE/IMS.
+The architecture separates scenarios by directory, Compose project, network,
+and volume to prevent interference between 5G SA and 4G LTE/IMS.
 
-## Componentes 5G SA
+## 5G SA components
 
-- MongoDB almacena datos de Open5GS, incluido el suscriptor de laboratorio.
-- Open5GS ejecuta NRF, AMF, SMF, UPF, AUSF, UDM, UDR y PCF.
-- UERANSIM ejecuta gNB y UE software.
-- Docker Compose conecta todos los servicios en la red `lain5g-lab-5g-sa-core`.
-- `runs/` almacena resultados mínimos por ejecución, sin copiar configuraciones completas ni código.
-- `5g-sa-x310` añade MariaDB, P-CSCF, I-CSCF, S-CSCF y DNS compactos al núcleo
-  siempre activo; el gNB continúa aislado en el perfil `rf`. No añade un DNN IMS
-  ni demuestra registro IMS o VoNR desde un UE físico.
+- MongoDB stores Open5GS data, including the lab subscriber.
+- Open5GS runs NRF, AMF, SMF, UPF, AUSF, UDM, UDR, and PCF.
+- UERANSIM runs the software gNB and UE.
+- Docker Compose connects all services on the `lain5g-lab-5g-sa-core` network.
+- `runs/` stores minimal per-run results without copying full configurations or
+  code.
+- `5g-sa-x310` adds compact MariaDB, P-CSCF, I-CSCF, S-CSCF, and DNS services to
+  the always-on core; the gNB remains isolated in the `rf` profile. It does not
+  add an IMS DNN or demonstrate IMS registration or VoNR from a physical UE.
 
-## Componentes 4G LTE/IMS
+## 4G LTE/IMS components
 
-- Open5GS ejecuta MME, HSS, SGW-C, SGW-U, PCRF y plano PGW compatible con la versión actual.
-- srsRAN 4G ejecuta eNB y UE en la ruta software.
-- En la simulación compacta, Kamailio ejecuta P-CSCF e I-CSCF y el servicio
-  `ims-sip` proporciona el registrador S-CSCF mínimo. La ruta X-Series usa
-  Kamailio para los tres roles.
-- CoreDNS resuelve nombres IMS de laboratorio.
-- La ruta X310 separa `enb-x310` en perfil Compose `rf` y `network_mode: host`.
-- Sus servicios IMS compactos se inician siempre con el EPC y sus resultados se
-  registran por ejecución.
-- Los manifiestos RF reales están ignorados por Git y deben crearse manualmente.
+- Open5GS runs MME, HSS, SGW-C, SGW-U, and PCRF. Its SMF and UPF binaries provide
+  the PGW control-plane and user-plane roles.
+- srsRAN 4G runs the eNB and UE on the software path.
+- In the compact simulation, Kamailio runs P-CSCF and I-CSCF, while the
+  `ims-sip` service provides the minimal S-CSCF registrar. The USRP path uses
+  Kamailio for all three roles.
+- CoreDNS resolves lab IMS names.
+- The X310 path isolates `enb-x310` in the `rf` Compose profile with
+  `network_mode: host`.
+- Its compact IMS services always start with the EPC, and their results are
+  recorded for each run.
+- Actual RF manifests are ignored by Git and must be created manually.
 
-## Límites actuales
+## Current limitations
 
-- Los resultados extremo a extremo dependen del perfil, hardware, UE y evidencia
-  asociados a cada ejecución autorizada.
-- No hay Kubernetes, microservicios ni Electron.
-- No se ejecuta RF sin autorización explícita y preflight.
-- La API y el frontend administran rutas 4G/5G dentro de una frontera local de
-  confianza. La aplicación base es de observación; la mutación requiere opt-in
-  explícito y acceso separado al socket Docker.
+- End-to-end results depend on the profile, hardware, UE, and evidence associated
+  with each authorized run.
+- The project does not use Kubernetes, a microservices architecture, or
+  Electron.
+- RF does not run without explicit authorization and preflight checks.
+- The API and frontend manage 4G/5G paths within a local trust boundary. The base
+  application is observation-only; mutation requires explicit opt-in and separate
+  access to the Docker socket.

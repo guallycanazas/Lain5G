@@ -1,19 +1,19 @@
-# Backend FastAPI
+# FastAPI Backend
 
-El backend permite administrar el despliegue 5G SA existente sin reemplazar su arquitectura. Reutiliza los scripts ya validados en `deployments/5g-sa/scripts/` como fuente operativa principal.
+The backend manages the existing 5G SA deployment without replacing its architecture. It reuses the validated scripts in `deployments/5g-sa/scripts/` as its primary operational implementation.
 
-## Instalación
+## Installation
 
 ```bash
 make backend-install
 ```
 
-El comando fija pip, instala los requisitos directos exactos y aplica el cierre
-transitivo de `backend/constraints.txt`.
+The command pins pip, installs the exact direct requirements, and applies the
+transitive dependency constraints from `backend/constraints.txt`.
 
-## Variables de Entorno
+## Environment Variables
 
-Ejemplo en `backend/.env.example`:
+Example from `backend/.env.example`:
 
 ```env
 LAIN5G_PROJECT_ROOT=/path/to/Lain5G
@@ -32,21 +32,25 @@ LAIN5G_OPEN5GS_DOCKER_NETWORK=lain5g-lab-5g-sa-core
 LAIN5G_OPEN5GS_DOCKER_IP=10.20.0.250
 ```
 
-`backend/.env` no debe versionarse.
+The network name and address shown above are defaults for the checked-in 5G SA
+profile, not universal Docker settings. Custom networks must select an unused
+address in their configured subnet and update both values consistently.
 
-## Ejecución
+`backend/.env` must not be committed.
+
+## Running
 
 ```bash
 make backend-dev
 ```
 
-Equivalente:
+Equivalent command:
 
 ```bash
 .venv/bin/uvicorn backend.app.main:app --host 127.0.0.1 --port 8000 --reload
 ```
 
-El backend no inicia Docker al arrancar.
+The backend does not start Docker during startup.
 
 ## Endpoints
 
@@ -72,7 +76,7 @@ El backend no inicia Docker al arrancar.
 - `POST /api/subscribers/{imsi}/clone`
 - `DELETE /api/subscribers/{imsi}`
 
-## Ejemplos curl
+## cURL Examples
 
 ```bash
 curl http://127.0.0.1:8000/api/health
@@ -87,28 +91,32 @@ curl http://127.0.0.1:8000/api/subscribers/connection
 curl http://127.0.0.1:8000/api/subscribers
 ```
 
-`/api/health` y el documento OpenAPI exponen la versión leída desde el archivo
-raíz `VERSION`.
+`/api/health` and the OpenAPI document expose the version read from the root
+`VERSION` file.
 
-## Modo dry-run
+## Dry-Run Mode
 
 ```bash
 LAIN5G_DRY_RUN=true make backend-dev
 ```
 
-En dry-run el backend no ejecuta Docker ni scripts operativos reales, no modifica `runs/` y devuelve el comando que habría ejecutado. Las validaciones se reportan como `NOT_TESTED`.
+In dry-run mode, the backend does not run Docker or actual operational scripts, does not modify `runs/`, and returns the command it would have executed. Validations are reported as `NOT_TESTED`.
 
-## Códigos de Error
+## Error Codes
 
-- `400`: solicitud inválida.
-- `403`: mutación deshabilitada por la configuración local.
-- `404`: escenario o ejecución inexistente.
-- `409`: conflicto de estado, por ejemplo iniciar un despliegue ya activo.
-- `422`: validación de entrada FastAPI.
-- `500`: error interno controlado o comando fallido.
-- `504`: timeout de comando.
+HTTP status and machine-readable `detail.code` values identify stable error
+categories. Human-readable messages and command diagnostics vary with the
+underlying host, profile, and failure; clients should not match exact wording.
 
-Ejemplo:
+- `400`: invalid request.
+- `403`: mutation disabled by local configuration.
+- `404`: scenario or run not found.
+- `409`: state conflict, such as starting an already active deployment.
+- `422`: FastAPI input validation error.
+- `500`: handled internal error or failed command.
+- `504`: command timeout.
+
+Example:
 
 ```json
 {
@@ -121,33 +129,33 @@ Ejemplo:
 }
 ```
 
-## Seguridad
+## Security
 
-- Las mutaciones requieren `LAIN5G_MUTATING_OPERATIONS_ENABLED=true`; dry-run no requiere esta habilitación.
-- La autorización RF sigue siendo independiente mediante `LAIN5G_RF_WEB_CONTROL_ENABLED` y los controles RF existentes.
-- No se usa `shell=True`.
-- Los scripts deben estar dentro del repositorio.
-- Se rechazan enlaces simbólicos que resuelvan fuera del proyecto.
-- No se devuelven variables de entorno completas.
-- Se redactan valores asociados a `SUBSCRIBER_KEY`, `SUBSCRIBER_OPC`, `SUBSCRIBER_OP`, `K`, `KI`, `OP` y `OPC`.
-- Los endpoints de suscriptores no devuelven K, OP ni OPc completos; solo indicadores redactados.
-- `runs/` se lee sin permitir path traversal ni archivos arbitrarios.
-- Ver `docs/security/local-deployment.md` y `docs/security/threat-model.md`.
+- Mutations require `LAIN5G_MUTATING_OPERATIONS_ENABLED=true`; dry-run mode does not require this setting.
+- RF authorization remains independent through `LAIN5G_RF_WEB_CONTROL_ENABLED` and the existing RF controls.
+- `shell=True` is not used.
+- Scripts must be located within the repository.
+- Symbolic links that resolve outside the project are rejected.
+- Complete environment variables are not returned.
+- Values associated with `SUBSCRIBER_KEY`, `SUBSCRIBER_OPC`, `SUBSCRIBER_OP`, `K`, `KI`, `OP`, and `OPC` are redacted.
+- Subscriber endpoints do not return complete K, OP, or OPc values; they return only redacted indicators.
+- `runs/` is read without allowing path traversal or access to arbitrary files.
+- See `docs/security/local-deployment.md` and `docs/security/threat-model.md`.
 
-## Estructura
+## Structure
 
 ```text
-backend/app/api/          routers FastAPI
-backend/app/models/       modelos Pydantic
-backend/app/services/     ejecución de comandos, despliegues, runs y validación
-backend/tests/            pruebas y fixtures aislados
+backend/app/api/          FastAPI routers
+backend/app/models/       Pydantic models
+backend/app/services/     command execution, deployments, runs, and validation
+backend/tests/            isolated tests and fixtures
 ```
 
-## Pruebas
+## Tests
 
 ```bash
 make backend-test
 make backend-cov
 ```
 
-Las pruebas unitarias usan fixtures y `LAIN5G_DRY_RUN=true`; no requieren Docker real ni modifican el directorio real `runs/`.
+The unit tests use fixtures and `LAIN5G_DRY_RUN=true`; they do not require a live Docker daemon or modify the actual `runs/` directory.

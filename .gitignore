@@ -118,5 +118,4 @@ __pycache__/
 runs/*
 !runs/.gitkeep
 .backups/*
-!.backups/.gitkeep
 frontend/dist/

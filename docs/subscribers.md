@@ -1,24 +1,24 @@
-# Gestión de Suscriptores Open5GS
+# Open5GS Subscriber Management
 
-OpenLain5G administra documentos de suscriptores compatibles con Open5GS. No implementa el algoritmo de autenticación 5G ni sustituye las funciones AUSF, UDM o UDR.
+OpenLain5G manages Open5GS-compatible subscriber documents. It does not implement the 5G authentication algorithm or replace the AUSF, UDM, or UDR functions.
 
-## Arquitectura
+## Architecture
 
-La interfaz React consume únicamente la API FastAPI:
+The React interface communicates exclusively with the FastAPI API:
 
 ```text
 React /subscribers
   -> Nginx /api
   -> FastAPI /api/subscribers
   -> pymongo
-  -> MongoDB de Open5GS
+  -> Open5GS MongoDB
 ```
 
-MongoDB no se expone al navegador. No se aceptan consultas MongoDB arbitrarias ni nombres de colecciones desde la UI.
+MongoDB is not exposed to the browser. The UI cannot submit arbitrary MongoDB queries or collection names.
 
-## Conexión a MongoDB
+## MongoDB Connection
 
-El backend usa estas variables:
+The backend uses these variables:
 
 ```env
 LAIN5G_OPEN5GS_MONGO_URI=mongodb://mongo:27017/open5gs
@@ -31,16 +31,22 @@ LAIN5G_OPEN5GS_DOCKER_IP=10.20.0.250
 LAIN5G_MUTATING_OPERATIONS_ENABLED=false
 ```
 
-Cuando el laboratorio 5G SA está detenido, la aplicación sigue iniciando y `/api/subscribers/connection` devuelve `disconnected` o `timeout` de forma controlada.
+When the 5G SA lab is stopped, the application still starts, and
+`/api/subscribers/connection` gracefully returns a `disconnected` or `timeout`
+status.
 
-Cuando existe la red Docker `lain5g-lab-5g-sa-core`, el backend puede conectarse solo si las mutaciones están habilitadas. La IP reservada `10.20.0.250` evita colisiones con los servicios estáticos del núcleo, incluso entre reinicios. No se levanta 5G SA automáticamente.
+When the configured Docker network exists, the backend can connect to it only if
+mutations are enabled. The checked-in 5G SA profile reserves `10.20.0.250`
+relative to its own subnet and known static services. Custom deployments must
+choose an unused address inside their configured subnet and update both network
+and IP settings consistently. 5G SA is not started automatically.
 
-## Esquema Soportado
+## Supported Schema
 
-El esquema deriva de `deployments/5g-sa/mongo/subscriber-init.js`:
+The schema is based on `deployments/5g-sa/mongo/subscriber-init.js`:
 
 - `imsi`
-- `msisdn`, opcional
+- `msisdn`, optional
 - `security.k`
 - `security.op`
 - `security.opc`
@@ -48,25 +54,25 @@ El esquema deriva de `deployments/5g-sa/mongo/subscriber-init.js`:
 - `security.sqn`
 - `slice[0].sst`
 - `slice[0].sd`
-- `slice[0].session[0].name` como DNN
+- `slice[0].session[0].name` as the DNN
 
-Los campos Open5GS de AMBR, QoS, `schema_version`, `subscriber_status`, `network_access_mode` y `access_restriction_data` se generan con los valores del despliegue base.
+The Open5GS AMBR, QoS, `schema_version`, `subscriber_status`, `network_access_mode`, and `access_restriction_data` fields are generated with values from the base deployment.
 
-## Validaciones
+## Validation
 
-- IMSI: obligatorio, solo dígitos, 5 a 15 caracteres, único.
-- MSISDN: opcional, solo dígitos, 5 a 20 caracteres.
-- K, OP y OPc: hexadecimales de 32 caracteres.
-- Se acepta K con OP o K con OPc; no se acepta OP y OPc simultáneamente.
-- AMF: hexadecimal de 4 caracteres.
-- SQN: hexadecimal de 12 caracteres, conserva ceros a la izquierda.
-- SST: entero entre 1 y 255.
-- SD: hexadecimal de 6 caracteres.
-- DNN: nombre seguro sin espacios. El despliegue base usa `internet`; `ims` queda reservado para etapas IMS futuras.
+- IMSI: required, digits only, 5 to 15 characters, unique.
+- MSISDN: optional, digits only, 5 to 20 characters.
+- K, OP, and OPc: 32-character hexadecimal values.
+- K with OP or K with OPc is accepted; OP and OPc cannot be provided together.
+- AMF: 4-character hexadecimal value.
+- SQN: 12-character hexadecimal value; leading zeros are preserved.
+- SST: integer from 1 to 255.
+- SD: 6-character hexadecimal value.
+- DNN: safe name without spaces. The base deployment uses `internet`; `ims` is reserved for future IMS stages.
 
-## Redacción de Secretos
+## Secret Redaction
 
-Los endpoints de listado y detalle nunca devuelven `security.k`, `security.op` ni `security.opc` completos. Devuelven indicadores:
+The list and detail endpoints never return complete `security.k`, `security.op`, or `security.opc` values. They return indicators:
 
 ```json
 {
@@ -78,7 +84,7 @@ Los endpoints de listado y detalle nunca devuelven `security.k`, `security.op` n
 }
 ```
 
-En edición, dejar K, OP u OPc vacío conserva el valor actual. Cadenas enmascaradas como `********` o `[REDACTED]` se rechazan como nuevos secretos.
+When editing, leaving K, OP, or OPc empty preserves the current value. Masked strings such as `********` or `[REDACTED]` are rejected as new secrets.
 
 ## Endpoints
 
@@ -89,19 +95,19 @@ En edición, dejar K, OP u OPc vacío conserva el valor actual. Cadenas enmascar
 - `POST /api/subscribers`
 - `PATCH /api/subscribers/{imsi}`
 - `POST /api/subscribers/{imsi}/clone`
-- `DELETE /api/subscribers/{imsi}` con body `{"confirm": true}`
+- `DELETE /api/subscribers/{imsi}` with body `{"confirm": true}`
 
-## Operaciones
+## Operations
 
-Crear, editar, clonar y eliminar modifican directamente MongoDB de Open5GS solo cuando `LAIN5G_DRY_RUN=false` y `LAIN5G_MUTATING_OPERATIONS_ENABLED=true`. No reinician el laboratorio ni desconectan UEs automáticamente.
+Create, edit, clone, and delete operations modify Open5GS MongoDB directly only when `LAIN5G_DRY_RUN=false` and `LAIN5G_MUTATING_OPERATIONS_ENABLED=true`. They do not automatically restart the lab or disconnect UEs.
 
-Clonar copia credenciales internamente hacia un nuevo IMSI, pero no las muestra en la respuesta.
+Cloning copies credentials internally to a new IMSI but does not include them in the response.
 
-Eliminar requiere confirmación explícita. Una sesión UE activa puede persistir temporalmente hasta que sea desconectada o vuelva a registrarse.
+Deletion requires explicit confirmation. An active UE session may persist temporarily until it is disconnected or registers again.
 
-## Modo Dry-Run
+## Dry-Run Mode
 
-Con `LAIN5G_DRY_RUN=true`, las operaciones de escritura validan el payload pero devuelven:
+With `LAIN5G_DRY_RUN=true`, write operations validate the payload but return:
 
 ```json
 {
@@ -110,27 +116,27 @@ Con `LAIN5G_DRY_RUN=true`, las operaciones de escritura validan el payload pero 
 }
 ```
 
-No insertan, modifican ni eliminan documentos reales.
+They do not insert, modify, or delete actual documents.
 
-## Pruebas
+## Tests
 
 ```bash
 make subscribers-test
 ```
 
-Las pruebas unitarias usan colecciones en memoria y no dependen de MongoDB real.
+The unit tests use in-memory collections and do not depend on an actual MongoDB instance.
 
-La integración real requiere confirmación explícita:
+Live integration testing requires explicit confirmation:
 
 ```bash
 LAIN5G_ALLOW_INTEGRATION_WRITES=true make subscribers-integration-test
 ```
 
-El flujo documentado valida conexión, listado, creación, edición, clonación, eliminación y posterior `make validate-5g-sa`.
+The documented workflow validates connection, listing, creation, editing, cloning, deletion, and the subsequent `make validate-5g-sa` command.
 
-## Riesgos
+## Risks
 
-- El Compose base no monta `/var/run/docker.sock`; el override operativo opcional concede control equivalente a root del host.
-- No expongas la aplicación fuera de loopback.
-- No uses IMSI ni claves reales sin anonimizar.
-- La existencia de un documento en MongoDB no demuestra autenticación exitosa del UE.
+- The base Compose configuration does not mount `/var/run/docker.sock`; the optional operational override grants control equivalent to root access on the host.
+- Do not expose the application outside loopback.
+- Do not use real IMSIs or keys without anonymizing them.
+- The existence of a document in MongoDB does not demonstrate successful UE authentication.
