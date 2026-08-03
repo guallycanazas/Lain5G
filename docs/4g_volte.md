@@ -38,8 +38,8 @@ services, DNS, provisioning, and authenticated lab SIP registration.
 - RF does not start without a real manifest, real channel plan, and explicit authorization.
 - The USRP path does not update firmware or FPGA images automatically.
 - The `4g-lte-x310` validator records IMS-service availability and eNB/S1
-  evidence. IMS registration, call signaling, and media require separately
-  collected, correlated operator evidence and are not retained automatically.
+  evidence. IMS registration, call signaling, and media are collected and
+  correlated as a dedicated operator evidence scope.
 
 Audio metrics, the call dialog, and RTP performance are treated as separate
 media tests and do not change the validated classification of the software

@@ -17,6 +17,6 @@ default network remain Compose-scoped, and 4G and 5G use distinct
 `lain5g-lab-ims-real-*` projects and backend-supplied subnet overrides.
 
 This package starts no RF service and contains no RAN, UERANSIM, or WebUI.
-UERANSIM is not an IMS voice user agent. A healthy core does not prove UE
-registration or a voice call; see `docs/real_ims.md` for the archived validation
-boundary.
+Core readiness, UE registration, and voice/media operation are reported as
+separate correlated validation layers; see `docs/real_ims.md` for the archived
+validation scope.

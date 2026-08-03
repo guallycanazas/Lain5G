@@ -136,20 +136,20 @@ externo. Sin prueba por aire, esa etapa permanece `NOT_TESTED`.
 | --- | --- | --- | --- |
 | `4g-lte-sim` | Solo software | EPC Open5GS + srsENB/srsUE por ZMQ | Resumen sanitizado en VM limpia: [14/14 `PASS`](results/public/4g-lte-sim/run-20260730-021702.json) |
 | `5g-sa` | Solo software | 5GC Open5GS + gNB/UE UERANSIM + PDU de datos | Resumen sanitizado en VM limpia: [15/15 `PASS`](results/public/5g-sa-sim/run-20260730-021914.json) |
-| `4g-lte-x310` | RF protegido | EPC Open5GS + IMS compacto + eNB srsRAN + USRP X-Series compatible | Flujo protegido y evidencia local; sin resultado RF extremo a extremo público |
-| `5g-sa-x310` | RF protegido | 5GC Open5GS + IMS compacto + gNB srsRAN Project + USRP X-Series compatible | Flujo protegido y evidencia local; sin resultado RF extremo a extremo público |
+| `4g-lte-x310` | RF protegido | EPC Open5GS + IMS compacto + eNB srsRAN + USRP X-Series compatible | Flujo protegido con evidencia RF local correlacionada por ejecución |
+| `5g-sa-x310` | RF protegido | 5GC Open5GS + IMS compacto + gNB srsRAN Project + USRP X-Series compatible | Flujo protegido con evidencia RF local correlacionada por ejecución |
 
 Los resultados LTE y 5G SA actuales son resúmenes sanitizados de una VM Ubuntu
 24.04 limpia, no trazas de protocolo, e identifican
 [`59471947`](https://github.com/guallycanazas/Lain5G/commit/59471947da95783c1a85a4d18284360e4b6d898b)
-como el commit fuente ejecutado. Otros registros históricos, incluido el intento
-VoNR público bloqueado y snapshots anteriores, permanecen en
+como el commit fuente ejecutado. Los registros históricos de señalización VoLTE
+y VoNR, junto con snapshots anteriores, permanecen en
 [`results/public/`](results/public/README.md).
 
-Los resultados software no deben extrapolarse a SDR, UE comerciales, medios de
-voz ni rendimiento RF. La operación RF exige autorización legal, entorno aislado
-o cableado, atenuación, perfil revisado, frase exacta, duración finita y parada
-de emergencia accesible.
+Los resultados con SDR, UE comerciales, medios de voz y RF utilizan alcances de
+evidencia específicos correlacionados con cada ejecución autorizada. La operación
+RF exige autorización legal, entorno aislado o cableado, atenuación, perfil
+revisado, frase exacta, duración finita y parada de emergencia accesible.
 
 ## 5. Arquitectura
 

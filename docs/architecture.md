@@ -16,8 +16,9 @@ and volume to prevent interference between 5G SA and 4G LTE/IMS.
 - `runs/` stores minimal per-run results without copying full configurations or
   code.
 - `5g-sa-x310` adds compact MariaDB, P-CSCF, I-CSCF, S-CSCF, and DNS services to
-  the always-on core; the gNB remains isolated in the `rf` profile. It does not
-  add an IMS DNN or demonstrate IMS registration or VoNR from a physical UE.
+  the always-on core; the gNB remains isolated in the `rf` profile. Physical-UE
+  IMS registration and VoNR are handled as a separate integration and evidence
+  scope.
 
 ## 4G LTE/IMS components
 

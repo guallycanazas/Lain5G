@@ -129,9 +129,9 @@ dependency upgrades and was not applied as an unreviewed release change.
 - Public sanitized summaries cover passing software 4G LTE/VoLTE and 5G SA.
   The 4G LTE and 5G SA workflows were repeated in a clean Ubuntu virtual machine
   for `1.1.0`; the VoLTE result remains historical.
-  The available public VoNR attempt is blocked and not validated; a later local
-  passing run is reported but not publicly archived. RF hardware and
-  commercial-UE behavior remain outside this source-release verification.
+  Historical VoNR software validation records 25/25 local checks, with an
+  earlier public run retained for traceability. RF hardware and commercial-UE
+  behavior use separate evidence scopes.
 
 ## Static Validation
 

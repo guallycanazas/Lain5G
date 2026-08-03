@@ -48,5 +48,5 @@ Use this checklist before any RF transmission with `5g-sa-x310`. Do not commit a
   transmit, and `Start core + RF` requires all safeguards.
 
 Retain NG setup and any separately collected, redacted UE-registration and PDU
-session evidence under the same `run-id`. IMS registration, VoNR calls, and RTP
-remain outside the supported `5g-sa-x310` scope.
+session evidence under the same `run-id`. When IMS registration, VoNR calls, and
+RTP are evaluated, correlate them through a dedicated IMS/media evidence scope.

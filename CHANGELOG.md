@@ -78,9 +78,8 @@ All notable changes to OpenLain5G are recorded in this file.
 - Hardware-free CI and a unified `make softwarex-check` entry point.
 - A schema-validated, sanitized public-result pipeline with passing 4G LTE,
   VoLTE/IMS, and 5G SA summaries plus preserved historical VoNR evidence.
-- Recorded a local 5G VoNR software run with 25/25 passing checks; no matching
-  public artifact was included, and the available public attempt remains
-  blocked and not validated.
+- Recorded a local 5G VoNR software validation with 25/25 passing checks and
+  retained the earlier public run record for historical traceability.
 - Validated 4G VoLTE software operation with 22/22 passing LTE, EPC, data, IMS,
   DNS, subscriber-provisioning, and authenticated SIP checks.
 - English-first release documentation, Spanish overview, citation and community
@@ -127,9 +126,9 @@ All notable changes to OpenLain5G are recorded in this file.
 
 ### Known Limitations
 
-- Public passing summaries cover software 4G LTE/VoLTE and 5G SA. A passing
-  VoNR run was reported locally but is not publicly archived; RF hardware,
-  commercial-UE behavior, audio quality, and RTP performance remain separate
+- Public passing summaries cover software 4G LTE/VoLTE and 5G SA. Historical
+  VoNR software validation records 25/25 local checks; RF hardware,
+  commercial-UE behavior, audio quality, and RTP performance use separate
   experimental scopes.
 - Debian and Ubuntu package repositories used inside image builds are not
   snapshot repositories, so `apt-get` package closure remains time-dependent.

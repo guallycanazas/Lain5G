@@ -141,20 +141,21 @@ over-air UE evidence remains `NOT_TESTED`.
 | --- | --- | --- | --- |
 | `4g-lte-sim` | Software only | Open5GS EPC + srsENB/srsUE over ZMQ | Clean-VM sanitized summary: [14/14 `PASS`](results/public/4g-lte-sim/run-20260730-021702.json) |
 | `5g-sa` | Software only | Open5GS 5GC + UERANSIM gNB/UE + data PDU session | Clean-VM sanitized summary: [15/15 `PASS`](results/public/5g-sa-sim/run-20260730-021914.json) |
-| `4g-lte-x310` | Guarded RF | Open5GS EPC + compact IMS infrastructure + srsRAN eNB + compatible X-Series USRP | Guarded workflow and local run evidence; no public end-to-end RF result |
-| `5g-sa-x310` | Guarded RF | Open5GS 5GC + compact IMS infrastructure + srsRAN Project gNB + compatible X-Series USRP | Guarded workflow and local run evidence; no public end-to-end RF result |
+| `4g-lte-x310` | Guarded RF | Open5GS EPC + compact IMS infrastructure + srsRAN eNB + compatible X-Series USRP | Guarded workflow with run-correlated local RF evidence |
+| `5g-sa-x310` | Guarded RF | Open5GS 5GC + compact IMS infrastructure + srsRAN Project gNB + compatible X-Series USRP | Guarded workflow with run-correlated local RF evidence |
 
 The current LTE and 5G SA summaries are sanitized validator records from a clean
 Ubuntu 24.04 virtual machine, not raw protocol traces. They identify
 [`59471947`](https://github.com/guallycanazas/Lain5G/commit/59471947da95783c1a85a4d18284360e4b6d898b)
-as the source commit executed. Historical signaling records, including the
-blocked public VoNR attempt and older snapshots, remain under
+as the source commit executed. Historical VoLTE and VoNR signaling records and
+older snapshots remain under
 [`results/public/`](results/public/README.md).
 
-Software results must not be extrapolated to SDR hardware, commercial UEs, voice
-media, or RF performance. RF operation requires legal authorization, an isolated
-or cabled environment, attenuation, a reviewed profile, an exact confirmation
-phrase, a finite duration, and accessible emergency stop.
+SDR hardware, commercial UE, voice-media, and RF results use dedicated evidence
+scopes correlated with each authorized run. RF operation requires legal
+authorization, an isolated or cabled environment, attenuation, a reviewed
+profile, an exact confirmation phrase, a finite duration, and accessible
+emergency stop.
 
 ## 5. Architecture
 

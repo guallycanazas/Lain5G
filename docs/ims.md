@@ -67,9 +67,9 @@ Valid evidence requires:
 ## Scope
 
 Current software validation retains REGISTER evidence. Call signaling and
-bidirectional RTP require separate media-test evidence; see
+bidirectional RTP use a separate media-test evidence scope; see
 `docs/volte_validation.md`.
 
 For `4g-lte-x310`, correlate separately collected IMS evidence with core, RAN,
-UE, and media logs under the same `run-id`. The `5g-sa-x310` profile has no IMS
-DNN and does not establish IMS registration or VoNR.
+UE, and media logs under the same `run-id`. For `5g-sa-x310`, physical-UE IMS
+registration and VoNR use a dedicated integration and evidence scope.

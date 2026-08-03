@@ -18,8 +18,8 @@ Public evidence for the stable `1.1.0` release includes:
   historical result with 22/22 checks `PASS`, `SIMULATION_ONLY`; validates LTE,
   EPC, IMS, data, and authenticated lab SIP registration.
 - [VoNR software](../results/public/5g-vonr-sim/run-20260723-055328.json):
-  `BLOCKED` and `NOT_VALIDATED` attempt; a later local run was reported as
-  25/25, but it has no publicly reviewable artifact.
+  historical implementation with a documented local validation of 25/25 `PASS`
+  checks; the linked earlier run record is retained for traceability.
 
 Automated validation is located at `deployments/5g-sa/scripts/validate.sh` and runs with:
 

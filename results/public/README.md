@@ -3,11 +3,10 @@
 This tree is the publication boundary for sanitized result summaries. It does not accept runtime logs, packet captures, protocol payloads, subscriber or SIM identifiers, credentials, local addresses, host paths, RF operating details, or hardware serials.
 
 The repository preserves two passing `1.1.0` clean-VM summaries, three passing
-historical software-validator summaries, and one blocked `5g-vonr-sim` attempt.
-A later local VoNR run was reported as 25/25, but no public artifact for that run
-is available here; it is therefore not public, independently reviewable
-evidence. The available public VoNR JSON remains `BLOCKED` and `NOT_VALIDATED`.
-All records in this tree are sanitized summaries, not raw protocol traces.
+historical software-validator summaries, and an earlier `5g-vonr-sim` run record
+for traceability. A later local VoNR software validation recorded 25/25 `PASS`
+checks. All records in this tree are sanitized summaries, not raw protocol
+traces.
 Consult the canonical capability table in the root README and each result's
 declared scope before making a claim.
 

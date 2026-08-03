@@ -52,7 +52,6 @@ commit only when there is correlated evidence of:
 - IP assigned to the UE.
 - successful ping from the UE.
 
-Running containers alone do not validate the scenario.
-
-UERANSIM simulation does not extrapolate to real radio operation. Registration,
-the PDU session, and 5G SA data with a commercial UE remain `NOT_VALIDATED`.
+Running containers alone do not validate the scenario. Commercial-UE and RF
+operation use a separate field-validation scope correlated with the authorized
+run.

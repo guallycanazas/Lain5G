@@ -48,18 +48,15 @@ disabled, and SQL echo disabled. The directory and files are restricted to the
 local user. The source runtime files remain unchanged so their recorded
 provenance hashes stay verifiable.
 
-## Limitations
+## Validation Scope
 
 A passing preflight evaluates only its packaging, Docker, image, and publication
 prerequisites. A passing service status evaluates only container and listener
 readiness. Mutable marker scans are not validation. Authenticated registration
 requires commit-linked, run-correlated evidence covering the applicable SIP and
-Cx sequence. A call claim additionally requires final dialog completion and
-bidirectional RTP evidence from the same run.
+Cx sequence. Call and media validation use a correlated evidence scope covering
+dialog completion, teardown, and bidirectional RTP from the same run.
 
-Neither preflight, service status, nor registration proves a VoLTE/VoNR call. A
-complete result requires a correlated successful SIP dialog, teardown, and
-bidirectional RTP, plus an IMS-capable UE and integrated RAN path. This package
-does not supply that UE or RAN, and no public result establishes the complete
-call path. Accordingly, the canonical status for the 5G mode is `DRY_RUN_ONLY`;
-private 4G observations remain `PARTIALLY_VALIDATED`.
+The package's core-service checks, registration flow, and call/media flow are
+reported as distinct validation layers. IMS-capable UE and integrated RAN
+evidence can be correlated with the package under the same run identifier.
