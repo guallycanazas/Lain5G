@@ -216,11 +216,6 @@ separately by the scenario validators.
 | Reproducibility records | Version matrix, public-result schemas, partial SBOM, and CI |
 | Support | Best-effort GitHub Issues; private vulnerability reporting for sensitive security reports |
 
-Before journal submission, the article authors must archive one exact release,
-add its DOI/permanent archive link, and approve article-specific authorship,
-ORCIDs, corresponding-author contact, CRediT roles, funding, conflicts, and data
-availability statements. These values are intentionally not inferred here.
-
 ## 7. Reproducibility and Security
 
 - Upstream source selections and image inputs are recorded in the
@@ -270,8 +265,7 @@ availability statements. These values are intentionally not inferred here.
 - **Alberth Ronal Tamo Calla**
 
 Software-release affiliation for all authors: **National University of San Agustin of
-Arequipa**. These three names are the complete confirmed author list for this
-project and any future article; see [`AUTHORS.md`](AUTHORS.md).
+Arequipa**. See [`AUTHORS.md`](AUTHORS.md).
 
 ## Citation
 

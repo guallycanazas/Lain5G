@@ -208,11 +208,6 @@ validadores de escenario.
 | Reproducibilidad | Matriz de versiones, esquemas, SBOM parcial y CI |
 | Soporte | GitHub Issues best-effort y reporte privado de vulnerabilidades |
 
-Antes de una entrega editorial, los autores del artículo deben archivar una
-release exacta, añadir su DOI/enlace permanente y aprobar autoría, ORCIDs,
-contacto correspondiente, roles CRediT, financiamiento, conflictos y
-declaraciones de disponibilidad. Estos valores no se inventan ni se infieren.
-
 ## 7. Reproducibilidad y Seguridad
 
 - Las selecciones upstream están en la
@@ -261,8 +256,7 @@ declaraciones de disponibilidad. Estos valores no se inventan ni se infieren.
 - **Alberth Ronal Tamo Calla**
 
 Afiliación de todos los autores: **Universidad Nacional de San Agustín de Arequipa**.
-Estos tres nombres conforman la lista completa y confirmada de autores del
-proyecto y de cualquier artículo futuro; consulte [`AUTHORS.md`](AUTHORS.md).
+Consulte [`AUTHORS.md`](AUTHORS.md).
 
 ## Citación
 
