@@ -26,6 +26,15 @@
         "@type": "Organization",
         "name": "National University of San Agustin of Arequipa"
       }
+    },
+    {
+      "@type": "Person",
+      "givenName": "Alberth Ronal",
+      "familyName": "Tamo Calla",
+      "affiliation": {
+        "@type": "Organization",
+        "name": "National University of San Agustin of Arequipa"
+      }
     }
   ],
   "programmingLanguage": [

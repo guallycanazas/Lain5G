@@ -13,6 +13,9 @@ authors:
   - family-names: "Prieto Tito"
     given-names: "Manuel Ismael"
     affiliation: "National University of San Agustin of Arequipa"
+  - family-names: "Tamo Calla"
+    given-names: "Alberth Ronal"
+    affiliation: "National University of San Agustin of Arequipa"
 abstract: >-
   OpenLain5G is a reproducible research environment for deploying, managing,
   and validating integrated laboratory 4G LTE/VoLTE and 5G SA/VoNR networks,

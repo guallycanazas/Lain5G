@@ -5,7 +5,7 @@ const projects = [
   { image: '/images/lain5g/logos/open5gs.png', imageClass: 'open5gs', name: 'Open5GS', role: 'EPC + 5GC', detail: 'Core control and user plane', href: 'https://open5gs.org/' },
   { image: '/images/lain5g/logos/ueransim.webp', imageClass: 'visual', name: 'UERANSIM', role: 'Software UE / gNB', detail: 'Reproducible 5G SA scenarios', href: 'https://github.com/aligungr/UERANSIM' },
   { image: '/images/lain5g/logos/fastapi.png', imageClass: 'fastapi', name: 'FastAPI', role: 'Management backend', detail: 'Local API and guarded control', href: 'https://fastapi.tiangolo.com/' },
-  { image: '/images/lain5g/logos/uhd.webp', imageClass: 'visual', name: 'UHD', role: 'SDR access', detail: 'Compatible X300/X310 device support', href: 'https://github.com/EttusResearch/uhd' },
+  { image: '/images/lain5g/logos/uhd.webp', imageClass: 'visual', name: 'UHD', role: 'SDR access', detail: 'Compatible USRP device support', href: 'https://github.com/EttusResearch/uhd' },
 ];
 
 export function OpenSourceStack() {

@@ -2,7 +2,7 @@
 
 <div align="center">
 
-**Evidence-oriented orchestration for software 4G/5G networks and guarded X300/X310 laboratory workflows**
+**Evidence-oriented orchestration for software 4G/5G networks and guarded USRP laboratory workflows**
 
 [![CI](https://github.com/guallycanazas/Lain5G/actions/workflows/ci.yml/badge.svg)](https://github.com/guallycanazas/Lain5G/actions/workflows/ci.yml)
 [![Release](https://img.shields.io/badge/release-v1.1.0-4051b5.svg)](https://github.com/guallycanazas/Lain5G/releases/tag/v1.1.0)
@@ -16,7 +16,7 @@
 
 OpenLain5G is a reproducibility-oriented GNU/Linux and Docker Compose laboratory
 integration for two public software data-network profiles, 4G LTE and 5G SA,
-and two guarded X300/X310 RF profiles. It combines established upstream mobile
+and two guarded USRP RF profiles. It combines established upstream mobile
 network components with scenario isolation, declarative configuration, guided
 operation, validators, local run records, a FastAPI backend, a React interface,
 and fail-closed RF safety controls.
@@ -128,7 +128,7 @@ flowchart LR
 
 Each stage becomes `PASS` only when all required checks report evidence. A
 running container never proves UE registration, an assigned address, user-plane
-traffic, RF emission, or over-air reception. For X310 profiles, the visual chain
+traffic, RF emission, or over-air reception. For guarded USRP profiles, the visual chain
 separates hardware/UHD detection, RF preflight, core readiness, the time-limited
 eNB/gNB process, S1/NG evidence, and external UE evidence. Missing over-air UE
 evidence remains `NOT_TESTED`.
@@ -141,8 +141,8 @@ evidence remains `NOT_TESTED`.
 | --- | --- | --- | --- |
 | `4g-lte-sim` | Software only | Open5GS EPC + srsENB/srsUE over ZMQ | Clean-VM sanitized summary: [14/14 `PASS`](results/public/4g-lte-sim/run-20260730-021702.json) |
 | `5g-sa` | Software only | Open5GS 5GC + UERANSIM gNB/UE + data PDU session | Clean-VM sanitized summary: [15/15 `PASS`](results/public/5g-sa-sim/run-20260730-021914.json) |
-| `4g-lte-x310` | Guarded RF | Open5GS EPC + compact IMS infrastructure + srsRAN eNB + compatible X300/X310 | Guarded workflow and local run evidence; no public end-to-end RF result |
-| `5g-sa-x310` | Guarded RF | Open5GS 5GC + compact IMS infrastructure + srsRAN Project gNB + compatible X300/X310 | Guarded workflow and local run evidence; no public end-to-end RF result |
+| `4g-lte-x310` | Guarded RF | Open5GS EPC + compact IMS infrastructure + srsRAN eNB + USRP | Guarded workflow and local run evidence; no public end-to-end RF result |
+| `5g-sa-x310` | Guarded RF | Open5GS 5GC + compact IMS infrastructure + srsRAN Project gNB + USRP | Guarded workflow and local run evidence; no public end-to-end RF result |
 
 The current LTE and 5G SA summaries are sanitized validator records from a clean
 Ubuntu 24.04 virtual machine, not raw protocol traces. They identify the exact
@@ -168,8 +168,8 @@ flowchart TB
     O --> C[Docker Compose scenarios]
     C --> S4[4G LTE ZMQ simulation]
     C --> S5[5G SA UERANSIM simulation]
-    C --> R4[Guarded 4G X310]
-    C --> R5[Guarded 5G X310]
+    C --> R4[Guarded 4G USRP]
+    C --> R5[Guarded 5G USRP]
     O --> V[Scenario validators]
     V --> RUNS[Run metadata, checks, and bounded logs]
     RUNS --> UI
@@ -256,7 +256,7 @@ availability statements. These values are intentionally not inferred here.
   3GPP reference implementation, or a conformance platform.
 - Public artifacts are sanitized summaries, not independently reviewable raw
   protocol traces or packet captures.
-- No public artifact validates X310 execution, RF behavior, commercial UE
+- No public artifact validates guarded-USRP execution, RF behavior, commercial UE
   interoperability, complete voice calls, audio quality, or RTP performance.
 - Existing catalog images are pull-only inputs and are not asserted to be
   approved for binary republication or accompanied by source attestations.

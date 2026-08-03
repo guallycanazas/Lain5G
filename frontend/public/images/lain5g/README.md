@@ -10,7 +10,7 @@ Console placements:
   scenario run evidence, not from the illustration itself.
 - `subscriber-provisioning.webp`: subscriber workflow; eSIM remains a design
   concept and is not exposed by the current backend.
-- `sdr-hardware.webp`: cropped to the supported X300/X310 preparation path.
+- `sdr-hardware.webp`: cropped to the guarded USRP preparation path.
 - `observability-concept.webp`: illustrative dashboard; displayed values are
   not live telemetry.
 - `lab-recipes.webp`: reproducible 4G/5G and VoLTE/VoNR workflow.
