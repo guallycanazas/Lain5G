@@ -14,6 +14,10 @@ import tempfile
 from pathlib import Path
 from types import SimpleNamespace
 
+SOURCE_ROOT = Path(__file__).resolve().parent / "src"
+if str(SOURCE_ROOT) not in sys.path:
+    sys.path.insert(0, str(SOURCE_ROOT))
+
 from backend.app.services.image_catalog import IMAGE_CATALOG, PROFILE_IMAGES, PUBLIC_PROFILE_IDS, RF_ACCESS_IMAGES, required_images
 from backend.app.services.profile_config_service import ProfileConfigError, ProfileConfigService
 from backend.app.services.scenario_environment import prepare_scenario_environment

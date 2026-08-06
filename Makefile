@@ -3,6 +3,8 @@ SHELL := /bin/bash
 PYTHON ?= python3
 VENV_PYTHON := .venv/bin/python
 BACKEND_INSTALL_STAMP := .venv/.lain5g-dev-deps
+PROJECT_PYTHONPATH := $(abspath src)$(if $(PYTHONPATH),:$(PYTHONPATH))
+export PYTHONPATH := $(PROJECT_PYTHONPATH)
 APP_CLEAN_ENV := env -u COMPOSE_PROJECT_NAME -u COMPOSE_FILE -u COMPOSE_PROFILES -u LAIN5G_PROJECT_ROOT -u LAIN5G_SCENARIO -u LAIN5G_DRY_RUN -u LAIN5G_MUTATING_OPERATIONS_ENABLED -u LAIN5G_COMMAND_TIMEOUT -u LAIN5G_IMAGE_PULL_TIMEOUT -u LAIN5G_IMAGE_PULL_ENABLED -u LAIN5G_LOG_TAIL_LINES -u LAIN5G_MAX_OUTPUT_CHARS -u LAIN5G_CORS_ORIGINS -u LAIN5G_OPEN5GS_MONGO_URI -u LAIN5G_OPEN5GS_MONGO_DATABASE -u LAIN5G_OPEN5GS_SUBSCRIBER_COLLECTION -u LAIN5G_SUBSCRIBER_SECRETS_VISIBLE -u LAIN5G_SUBSCRIBER_OPERATION_TIMEOUT -u LAIN5G_OPEN5GS_DOCKER_NETWORK -u LAIN5G_OPEN5GS_DOCKER_IP -u LAIN5G_RF_WEB_CONTROL_ENABLED -u APP_FRONTEND_PORT -u APP_BACKEND_PORT
 
 .PHONY: version-check images-check images-pull build-5g-sa start-5g-sa stop-5g-sa restart-5g-sa status-5g-sa logs-5g-sa validate-5g-sa clean-5g-sa backend-install backend-dev backend-test backend-cov frontend-install frontend-dev frontend-build frontend-test app-build app-up app-down app-logs app-ps app-up-operations app-down-operations app-logs-operations app-ps-operations subscribers-test subscribers-integration-test build-4g-lte-sim start-4g-lte-sim stop-4g-lte-sim restart-4g-lte-sim status-4g-lte-sim logs-4g-lte-sim validate-4g-lte-sim test-4g-lte-sim build-4g-volte-sim start-4g-volte-sim stop-4g-volte-sim status-4g-volte-sim logs-4g-volte-sim validate-4g-volte-sim test-4g-volte-sim build-4g-lte-x310 check-x310 preflight-4g-lte-x310 start-4g-lte-x310-epc start-4g-lte-x310-rf emergency-stop-4g-lte-x310 stop-4g-lte-x310 status-4g-lte-x310 logs-4g-lte-x310 validate-4g-lte-x310 test-4g-lte-x310 build-5g-vonr-sim start-5g-vonr-sim stop-5g-vonr-sim restart-5g-vonr-sim status-5g-vonr-sim logs-5g-vonr-sim validate-5g-vonr-sim test-5g-vonr-sim build-5g-x310 check-5g-x310 preflight-5g-x310 start-5g-x310-core dry-run-5g-x310 start-5g-x310-rf emergency-stop-5g-x310 stop-5g-x310 status-5g-x310 logs-5g-x310 test-5g-x310
@@ -53,35 +55,35 @@ clean-5g-sa:
 
 backend-install: $(BACKEND_INSTALL_STAMP)
 
-$(BACKEND_INSTALL_STAMP): backend/constraints.txt backend/requirements.txt backend/requirements-dev.txt
+$(BACKEND_INSTALL_STAMP): src/backend/constraints.txt src/backend/requirements.txt src/backend/requirements-dev.txt
 	$(PYTHON) -m venv .venv
 	$(VENV_PYTHON) -m pip install --upgrade pip==25.1.1
-	$(VENV_PYTHON) -m pip install --constraint backend/constraints.txt --requirement backend/requirements.txt --requirement backend/requirements-dev.txt
+	$(VENV_PYTHON) -m pip install --constraint src/backend/constraints.txt --requirement src/backend/requirements.txt --requirement src/backend/requirements-dev.txt
 	@touch $@
 
 backend-dev:
 	.venv/bin/uvicorn backend.app.main:app --host 127.0.0.1 --port 8000 --reload
 
 backend-test: backend-install
-	$(VENV_PYTHON) -m pytest backend/tests
+	$(VENV_PYTHON) -m pytest src/backend/tests
 
 backend-cov: backend-install
-	$(VENV_PYTHON) -m pytest --cov=backend/app --cov-report=term-missing backend/tests
+	$(VENV_PYTHON) -m pytest --cov=src/backend/app --cov-report=term-missing src/backend/tests
 
 frontend-install:
-	cd frontend && npm ci
+	cd src/frontend && npm ci
 
 frontend-dev:
-	cd frontend && npm run dev
+	cd src/frontend && npm run dev
 
 frontend-build: frontend-install
-	cd frontend && npm run build
+	cd src/frontend && npm run build
 
 frontend-test: frontend-install
-	cd frontend && npm test
+	cd src/frontend && npm test
 
 frontend-typecheck: frontend-install
-	cd frontend && ./node_modules/.bin/tsc -b --pretty false
+	cd src/frontend && ./node_modules/.bin/tsc -b --pretty false
 
 source-formats-check: backend-install
 	$(VENV_PYTHON) scripts/verify/source_formats.py
@@ -177,8 +179,8 @@ app-ps-operations:
 	$(APP_CLEAN_ENV) docker compose --env-file .env.app -f docker-compose.app.yml -f docker-compose.app-operations.yml ps
 
 subscribers-test:
-	.venv/bin/pytest backend/tests/test_open5gs_connection_service.py backend/tests/test_subscriber_service.py backend/tests/test_subscribers_api.py
-	cd frontend && npm test -- subscribers
+	.venv/bin/pytest src/backend/tests/test_open5gs_connection_service.py src/backend/tests/test_subscriber_service.py src/backend/tests/test_subscribers_api.py
+	cd src/frontend && npm test -- subscribers
 
 subscribers-integration-test:
 	@if [ "$${LAIN5G_ALLOW_INTEGRATION_WRITES:-false}" != "true" ]; then \
@@ -210,7 +212,7 @@ validate-4g-lte-sim:
 	@deployments/4g-lte-sim/scripts/validate.sh
 
 test-4g-lte-sim:
-	.venv/bin/pytest backend/tests/test_4g_lte_sim_static.py
+	.venv/bin/pytest src/backend/tests/test_4g_lte_sim_static.py
 	@deployments/4g-lte-sim/scripts/test.sh
 
 build-4g-lte-x310:
@@ -246,7 +248,7 @@ validate-4g-lte-x310:
 	@deployments/4g-volte/x310/scripts/validate.sh
 
 test-4g-lte-x310:
-	.venv/bin/pytest backend/tests/test_4g_volte_static.py
+	.venv/bin/pytest src/backend/tests/test_4g_volte_static.py
 	@deployments/4g-volte/x310/scripts/test.sh
 
 build-5g-x310:
@@ -280,7 +282,7 @@ logs-5g-x310:
 	@deployments/5g-sa-x310/scripts/logs.sh
 
 test-5g-x310:
-	.venv/bin/pytest backend/tests/test_5g_x310_static.py
+	.venv/bin/pytest src/backend/tests/test_5g_x310_static.py
 	@deployments/5g-sa-x310/scripts/test.sh
 
 INTERNAL_ONLY_TARGETS := \

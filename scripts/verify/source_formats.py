@@ -13,7 +13,7 @@ from _common import ROOT, relative, source_files
 
 
 EXPECTED_INVALID_JSON = {
-    "backend/tests/fixtures/runs/run-invalid/metadata.json",
+    "src/backend/tests/fixtures/runs/run-invalid/metadata.json",
 }
 PYTHON_ENTRYPOINTS = {"lain5g"}
 

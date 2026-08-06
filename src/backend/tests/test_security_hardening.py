@@ -8,7 +8,7 @@ import stat
 import subprocess
 
 
-ROOT = Path(__file__).resolve().parents[2]
+ROOT = Path(__file__).resolve().parents[3]
 UDM_ROLE = ROOT / "images" / "ims-real-open5gs" / "roles" / "udm"
 
 

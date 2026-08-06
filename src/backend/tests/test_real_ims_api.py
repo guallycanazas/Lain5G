@@ -5,7 +5,7 @@ from fastapi.testclient import TestClient
 
 from backend.app.main import create_app
 
-ROOT = Path(__file__).resolve().parents[2]
+ROOT = Path(__file__).resolve().parents[3]
 
 
 def test_real_ims_routes_are_not_public():

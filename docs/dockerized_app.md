@@ -63,8 +63,8 @@ make app-build
 ```
 
 The backend build uses the root context to copy `VERSION`; its Python packages
-are resolved with `backend/constraints.txt`. The frontend installs from the
-lockfile using `npm ci`.
+are resolved with `src/backend/constraints.txt`. The frontend installs from
+`src/frontend/package-lock.json` using `npm ci`.
 
 Equivalent command:
 
@@ -88,7 +88,7 @@ In this mode, the backend returns the commands it would have executed, and valid
 - `docker-compose.app-operations.yml` explicitly enables a writable project directory and the Docker socket, which is equivalent to root control of the host.
 - Mutations also require `LAIN5G_MUTATING_OPERATIONS_ENABLED=true`.
 - Do not expose the application outside the local machine.
-- `.env.app`, `backend/.env`, `frontend/.env`, and `deployments/5g-sa/.env` must not be committed.
+- `.env.app`, `src/backend/.env`, `src/frontend/.env`, and `deployments/5g-sa/.env` must not be committed.
 - Do not use real keys or non-anonymized IMSIs in the lab.
 - See `docs/security/local-deployment.md` for the exact opt-in command.
 

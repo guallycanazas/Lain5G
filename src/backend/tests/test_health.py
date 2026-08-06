@@ -2,7 +2,7 @@ from pathlib import Path
 
 
 def test_health_responds_ok(client):
-    version = (Path(__file__).resolve().parents[2] / "VERSION").read_text(encoding="utf-8").strip()
+    version = (Path(__file__).resolve().parents[3] / "VERSION").read_text(encoding="utf-8").strip()
     response = client.get("/api/health")
 
     assert response.status_code == 200

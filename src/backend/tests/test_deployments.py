@@ -34,9 +34,9 @@ def test_hidden_signaling_scenarios_remain_internal(client):
 
 
 def test_5g_sa_ue_renders_private_credentials_at_runtime():
-    compose = (Path(__file__).resolve().parents[2] / "deployments/5g-sa/docker-compose.runtime.yml").read_text(encoding="utf-8")
-    ue = (Path(__file__).resolve().parents[2] / "deployments/5g-sa/ueransim/ue.yaml").read_text(encoding="utf-8")
-    start = (Path(__file__).resolve().parents[2] / "deployments/5g-sa/scripts/start.sh").read_text(encoding="utf-8")
+    compose = (Path(__file__).resolve().parents[3] / "deployments/5g-sa/docker-compose.runtime.yml").read_text(encoding="utf-8")
+    ue = (Path(__file__).resolve().parents[3] / "deployments/5g-sa/ueransim/ue.yaml").read_text(encoding="utf-8")
+    start = (Path(__file__).resolve().parents[3] / "deployments/5g-sa/scripts/start.sh").read_text(encoding="utf-8")
 
     assert "env_file:\n      - .env" in compose
     assert "umask 077" in compose
@@ -52,7 +52,7 @@ def test_5g_sa_ue_renders_private_credentials_at_runtime():
 
 
 def test_5g_sa_runtime_renderer_matches_provisioned_credentials(tmp_path: Path):
-    root = Path(__file__).resolve().parents[2]
+    root = Path(__file__).resolve().parents[3]
     runtime = yaml.safe_load((root / "deployments/5g-sa/docker-compose.runtime.yml").read_text(encoding="utf-8"))
     command = runtime["services"]["ue"]["command"][2].replace("$$", "$")
     runtime_dir = tmp_path / "ueransim"

@@ -9,7 +9,7 @@ from pathlib import Path
 import pytest
 
 
-ROOT = Path(__file__).resolve().parents[2]
+ROOT = Path(__file__).resolve().parents[3]
 
 
 def fake_docker(tmp_path: Path) -> tuple[dict[str, str], Path]:

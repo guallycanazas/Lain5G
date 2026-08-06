@@ -1,7 +1,7 @@
 # Versions and traceability
 
 The authoritative OpenLain5G version is stored in `VERSION`. The current stable
-release is `1.1.2`. The API, frontend, OCI tags, derived images, and changelog
+release is `1.1.3`. The API, frontend, OCI tags, derived images, and changelog
 are checked against that source with:
 
 ```bash
@@ -35,10 +35,10 @@ the project's own software has been tested on all those architectures.
 
 ## Application dependencies
 
-- Python: exact direct requirements in `backend/requirements*.txt` and exact
-  runtime/development resolution in `backend/constraints.txt`.
+- Python: exact direct requirements in `src/backend/requirements*.txt` and exact
+  runtime/development resolution in `src/backend/constraints.txt`.
 - Frontend: dependency resolution and integrity hashes in
-  `frontend/package-lock.json`; install with `npm ci` through
+  `src/frontend/package-lock.json`; install with `npm ci` through
   `make frontend-install`.
 - Real IMS: base images and derived tags in
   `deployments/ims-real/images.lock.yaml`.

@@ -100,22 +100,22 @@ def check(root: Path) -> list[str]:
     if not SEMVER.fullmatch(version):
         errors.append(f"VERSION is not valid SemVer: {version!r}")
 
-    package = _json(root / "frontend/package.json", errors)
-    package_lock = _json(root / "frontend/package-lock.json", errors)
+    package = _json(root / "src/frontend/package.json", errors)
+    package_lock = _json(root / "src/frontend/package-lock.json", errors)
     if package.get("version") != version:
-        errors.append(f"frontend/package.json version {package.get('version')!r} != {version!r}")
+        errors.append(f"src/frontend/package.json version {package.get('version')!r} != {version!r}")
     if package_lock.get("version") != version:
-        errors.append(f"frontend/package-lock.json version {package_lock.get('version')!r} != {version!r}")
+        errors.append(f"src/frontend/package-lock.json version {package_lock.get('version')!r} != {version!r}")
     lock_root = package_lock.get("packages", {}).get("", {}) if isinstance(package_lock.get("packages"), dict) else {}
     if lock_root.get("version") != version:
-        errors.append(f"frontend/package-lock.json root package version {lock_root.get('version')!r} != {version!r}")
+        errors.append(f"src/frontend/package-lock.json root package version {lock_root.get('version')!r} != {version!r}")
     for section in ("dependencies", "devDependencies"):
         if package.get(section, {}) != lock_root.get(section, {}):
-            errors.append(f"frontend/package-lock.json root {section} contradicts package.json")
+            errors.append(f"src/frontend/package-lock.json root {section} contradicts package.json")
 
-    main_py = _read(root / "backend/app/main.py", errors)
-    model_py = _read(root / "backend/app/models/deployment.py", errors)
-    version_py = _read(root / "backend/app/version.py", errors)
+    main_py = _read(root / "src/backend/app/main.py", errors)
+    model_py = _read(root / "src/backend/app/models/deployment.py", errors)
+    version_py = _read(root / "src/backend/app/version.py", errors)
     if "from .version import VERSION" not in main_py or "version=VERSION" not in main_py:
         errors.append("backend FastAPI metadata must use backend.app.version.VERSION")
     if re.search(r"\bversion\s*=\s*['\"]", main_py):
@@ -149,22 +149,22 @@ def check(root: Path) -> list[str]:
     if "make version-check" not in policy_doc:
         errors.append("dependency policy does not document make version-check")
 
-    runtime = _requirements(root / "backend/requirements.txt", errors)
-    development = _requirements(root / "backend/requirements-dev.txt", errors)
-    constraints = _requirements(root / "backend/constraints.txt", errors)
+    runtime = _requirements(root / "src/backend/requirements.txt", errors)
+    development = _requirements(root / "src/backend/requirements-dev.txt", errors)
+    constraints = _requirements(root / "src/backend/constraints.txt", errors)
     for name, pinned_version in {**runtime, **development}.items():
         if constraints.get(name) != pinned_version:
             errors.append(
-                f"backend/constraints.txt has {name}=={constraints.get(name)!s}, expected {pinned_version}"
+                f"src/backend/constraints.txt has {name}=={constraints.get(name)!s}, expected {pinned_version}"
             )
 
     makefile = _read(root / "Makefile", errors)
-    if "frontend-install:\n\tcd frontend && npm ci" not in makefile:
+    if "frontend-install:\n\tcd src/frontend && npm ci" not in makefile:
         errors.append("frontend-install must use npm ci")
     if re.search(r"\bnpm\s+install\b", makefile):
         errors.append("Makefile contains mutable npm install usage")
-    if "--constraint backend/constraints.txt" not in makefile:
-        errors.append("backend-install must consume backend/constraints.txt")
+    if "--constraint src/backend/constraints.txt" not in makefile:
+        errors.append("backend-install must consume src/backend/constraints.txt")
     if "version-check:" not in makefile:
         errors.append("Makefile is missing version-check")
 
@@ -246,7 +246,7 @@ def check(root: Path) -> list[str]:
             if not digest or digest.end() != len(image):
                 errors.append(f"{rel}:{number}: third-party image {image!r} is not digest-pinned")
 
-    catalog = _read(root / "backend/app/services/image_catalog.py", errors)
+    catalog = _read(root / "src/backend/app/services/image_catalog.py", errors)
     for source in re.findall(r'"lain5g-lab/[^\"]+:local": \("([^\"]+)"', catalog):
         digest = SHA256.search(source)
         if not digest or digest.end() != len(source):
@@ -265,7 +265,7 @@ def check(root: Path) -> list[str]:
         if pattern.search(ims_lock):
             errors.append("real-IMS image lock contains a mutable latest reference")
 
-    service = _read(root / "backend/app/services/real_ims_service.py", errors)
+    service = _read(root / "src/backend/app/services/real_ims_service.py", errors)
     if "from ..version import VERSION" not in service or ':{VERSION}' not in service:
         errors.append("real-IMS service image tags must derive from VERSION")
 

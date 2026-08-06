@@ -21,6 +21,10 @@ nonstandard init systems should satisfy the requirements below manually. The
 installer does not override host policy when daemon or group management is not
 available.
 
+The application source is located under `src/backend/` and `src/frontend/`.
+Release metadata, operational deployments, scripts, documentation, and public
+results remain at the repository root.
+
 To review all actions without modifying the system:
 
 ```bash
@@ -50,19 +54,22 @@ verify that the version and lock files are consistent:
 make version-check
 ```
 
-The console is the recommended entry point. Its first option installs missing
-dependencies and downloads the complete lab; it also supports scenario
-operations and launches the web application:
+The web application is the recommended operational entry point. On a trusted
+laboratory workstation, start it with:
+
+```bash
+./lain5g app start --operations --open
+```
+
+For observation-only access, use `./lain5g app start --open`. The second
+supported entry point is the guided interactive CLI:
 
 ```bash
 ./lain5g
 ```
 
-Select `PREPARAR MAQUINA Y DESCARGAR TODO` for a new installation,
-`Imagenes y componentes` to manage downloads, `Perfiles y operacion` to
-configure/start/validate/stop a network, or `Aplicacion web` to prepare, start,
-open, and stop the interface. Downloading images does not build or start
-services.
+Use its menus to prepare the machine, manage downloads, select profiles, and
+operate software networks. Downloading images does not build or start services.
 
 The CLI automatically prepares `.env.app` with the absolute repository path.
 To start the interface in safe observation mode:
@@ -134,7 +141,7 @@ make build-4g-lte-x310
 The X310 image builds UHD and can take considerably longer than the software path.
 
 The containerized API is built from the root context to include the authoritative
-`VERSION` file; use `docker build -f backend/Dockerfile .` if you need to build
+`VERSION` file; use `docker build -f src/backend/Dockerfile .` if you need to build
 it outside Compose.
 
 This creates the same local tags as the automatic download:

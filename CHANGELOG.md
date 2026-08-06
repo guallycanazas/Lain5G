@@ -4,6 +4,16 @@ All notable changes to OpenLain5G are recorded in this file.
 
 ## [Unreleased]
 
+## [1.1.3] - 2026-08-06
+
+### Changed
+
+- Moved the backend and frontend source trees under `src/` while preserving
+  package names, commands, container behavior, and validation contracts.
+- Made the web application the first documented operator entry point and the
+  interactive CLI the second, with direct scenario commands kept as advanced
+  automation guidance.
+
 ## [1.1.2] - 2026-08-03
 
 ### Changed

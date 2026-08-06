@@ -6,8 +6,9 @@ from types import SimpleNamespace
 
 from _common import ROOT, relative, source_files
 
-if str(ROOT) not in sys.path:
-    sys.path.insert(0, str(ROOT))
+SOURCE_ROOT = ROOT / "src"
+if str(SOURCE_ROOT) not in sys.path:
+    sys.path.insert(0, str(SOURCE_ROOT))
 
 from backend.app.services.profile_config_service import ProfileConfigService  # noqa: E402
 

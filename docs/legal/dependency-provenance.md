@@ -2,7 +2,7 @@
 
 ## Purpose and Scope
 
-This document records how OpenLain5G release `1.1.2` identifies the
+This document records how OpenLain5G release `1.1.3` identifies the
 origin and version of third-party inputs. It covers source-built network
 components, registry images, application package manifests, base images, and
 imported configuration. It does not claim that a digest, lock file, or SBOM is
@@ -82,9 +82,9 @@ provenance identifiers.
 
 ## Python Packages
 
-`backend/requirements.txt` and `backend/requirements-dev.txt` define the nine
+`src/backend/requirements.txt` and `src/backend/requirements-dev.txt` define the nine
 direct packages. Every direct requirement is exactly pinned. The tested
-transitive environment is frozen in `backend/constraints.txt` with 29 package
+transitive environment is frozen in `src/backend/constraints.txt` with 29 package
 versions, including pip.
 
 The constraints file was captured from CPython 3.14.4, whereas the backend
@@ -99,10 +99,10 @@ separate review item.
 
 ## npm Packages
 
-`frontend/package-lock.json` is a lockfile version 3 record for frontend
-version `1.1.2`. It provides the exact resolved version, registry tarball,
+`src/frontend/package-lock.json` is a lockfile version 3 record for frontend
+version `1.1.3`. It provides the exact resolved version, registry tarball,
 and Subresource Integrity value for the npm closure. The semver ranges in
-`frontend/package.json` are declarations, not the final version authority.
+`src/frontend/package.json` are declarations, not the final version authority.
 
 The direct set consists of nine packages in `dependencies` and eleven packages
 in `devDependencies`. Some entries under `dependencies`, notably Vite and the

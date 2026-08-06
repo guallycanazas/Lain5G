@@ -1,13 +1,13 @@
 FROM python:3.12-slim@sha256:57cd7c3a7a273101a6485ba99423ee568157882804b1124b4dd04266317710de
 
-ARG LAIN5G_VERSION=1.1.2
+ARG LAIN5G_VERSION=1.1.3
 
 LABEL org.opencontainers.image.version="${LAIN5G_VERSION}" \
       org.opencontainers.image.source="https://github.com/guallycanazas/Lain5G"
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
-    PYTHONPATH=/app
+    PYTHONPATH=/app/src
 
 RUN apt-get update \
     && apt-get install -y --no-install-recommends bash ca-certificates curl git gnupg iproute2 iputils-ping \
@@ -22,12 +22,12 @@ RUN apt-get update \
 
 WORKDIR /app
 
-COPY backend/requirements.txt backend/constraints.txt ./
+COPY src/backend/requirements.txt src/backend/constraints.txt ./
 RUN python -m pip install --no-cache-dir --upgrade pip==25.1.1 \
     && python -m pip install --no-cache-dir --constraint constraints.txt --requirement requirements.txt
 
 COPY VERSION /app/VERSION
-COPY backend /app/backend
+COPY src/backend /app/src/backend
 
 EXPOSE 8000
 

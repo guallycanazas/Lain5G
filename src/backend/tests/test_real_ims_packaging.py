@@ -4,7 +4,7 @@ import hashlib
 import json
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[2]
+ROOT = Path(__file__).resolve().parents[3]
 DEPLOY = ROOT / "deployments" / "ims-real"
 IMAGE_CONTEXTS = {
     "ims-real-open5gs": ("441d40e16f76ae79fc25eaaa92245850ed833bdd3d0d0dc78acbffd958cdc2c6", "MIT AND AGPL-3.0-only AND BSD-2-Clause"),

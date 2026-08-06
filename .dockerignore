@@ -1,11 +1,13 @@
 # The root build context is only used by the backend image.
 **
 !VERSION
-!backend/
-!backend/Dockerfile
-!backend/requirements.txt
-!backend/constraints.txt
-!backend/app/
-!backend/app/**
-backend/app/**/__pycache__/
-backend/app/**/*.pyc
+!src/
+!src/backend/
+!src/backend/__init__.py
+!src/backend/Dockerfile
+!src/backend/requirements.txt
+!src/backend/constraints.txt
+!src/backend/app/
+!src/backend/app/**
+src/backend/app/**/__pycache__/
+src/backend/app/**/*.pyc

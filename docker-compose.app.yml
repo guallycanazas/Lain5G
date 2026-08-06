@@ -7,7 +7,7 @@ services:
   backend:
     build:
       context: .
-      dockerfile: backend/Dockerfile
+      dockerfile: src/backend/Dockerfile
     container_name: lain5g-lab-app-backend
     working_dir: ${LAIN5G_PROJECT_ROOT:?Set LAIN5G_PROJECT_ROOT in .env.app}
     environment:
@@ -29,7 +29,7 @@ services:
       LAIN5G_OPEN5GS_DOCKER_NETWORK: ${LAIN5G_OPEN5GS_DOCKER_NETWORK:-lain5g-lab-5g-sa-core}
       LAIN5G_OPEN5GS_DOCKER_IP: ${LAIN5G_OPEN5GS_DOCKER_IP:-10.20.0.250}
       LAIN5G_RF_WEB_CONTROL_ENABLED: ${LAIN5G_RF_WEB_CONTROL_ENABLED:-false}
-      PYTHONPATH: ${LAIN5G_PROJECT_ROOT:?Set LAIN5G_PROJECT_ROOT in .env.app}
+      PYTHONPATH: ${LAIN5G_PROJECT_ROOT:?Set LAIN5G_PROJECT_ROOT in .env.app}/src
     volumes:
       - type: bind
         source: ${LAIN5G_PROJECT_ROOT:?Set LAIN5G_PROJECT_ROOT in .env.app}
@@ -47,7 +47,7 @@ services:
 
   frontend:
     build:
-      context: ./frontend
+      context: ./src/frontend
       dockerfile: Dockerfile
     container_name: lain5g-lab-app-frontend
     depends_on:

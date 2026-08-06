@@ -16,7 +16,7 @@ from backend.app.main import create_app
 from backend.app.settings import Settings
 
 
-ROOT = Path(__file__).resolve().parents[2]
+ROOT = Path(__file__).resolve().parents[3]
 RF_REQUEST = {
     "execute": True,
     "confirmation_phrase": "START 4G-LTE-X310 RF",

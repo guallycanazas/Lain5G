@@ -6,7 +6,7 @@ import sys
 from pathlib import Path
 
 
-ROOT = Path(__file__).resolve().parents[2]
+ROOT = Path(__file__).resolve().parents[3]
 CHECK = ROOT / "scripts" / "release" / "check-version.py"
 
 
@@ -32,8 +32,8 @@ def test_release_version_and_dependency_policy_passes():
 
 
 def test_release_policy_rejects_a_frontend_version_contradiction(tmp_path: Path):
-    frontend = tmp_path / "frontend"
-    frontend.mkdir()
+    frontend = tmp_path / "src" / "frontend"
+    frontend.mkdir(parents=True)
     (tmp_path / "VERSION").write_text("2.3.4\n", encoding="utf-8")
     (frontend / "package.json").write_text(
         json.dumps({"version": "9.9.9", "dependencies": {}, "devDependencies": {}}),
@@ -52,4 +52,4 @@ def test_release_policy_rejects_a_frontend_version_contradiction(tmp_path: Path)
     )
 
     assert result.returncode == 1
-    assert "frontend/package.json version '9.9.9' != '2.3.4'" in result.stderr
+    assert "src/frontend/package.json version '9.9.9' != '2.3.4'" in result.stderr

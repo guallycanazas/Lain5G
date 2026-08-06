@@ -10,7 +10,7 @@ from pathlib import Path
 import pytest
 
 
-ROOT = Path(__file__).resolve().parents[2]
+ROOT = Path(__file__).resolve().parents[3]
 SCRIPT_DIRS = (
     Path("deployments/4g-volte/x310/scripts"),
     Path("deployments/5g-sa-x310/scripts"),

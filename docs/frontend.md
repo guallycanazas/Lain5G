@@ -12,14 +12,14 @@ make frontend-dev
 ```
 
 `make frontend-install` uses `npm ci` exclusively and preserves the dependency
-closure and integrity values in `frontend/package-lock.json`.
+closure and integrity values in `src/frontend/package-lock.json`.
 
 The Vite server listens on `http://127.0.0.1:5173` and proxies `/api` to
 `http://127.0.0.1:8000`.
 
 ## Variables
 
-Example from `frontend/.env.example`:
+Example from `src/frontend/.env.example`:
 
 ```env
 VITE_API_BASE_URL=
@@ -36,7 +36,7 @@ make frontend-build
 make frontend-test
 ```
 
-The same checks can be run directly from `frontend/`:
+The same checks can be run directly from `src/frontend/`:
 
 ```bash
 npm ci

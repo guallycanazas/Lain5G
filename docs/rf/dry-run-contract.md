@@ -65,7 +65,7 @@ script and does not include the requested duration or operator note. For
 
 ## Automated verification
 
-`backend/tests/test_rf_dry_run_contract.py` copies only versioned shell scripts
+`src/backend/tests/test_rf_dry_run_contract.py` copies only versioned shell scripts
 into a temporary sandbox. It places synthetic canaries in local-config and
 marker locations, traps Docker, UHD, RF, network, filesystem, and service
 commands, then invokes every X310 script with `LAIN5G_DRY_RUN=true`.

@@ -7,6 +7,21 @@ visualization layer.
 The architecture separates scenarios by directory, Compose project, network,
 and volume to prevent interference between 5G SA and 4G LTE/IMS.
 
+## Repository source layout
+
+Application source follows a root `src/` layout:
+
+```text
+src/
+  backend/     FastAPI package, tests, and Python dependency manifests
+  frontend/    React application, tests, and npm dependency manifests
+```
+
+Publication metadata, operational Compose files, deployment scripts, public
+results, and documentation remain at the repository root. The Python package
+name remains `backend`; `src` is its import root rather than part of the package
+name.
+
 ## 5G SA components
 
 - MongoDB stores Open5GS data, including the lab subscriber.

@@ -24,9 +24,9 @@ deployments/5g-vonr/.env
 deployments/5g-vonr/ueransim/.runtime/
 deployments/ims-real/.runtime/
 config/real-ims-subscriber.json
-backend/.env
-frontend/.env
-frontend/.env.local
+src/backend/.env
+src/frontend/.env
+src/frontend/.env.local
 
 # Operational RF overlays; reviewed examples remain versionable
 **/rf/channel-plan.yaml
@@ -96,7 +96,7 @@ id_ed25519.pub
 *.log
 *.pcap
 *.pcapng
-!backend/tests/fixtures/**/*.log
+!src/backend/tests/fixtures/**/*.log
 
 # IDE and editor state
 .idea/
@@ -118,4 +118,4 @@ __pycache__/
 runs/*
 !runs/.gitkeep
 .backups/*
-frontend/dist/
+src/frontend/dist/

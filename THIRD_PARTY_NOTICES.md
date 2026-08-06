@@ -219,7 +219,7 @@ sets were not established by this source-only review:
 | --- | --- | --- |
 | BIND 9 tools/server | Installed by `images/ims-real-dns/Dockerfile` | Version and final-image license/notice inventory pending; binary publication of the wrapper remains blocked. |
 | Redis | Installed by `images/pyhss-secure/runtime/Dockerfile` | Version and final-image license expression pending; binary publication of the wrapper remains blocked. |
-| Docker CLI and Compose plug-in | Installed by `backend/Dockerfile` for opt-in local operations | Exact package versions and notices pending final backend-image inspection. |
+| Docker CLI and Compose plug-in | Installed by `src/backend/Dockerfile` for opt-in local operations | Exact package versions and notices pending final backend-image inspection. |
 
 This table records known omissions rather than assigning unverified SPDX
 identifiers. Transitive operating-system packages remain outside the source
@@ -271,8 +271,8 @@ manifest SBOM.
 
 ## Python Direct Packages
 
-All Python versions below are exact pins from `backend/requirements.txt` and
-`backend/requirements-dev.txt`. License values were verified from the
+All Python versions below are exact pins from `src/backend/requirements.txt` and
+`src/backend/requirements-dev.txt`. License values were verified from the
 maintainer-supplied metadata for each exact PyPI release. Runtime packages are
 downloaded during the backend image build; development packages are downloaded
 only into a developer/test environment. No wheel or source archive is vendored
@@ -290,14 +290,14 @@ in this repository.
 | pytest-cov | `7.1.0` | [pytest-dev/pytest-cov](https://github.com/pytest-dev/pytest-cov); [PyPI metadata](https://pypi.org/pypi/pytest-cov/7.1.0/json) | `MIT` | Test coverage integration | Development download only; retain the MIT notice if conveyed. |
 | HTTPX | `0.28.1` | [encode/httpx](https://github.com/encode/httpx); [PyPI metadata](https://pypi.org/pypi/httpx/0.28.1/json) | `BSD-3-Clause` | Backend API test client | Development download only; retain copyright, conditions, and disclaimer if conveyed. |
 
-The Python transitive closure is pinned in `backend/constraints.txt`, but it
+The Python transitive closure is pinned in `src/backend/constraints.txt`, but it
 has not received the same component-by-component legal review as the direct
 set. The partial SBOM records only the nine direct Python package manifests.
 
 ## npm Direct Packages
 
-Exact resolved versions come from `frontend/package-lock.json`, not the
-semver ranges in `frontend/package.json`. License values and authoritative
+Exact resolved versions come from `src/frontend/package-lock.json`, not the
+semver ranges in `src/frontend/package.json`. License values and authoritative
 repositories were verified from the exact npm registry records linked below.
 No npm tarball or `node_modules` directory is vendored.
 

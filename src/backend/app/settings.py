@@ -9,7 +9,7 @@ from pydantic_settings import BaseSettings, NoDecode, SettingsConfigDict
 
 
 def default_project_root() -> Path:
-    return Path(__file__).resolve().parents[2]
+    return Path(__file__).resolve().parents[3]
 
 
 class Settings(BaseSettings):
@@ -36,7 +36,7 @@ class Settings(BaseSettings):
     image_pull_enabled: bool = Field(default=False, alias="LAIN5G_IMAGE_PULL_ENABLED")
 
     model_config = SettingsConfigDict(
-        env_file="backend/.env",
+        env_file="src/backend/.env",
         env_file_encoding="utf-8",
         populate_by_name=True,
         extra="ignore",

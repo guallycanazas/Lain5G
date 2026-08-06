@@ -13,7 +13,7 @@ from backend.app.main import create_app
 from backend.app.services.profile_config_service import ProfileConfigError, ProfileConfigService
 from backend.app.settings import Settings
 
-ROOT = Path(__file__).resolve().parents[2]
+ROOT = Path(__file__).resolve().parents[3]
 
 
 def make_profile_project(tmp_path: Path) -> Path:
@@ -527,7 +527,7 @@ def test_5g_nsa_x310_rejects_unsupported_or_unsafe_values(tmp_path: Path):
 
 
 def test_no_rf_start_commands_in_profile_service():
-    text = (ROOT / "backend/app/services/profile_config_service.py").read_text(encoding="utf-8")
+    text = (ROOT / "src/backend/app/services/profile_config_service.py").read_text(encoding="utf-8")
     forbidden = ["docker compose up", "start-gnb", "start-enb", "uhd_image_loader", "docker system prune"]
     for item in forbidden:
         assert item not in text

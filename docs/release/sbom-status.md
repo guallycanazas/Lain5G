@@ -11,13 +11,17 @@ Artifact:
 
 - Path: `sbom/lain5g-lab-application.cdx.json`
 - Format: CycloneDX JSON 1.7
-- Subject: `OpenLain5G` version `1.1.2`
-- Generated: `2026-08-03T14:59:38Z`
+- Subject: `OpenLain5G` version `1.1.3`
+- Generated: `2026-08-06T17:30:59Z`
 - Components: 340 libraries, comprising 331 npm package/version entries and 9
   direct PyPI package/version entries
 - Dependency graph entries: 125
 - SHA-256:
-  `04336c9c1be653e60fb92e14b69c47ed9fc71dc300e3fa63468137fe6f87c2c1`
+  `825998853b365c7e6a944fde4e69bf7ea59c64c0dcfa10649c271c7446753cc9`
+
+This artifact was regenerated for OpenLain5G `1.1.3` after the source-layout
+change. Its timestamp and hash identify the `v1.1.3` source-manifest SBOM and do
+not replace the SBOM asset preserved with the immutable `v1.1.2` tag.
 
 ## Generator
 
@@ -39,10 +43,10 @@ npm development dependencies enabled, and file metadata disabled.
 The artifact includes package identities and dependency relationships detected
 from:
 
-- `frontend/package-lock.json`, including production, development, optional,
+- `src/frontend/package-lock.json`, including production, development, optional,
   and platform-specific lock entries; and
-- the nine exact direct entries in `backend/requirements.txt` and
-  `backend/requirements-dev.txt`.
+- the nine exact direct entries in `src/backend/requirements.txt` and
+  `src/backend/requirements-dev.txt`.
 
 The SBOM intentionally contains no scanner-enriched license assertions because
 generation was network-isolated and the source manifests do not carry complete
@@ -58,7 +62,7 @@ databases, dumps, backups, run output, logs, and packet captures.
 
 The artifact does not cover:
 
-- the 29-entry Python tested closure in `backend/constraints.txt` beyond its
+- the 29-entry Python tested closure in `src/backend/constraints.txt` beyond its
   nine direct requirements;
 - packages installed in final Python, nginx, Ubuntu, Debian, Alpine, MongoDB,
   MariaDB, MySQL, CoreDNS, or GHCR image filesystems;
@@ -90,10 +94,10 @@ docker run --rm --network none \
   --env SYFT_JAVASCRIPT_INCLUDE_DEV_DEPENDENCIES=true \
   --env SYFT_FILE_METADATA_SELECTION=none \
   --env SYFT_RELATIONSHIPS_PACKAGE_FILE_OWNERSHIP=false \
-  --mount type=bind,source="$PWD",target=/src,readonly \
+  --mount type=bind,source="$PWD",target=/workspace,readonly \
   anchore/syft:v1.49.0@sha256:13b53ebabe3d215268c90cf8fb9b875f0183908245f376fd4b3a2cb69d21d484 \
-  scan dir:/src --base-path /src \
-  --source-name OpenLain5G --source-version 1.1.2 \
+  scan dir:/workspace --base-path /workspace \
+  --source-name OpenLain5G --source-version 1.1.3 \
   --exclude './.git' --exclude './.git/**' \
   --exclude './.github' --exclude './.github/**' \
   --exclude './.venv' --exclude './.venv/**' \
@@ -137,8 +141,8 @@ Validation performed after generation established that:
 - `bomFormat` is `CycloneDX`, `specVersion` is `1.7`, and `components` is an
   array;
 - the component count and ecosystem counts agree with the declared scope;
-- no string contains a host home path, `/src` scan path, file URI, or directory
-  source URI; normalized repository-relative manifest locations remain;
+- no string contains a host home path, `/workspace` scan path, file URI, or
+  directory source URI; normalized repository locations under `src/` remain;
 - no string matches IPv4 loopback, link-local, or RFC 1918 private ranges,
   `localhost`, or `.local` host names;
 - no string matches password, credential, private-key, API-key, access-token,
@@ -179,7 +183,7 @@ docker run --rm --network none \
   --mount type=bind,source="$PWD/sbom",target=/out \
   anchore/syft:v1.49.0@sha256:13b53ebabe3d215268c90cf8fb9b875f0183908245f376fd4b3a2cb69d21d484 \
   scan docker-archive:/input/backend.tar \
-  --source-name lain5g-lab/backend --source-version 1.1.2 \
+  --source-name lain5g-lab/backend --source-version 1.1.3 \
   --output cyclonedx-json=/out/lain5g-lab-backend-image.cdx.json
 ```
 

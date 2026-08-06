@@ -18,8 +18,8 @@ mutable `latest` image/URL policy references, and Real-IMS tag drift.
 
 ## Python
 
-`backend/requirements.txt` and `backend/requirements-dev.txt` contain only
-direct dependencies and use exact `==` versions. `backend/constraints.txt`
+`src/backend/requirements.txt` and `src/backend/requirements-dev.txt` contain only
+direct dependencies and use exact `==` versions. `src/backend/constraints.txt`
 contains the exact runtime and development closure observed in the tested
 Python 3.14.4 virtual environment, including pip 25.1.1. It intentionally does
 not contain fabricated package hashes.
@@ -45,7 +45,7 @@ its pinned Python 3.12 base is a separate interpreter target. A local Python
 
 ## JavaScript
 
-`frontend/package-lock.json` is the transitive dependency lock and retains npm
+`src/frontend/package-lock.json` is the transitive dependency lock and retains npm
 registry integrity hashes. Release and developer install commands use:
 
 ```bash
@@ -57,10 +57,8 @@ require a separately reviewed lockfile refresh, followed by `npm ci`, frontend
 tests, and a production build. The release version is changed in only the root
 package records; transitive package metadata remains untouched.
 
-For this release, `npm audit --omit=dev` reports zero findings. A full audit
-reports five findings in the locked Vitest/Vite development path. The available
-automatic fix is a semver-major Vitest update, so it is documented as a release
-limitation rather than applied without a dedicated compatibility review.
+For this release, `npm audit` reports zero findings across production and
+development dependencies after the reviewed Vitest `4.1.10` upgrade.
 
 ## Git Sources
 
@@ -111,8 +109,8 @@ The minimum non-operational release gate is:
 ```bash
 make version-check
 .venv/bin/python -m pip check
-.venv/bin/pytest backend/tests/test_release_metadata.py backend/tests/test_health.py
-cd frontend && npm ci && npm test && npm run build
+PYTHONPATH=src .venv/bin/pytest src/backend/tests/test_release_metadata.py src/backend/tests/test_health.py
+cd src/frontend && npm ci && npm test && npm run build
 ```
 
 Compose and Dockerfile static validation must also pass. Scenario, RF, hardware,

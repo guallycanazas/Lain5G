@@ -5,10 +5,10 @@
 **Orquestación basada en evidencia para redes software 4G/5G y laboratorios USRP X-Series protegidos**
 
 [![CI](https://github.com/guallycanazas/Lain5G/actions/workflows/ci.yml/badge.svg)](https://github.com/guallycanazas/Lain5G/actions/workflows/ci.yml)
-[![Release](https://img.shields.io/badge/release-v1.1.2-4051b5.svg)](https://github.com/guallycanazas/Lain5G/releases/tag/v1.1.2)
+[![Release](https://img.shields.io/badge/release-v1.1.3-4051b5.svg)](https://github.com/guallycanazas/Lain5G/releases/tag/v1.1.3)
 [![Código propio: MIT](https://img.shields.io/badge/c%C3%B3digo_propio-MIT-d9a441.svg)](LICENSE)
 [![Plataforma](https://img.shields.io/badge/plataforma-GNU%2FLinux_x86__64-2f6f62.svg)](docs/installation.md)
-[![Python](https://img.shields.io/badge/Python-%E2%89%A53.10-3776ab.svg)](backend/requirements.txt)
+[![Python](https://img.shields.io/badge/Python-%E2%89%A53.10-3776ab.svg)](src/backend/requirements.txt)
 
 [English README](README.md) · [Documentación](#documentación) · [Evidencia pública](results/public/README.md) · [Citación](#citación)
 
@@ -22,7 +22,7 @@ ofrece un entorno personalizable con escenarios completamente software, flujos
 USRP X-Series protegidos, configuración declarativa, validación automatizada y
 evidencia trazable de cada ejecución.
 
-> **Estado de publicación:** [`v1.1.2`](https://github.com/guallycanazas/Lain5G/tree/v1.1.2)
+> **Estado de publicación:** [`v1.1.3`](https://github.com/guallycanazas/Lain5G/tree/v1.1.3)
 > es la última release inmutable.
 
 > **Nombres:** OpenLain5G es el nombre actual del proyecto. La URL del
@@ -70,43 +70,39 @@ newgrp docker
 Los requisitos detallados y la alternativa manual están en
 [docs/installation.md](docs/installation.md).
 
-## 2. Probar una Red Software
+## 2. Operar OpenLain5G
 
-La comprobación extremo a extremo más corta usa LTE completamente software:
+Después de la instalación, elija una de las dos interfaces de operación.
 
-```bash
-./lain5g scenario start 4g-lte-sim
-./lain5g scenario validate 4g-lte-sim
-./lain5g scenario stop 4g-lte-sim
-```
+### Opción 1: Aplicación web
 
-El validador espera el attach y revisa EPC, S1, registro UE, bearer por defecto,
-`tun_srsue`, dirección IPv4 y ping enlazado explícitamente al túnel UE. Un
-`WARNING` nunca se transforma en `PASS`.
-
-La ruta equivalente para 5G SA software es:
-
-```bash
-./lain5g scenario start 5g-sa
-./lain5g scenario validate 5g-sa
-./lain5g scenario stop 5g-sa
-```
-
-### Interfaz visual
-
-En una estación de laboratorio dedicada y confiable:
+En una estación de laboratorio dedicada y confiable, inicie la aplicación web:
 
 ```bash
 ./lain5g app start --operations --open
 ```
 
 Abra **Scenarios**, elija un perfil y pulse **Run evidence check**. El overview
-muestra una cadena explícita de evidencia y enlaza el run y los logs sanitizados.
-Detenga la interfaz con `./lain5g app stop`.
+muestra una cadena explícita de evidencia y enlaza la ejecución y los logs
+sanitizados. Detenga la aplicación con `./lain5g app stop`.
 
 `--operations` concede al backend acceso al socket Docker y al árbol del
-proyecto. Úselo solo en un host confiable. La interfaz de solo observación se
-inicia con `./lain5g app start --open`; la consola interactiva es `./lain5g`.
+proyecto. Úselo solo en un host confiable. Para acceso de solo observación,
+ejecute `./lain5g app start --open`.
+
+### Opción 2: CLI interactiva
+
+Inicie la interfaz guiada de terminal con:
+
+```bash
+./lain5g
+```
+
+Use sus menús para preparar el equipo, administrar componentes, elegir un perfil
+y configurar, iniciar, inspeccionar, validar o detener una red software. Los
+perfiles RF conservan sus controles de autorización, preflight, duración finita
+y parada de emergencia. Los comandos de automatización directa permanecen en
+[Instalación](docs/installation.md) y en las guías de cada escenario.
 
 ## 3. Evidencia, no solo Contenedores Verdes
 
@@ -173,8 +169,8 @@ flowchart TB
 
 | Área | Responsabilidad |
 | --- | --- |
-| [`backend/`](backend/) | API local, allowlists de comandos, validación y runs |
-| [`frontend/`](frontend/) | Interfaz React y visualización de evidencia |
+| [`src/backend/`](src/backend/) | API local, allowlists de comandos, validación y runs |
+| [`src/frontend/`](src/frontend/) | Interfaz React y visualización de evidencia |
 | [`deployments/`](deployments/) | Compose, configuración de red y scripts protegidos |
 | [`config/profiles/`](config/profiles/) | Entradas declarativas software y RF |
 | [`results/public/`](results/public/README.md) | Resúmenes revisados, sanitizados y validados por esquema |
@@ -202,7 +198,7 @@ validadores de escenario.
 
 | Elemento | Valor del repositorio |
 | --- | --- |
-| Release inmutable | [`v1.1.2`](https://github.com/guallycanazas/Lain5G/releases/tag/v1.1.2) |
+| Release inmutable | [`v1.1.3`](https://github.com/guallycanazas/Lain5G/releases/tag/v1.1.3) |
 | Control de versiones | Git y GitHub |
 | Licencia de código propio | [MIT](LICENSE), con términos upstream separados |
 | Lenguajes | Python, TypeScript y Shell |

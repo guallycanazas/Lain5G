@@ -86,7 +86,7 @@ active so the web emergency stop remains available.
 Run the native backend only on loopback:
 
 ```bash
-.venv/bin/uvicorn backend.app.main:app --host 127.0.0.1 --port 8000
+PYTHONPATH=src .venv/bin/uvicorn backend.app.main:app --host 127.0.0.1 --port 8000
 ```
 
 Do not use `--host 0.0.0.0`, port forwarding, a public reverse proxy, or a LAN

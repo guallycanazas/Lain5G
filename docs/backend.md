@@ -9,11 +9,11 @@ make backend-install
 ```
 
 The command pins pip, installs the exact direct requirements, and applies the
-transitive dependency constraints from `backend/constraints.txt`.
+transitive dependency constraints from `src/backend/constraints.txt`.
 
 ## Environment Variables
 
-Example from `backend/.env.example`:
+Example from `src/backend/.env.example`:
 
 ```env
 LAIN5G_PROJECT_ROOT=/path/to/Lain5G
@@ -36,7 +36,7 @@ The network name and address shown above are defaults for the checked-in 5G SA
 profile, not universal Docker settings. Custom networks must select an unused
 address in their configured subnet and update both values consistently.
 
-`backend/.env` must not be committed.
+`src/backend/.env` must not be committed.
 
 ## Running
 
@@ -47,7 +47,7 @@ make backend-dev
 Equivalent command:
 
 ```bash
-.venv/bin/uvicorn backend.app.main:app --host 127.0.0.1 --port 8000 --reload
+PYTHONPATH=src .venv/bin/uvicorn backend.app.main:app --host 127.0.0.1 --port 8000 --reload
 ```
 
 The backend does not start Docker during startup.
@@ -145,10 +145,10 @@ Example:
 ## Structure
 
 ```text
-backend/app/api/          FastAPI routers
-backend/app/models/       Pydantic models
-backend/app/services/     command execution, deployments, runs, and validation
-backend/tests/            isolated tests and fixtures
+src/backend/app/api/          FastAPI routers
+src/backend/app/models/       Pydantic models
+src/backend/app/services/     command execution, deployments, runs, and validation
+src/backend/tests/            isolated tests and fixtures
 ```
 
 ## Tests

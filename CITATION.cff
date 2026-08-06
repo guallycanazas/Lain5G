@@ -1,10 +1,10 @@
 cff-version: "1.2.0"
 message: >-
-  If you use OpenLain5G 1.1.2, cite the software metadata in this file.
+  If you use OpenLain5G 1.1.3, cite the software metadata in this file.
 title: "OpenLain5G"
 type: software
-version: "1.1.2"
-date-released: "2026-08-03"
+version: "1.1.3"
+date-released: "2026-08-06"
 authors:
   - family-names: "Canazas Rosas"
     given-names: "Willian Roy"
