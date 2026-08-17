@@ -72,9 +72,10 @@ jobs:
         run: |
           set -o pipefail
           ./lain5g scenario setup 5g-sa
+          printf '\nPING_TARGET=10.45.0.1\n' >> deployments/5g-sa/.env
           ./lain5g scenario start 5g-sa
           trap './lain5g scenario stop 5g-sa || true' EXIT
-          PING_TARGET=10.45.0.1 ./lain5g scenario validate 5g-sa | tee validation-5g-sa.txt
+          ./lain5g scenario validate 5g-sa | tee validation-5g-sa.txt
 
       - name: Stop 5G SA profile
         if: always()
