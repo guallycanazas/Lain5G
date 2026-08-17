@@ -74,7 +74,7 @@ jobs:
           ./lain5g scenario setup 5g-sa
           ./lain5g scenario start 5g-sa
           trap './lain5g scenario stop 5g-sa || true' EXIT
-          ./lain5g scenario validate 5g-sa | tee validation-5g-sa.txt
+          PING_TARGET=10.45.0.1 ./lain5g scenario validate 5g-sa | tee validation-5g-sa.txt
 
       - name: Stop 5G SA profile
         if: always()
