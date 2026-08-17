@@ -1,0 +1,104 @@
+name: Reproduce v1.1.3 software experiments
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - .github/workflows/reproduce-v1.1.3.yml
+
+permissions:
+  contents: read
+
+concurrency:
+  group: reproduce-v1.1.3
+  cancel-in-progress: false
+
+jobs:
+  reproduce:
+    name: Clean Ubuntu 24.04 reproduction
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+
+    steps:
+      - name: Check out immutable release
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: v1.1.3
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: "3.12"
+
+      - name: Set up Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: "22"
+
+      - name: Prepare host and record environment
+        shell: bash
+        run: |
+          set -euxo pipefail
+          sudo modprobe sctp || true
+          ./install.sh --dry-run
+          ./install.sh
+          {
+            echo "date_utc=$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+            echo "git_commit=$(git rev-parse HEAD)"
+            echo "uname=$(uname -a)"
+            python3 --version
+            node --version
+            docker version
+            docker compose version
+          } | tee environment.txt
+
+      - name: Reproduce 4G LTE software profile
+        shell: bash
+        run: |
+          set -o pipefail
+          ./lain5g scenario setup 4g-lte-sim
+          ./lain5g scenario start 4g-lte-sim
+          trap './lain5g scenario stop 4g-lte-sim || true' EXIT
+          ./lain5g scenario validate 4g-lte-sim | tee validation-4g-lte-sim.txt
+
+      - name: Stop 4G LTE profile
+        if: always()
+        shell: bash
+        run: ./lain5g scenario stop 4g-lte-sim || true
+
+      - name: Reproduce 5G SA software profile
+        shell: bash
+        run: |
+          set -o pipefail
+          ./lain5g scenario setup 5g-sa
+          ./lain5g scenario start 5g-sa
+          trap './lain5g scenario stop 5g-sa || true' EXIT
+          ./lain5g scenario validate 5g-sa | tee validation-5g-sa.txt
+
+      - name: Stop 5G SA profile
+        if: always()
+        shell: bash
+        run: ./lain5g scenario stop 5g-sa || true
+
+      - name: Collect Docker state
+        if: always()
+        shell: bash
+        run: |
+          docker ps -a > docker-ps.txt || true
+          docker network ls > docker-networks.txt || true
+          find runs -maxdepth 3 -type f -print > runs-files.txt 2>/dev/null || true
+
+      - name: Upload reproduction evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: openlain5g-v1.1.3-reproduction
+          if-no-files-found: warn
+          retention-days: 30
+          path: |
+            environment.txt
+            validation-*.txt
+            docker-ps.txt
+            docker-networks.txt
+            runs/
