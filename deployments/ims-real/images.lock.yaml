@@ -1,5 +1,5 @@
 schema_version: 1
-release_version: 1.1.3
+release_version: 1.1.4
 configuration_source:
   repository: https://github.com/herlesupreeth/docker_open5gs
   commit: 3685b58aa0c7c28b2fecc6b9533f128285bf8dda
@@ -16,9 +16,9 @@ rtpengine_repository:
   keyring_url: https://rtpengine.dfx.at/26.0/pool/main/r/rtpengine-dfx-repo-keyring/rtpengine-dfx-repo-keyring_1.0_all.deb
   keyring_sha256: 78fe26f0251138f4e3c749c88dc4df29666c8efe0823858d3a4ab49d2fa2e088
 derived_images:
-  - lain5g-lab/ims-real-open5gs:1.1.3
-  - lain5g-lab/ims-real-kamailio:1.1.3
-  - lain5g-lab/pyhss-secure:1.1.3
-  - lain5g-lab/ims-real-mysql:1.1.3
-  - lain5g-lab/ims-real-dns:1.1.3
-  - lain5g-lab/ims-real-rtpengine:1.1.3
+  - lain5g-lab/ims-real-open5gs:1.1.4
+  - lain5g-lab/ims-real-kamailio:1.1.4
+  - lain5g-lab/pyhss-secure:1.1.4
+  - lain5g-lab/ims-real-mysql:1.1.4
+  - lain5g-lab/ims-real-dns:1.1.4
+  - lain5g-lab/ims-real-rtpengine:1.1.4

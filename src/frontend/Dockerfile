@@ -10,7 +10,7 @@ RUN npm run build
 
 FROM nginx:1.27-alpine@sha256:65645c7bb6a0661892a8b03b89d0743208a18dd2f3f17a54ef4b76fb8e2f2a10
 
-ARG LAIN5G_VERSION=1.1.3
+ARG LAIN5G_VERSION=1.1.4
 
 LABEL org.opencontainers.image.version="${LAIN5G_VERSION}" \
       org.opencontainers.image.source="https://github.com/guallycanazas/Lain5G"
