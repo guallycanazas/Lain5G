@@ -6,7 +6,7 @@
 
 [![CI](https://github.com/guallycanazas/Lain5G/actions/workflows/ci.yml/badge.svg)](https://github.com/guallycanazas/Lain5G/actions/workflows/ci.yml)
 [![Release](https://img.shields.io/badge/release-v1.1.3-4051b5.svg)](https://github.com/guallycanazas/Lain5G/releases/tag/v1.1.3)
-[![Project source: MIT](https://img.shields.io/badge/project_source-MIT-d9a441.svg)](LICENSE)
+[![Project source: MIT](https://img.shields.io/badge/project_source-MIT-d9a441.svg)](LICENSE.txt)
 [![Platform](https://img.shields.io/badge/platform-GNU%2FLinux_x86__64-2f6f62.svg)](docs/installation.md)
 [![Python](https://img.shields.io/badge/Python-%E2%89%A53.10-3776ab.svg)](src/backend/requirements.txt)
 
@@ -261,7 +261,7 @@ Citation metadata is available in [`CITATION.cff`](CITATION.cff) and
 
 ## License
 
-Project-authored source is licensed under the [MIT License](LICENSE). Upstream
+Project-authored source is licensed under the [MIT License](LICENSE.txt). Upstream
 software, imported configuration, databases, and container images retain their
 own licenses and redistribution terms. See
 [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md) and the
