@@ -146,7 +146,9 @@ Ubuntu 24.04 virtual machine, not raw protocol traces. They identify
 [`59471947`](https://github.com/guallycanazas/Lain5G/commit/59471947da95783c1a85a4d18284360e4b6d898b)
 as the source commit executed. Historical VoLTE and VoNR signaling records and
 older snapshots remain under
-[`results/public/`](results/public/README.md).
+[`results/public/`](results/public/README.md). Five independent clean-host runs of
+v1.1.3 passed both software profiles; see the [sanitized cloud-reproduction
+summary](results/public/summaries/v1.1.3-cloud-five-run-20260818.md).
 
 SDR hardware, commercial UE, voice-media, and RF results use dedicated evidence
 scopes correlated with each authorized run. RF operation requires legal
@@ -208,7 +210,7 @@ separately by the scenario validators.
 | --- | --- |
 | Current immutable release | [`v1.1.3`](https://github.com/guallycanazas/Lain5G/releases/tag/v1.1.3) |
 | Version control | Git and GitHub |
-| Project-source license | [MIT](LICENSE), with separate upstream terms |
+| Project-source license | [MIT](LICENSE.txt), with separate upstream terms |
 | Languages | Python, TypeScript, and Shell |
 | Runtime | GNU/Linux x86_64, Docker Engine, Docker Compose v2 |
 | Citation metadata | [`CITATION.cff`](CITATION.cff) and [`codemeta.json`](codemeta.json) |
