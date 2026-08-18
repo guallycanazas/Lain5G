@@ -2,9 +2,6 @@ name: Reproduce v1.1.3 software experiments
 
 on:
   workflow_dispatch:
-  push:
-    paths:
-      - .github/workflows/reproduce-v1.1.3.yml
 
 permissions:
   contents: read
@@ -15,7 +12,7 @@ concurrency:
 
 jobs:
   reproduce:
-    name: Clean Ubuntu 24.04 reproduction (\${{ matrix.attempt }}/5)
+    name: Clean Ubuntu 24.04 reproduction (${{ matrix.attempt }}/5)
     runs-on: ubuntu-24.04
     timeout-minutes: 60
     strategy:
@@ -48,7 +45,7 @@ jobs:
           ./install.sh --dry-run
           ./install.sh
           {
-            echo "attempt=\${{ matrix.attempt }}"
+            echo "attempt=${{ matrix.attempt }}"
             echo "date_utc=$(date -u +%Y-%m-%dT%H:%M:%SZ)"
             echo "git_commit=$(git rev-parse HEAD)"
             echo "uname=$(uname -a)"
@@ -99,7 +96,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
-          name: openlain5g-v1.1.3-reproduction-attempt-\${{ matrix.attempt }}
+          name: openlain5g-v1.1.3-reproduction-attempt-${{ matrix.attempt }}
           if-no-files-found: warn
           retention-days: 90
           path: |
