@@ -22,7 +22,7 @@ REQUIRED_RELEASE_FILES = (
     "AUTHORS.md",
     "CHANGELOG.md",
     "CITATION.cff",
-    "LICENSE",
+    "LICENSE.txt",
     "README.md",
     "SUPPORT.md",
     "THIRD_PARTY_NOTICES.md",
