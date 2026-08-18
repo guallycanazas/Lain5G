@@ -6,7 +6,7 @@
 
 [![CI](https://github.com/guallycanazas/Lain5G/actions/workflows/ci.yml/badge.svg)](https://github.com/guallycanazas/Lain5G/actions/workflows/ci.yml)
 [![Release](https://img.shields.io/badge/release-v1.1.3-4051b5.svg)](https://github.com/guallycanazas/Lain5G/releases/tag/v1.1.3)
-[![Código propio: MIT](https://img.shields.io/badge/c%C3%B3digo_propio-MIT-d9a441.svg)](LICENSE)
+[![Código propio: MIT](https://img.shields.io/badge/c%C3%B3digo_propio-MIT-d9a441.svg)](LICENSE.txt)
 [![Plataforma](https://img.shields.io/badge/plataforma-GNU%2FLinux_x86__64-2f6f62.svg)](docs/installation.md)
 [![Python](https://img.shields.io/badge/Python-%E2%89%A53.10-3776ab.svg)](src/backend/requirements.txt)
 
@@ -200,7 +200,7 @@ validadores de escenario.
 | --- | --- |
 | Release inmutable | [`v1.1.3`](https://github.com/guallycanazas/Lain5G/releases/tag/v1.1.3) |
 | Control de versiones | Git y GitHub |
-| Licencia de código propio | [MIT](LICENSE), con términos upstream separados |
+| Licencia de código propio | [MIT](LICENSE.txt), con términos upstream separados |
 | Lenguajes | Python, TypeScript y Shell |
 | Runtime | GNU/Linux x86_64, Docker Engine y Docker Compose v2 |
 | Citación | [`CITATION.cff`](CITATION.cff) y [`codemeta.json`](codemeta.json) |
@@ -252,7 +252,7 @@ Los metadatos de citación están en [`CITATION.cff`](CITATION.cff) y
 
 ## Licencia
 
-El código propio se distribuye bajo [MIT](LICENSE). El software upstream,
+El código propio se distribuye bajo [MIT](LICENSE.txt). El software upstream,
 configuraciones importadas, bases de datos e imágenes conservan sus licencias y
 términos. Consulte [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md) y el
 [estado de redistribución](docs/legal/redistribution-status.md).
