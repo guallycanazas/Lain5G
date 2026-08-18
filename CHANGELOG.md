@@ -4,7 +4,7 @@ All notable changes to OpenLain5G are recorded in this file.
 
 ## [Unreleased]
 
-## [1.1.4] - 2026-08-17
+## [1.1.5] - 2026-08-17
 
 ### Added
 

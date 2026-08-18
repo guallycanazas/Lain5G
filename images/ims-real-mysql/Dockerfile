@@ -1,7 +1,7 @@
 ARG BASE_IMAGE=ghcr.io/herlesupreeth/docker_mysql@sha256:324d3d4c5089feea787684f0dbf1a646dde8d356170085ac0b6538aee6910057
 FROM ${BASE_IMAGE}
 
-ARG LAIN5G_VERSION=1.1.4
+ARG LAIN5G_VERSION=1.1.5
 
 LABEL org.opencontainers.image.version="${LAIN5G_VERSION}" \
       org.opencontainers.image.title="OpenLain5G Real IMS MySQL" \
