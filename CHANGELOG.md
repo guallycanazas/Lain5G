@@ -4,6 +4,29 @@ All notable changes to OpenLain5G are recorded in this file.
 
 ## [Unreleased]
 
+## [1.1.4] - 2026-08-17
+
+### Added
+
+- Added a manually dispatched five-run GitHub Actions reproduction workflow for
+  immutable software release validation on clean Ubuntu 24.04 runners.
+- Added a permanent sanitized public summary of the five independent cloud
+  reproductions: every LTE run passed 14/14 checks and every 5G SA run passed
+  15/15 checks.
+
+### Changed
+
+- Updated CI and reproduction actions to pinned versions that use the Node 24
+  runtime internally while retaining Node 22 as the project runtime.
+- Standardized the release license artifact on `LICENSE.txt` for SoftwareX
+  submission compatibility and GitHub license detection.
+- Used the local 5G tunnel gateway as the cloud user-plane validation target.
+
+### Fixed
+
+- Corrected public-evidence inventory checks and documentation links after
+  adding the cloud-reproduction summary.
+
 ## [1.1.3] - 2026-08-06
 
 ### Changed
