@@ -4,7 +4,7 @@
 
 | Item | Exact value | Authority |
 | --- | --- | --- |
-| OpenLain5G | `1.1.3` | Root `VERSION` |
+| OpenLain5G | `1.1.4` | Root `VERSION` |
 | Status | Stable source release | `CHANGELOG.md` |
 | Operational evidence baseline | `v1.1.0` | Immutable clean-VM scenario results |
 | Operational evidence captured | `2026-07-30T02:20:51Z` | Clean-VM UTC clock after scenario verification |
@@ -14,9 +14,9 @@
 | Operational Docker tooling | Docker client `29.1.3`, Compose `2.40.3` | Clean virtual-machine tool output |
 | Dockerfile linter | Hadolint `v2.14.0`, linux/amd64 manifest `sha256:e9dbf5113239ef2bf696d20c8f28d3019a47c26a38c98b89344d3e2846c4d5f8` | Official `hadolint/hadolint` registry artifact |
 
-Version `1.1.3` is a source-layout and operator-documentation maintenance
-release. It introduces no new runtime or RF claim; operational evidence remains
-fixed to the immutable `v1.1.0` baseline.
+Version `1.1.4` is a reproducibility and CI maintenance release. It adds
+five-run cloud reproduction evidence for the software-only profiles without
+introducing a new runtime or RF claim; RF evidence remains outside this scope.
 
 ## Source Builds
 
@@ -91,7 +91,7 @@ attestation was available. Every listed artifact is Linux/amd64-only. The local
 | Full closure | Every package and version is listed in `src/backend/constraints.txt`; source was `.venv/bin/pip freeze --all` before release tests |
 
 The npm transitive closure and registry integrity values remain authoritative in
-`src/frontend/package-lock.json`; the root package version is `1.1.3`.
+`src/frontend/package-lock.json`; the root package version is `1.1.4`.
 `npm audit` reports zero findings across the complete locked production and
 development dependency tree after the reviewed Vitest `4.1.10` upgrade.
 

@@ -1,7 +1,7 @@
 ARG BASE_IMAGE=ghcr.io/herlesupreeth/docker_open5gs@sha256:441d40e16f76ae79fc25eaaa92245850ed833bdd3d0d0dc78acbffd958cdc2c6
 FROM ${BASE_IMAGE}
 
-ARG LAIN5G_VERSION=1.1.3
+ARG LAIN5G_VERSION=1.1.4
 
 LABEL org.opencontainers.image.version="${LAIN5G_VERSION}" \
       org.opencontainers.image.title="OpenLain5G Real IMS Open5GS" \
