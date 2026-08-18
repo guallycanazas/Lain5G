@@ -214,4 +214,4 @@ def test_repository_public_results_verifier_passes():
     assert result.returncode == 0, result.stderr
     assert "6 scenario result(s)" in result.stdout
     assert "2 environment summary(s)" in result.stdout
-    assert "6 support artifact(s)" in result.stdout
+    assert "7 support artifact(s)" in result.stdout
