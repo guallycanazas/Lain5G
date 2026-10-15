@@ -1,0 +1,847 @@
+{
+  "audit_date": "2026-10-14",
+  "classification": "SIMULATION_ONLY",
+  "input_sha256": {
+    "artifacts-32087329776.json": "729679b33bdd11829538bb952f05e5b082ea3253570124f66d6af6f4645989e4",
+    "jobs.json": "7c457127bffac763460adc50b0efc3cbb11d153849ff1d2c071de610c938b4b1",
+    "original-artifacts/openlain5g-v1.1.3-reproduction-attempt-1/docker-networks.txt": "fa8aae19f68ff746500409d114aabb979c7ab0276c59b561dd41566327021d55",
+    "original-artifacts/openlain5g-v1.1.3-reproduction-attempt-1/docker-ps.txt": "7a517f5734616888c608ed6a04ed42269f694f589bd03b35ff33507dd96f7a25",
+    "original-artifacts/openlain5g-v1.1.3-reproduction-attempt-1/environment.txt": "b395f7a849eea43d4a83e46e32415723e37ec9649a96ca582d8cee2cc88c0e84",
+    "original-artifacts/openlain5g-v1.1.3-reproduction-attempt-1/runs/run-20260818-011344/metadata.json": "a9c98b0565e483fa35c7dc3aafccab700488fdaec84106cc3e41b7c91eceba90",
+    "original-artifacts/openlain5g-v1.1.3-reproduction-attempt-1/runs/run-20260818-011344/metrics.json": "ec7b0ab359daaa74504507f8f519aedff92a78b0d75038e147a6227e17eff299",
+    "original-artifacts/openlain5g-v1.1.3-reproduction-attempt-1/runs/run-20260818-011344/validation.json": "8fad6391d17088894d7e6edf2bcaae21f8dcb2e7bebb95012ba7e9f2858e7eb4",
+    "original-artifacts/openlain5g-v1.1.3-reproduction-attempt-1/runs/run-20260818-011433/metadata.json": "d2e0dad486f761729a3c0aee961fcb8af6d0ae28fadfd37e8015d8a7a3654a49",
+    "original-artifacts/openlain5g-v1.1.3-reproduction-attempt-1/runs/run-20260818-011433/metrics.json": "78560113fc793f07704d2d47d95c8835265a45cb7f1c7a7d213f2a71645ff598",
+    "original-artifacts/openlain5g-v1.1.3-reproduction-attempt-1/runs/run-20260818-011433/validation.json": "345b0f28b16b0c07c1ae3fa2c8970dc954e205eda53f63cfc064133eabd1b1f5",
+    "original-artifacts/openlain5g-v1.1.3-reproduction-attempt-1/validation-4g-lte-sim.txt": "c9fc2ea6f4c52f650fa2c3d2b4fea1527f31765917d96cfbf88688c4e857fb08",
+    "original-artifacts/openlain5g-v1.1.3-reproduction-attempt-1/validation-5g-sa.txt": "1747cf67eeb6eea259b397122ddfeedbb49c6300ac1ae4509f28aae21e4291be",
+    "original-artifacts/openlain5g-v1.1.3-reproduction-attempt-2/docker-networks.txt": "6cab32b1eba8aa38ffd10e3192720d9753b63b987eee31202b4f45bb89a096d9",
+    "original-artifacts/openlain5g-v1.1.3-reproduction-attempt-2/docker-ps.txt": "204b1df8a66a53c3c34453a7a7cba866b1f171ea463cf8f4aa57b6ea48bc0263",
+    "original-artifacts/openlain5g-v1.1.3-reproduction-attempt-2/environment.txt": "427ef9e56d075d1d00708ec882787064d46ff9013cd9f2459c7056c47c40431f",
+    "original-artifacts/openlain5g-v1.1.3-reproduction-attempt-2/runs/run-20260818-011333/metadata.json": "e9ca2cf1eed44cfeee586743ebc3c7baa69397361ec847a3332c4fd645ac3852",
+    "original-artifacts/openlain5g-v1.1.3-reproduction-attempt-2/runs/run-20260818-011333/metrics.json": "0b3ef5b3b0effee9b37de3bc44a201a56b96dcb2a3fa240e50c24ca5a20bbd1d",
+    "original-artifacts/openlain5g-v1.1.3-reproduction-attempt-2/runs/run-20260818-011333/validation.json": "d68eeb7698fe607bc9f253bc87f6f460ee54dc8696036e274dfd431af3f78685",
+    "original-artifacts/openlain5g-v1.1.3-reproduction-attempt-2/runs/run-20260818-011420/metadata.json": "d041a18c737bb03e256eda5f4cab6e1e080b6e31bf7692eeb2e4686d1c148538",
+    "original-artifacts/openlain5g-v1.1.3-reproduction-attempt-2/runs/run-20260818-011420/metrics.json": "0bb76c20a6b7e4cb860c67b89e90a38e257598525c2ebbf6e8bf8bb66f1f9d41",
+    "original-artifacts/openlain5g-v1.1.3-reproduction-attempt-2/runs/run-20260818-011420/validation.json": "11471325e6970baf52c7861becfe3b7b40a58a03f8c1acb9d4dcbe43ed408925",
+    "original-artifacts/openlain5g-v1.1.3-reproduction-attempt-2/validation-4g-lte-sim.txt": "5b26cd31ade896a639d2ef38a312206649eedc1f31529159988bb74d93b43183",
+    "original-artifacts/openlain5g-v1.1.3-reproduction-attempt-2/validation-5g-sa.txt": "e6d498117b4d2e1d84d614ba7daae871455b95f05efebf9a4d641706f80f646e",
+    "original-artifacts/openlain5g-v1.1.3-reproduction-attempt-3/docker-networks.txt": "8143f2bb8bec1311d28af7477ec7c66f37ed034f328d791bc304210177bc7b91",
+    "original-artifacts/openlain5g-v1.1.3-reproduction-attempt-3/docker-ps.txt": "0457ad2bc825383e5fec89fcf7b7fbbba4c68eaa2c3946a8f896e8dd5b6638fe",
+    "original-artifacts/openlain5g-v1.1.3-reproduction-attempt-3/environment.txt": "9990464f584d5a36cfcb93ee3bb4eb61363d6517f371213cd6a841429341776e",
+    "original-artifacts/openlain5g-v1.1.3-reproduction-attempt-3/runs/run-20260818-011352/metadata.json": "aa3f302c94b031cb6e4c49b939caa10f7a00c4cde226d55cf484717ad303b44e",
+    "original-artifacts/openlain5g-v1.1.3-reproduction-attempt-3/runs/run-20260818-011352/metrics.json": "9b5e64ed775971795fca63ef68333affc11260cec8868ab475905f740103cae2",
+    "original-artifacts/openlain5g-v1.1.3-reproduction-attempt-3/runs/run-20260818-011352/validation.json": "d99179f45fc9dfa8994a9c38e90846346393d4a29ee3c3b028177e93ba814675",
+    "original-artifacts/openlain5g-v1.1.3-reproduction-attempt-3/runs/run-20260818-011441/metadata.json": "33a9dc8ddeb00f1bec13d5bce5f113fa416385faced9b9f54977899e37c28b3b",
+    "original-artifacts/openlain5g-v1.1.3-reproduction-attempt-3/runs/run-20260818-011441/metrics.json": "918d57b601d02c1e911b4914f8da2ff95b08a518551291436ed7deddd43055b3",
+    "original-artifacts/openlain5g-v1.1.3-reproduction-attempt-3/runs/run-20260818-011441/validation.json": "79c0df337cdd49d88d6ea63b875261d4049a47968e0252d2a9351fbfde7d31c0",
+    "original-artifacts/openlain5g-v1.1.3-reproduction-attempt-3/validation-4g-lte-sim.txt": "5dc84618003b57b3ad1b64c0974f7c96dfdeba893a24cde51e8d4e0ba19e1169",
+    "original-artifacts/openlain5g-v1.1.3-reproduction-attempt-3/validation-5g-sa.txt": "4bba771c2cb9457ef4a797e8a9aa22e4a62d3cea69a3db92be1ddba4041620e3",
+    "original-artifacts/openlain5g-v1.1.3-reproduction-attempt-4/docker-networks.txt": "1ce13559d472efb94f0f1738ac07ca2831d1e1e8a035228abeaf8b010ffe4759",
+    "original-artifacts/openlain5g-v1.1.3-reproduction-attempt-4/docker-ps.txt": "05411bf4f855bdbaf3f7c445e307c4f09515ae64b896795f1925b38bbcfe4f57",
+    "original-artifacts/openlain5g-v1.1.3-reproduction-attempt-4/environment.txt": "d6fac10c4243c76aaae0afe935376305f6a14b6602d79c72cd87f1d6026d3898",
+    "original-artifacts/openlain5g-v1.1.3-reproduction-attempt-4/runs/run-20260818-011400/metadata.json": "ad388ed328bb4470a75c43e65015456b893f1ac0c83875c2636ef0b2bbb65341",
+    "original-artifacts/openlain5g-v1.1.3-reproduction-attempt-4/runs/run-20260818-011400/metrics.json": "dcb4a533dfc945b3c06b4e3a8731df40a1eb347819f2279be04a286bee3020ec",
+    "original-artifacts/openlain5g-v1.1.3-reproduction-attempt-4/runs/run-20260818-011400/validation.json": "87d7be1b6d6d99a48c4aaa441d49ec3ad207e1f6bc58cfba3fec7e9813445008",
+    "original-artifacts/openlain5g-v1.1.3-reproduction-attempt-4/runs/run-20260818-011445/metadata.json": "227257e3b5d281edb0e31030f8b8dfce8f258bdc93e6966061d013fc6d45020a",
+    "original-artifacts/openlain5g-v1.1.3-reproduction-attempt-4/runs/run-20260818-011445/metrics.json": "8e0ab015e106cccd97824e22217e6a8971f5d294e64fc661caf72b5bf7c0f7f6",
+    "original-artifacts/openlain5g-v1.1.3-reproduction-attempt-4/runs/run-20260818-011445/validation.json": "b177a756e6bde353fa683de6560eaf6b4bf1fc68409a18942501c6e3e270032e",
+    "original-artifacts/openlain5g-v1.1.3-reproduction-attempt-4/validation-4g-lte-sim.txt": "5fba1340d453dd4893d83e9db9114392f3c1e0974fd298155797897a48cef525",
+    "original-artifacts/openlain5g-v1.1.3-reproduction-attempt-4/validation-5g-sa.txt": "4d2046fccdfb4e2835eeffb49df315743ed3d2c1428770006c1e322f405d637e",
+    "original-artifacts/openlain5g-v1.1.3-reproduction-attempt-5/docker-networks.txt": "78ffd3436211a71ddafe9915b2a5c2d8ce27038b0e9ec9912d3f7f6a7b6e679a",
+    "original-artifacts/openlain5g-v1.1.3-reproduction-attempt-5/docker-ps.txt": "16a4d66f4ccbc2b4a14402ce2211270c406491d263957e46c1f8a10f3034f87f",
+    "original-artifacts/openlain5g-v1.1.3-reproduction-attempt-5/environment.txt": "2c2896c974dc31fa91e4203dedfd8dc2c30d06ef5a755e7501b3f2725c227cbe",
+    "original-artifacts/openlain5g-v1.1.3-reproduction-attempt-5/runs/run-20260818-011341/metadata.json": "b81808065d8a8b16ed023d579ca3650543838a085dbe69d7953b878af7019c2a",
+    "original-artifacts/openlain5g-v1.1.3-reproduction-attempt-5/runs/run-20260818-011341/metrics.json": "f51f2439ac6ba76078a728855788330a1e0e4943b475a3548c065954519b2123",
+    "original-artifacts/openlain5g-v1.1.3-reproduction-attempt-5/runs/run-20260818-011341/validation.json": "86584d02e4f05d384b996ab8b1b2b6c71f39ebab4f330751910ecbe27de3b2e4",
+    "original-artifacts/openlain5g-v1.1.3-reproduction-attempt-5/runs/run-20260818-011428/metadata.json": "a926d546959a12e9288048539e788b3ceaca93525eb2509e5a1f1705e17840d2",
+    "original-artifacts/openlain5g-v1.1.3-reproduction-attempt-5/runs/run-20260818-011428/metrics.json": "bbe3ee81b94733a46b6ba2d5f066611950a106ad97c2adb2010e259d5be33836",
+    "original-artifacts/openlain5g-v1.1.3-reproduction-attempt-5/runs/run-20260818-011428/validation.json": "4fd21b853bde80fbed5a0c1c780a788bd0c3f6cbfb65da27a64a53670d53a01a",
+    "original-artifacts/openlain5g-v1.1.3-reproduction-attempt-5/validation-4g-lte-sim.txt": "087d59d0f879d881d597659f8f1f04bb250a73a1d2ee1f2c97fccf1104f537f2",
+    "original-artifacts/openlain5g-v1.1.3-reproduction-attempt-5/validation-5g-sa.txt": "a1ad3ffc2c481f84684f226d61f9cc203ec7dddfee19d9ec9732734354624d89",
+    "workflow-history.json": "d8b6d5da8e616df1ff7e139478b4bd89ed8811ebc5ba2e8ae1366db3c12639ae"
+  },
+  "limitations": [
+    "CPU model, RAM and NIC inventory not captured in the original artifact environment files",
+    "No physical RF, voice media, latency benchmark or manual-deployment comparison",
+    "100% is conditional on the selected workflow run; earlier workflow attempts exist"
+  ],
+  "rows": [
+    {
+      "artifact_digest": "sha256:0eb5e7a4be2e461e4d4d8781ff9b1fe23887b8a89a8fc5f110d300a0d3bf55eb",
+      "artifact_id": 9307199454,
+      "checks": [
+        {
+          "id": "mongo",
+          "status": "PASS"
+        },
+        {
+          "id": "mme",
+          "status": "PASS"
+        },
+        {
+          "id": "hss",
+          "status": "PASS"
+        },
+        {
+          "id": "sgwc",
+          "status": "PASS"
+        },
+        {
+          "id": "sgwu",
+          "status": "PASS"
+        },
+        {
+          "id": "pgwc",
+          "status": "PASS"
+        },
+        {
+          "id": "pgwu",
+          "status": "PASS"
+        },
+        {
+          "id": "pcrf",
+          "status": "PASS"
+        },
+        {
+          "id": "s1_setup",
+          "status": "PASS"
+        },
+        {
+          "id": "ue_registration",
+          "status": "PASS"
+        },
+        {
+          "id": "default_bearer",
+          "status": "PASS"
+        },
+        {
+          "id": "ue_ip",
+          "status": "PASS"
+        },
+        {
+          "id": "ue_tun",
+          "status": "PASS"
+        },
+        {
+          "id": "data_ping",
+          "status": "PASS"
+        }
+      ],
+      "checks_passed": 14,
+      "checks_total": 14,
+      "job_id": 95562466135,
+      "repetition": 1,
+      "scenario": "4g-lte-sim",
+      "step_completed_at": "2026-08-18T01:14:33Z",
+      "step_seconds": 49,
+      "step_started_at": "2026-08-18T01:13:44Z"
+    },
+    {
+      "artifact_digest": "sha256:0eb5e7a4be2e461e4d4d8781ff9b1fe23887b8a89a8fc5f110d300a0d3bf55eb",
+      "artifact_id": 9307199454,
+      "checks": [
+        {
+          "id": "mongo",
+          "status": "PASS"
+        },
+        {
+          "id": "nrf",
+          "status": "PASS"
+        },
+        {
+          "id": "amf",
+          "status": "PASS"
+        },
+        {
+          "id": "smf",
+          "status": "PASS"
+        },
+        {
+          "id": "upf",
+          "status": "PASS"
+        },
+        {
+          "id": "ausf",
+          "status": "PASS"
+        },
+        {
+          "id": "udm",
+          "status": "PASS"
+        },
+        {
+          "id": "udr",
+          "status": "PASS"
+        },
+        {
+          "id": "pcf",
+          "status": "PASS"
+        },
+        {
+          "id": "ng_setup",
+          "status": "PASS"
+        },
+        {
+          "id": "ue_registration",
+          "status": "PASS"
+        },
+        {
+          "id": "pdu_session",
+          "status": "PASS"
+        },
+        {
+          "id": "ue_tun",
+          "status": "PASS"
+        },
+        {
+          "id": "ue_ip",
+          "status": "PASS"
+        },
+        {
+          "id": "ping",
+          "status": "PASS"
+        }
+      ],
+      "checks_passed": 15,
+      "checks_total": 15,
+      "job_id": 95562466135,
+      "repetition": 1,
+      "scenario": "5g-sa",
+      "step_completed_at": "2026-08-18T01:14:46Z",
+      "step_seconds": 13,
+      "step_started_at": "2026-08-18T01:14:33Z"
+    },
+    {
+      "artifact_digest": "sha256:de70157138f0ebdf2b02210cd982a8033bbea724a90923e9c38a69f1fecb284f",
+      "artifact_id": 9307195046,
+      "checks": [
+        {
+          "id": "mongo",
+          "status": "PASS"
+        },
+        {
+          "id": "mme",
+          "status": "PASS"
+        },
+        {
+          "id": "hss",
+          "status": "PASS"
+        },
+        {
+          "id": "sgwc",
+          "status": "PASS"
+        },
+        {
+          "id": "sgwu",
+          "status": "PASS"
+        },
+        {
+          "id": "pgwc",
+          "status": "PASS"
+        },
+        {
+          "id": "pgwu",
+          "status": "PASS"
+        },
+        {
+          "id": "pcrf",
+          "status": "PASS"
+        },
+        {
+          "id": "s1_setup",
+          "status": "PASS"
+        },
+        {
+          "id": "ue_registration",
+          "status": "PASS"
+        },
+        {
+          "id": "default_bearer",
+          "status": "PASS"
+        },
+        {
+          "id": "ue_ip",
+          "status": "PASS"
+        },
+        {
+          "id": "ue_tun",
+          "status": "PASS"
+        },
+        {
+          "id": "data_ping",
+          "status": "PASS"
+        }
+      ],
+      "checks_passed": 14,
+      "checks_total": 14,
+      "job_id": 95562466189,
+      "repetition": 2,
+      "scenario": "4g-lte-sim",
+      "step_completed_at": "2026-08-18T01:14:20Z",
+      "step_seconds": 47,
+      "step_started_at": "2026-08-18T01:13:33Z"
+    },
+    {
+      "artifact_digest": "sha256:de70157138f0ebdf2b02210cd982a8033bbea724a90923e9c38a69f1fecb284f",
+      "artifact_id": 9307195046,
+      "checks": [
+        {
+          "id": "mongo",
+          "status": "PASS"
+        },
+        {
+          "id": "nrf",
+          "status": "PASS"
+        },
+        {
+          "id": "amf",
+          "status": "PASS"
+        },
+        {
+          "id": "smf",
+          "status": "PASS"
+        },
+        {
+          "id": "upf",
+          "status": "PASS"
+        },
+        {
+          "id": "ausf",
+          "status": "PASS"
+        },
+        {
+          "id": "udm",
+          "status": "PASS"
+        },
+        {
+          "id": "udr",
+          "status": "PASS"
+        },
+        {
+          "id": "pcf",
+          "status": "PASS"
+        },
+        {
+          "id": "ng_setup",
+          "status": "PASS"
+        },
+        {
+          "id": "ue_registration",
+          "status": "PASS"
+        },
+        {
+          "id": "pdu_session",
+          "status": "PASS"
+        },
+        {
+          "id": "ue_tun",
+          "status": "PASS"
+        },
+        {
+          "id": "ue_ip",
+          "status": "PASS"
+        },
+        {
+          "id": "ping",
+          "status": "PASS"
+        }
+      ],
+      "checks_passed": 15,
+      "checks_total": 15,
+      "job_id": 95562466189,
+      "repetition": 2,
+      "scenario": "5g-sa",
+      "step_completed_at": "2026-08-18T01:14:32Z",
+      "step_seconds": 12,
+      "step_started_at": "2026-08-18T01:14:20Z"
+    },
+    {
+      "artifact_digest": "sha256:7c5e8d13248ddbfd1bfe6f5ddde097620ce518c07108243ec153d21ef15f0526",
+      "artifact_id": 9307201697,
+      "checks": [
+        {
+          "id": "mongo",
+          "status": "PASS"
+        },
+        {
+          "id": "mme",
+          "status": "PASS"
+        },
+        {
+          "id": "hss",
+          "status": "PASS"
+        },
+        {
+          "id": "sgwc",
+          "status": "PASS"
+        },
+        {
+          "id": "sgwu",
+          "status": "PASS"
+        },
+        {
+          "id": "pgwc",
+          "status": "PASS"
+        },
+        {
+          "id": "pgwu",
+          "status": "PASS"
+        },
+        {
+          "id": "pcrf",
+          "status": "PASS"
+        },
+        {
+          "id": "s1_setup",
+          "status": "PASS"
+        },
+        {
+          "id": "ue_registration",
+          "status": "PASS"
+        },
+        {
+          "id": "default_bearer",
+          "status": "PASS"
+        },
+        {
+          "id": "ue_ip",
+          "status": "PASS"
+        },
+        {
+          "id": "ue_tun",
+          "status": "PASS"
+        },
+        {
+          "id": "data_ping",
+          "status": "PASS"
+        }
+      ],
+      "checks_passed": 14,
+      "checks_total": 14,
+      "job_id": 95562466136,
+      "repetition": 3,
+      "scenario": "4g-lte-sim",
+      "step_completed_at": "2026-08-18T01:14:40Z",
+      "step_seconds": 49,
+      "step_started_at": "2026-08-18T01:13:51Z"
+    },
+    {
+      "artifact_digest": "sha256:7c5e8d13248ddbfd1bfe6f5ddde097620ce518c07108243ec153d21ef15f0526",
+      "artifact_id": 9307201697,
+      "checks": [
+        {
+          "id": "mongo",
+          "status": "PASS"
+        },
+        {
+          "id": "nrf",
+          "status": "PASS"
+        },
+        {
+          "id": "amf",
+          "status": "PASS"
+        },
+        {
+          "id": "smf",
+          "status": "PASS"
+        },
+        {
+          "id": "upf",
+          "status": "PASS"
+        },
+        {
+          "id": "ausf",
+          "status": "PASS"
+        },
+        {
+          "id": "udm",
+          "status": "PASS"
+        },
+        {
+          "id": "udr",
+          "status": "PASS"
+        },
+        {
+          "id": "pcf",
+          "status": "PASS"
+        },
+        {
+          "id": "ng_setup",
+          "status": "PASS"
+        },
+        {
+          "id": "ue_registration",
+          "status": "PASS"
+        },
+        {
+          "id": "pdu_session",
+          "status": "PASS"
+        },
+        {
+          "id": "ue_tun",
+          "status": "PASS"
+        },
+        {
+          "id": "ue_ip",
+          "status": "PASS"
+        },
+        {
+          "id": "ping",
+          "status": "PASS"
+        }
+      ],
+      "checks_passed": 15,
+      "checks_total": 15,
+      "job_id": 95562466136,
+      "repetition": 3,
+      "scenario": "5g-sa",
+      "step_completed_at": "2026-08-18T01:14:52Z",
+      "step_seconds": 12,
+      "step_started_at": "2026-08-18T01:14:40Z"
+    },
+    {
+      "artifact_digest": "sha256:19daa4bb3188fc949a8dd5f061b034379278d87409fef4628cd6316dec9a79c9",
+      "artifact_id": 9307204927,
+      "checks": [
+        {
+          "id": "mongo",
+          "status": "PASS"
+        },
+        {
+          "id": "mme",
+          "status": "PASS"
+        },
+        {
+          "id": "hss",
+          "status": "PASS"
+        },
+        {
+          "id": "sgwc",
+          "status": "PASS"
+        },
+        {
+          "id": "sgwu",
+          "status": "PASS"
+        },
+        {
+          "id": "pgwc",
+          "status": "PASS"
+        },
+        {
+          "id": "pgwu",
+          "status": "PASS"
+        },
+        {
+          "id": "pcrf",
+          "status": "PASS"
+        },
+        {
+          "id": "s1_setup",
+          "status": "PASS"
+        },
+        {
+          "id": "ue_registration",
+          "status": "PASS"
+        },
+        {
+          "id": "default_bearer",
+          "status": "PASS"
+        },
+        {
+          "id": "ue_ip",
+          "status": "PASS"
+        },
+        {
+          "id": "ue_tun",
+          "status": "PASS"
+        },
+        {
+          "id": "data_ping",
+          "status": "PASS"
+        }
+      ],
+      "checks_passed": 14,
+      "checks_total": 14,
+      "job_id": 95562466192,
+      "repetition": 4,
+      "scenario": "4g-lte-sim",
+      "step_completed_at": "2026-08-18T01:14:45Z",
+      "step_seconds": 45,
+      "step_started_at": "2026-08-18T01:14:00Z"
+    },
+    {
+      "artifact_digest": "sha256:19daa4bb3188fc949a8dd5f061b034379278d87409fef4628cd6316dec9a79c9",
+      "artifact_id": 9307204927,
+      "checks": [
+        {
+          "id": "mongo",
+          "status": "PASS"
+        },
+        {
+          "id": "nrf",
+          "status": "PASS"
+        },
+        {
+          "id": "amf",
+          "status": "PASS"
+        },
+        {
+          "id": "smf",
+          "status": "PASS"
+        },
+        {
+          "id": "upf",
+          "status": "PASS"
+        },
+        {
+          "id": "ausf",
+          "status": "PASS"
+        },
+        {
+          "id": "udm",
+          "status": "PASS"
+        },
+        {
+          "id": "udr",
+          "status": "PASS"
+        },
+        {
+          "id": "pcf",
+          "status": "PASS"
+        },
+        {
+          "id": "ng_setup",
+          "status": "PASS"
+        },
+        {
+          "id": "ue_registration",
+          "status": "PASS"
+        },
+        {
+          "id": "pdu_session",
+          "status": "PASS"
+        },
+        {
+          "id": "ue_tun",
+          "status": "PASS"
+        },
+        {
+          "id": "ue_ip",
+          "status": "PASS"
+        },
+        {
+          "id": "ping",
+          "status": "PASS"
+        }
+      ],
+      "checks_passed": 15,
+      "checks_total": 15,
+      "job_id": 95562466192,
+      "repetition": 4,
+      "scenario": "5g-sa",
+      "step_completed_at": "2026-08-18T01:15:02Z",
+      "step_seconds": 17,
+      "step_started_at": "2026-08-18T01:14:45Z"
+    },
+    {
+      "artifact_digest": "sha256:91bdd311c6797be953180f6e5244016e86de13bc648e2a7a5b31143d3a4155bd",
+      "artifact_id": 9307197677,
+      "checks": [
+        {
+          "id": "mongo",
+          "status": "PASS"
+        },
+        {
+          "id": "mme",
+          "status": "PASS"
+        },
+        {
+          "id": "hss",
+          "status": "PASS"
+        },
+        {
+          "id": "sgwc",
+          "status": "PASS"
+        },
+        {
+          "id": "sgwu",
+          "status": "PASS"
+        },
+        {
+          "id": "pgwc",
+          "status": "PASS"
+        },
+        {
+          "id": "pgwu",
+          "status": "PASS"
+        },
+        {
+          "id": "pcrf",
+          "status": "PASS"
+        },
+        {
+          "id": "s1_setup",
+          "status": "PASS"
+        },
+        {
+          "id": "ue_registration",
+          "status": "PASS"
+        },
+        {
+          "id": "default_bearer",
+          "status": "PASS"
+        },
+        {
+          "id": "ue_ip",
+          "status": "PASS"
+        },
+        {
+          "id": "ue_tun",
+          "status": "PASS"
+        },
+        {
+          "id": "data_ping",
+          "status": "PASS"
+        }
+      ],
+      "checks_passed": 14,
+      "checks_total": 14,
+      "job_id": 95562466133,
+      "repetition": 5,
+      "scenario": "4g-lte-sim",
+      "step_completed_at": "2026-08-18T01:14:28Z",
+      "step_seconds": 47,
+      "step_started_at": "2026-08-18T01:13:41Z"
+    },
+    {
+      "artifact_digest": "sha256:91bdd311c6797be953180f6e5244016e86de13bc648e2a7a5b31143d3a4155bd",
+      "artifact_id": 9307197677,
+      "checks": [
+        {
+          "id": "mongo",
+          "status": "PASS"
+        },
+        {
+          "id": "nrf",
+          "status": "PASS"
+        },
+        {
+          "id": "amf",
+          "status": "PASS"
+        },
+        {
+          "id": "smf",
+          "status": "PASS"
+        },
+        {
+          "id": "upf",
+          "status": "PASS"
+        },
+        {
+          "id": "ausf",
+          "status": "PASS"
+        },
+        {
+          "id": "udm",
+          "status": "PASS"
+        },
+        {
+          "id": "udr",
+          "status": "PASS"
+        },
+        {
+          "id": "pcf",
+          "status": "PASS"
+        },
+        {
+          "id": "ng_setup",
+          "status": "PASS"
+        },
+        {
+          "id": "ue_registration",
+          "status": "PASS"
+        },
+        {
+          "id": "pdu_session",
+          "status": "PASS"
+        },
+        {
+          "id": "ue_tun",
+          "status": "PASS"
+        },
+        {
+          "id": "ue_ip",
+          "status": "PASS"
+        },
+        {
+          "id": "ping",
+          "status": "PASS"
+        }
+      ],
+      "checks_passed": 15,
+      "checks_total": 15,
+      "job_id": 95562466133,
+      "repetition": 5,
+      "scenario": "5g-sa",
+      "step_completed_at": "2026-08-18T01:14:41Z",
+      "step_seconds": 13,
+      "step_started_at": "2026-08-18T01:14:28Z"
+    }
+  ],
+  "run_attempt": 1,
+  "source_commit": "8da4d92e4aacec8660ddd3a5be5c4c0167671de5",
+  "timing_boundary": "GitHub reproduction step, including setup, start, validation and EXIT-trap stop; excluding prior install and image pulls",
+  "workflow_commit": "8f535205a12c5a270b3382710647bef8c290af86",
+  "workflow_history": [
+    {
+      "conclusion": "success",
+      "created_at": "2026-08-18T01:11:37Z",
+      "id": 32087329776,
+      "run_attempt": 1,
+      "run_number": 7
+    },
+    {
+      "conclusion": "cancelled",
+      "created_at": "2026-08-18T01:08:29Z",
+      "id": 32087138323,
+      "run_attempt": 1,
+      "run_number": 6
+    },
+    {
+      "conclusion": "failure",
+      "created_at": "2026-08-18T01:08:10Z",
+      "id": 32087118426,
+      "run_attempt": 1,
+      "run_number": 5
+    },
+    {
+      "conclusion": "success",
+      "created_at": "2026-08-17T23:59:08Z",
+      "id": 32082708632,
+      "run_attempt": 1,
+      "run_number": 4
+    },
+    {
+      "conclusion": "success",
+      "created_at": "2026-08-17T23:54:21Z",
+      "id": 32082382467,
+      "run_attempt": 1,
+      "run_number": 3
+    },
+    {
+      "conclusion": "success",
+      "created_at": "2026-08-17T23:49:24Z",
+      "id": 32082045926,
+      "run_attempt": 1,
+      "run_number": 2
+    },
+    {
+      "conclusion": "failure",
+      "created_at": "2026-08-17T23:48:35Z",
+      "id": 32081991360,
+      "run_attempt": 1,
+      "run_number": 1
+    }
+  ],
+  "workflow_run": 32087329776
+}

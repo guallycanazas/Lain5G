@@ -47,6 +47,7 @@ four-profile public operational catalog. Their scope is stated in each guide.
 - [Dependency policy](reproducibility/dependency-policy.md)
 - [Version matrix](reproducibility/version-matrix.md)
 - [Public result format](../results/public/README.md)
+- [SoftwareX revision audit and measurement protocol](revision/softwarex-2026.md)
 - [SBOM status](release/sbom-status.md)
 - [Third-party components](third_party.md)
 
