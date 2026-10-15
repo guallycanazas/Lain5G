@@ -49,3 +49,6 @@ jobs:
       # dry-run guards), frontend tests/typecheck/build, and all static checks.
       - name: Run unified safe check
         run: make softwarex-check
+
+      - name: Demonstrate configuration reuse without network activation
+        run: .venv/bin/python scripts/revision/demo_profile_reuse.py
