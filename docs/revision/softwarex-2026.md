@@ -33,7 +33,8 @@ workflow step durations were 49/15, 42/15 and 41/12 s. Replace Table 4 with
 the five audited rows; do not infer that 40 s belongs to a particular run.
 
 Timing includes scenario setup, start, validation and the EXIT-trap stop.
-Prior host preparation and image pulls are excluded. Container caching,+registry bandwidth, runner scheduling, CPU contention, polling intervals,
+Prior host preparation and image pulls are excluded. Container caching,
+registry bandwidth, runner scheduling, CPU contention, polling intervals,
 database initialization and protocol startup can affect durations. No manual
 baseline was measured; no numeric time saving is justified.
 
