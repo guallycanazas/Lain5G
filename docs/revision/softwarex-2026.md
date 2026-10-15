@@ -175,7 +175,7 @@ Software guard/unit tests cannot substitute for these physical trials.
 7. Publish and verify the separate sanitized evidence deposit before citing its
    DOI. A Zenodo draft exists with reserved DOI `10.5281/zenodo.23381975`; the
    sanitized archive is uploaded but the DOI is not registered. Its archive
-   SHA-256 is `e4c7587bb8b8f5779cbb9a8961b135980c1bcc01dd5e9dcd8c6c7779faa98628`.
+   SHA-256 is `772e6452785ae481b7d157b762f16c9eb76c3abf4270e8e59bb220e38fa5baeb`.
    Draft metadata uses the four manuscript authors and CC BY 4.0; confirm the
    author list before publication. Do not replace the published source ZIP.
 8. Add actual access dates to URL references. Preserve original 2026-08-06 dates
