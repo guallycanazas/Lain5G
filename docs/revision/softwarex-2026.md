@@ -27,6 +27,11 @@ out v1.1.3 source. Its `63e0615` folder prefix is the annotated tag object,
 which peels to the expected `8da4d92` source commit. It is not a source mismatch.
 Its older v1.1.0 operational baseline must remain labelled as such.
 
+The separate evidence record is still a draft. It contains the sanitized ZIP
+only; the raw GitHub ZIPs and full logs remain with the author. Do not cite the
+reserved evidence DOI as a published record until publication and checksum
+verification are complete.
+
 The paper's Table 4 values (40 s LTE and 12 s 5G) do not describe the five-job
 series. Their provenance is unresolved: the earlier successful single-job
 workflow step durations were 49/15, 42/15 and 41/12 s. Replace Table 4 with
@@ -167,8 +172,12 @@ Software guard/unit tests cannot substitute for these physical trials.
 5. Expand Table 2 using the scoped technical comparison above; moderate Impact
    and Conclusions claims about ease, novelty and manual time savings.
 6. Add the configuration reuse example and its non-runtime limitation.
-7. Deposit a separate sanitized evidence package with DOI and checksum manifest;
-   cite both source and evidence DOIs. Do not replace the published source ZIP.
+7. Publish and verify the separate sanitized evidence deposit before citing its
+   DOI. A Zenodo draft exists with reserved DOI `10.5281/zenodo.23381975`; the
+   sanitized archive is uploaded but the DOI is not registered. Its archive
+   SHA-256 is `e4c7587bb8b8f5779cbb9a8961b135980c1bcc01dd5e9dcd8c6c7779faa98628`.
+   Draft metadata uses the four manuscript authors and CC BY 4.0; confirm the
+   author list before publication. Do not replace the published source ZIP.
 8. Add actual access dates to URL references. Preserve original 2026-08-06 dates
    where documented; do not backdate new consultations. Resolve exact 3GPP
    release/version/date metadata against the authors' actual cited documents.
