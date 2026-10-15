@@ -19,6 +19,12 @@ SOURCE = "8da4d92e4aacec8660ddd3a5be5c4c0167671de5"
 RUN = 32087329776
 
 
+def require(condition: bool, message: str) -> None:
+    """Keep evidence checks active even when Python optimization is enabled."""
+    if not condition:
+        raise ValueError(f"Audit validation failed: {message}")
+
+
 def main() -> None:
     root = Path(sys.argv[1])
     load = lambda name: json.loads((root / name).read_text())
@@ -29,24 +35,34 @@ def main() -> None:
         repetition = int(re.search(r"\((\d)/5\)", job["name"])[1])
         artifact = next(a for a in artifacts if a["name"].endswith(f"-{repetition}"))
         folder = root / "original-artifacts" / artifact["name"]
-        assert f"git_commit={SOURCE}" in (folder / "environment.txt").read_text()
+        require(
+            f"git_commit={SOURCE}" in (folder / "environment.txt").read_text(),
+            f"job {job['id']} does not use the expected source commit",
+        )
         validations = [json.loads(p.read_text()) for p in folder.glob("runs/*/validation.json")]
-        assert len(validations) == 2 and job["conclusion"] == "success"
+        require(len(validations) == 2, f"job {job['id']} must contain two scenario validations")
+        require(job["conclusion"] == "success", f"job {job['id']} did not complete successfully")
         for scenario, label, expected in (("4g-lte-sim", "4G LTE", 14), ("5g-sa", "5G SA", 15)):
             step = next(s for s in job["steps"] if s["name"] == f"Reproduce {label} software profile")
             validation = next(v for v in validations if v["scenario"] == scenario)
-            assert step["conclusion"] == "success"
+            require(step["conclusion"] == "success", f"job {job['id']} {label} step did not succeed")
             if "status" in validation:
-                assert validation["status"] == "PASS"
-            assert len(validation["checks"]) == expected
-            assert all(c["status"] == "PASS" for c in validation["checks"])
+                require(validation["status"] == "PASS", f"job {job['id']} {label} validation did not pass")
+            require(
+                len(validation["checks"]) == expected,
+                f"job {job['id']} {label} validation has an unexpected check count",
+            )
+            require(
+                all(c["status"] == "PASS" for c in validation["checks"]),
+                f"job {job['id']} {label} contains a failing check",
+            )
             seconds = int((datetime.fromisoformat(step["completed_at"]) - datetime.fromisoformat(step["started_at"])).total_seconds())
             rows.append({"repetition": repetition, "scenario": scenario, "job_id": job["id"],
                          "step_started_at": step["started_at"], "step_completed_at": step["completed_at"],
                          "step_seconds": seconds, "checks_passed": expected, "checks_total": expected,
                          "checks": [{"id": c["id"], "status": c["status"]} for c in validation["checks"]],
                          "artifact_id": artifact["id"], "artifact_digest": artifact["digest"]})
-    assert len(rows) == 10
+    require(len(rows) == 10, "the selected workflow run must contain ten scenario outcomes")
     inputs = [root / n for n in ("jobs.json", "workflow-history.json", "artifacts-32087329776.json")]
     inputs += sorted((root / "original-artifacts").rglob("*"))
     payload = {"audit_date": "2026-10-14", "source_commit": SOURCE, "workflow_run": RUN,
