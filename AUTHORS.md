@@ -5,6 +5,7 @@
 - **Willian Roy Canazas Rosas**
 - **Manuel Ismael Prieto Tito**
 - **Alberth Ronal Tamo Calla**
+- **Alexander Beremiz Hilario Tacuri**
 
 Affiliation for all authors: **National University of San Agustin of
 Arequipa**.

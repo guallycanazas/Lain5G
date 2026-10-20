@@ -1,0 +1,77 @@
+{
+  "scenario": "4g-lte-sim",
+  "status": "PASS",
+  "checked_at": "2026-10-20T11:36:59Z",
+  "checks": [
+    {
+      "id": "mongo",
+      "status": "PASS",
+      "detail": "container is running"
+    },
+    {
+      "id": "mme",
+      "status": "PASS",
+      "detail": "container is running"
+    },
+    {
+      "id": "hss",
+      "status": "PASS",
+      "detail": "container is running"
+    },
+    {
+      "id": "sgwc",
+      "status": "PASS",
+      "detail": "container is running"
+    },
+    {
+      "id": "sgwu",
+      "status": "PASS",
+      "detail": "container is running"
+    },
+    {
+      "id": "pgwc",
+      "status": "PASS",
+      "detail": "container is running"
+    },
+    {
+      "id": "pgwu",
+      "status": "PASS",
+      "detail": "container is running"
+    },
+    {
+      "id": "pcrf",
+      "status": "PASS",
+      "detail": "container is running"
+    },
+    {
+      "id": "s1_setup",
+      "status": "PASS",
+      "detail": "eNB/MME S1 evidence found in this run"
+    },
+    {
+      "id": "ue_registration",
+      "status": "PASS",
+      "detail": "srsUE registration evidence found in MME/UE logs"
+    },
+    {
+      "id": "default_bearer",
+      "status": "PASS",
+      "detail": "default bearer evidence found in this run"
+    },
+    {
+      "id": "ue_ip",
+      "status": "PASS",
+      "detail": "UE IP assigned on tun_srsue: <UE_IPV4_REDACTED>"
+    },
+    {
+      "id": "ue_tun",
+      "status": "PASS",
+      "detail": "tun_srsue exists in UE container"
+    },
+    {
+      "id": "data_ping",
+      "status": "PASS",
+      "detail": "Ping to <LOCAL_GATEWAY_REDACTED> succeeded through tun_srsue"
+    }
+  ]
+}

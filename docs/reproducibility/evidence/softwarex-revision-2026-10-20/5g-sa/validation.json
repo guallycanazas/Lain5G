@@ -1,0 +1,81 @@
+{
+  "scenario": "5g-sa",
+  "checked_at": "2026-10-20T13:55:56Z",
+  "checks": [
+    {
+      "id": "mongo",
+      "status": "PASS",
+      "detail": "MongoDB responds to ping"
+    },
+    {
+      "id": "nrf",
+      "status": "PASS",
+      "detail": "container is running"
+    },
+    {
+      "id": "amf",
+      "status": "PASS",
+      "detail": "container is running"
+    },
+    {
+      "id": "smf",
+      "status": "PASS",
+      "detail": "container is running"
+    },
+    {
+      "id": "upf",
+      "status": "PASS",
+      "detail": "container is running"
+    },
+    {
+      "id": "ausf",
+      "status": "PASS",
+      "detail": "container is running"
+    },
+    {
+      "id": "udm",
+      "status": "PASS",
+      "detail": "container is running"
+    },
+    {
+      "id": "udr",
+      "status": "PASS",
+      "detail": "container is running"
+    },
+    {
+      "id": "pcf",
+      "status": "PASS",
+      "detail": "container is running"
+    },
+    {
+      "id": "ng_setup",
+      "status": "PASS",
+      "detail": "gNB reports successful NG setup"
+    },
+    {
+      "id": "ue_registration",
+      "status": "PASS",
+      "detail": "UE registration evidence found"
+    },
+    {
+      "id": "pdu_session",
+      "status": "PASS",
+      "detail": "PDU session evidence found"
+    },
+    {
+      "id": "ue_tun",
+      "status": "PASS",
+      "detail": "uesimtun0 exists in UE container"
+    },
+    {
+      "id": "ue_ip",
+      "status": "PASS",
+      "detail": "UE IP assigned: <UE_IPV4_REDACTED>"
+    },
+    {
+      "id": "ping",
+      "status": "PASS",
+      "detail": "Ping to 8.8.8.8 succeeded from UE"
+    }
+  ]
+}

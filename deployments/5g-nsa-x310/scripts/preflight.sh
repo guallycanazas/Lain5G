@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 if [ "${LAIN5G_DRY_RUN:-false}" = true ]; then
-  echo "DRY RUN: 5G NSA X310 preflight plan; no configuration, hardware, UHD, Docker, network, file, or marker action was performed"
+  echo "DRY RUN: 5G NSA RF preflight plan; no configuration, hardware, UHD, Docker, network, file, or marker action was performed"
   exit 0
 fi
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -50,7 +50,13 @@ else
   [ "$nr_rf_path" = true ] && add nr_rf_path PASS "second RF path declared connected" || add nr_rf_path WARNING "NR rf_port=1 path is disconnected"
 fi
 
-"$script_dir/hardware-check.sh" >/tmp/lain5g-nsa-hardware-check.log 2>&1 && add hardware PASS "dual-chain hardware reported" || add hardware FAIL "dual-chain hardware check failed"
+hardware_log=/tmp/lain5g-nsa-hardware-check.log
+if "$script_dir/hardware-check.sh" >"$hardware_log" 2>&1; then
+  add hardware PASS "dual-chain hardware reported"
+else
+  add hardware FAIL "dual-chain hardware check failed; probe details follow"
+  sed -n '1,160p' "$hardware_log"
+fi
 
 echo "status=$status"
 [ "$status" = PASS ]

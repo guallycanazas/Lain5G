@@ -87,7 +87,7 @@ export function DashboardPage() {
       <section className="panel">
         <div className="panel-heading"><div><span className="eyebrow">RF safety</span><h3>Operator guardrails</h3></div><Link to="/rf-safety">Review</Link></div>
         <p className="muted-text">RF actions remain guarded by backend scripts and local manifests. This console does not treat container state as authorization.</p>
-        <div className="warning-box">Emergency stop is available only through the guarded X310 backend action. Review authorization before any RF operation.</div>
+        <div className="warning-box">Emergency stop is available only through the guarded RF action. Review authorization before any RF operation.</div>
       </section>
 
       <section className="panel">

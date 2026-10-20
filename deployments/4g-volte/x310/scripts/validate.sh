@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 if [ "${LAIN5G_DRY_RUN:-false}" = true ]; then
-  echo "DRY RUN: 4G LTE X310 validation plan; no RF, hardware, UHD, Docker, configuration, file, or marker action was performed"
+  echo "DRY RUN: 4G LTE RF validation plan; no RF, hardware, UHD, Docker, configuration, file, or marker action was performed"
   exit 0
 fi
 scenario_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -31,8 +31,8 @@ write_json(){
   echo "Validation written to ${run_dir#$repo_dir/}/validation.json"
   [ "$status" = PASS ]
 }
-"$(dirname "${BASH_SOURCE[0]}")/hardware-check.sh" >"$run_dir/logs/hardware-check.log" 2>&1 && add hardware_detected PASS "X310 detected" || add hardware_detected FAIL "X310 not detected"
-grep -q 'ethernet_link.*PASS' "$run_dir/logs/hardware-check.log" && add ethernet_link PASS "compatible local subnet found" || add ethernet_link WARNING "ethernet not proven compatible"
+"$(dirname "${BASH_SOURCE[0]}")/hardware-check.sh" >"$run_dir/logs/hardware-check.log" 2>&1 && add hardware_detected PASS "compatible USRP detected" || add hardware_detected FAIL "compatible USRP not detected"
+grep -q 'ethernet_link.*PASS' "$run_dir/logs/hardware-check.log" && add ethernet_link PASS "host route to the configured USRP address is available" || add ethernet_link FAIL "no host route to the configured USRP address; inspect hardware-check.log"
 "$(dirname "${BASH_SOURCE[0]}")/uhd-check.sh" >"$run_dir/logs/uhd-check.log" 2>&1 && add uhd_available PASS "UHD probe passed" || add uhd_available FAIL "UHD probe failed"
 "$(dirname "${BASH_SOURCE[0]}")/fpga-check.sh" "$run_dir/logs/uhd-check.log" >"$run_dir/logs/fpga-check.log" 2>&1 && add uhd_fpga_compatible PASS "FPGA compatible" || add uhd_fpga_compatible FAIL "FPGA compatibility unknown"
 for svc in mme hss sgwc sgwu pgwc pgwu pcrf; do running "$svc" || epc_fail=1; done; [ "${epc_fail:-0}" = 0 ] && add epc_services PASS "EPC services running" || add epc_services FAIL "EPC incomplete"

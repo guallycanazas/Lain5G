@@ -2,7 +2,7 @@
 
 <div align="center">
 
-**Orquestación basada en evidencia para redes software 4G/5G y laboratorios USRP X-Series protegidos**
+**Orquestación basada en evidencia para redes software 4G/5G y laboratorios USRP protegidos**
 
 [![CI](https://github.com/guallycanazas/Lain5G/actions/workflows/ci.yml/badge.svg)](https://github.com/guallycanazas/Lain5G/actions/workflows/ci.yml)
 [![Release](https://img.shields.io/badge/release-v1.1.5-4051b5.svg)](https://github.com/guallycanazas/Lain5G/releases/tag/v1.1.5)
@@ -19,7 +19,7 @@ móviles 4G LTE y 5G SA. Despliega y administra componentes open source de RAN,
 core, IMS y simulación mediante Docker Compose, una interfaz de línea de comandos
 y una aplicación web. Está diseñado para investigación, pruebas y educación, y
 ofrece un entorno personalizable con escenarios completamente software, flujos
-USRP X-Series protegidos, configuración declarativa, validación automatizada y
+USRP protegidos, configuración declarativa, validación automatizada y
 evidencia trazable de cada ejecución.
 
 > **Estado de publicación:** [`v1.1.5`](https://github.com/guallycanazas/Lain5G/tree/v1.1.5)
@@ -57,7 +57,8 @@ de inicio no estándar deben satisfacer los requisitos documentados manualmente.
 | Contenedores | Docker Engine y Docker Compose v2 instalados; el daemon se inicia cuando el sistema lo permite |
 | Acceso | Membresía del grupo Docker configurada solo si el equipo usa ese modelo |
 | Estado privado | Perfiles y configuración local ignorados, con permisos restrictivos |
-| Componentes | Todas las imágenes únicas de los cuatro perfiles públicos descargadas |
+| Registro | Resultado, dependencias solicitadas, motivos, tiempos y tipo de máquina en `runs/installation-logs/` |
+| Componentes | Todas las imágenes únicas de los cinco perfiles públicos descargadas |
 | RF | Ninguna transmisión; la operación de hardware sigue separada, autorizada y bloqueada por defecto |
 
 Si la instalación cambió la membresía del grupo Docker y la sesión actual aún no
@@ -132,8 +133,8 @@ externo. Sin prueba por aire, esa etapa permanece `NOT_TESTED`.
 | --- | --- | --- | --- |
 | `4g-lte-sim` | Solo software | EPC Open5GS + srsENB/srsUE por ZMQ | Resumen sanitizado en VM limpia: [14/14 `PASS`](results/public/4g-lte-sim/run-20260730-021702.json) |
 | `5g-sa` | Solo software | 5GC Open5GS + gNB/UE UERANSIM + PDU de datos | Resumen sanitizado en VM limpia: [15/15 `PASS`](results/public/5g-sa-sim/run-20260730-021914.json) |
-| `4g-lte-x310` | RF protegido | EPC Open5GS + IMS compacto + eNB srsRAN + USRP X-Series compatible | Flujo protegido con evidencia RF local correlacionada por ejecución |
-| `5g-sa-x310` | RF protegido | 5GC Open5GS + IMS compacto + gNB srsRAN Project + USRP X-Series compatible | Flujo protegido con evidencia RF local correlacionada por ejecución |
+| `4g-lte-x310` | RF protegido | EPC Open5GS + IMS compacto + eNB srsRAN + USRP compatible | Flujo protegido con evidencia RF local correlacionada por ejecución |
+| `5g-sa-x310` | RF protegido | 5GC Open5GS + IMS compacto + gNB srsRAN Project + USRP compatible | Flujo protegido con evidencia RF local correlacionada por ejecución |
 
 Los resultados LTE y 5G SA actuales son resúmenes sanitizados de una VM Ubuntu
 24.04 limpia, no trazas de protocolo, e identifican
@@ -241,6 +242,7 @@ validadores de escenario.
 - **Willian Roy Canazas Rosas**
 - **Manuel Ismael Prieto Tito**
 - **Alberth Ronal Tamo Calla**
+- **Alexander Beremiz Hilario Tacuri**
 
 Afiliación de todos los autores: **Universidad Nacional de San Agustín de Arequipa**.
 Consulte [`AUTHORS.md`](AUTHORS.md).

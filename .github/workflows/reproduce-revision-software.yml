@@ -1,0 +1,149 @@
+name: Reproduce revision software profiles
+
+on:
+  workflow_dispatch:
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: revision-software-reproduction-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  reproduce:
+    name: Ubuntu 24.04 clean run (${{ matrix.attempt }}/5)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        attempt: [1, 2, 3, 4, 5]
+
+    steps:
+      - name: Check out the exact dispatched commit
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: |
+            src/backend/constraints.txt
+            src/backend/requirements.txt
+
+      - name: Install pinned CLI dependencies
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m venv .venv
+          .venv/bin/python -m pip install --constraint src/backend/constraints.txt --requirement src/backend/requirements.txt
+          echo "$GITHUB_WORKSPACE/.venv/bin" >> "$GITHUB_PATH"
+
+      - name: Record Ubuntu runner environment
+        shell: bash
+        env:
+          MATRIX_ATTEMPT: ${{ matrix.attempt }}
+        run: |
+          set -euo pipefail
+          mkdir -p action-evidence/${{ matrix.attempt }}
+          python - <<'PY'
+          import json, os, platform, subprocess
+          def output(*command):
+              return subprocess.run(command, text=True, capture_output=True, check=False).stdout.strip()
+          cpu = output("bash", "-lc", "lscpu | sed -n '/^Model name:/p; /^CPU(s):/p; /^Socket(s):/p; /^Thread(s) per core:/p'")
+          memory = output("bash", "-lc", "awk '/MemTotal/ {print $2 \" kB\"}' /proc/meminfo")
+          nics = output("bash", "-lc", "ip -o link show | awk -F': ' '{print $2}' | paste -sd, -")
+          data = {
+              "os": output("bash", "-lc", "source /etc/os-release && echo \"$PRETTY_NAME\""),
+              "kernel": platform.release(), "architecture": platform.machine(),
+              "cpu_summary": cpu, "memory_total": memory, "network_interfaces": nics,
+              "docker_engine": output("docker", "version", "--format", "{{.Server.Version}}"),
+              "docker_compose": output("docker", "compose", "version", "--short"),
+              "source_commit": os.environ["GITHUB_SHA"],
+              "workflow_run_id": os.environ["GITHUB_RUN_ID"],
+              "attempt": int(os.environ["GITHUB_RUN_ATTEMPT"]),
+              "matrix_attempt": int(os.environ["MATRIX_ATTEMPT"]),
+              "rf_hardware_used": False
+          }
+          with open(f"action-evidence/{data['matrix_attempt']}/environment.json", "w") as f:
+              json.dump(data, f, indent=2)
+              f.write("\n")
+          PY
+
+      - name: Pull simulation images once
+        shell: bash
+        run: |
+          set -euo pipefail
+          ./lain5g images pull 4g-lte-sim
+          ./lain5g images pull 5g-sa
+
+      - name: Reproduce 4G LTE ZMQ
+        shell: bash
+        env:
+          PROFILE: 4g-lte-sim
+          MATRIX_ATTEMPT: ${{ matrix.attempt }}
+        run: |
+          set -euo pipefail
+          run_id="run-$(date -u +%Y%m%d-%H%M%S)"
+          started_at="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          LAIN5G_RUN_ID="$run_id" ./lain5g scenario setup "$PROFILE"
+          start_output="$(LAIN5G_RUN_ID="$run_id" ./lain5g scenario start "$PROFILE")"
+          printf '%s\n' "$start_output"
+          run_id="$(printf '%s\n' "$start_output" | sed -n 's/.*Created run metadata: runs\/\([^[:space:]]*\).*/\1/p' | tail -n 1)"
+          test -n "$run_id"
+          trap 'LAIN5G_RUN_ID="$run_id" ./lain5g scenario stop "$PROFILE" || true' EXIT
+          LAIN5G_RUN_ID="$run_id" ./lain5g scenario validate "$PROFILE"
+          LAIN5G_RUN_ID="$run_id" ./lain5g scenario stop "$PROFILE"
+          trap - EXIT
+          finished_at="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          .venv/bin/python scripts/revision/package_action_evidence.py \
+            --run-id "$run_id" --scenario "$PROFILE" --attempt "$MATRIX_ATTEMPT" \
+            --source-sha "$GITHUB_SHA" --started-at "$started_at" --finished-at "$finished_at" \
+            --output "action-evidence/$MATRIX_ATTEMPT/$PROFILE"
+
+      - name: Reproduce 5G SA UERANSIM
+        shell: bash
+        env:
+          PROFILE: 5g-sa
+          MATRIX_ATTEMPT: ${{ matrix.attempt }}
+        run: |
+          set -euo pipefail
+          run_id="run-$(date -u +%Y%m%d-%H%M%S)"
+          started_at="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          LAIN5G_RUN_ID="$run_id" ./lain5g scenario setup "$PROFILE"
+          printf '\nPING_TARGET=10.45.0.1\n' >> deployments/5g-sa/.env
+          start_output="$(LAIN5G_RUN_ID="$run_id" ./lain5g scenario start "$PROFILE")"
+          printf '%s\n' "$start_output"
+          run_id="$(printf '%s\n' "$start_output" | sed -n 's/.*Created run metadata: runs\/\([^[:space:]]*\).*/\1/p' | tail -n 1)"
+          test -n "$run_id"
+          trap 'LAIN5G_RUN_ID="$run_id" ./lain5g scenario stop "$PROFILE" || true' EXIT
+          LAIN5G_RUN_ID="$run_id" ./lain5g scenario validate "$PROFILE"
+          LAIN5G_RUN_ID="$run_id" ./lain5g scenario stop "$PROFILE"
+          trap - EXIT
+          finished_at="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          .venv/bin/python scripts/revision/package_action_evidence.py \
+            --run-id "$run_id" --scenario "$PROFILE" --attempt "$MATRIX_ATTEMPT" \
+            --source-sha "$GITHUB_SHA" --started-at "$started_at" --finished-at "$finished_at" \
+            --output "action-evidence/$MATRIX_ATTEMPT/$PROFILE"
+
+      - name: Stop any remaining software profile
+        if: always()
+        shell: bash
+        run: |
+          ./lain5g scenario stop 4g-lte-sim || true
+          ./lain5g scenario stop 5g-sa || true
+
+      - name: Upload sanitized run evidence
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: openlain5g-revision-ubuntu24-attempt-${{ matrix.attempt }}
+          path: action-evidence/${{ matrix.attempt }}/
+          if-no-files-found: warn
+          retention-days: 90

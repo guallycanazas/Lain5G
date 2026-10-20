@@ -123,9 +123,9 @@ def test_main_menu_exposes_preparation_without_publishing():
         check=False,
     )
     assert profiles.returncode == 0
-    for profile in ("4g-lte-sim", "5g-sa", "4g-lte-x310", "5g-sa-x310"):
+    for profile in ("4g-lte-sim", "5g-sa", "4g-lte-x310", "5g-sa-x310", "5g-nsa-x310"):
         assert profile in profiles.stdout
-    for hidden in ("4g-volte-sim", "5g-vonr", "5g-nsa-x310"):
+    for hidden in ("4g-volte-sim", "5g-vonr"):
         assert hidden not in profiles.stdout
     hidden_start = subprocess.run(
         [str(ROOT / "lain5g"), "scenario", "start", "5g-vonr-sim"],

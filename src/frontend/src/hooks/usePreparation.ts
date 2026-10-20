@@ -7,6 +7,14 @@ export function usePreparation() {
   return useQuery({ queryKey: ['preparation'], queryFn: preparationApi.report });
 }
 
+export function useInstallationHistory() {
+  return useQuery({
+    queryKey: ['preparation', 'installations'],
+    queryFn: preparationApi.installations,
+    refetchInterval: (query) => Array.isArray(query.state.data) && query.state.data.some((item) => item.status === 'running') ? 1500 : 5000,
+  });
+}
+
 export function useProfileComponents(profileId: string, coreOnly = false) {
   return useQuery({
     queryKey: ['preparation', 'profile', profileId, coreOnly],

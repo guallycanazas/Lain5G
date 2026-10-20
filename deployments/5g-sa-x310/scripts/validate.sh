@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 if [ "${LAIN5G_DRY_RUN:-false}" = true ]; then
-  echo "DRY RUN: 5G SA X310 validation plan; no RF, hardware, UHD, Docker, configuration, file, or marker action was performed"
+  echo "DRY RUN: 5G SA RF validation plan; no RF, hardware, UHD, Docker, configuration, file, or marker action was performed"
   exit 0
 fi
 
@@ -36,12 +36,13 @@ write_json(){
 }
 
 "$script_dir/hardware-check.sh" "$env_file" >"$run_dir/logs/hardware-check.log" 2>&1 && {
-  add hardware_detected PASS "Compatible X300/X310 hardware detected"
+  add hardware_detected PASS "Compatible USRP hardware detected"
   add uhd_available PASS "UHD hardware probe passed"
 } || {
-  add hardware_detected FAIL "Compatible X300/X310 hardware was not detected"
+  add hardware_detected FAIL "Compatible USRP hardware was not detected"
   add uhd_available FAIL "UHD hardware probe failed"
 }
+grep -q 'ethernet_link.*PASS' "$run_dir/logs/hardware-check.log" && add ethernet_link PASS "Host route to the configured USRP address is available" || add ethernet_link FAIL "No host route to the configured USRP address; inspect hardware-check.log"
 
 for service in mongo nrf ausf udm udr pcf upf smf amf; do running "$service" || core_fail=1; done
 [ "${core_fail:-0}" = 0 ] && add core_services PASS "5G core services running" || add core_services FAIL "5G core services incomplete"

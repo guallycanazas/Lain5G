@@ -14,7 +14,7 @@ chmod 600 "$env_file"
 simulation_project="lain5g-lab-5g-sa"
 simulation_network="lain5g-lab-5g-sa-core"
 if [ -n "$(docker ps -aq --filter "label=com.docker.compose.project=$simulation_project")" ] || docker network inspect "$simulation_network" >/dev/null 2>&1; then
-  echo "Switching from 5G SA simulation to 5G SA X310 core..."
+  echo "Switching from 5G SA simulation to the 5G SA RF core..."
   "$repo_dir/deployments/5g-sa/scripts/stop.sh"
   echo "5G SA simulation stopped; volumes and data were preserved."
 fi

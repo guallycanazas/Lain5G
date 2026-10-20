@@ -75,6 +75,14 @@ export function validationDescription(id: string): string {
     sip_register: 'SIP registration observed',
     hardware: 'SDR hardware detected',
     preflight: 'Preflight passed',
+    hardware_detected: 'USRP radio detected',
+    ethernet_link: 'Direct Ethernet route to the USRP',
+    uhd_available: 'UHD can access the radio',
+    uhd_fpga_compatible: 'UHD and FPGA versions are compatible',
+    dual_rf_chains: 'Both LTE and NR radio chains detected',
+    epc_ready: 'LTE EPC ready',
+    lte_attach: 'UE attached to LTE',
+    nr_secondary_cell: 'NR secondary cell active',
   };
   return labels[id] || id;
 }

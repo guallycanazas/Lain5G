@@ -1,0 +1,17 @@
+{
+  "run_id": "run-20261020-135526",
+  "scenario": "5g-sa",
+  "started_at": "2026-10-20T13:55:26Z",
+  "validation_at": "2026-10-20T13:55:56Z",
+  "captured_at": "2026-10-20T20:15:18Z",
+  "execution_status": "PASS",
+  "runtime_state_at_capture": "running",
+  "checks_passed": 15,
+  "checks_total": 15,
+  "source_base_commit": "583c350",
+  "working_tree_modified": true,
+  "notes": [
+    "Local software-only simulation. The service stack was still running at capture; no stop time or end-to-end duration is claimed.",
+    "This run predates the final commit for the revision branch."
+  ]
+}

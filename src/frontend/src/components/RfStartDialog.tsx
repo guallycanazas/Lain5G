@@ -30,7 +30,8 @@ export function RfStartDialog({ scenarioId, open, loading, missingImages, pullJo
   const previousMissingCount = useRef(missingImages.length);
   const profile = useQuery({ queryKey: ['profile', scenarioId], queryFn: () => profilesApi.detail(scenarioId), enabled: open });
   const diff = useQuery({ queryKey: ['profile-diff', scenarioId], queryFn: () => profilesApi.diff(scenarioId), enabled: open });
-  const expectedPhrase = `START ${scenarioId.toUpperCase()} RF`;
+  const launchProfile = scenarioId === '4g-lte-x310' ? '4G LTE' : scenarioId === '5g-nsa-x310' ? '5G NSA' : '5G SA';
+  const expectedPhrase = `START ${launchProfile} RF`;
   const is5gSa = scenarioId === '5g-sa-x310';
   const is5gNsa = scenarioId === '5g-nsa-x310';
   const is5g = is5gSa || is5gNsa;
@@ -146,7 +147,7 @@ export function RfStartDialog({ scenarioId, open, loading, missingImages, pullJo
   if (!open) return null;
   return <div className="dialog-backdrop rf-dialog-backdrop" role="presentation">
     <section className="rf-start-dialog" role="dialog" aria-modal="true" aria-labelledby="rf-start-title">
-      <header><div className="rf-dialog-title"><span><RadioTower size={21} /></span><div><small>GUARDED RF SESSION</small><h2 id="rf-start-title">Start {radioTitle} + X310</h2></div></div><button className="dialog-close" type="button" onClick={onCancel} aria-label="Close"><X size={18} /></button></header>
+      <header><div className="rf-dialog-title"><span><RadioTower size={21} /></span><div><small>GUARDED RF SESSION</small><h2 id="rf-start-title">Start {radioTitle} + USRP</h2></div></div><button className="dialog-close" type="button" onClick={onCancel} aria-label="Close"><X size={18} /></button></header>
       <div className="rf-danger-banner"><AlertTriangle size={18} /><div><strong>This action transmits RF energy.</strong><span>The core starts first and the SDR container stops automatically.</span></div></div>
       {profile.isLoading || diff.isLoading ? <div className="rf-config-state">Loading effective RF configuration...</div> : null}
       {profile.error || diff.error ? <div className="rf-config-state error">The RF configuration could not be verified. Start remains blocked.</div> : null}
@@ -161,7 +162,7 @@ export function RfStartDialog({ scenarioId, open, loading, missingImages, pullJo
         <div><span>Environment</span><strong>{safety.environment || '—'} · {safety.attenuation_db ?? '—'} dB</strong></div>
         <div><span>Auto-stop limit</span><strong>{maximumDuration} seconds</strong></div>
       </div>
-      <div className="rf-profile-link">Values come from the applied <code>{scenarioId}</code> profile. <Link to="/deployments" onClick={onCancel}>Edit configuration</Link></div>
+      <div className="rf-profile-link">Values come from the applied profile. <Link to="/deployments" onClick={onCancel}>Edit configuration</Link></div>
       <div className="rf-form-grid"><label><Timer size={14} />Requested duration (seconds)<input type="number" min={1} max={maximumDuration} value={duration} onChange={(event) => setDuration(Number(event.target.value))} /></label><label>Operator purpose<input value={note} maxLength={240} onChange={(event) => setNote(event.target.value)} /></label></div>
       {config ? <section className={`rf-authorization-panel ${needsAuthorizationSetup ? 'required' : 'ready'}`} aria-labelledby="rf-authorization-title">
         <div className="rf-authorization-heading"><div><span className="rf-authorization-icon">{needsAuthorizationSetup ? <AlertTriangle size={16} /> : <CheckCircle2 size={16} />}</span><div><small>PROFILE GATE</small><h3 id="rf-authorization-title">{needsAuthorizationSetup ? 'Authorize RF for this lab' : 'RF profile authorized and applied'}</h3></div></div><strong>{needsAuthorizationSetup ? 'Action required' : 'Ready'}</strong></div>

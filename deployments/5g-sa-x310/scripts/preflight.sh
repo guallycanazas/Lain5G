@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 if [ "${LAIN5G_DRY_RUN:-false}" = true ]; then
-  echo "DRY RUN: 5G SA X310 preflight plan; no configuration, hardware, UHD, Docker, network, file, or marker action was performed"
+  echo "DRY RUN: 5G SA RF preflight plan; no configuration, hardware, UHD, Docker, network, file, or marker action was performed"
   exit 0
 fi
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -36,7 +36,7 @@ compose_env="$env_example"; [ -f "$env_file" ] && compose_env="$env_file"
 docker compose --env-file "$compose_env" -f "$scenario_dir/docker-compose.yml" config --quiet && add compose_config PASS "docker compose config valid" || add compose_config FAIL "docker compose config invalid"
 
 if grep -q 'image: lain5g-lab/srsranproject-uhd:local' "$scenario_dir/docker-compose.yml" && grep -q 'profiles: \["rf"\]' "$scenario_dir/docker-compose.yml"; then add gnb_profile PASS "gNB is isolated behind rf profile"; else add gnb_profile FAIL "gNB rf profile missing"; fi
-grep -q 'network_mode: host' "$scenario_dir/docker-compose.yml" && add x310_network PASS "gNB can reach X310 over host Ethernet" || add x310_network FAIL "host network not configured for gNB"
+grep -q 'network_mode: host' "$scenario_dir/docker-compose.yml" && add usrp_network PASS "gNB can reach the USRP over host Ethernet" || add usrp_network FAIL "host network not configured for gNB"
 grep -q 'addr: ${AMF_ADDR}' "$scenario_dir/gnb/gnb_x310.yml" && add gnb_config_template PASS "gNB config is parameterized" || add gnb_config_template FAIL "gNB config template missing AMF parameter"
 
 amf_addr="$(get_env AMF_ADDR 10.20.0.5)"
@@ -101,7 +101,13 @@ else
   [ -n "$rx_gain" ] && add rx_gain PASS "RX gain set" || add rx_gain NOT_TESTED "operator must set RX_GAIN locally"
 fi
 
-"$script_dir/hardware-check.sh" >/tmp/lain5g-5g-x310-hardware-check.log 2>&1 && add hardware PASS "hardware check passed" || add hardware FAIL "hardware check failed"
+hardware_log=/tmp/lain5g-5g-x310-hardware-check.log
+if "$script_dir/hardware-check.sh" >"$hardware_log" 2>&1; then
+  add hardware PASS "USRP hardware check passed"
+else
+  add hardware FAIL "USRP hardware check failed; probe details follow"
+  sed -n '1,180p' "$hardware_log"
+fi
 
 printf 'status=%s\n' "$status"
 [ "$status" = PASS ]

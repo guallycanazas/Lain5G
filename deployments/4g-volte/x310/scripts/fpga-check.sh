@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 if [ "${LAIN5G_DRY_RUN:-false}" = true ]; then
-  echo "DRY RUN: 4G LTE X310 FPGA-check plan; no device, UHD, Docker, or file access was performed"
+  echo "DRY RUN: 4G LTE USRP FPGA-check plan; no device, UHD, Docker, or file access was performed"
   exit 0
 fi
 log="${1:-/tmp/lain5g-fpga-check.log}"

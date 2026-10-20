@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 if [ "${LAIN5G_DRY_RUN:-false}" = true ]; then
-  echo "DRY RUN: 5G NSA X310 hardware-check plan; no device, network, UHD, Docker, or file access was performed"
+  echo "DRY RUN: 5G NSA USRP hardware-check plan; no device, network, UHD, Docker, or file access was performed"
   exit 0
 fi
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"

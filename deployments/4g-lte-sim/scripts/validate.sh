@@ -10,13 +10,12 @@ running(){ [ -n "$(compose ps --status running -q "$1" 2>/dev/null)" ]; }
 logs_have(){
   local status
   set +o pipefail
-  (cd "$scenario_dir" && timeout 10s docker compose --env-file ../4g-volte/common/.env -f docker-compose.yml logs --no-color "$1" 2>/dev/null) | grep -Eiq -m1 "$2"
+  (cd "$scenario_dir" && docker compose --env-file ../4g-volte/common/.env -f docker-compose.yml logs --since "$run_started_at" --no-color "$1" 2>/dev/null | head -n 100000) | grep -Eiq -m1 "$2"
   status=$?
   set -o pipefail
   return "$status"
 }
-container_file_have(){ compose exec -T "$1" sh -lc 'grep -Eiq "$1" "$2"' sh "$3" "$2" 2>/dev/null; }
-registration_ready(){ container_file_have mme /var/log/open5gs/mme.log 'Attach complete' || logs_have ue 'Attach.*complete|RRC Connected|Network attach successful|Received Attach Accept'; }
+registration_ready(){ logs_have ue 'Attach.*complete|RRC Connected|Network attach successful|Received Attach Accept'; }
 
 latest=""
 for metadata in "$repo_dir"/runs/run-*/metadata.json; do
@@ -33,21 +32,30 @@ done
   printf '{"created_at":"%s","metrics":[]}\n' "$now" > "$latest/metrics.json"
 }
 mkdir -p "$latest/logs"
+run_started_at="$(sed -n 's/.*"started_at":"\([^"]*\)".*/\1/p' "$latest/metadata.json")"
+[ -n "$run_started_at" ] || run_started_at="10 minutes ago"
 
 if [ "${LAIN5G_DRY_RUN:-false}" = "true" ]; then
   for id in mongo mme hss sgwc sgwu pgwc pgwu pcrf s1_setup ue_registration default_bearer ue_ip ue_tun data_ping; do add_check "$id" NOT_TESTED "dry-run mode"; done
 else
   for svc in mongo mme hss sgwc sgwu pgwc pgwu pcrf; do running "$svc" && add_check "$svc" PASS "container is running" || add_check "$svc" FAIL "container is not running"; done
   if running ue; then
-    for _ in 1 2 3 4 5 6; do
+    for _ in {1..12}; do
       registration_ready && break
       sleep 5
     done
   fi
-  { container_file_have mme /var/log/open5gs/mme.log 'eNB-S1 accepted|Number of eNBs is now 1' || logs_have enb 'S1 Setup|S1AP.*Setup|MME connection|S1 connection'; } && { add_check s1_setup PASS "eNB/MME S1 evidence found"; claims+=("eNB connected to MME"); } || add_check s1_setup WARNING "S1 evidence not found"
+  logs_have mme 'eNB-S1 accepted|Number of eNBs is now 1' || logs_have enb 'S1 Setup|S1AP.*Setup|MME connection|S1 connection'
+  if [ "$?" -eq 0 ]; then add_check s1_setup PASS "eNB/MME S1 evidence found in this run"; claims+=("eNB connected to MME"); else add_check s1_setup WARNING "S1 evidence not found in this run"; fi
   registration_ready && { add_check ue_registration PASS "srsUE registration evidence found in MME/UE logs"; claims+=("LTE UE registered"); } || add_check ue_registration WARNING "UE registration evidence not found"
-  { container_file_have mme /var/log/open5gs/mme.log 'Number of MME-Sessions is now [1-9][0-9]*' || logs_have ue 'Registered EPS bearer|Default EPS bearer|bearer.*established|Network attach successful' || logs_have enb 'InitialContextSetupResponse|New tunnel created|DRB1|User .*connected'; } && { add_check default_bearer PASS "default bearer evidence found in MME/RAN logs"; claims+=("Default bearer established"); } || add_check default_bearer WARNING "bearer evidence not found"
-  ue_ip="$(compose exec -T ue ip -o -4 addr show dev tun_srsue 2>/dev/null | grep -Eo '10\.57\.[0-9]+\.[0-9]+' | head -n 1 || true)"
+  { logs_have mme 'Number of MME-Sessions is now [1-9][0-9]*' || logs_have ue 'Registered EPS bearer|Default EPS bearer|bearer.*established|Network attach successful' || logs_have enb 'InitialContextSetupResponse|New tunnel created|DRB1|User .*connected'; } && { add_check default_bearer PASS "default bearer evidence found in this run"; claims+=("Default bearer established"); } || add_check default_bearer WARNING "bearer evidence not found in this run"
+  ue_ip=""
+  for _ in {1..6}; do
+    ue_ip="$(compose exec -T ue ip -o -4 addr show dev tun_srsue 2>/dev/null | grep -Eo '10\.57\.[0-9]+\.[0-9]+' | head -n 1 || true)"
+    [ -n "$ue_ip" ] && break
+    running ue || break
+    sleep 5
+  done
   [ -n "$ue_ip" ] && { add_check ue_ip PASS "UE IP assigned on tun_srsue: $ue_ip"; claims+=("UE IP assigned"); } || add_check ue_ip WARNING "UE IPv4 address not found on tun_srsue"
   compose exec -T ue ip link show dev tun_srsue >/dev/null 2>&1 && add_check ue_tun PASS "tun_srsue exists in UE container" || add_check ue_tun WARNING "tun_srsue not found in UE container"
   compose exec -T ue ping -I tun_srsue -c 3 -W 2 10.57.0.1 >/dev/null 2>&1 && { add_check data_ping PASS "Ping to 10.57.0.1 succeeded through tun_srsue"; claims+=("Data ping succeeded"); } || add_check data_ping WARNING "Ping through tun_srsue was not validated"

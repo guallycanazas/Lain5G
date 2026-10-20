@@ -1,4 +1,5 @@
 import type { ContainerStatus, DeploymentState } from '../types/deployment';
+import { runtimeIdentifier, serviceLabel } from '../utils/serviceLabels';
 import { StatusBadge } from './StatusBadge';
 
 type DisplayContainer = ContainerStatus & { expected: boolean; missing: boolean; conditional: boolean };
@@ -41,10 +42,10 @@ export function ContainerStatusTable({ containers, expectedServices = [], condit
                 : container.expected ? container.status : `${container.status} · Additional runtime service.`;
               return (
                 <tr key={container.name} className={container.missing ? 'service-missing' : ''}>
-                  <td>{(container.service || container.name).toUpperCase()}</td>
-                  <td>{container.service || 'Unmapped service'}</td>
+                  <td>{serviceLabel(container.service || container.name).toUpperCase()}</td>
+                  <td>{container.service ? serviceLabel(container.service) : 'Unmapped service'}</td>
                   <td><StatusBadge status={container.running ? 'running' : stoppedStatus} kind={container.running || stoppedStatus === 'stopped' || stoppedStatus === 'standby' ? 'deployment' : 'validation'} /></td>
-                  <td>{container.missing || (container.conditional && !container.running) ? <span className="muted-text">Not active</span> : <code>{container.name}</code>}</td>
+                  <td>{container.missing || (container.conditional && !container.running) ? <span className="muted-text">Not active</span> : <code>{runtimeIdentifier(container.name)}</code>}</td>
                   <td>{reason}</td>
                 </tr>
               );

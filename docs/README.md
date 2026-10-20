@@ -24,9 +24,9 @@ the maintained Spanish project overview.
 - [LTE USRP workflow](x310_lte.md)
 - [5G SA COTS UE checklist](5g_x310_cots_ue_checklist.md)
 
-The public profile IDs retain `x310` for compatibility. Reader-facing
-documentation uses USRP as the broader hardware category and identifies concrete
-X-Series requirements where they apply.
+Profile IDs and internal service names retain their existing identifiers for
+compatibility. Reader-facing documentation uses USRP as the broader hardware
+category.
 
 ## IMS and Archived Scenarios
 
@@ -37,7 +37,7 @@ X-Series requirements where they apply.
 - [Real IMS package](real_ims.md)
 
 These documents include archived or internal scenarios that are not part of the
-four-profile public operational catalog. Their scope is stated in each guide.
+five-profile public operational catalog. Their scope is stated in each guide.
 
 ## Development and Reproducibility
 

@@ -2,7 +2,7 @@
 
 <div align="center">
 
-**Evidence-oriented orchestration for software 4G/5G networks and guarded X-Series USRP laboratory workflows**
+**Evidence-oriented orchestration for software 4G/5G networks and guarded USRP laboratory workflows**
 
 [![CI](https://github.com/guallycanazas/Lain5G/actions/workflows/ci.yml/badge.svg)](https://github.com/guallycanazas/Lain5G/actions/workflows/ci.yml)
 [![Release](https://img.shields.io/badge/release-v1.1.5-4051b5.svg)](https://github.com/guallycanazas/Lain5G/releases/tag/v1.1.5)
@@ -18,7 +18,7 @@ OpenLain5G is a modular framework for reproducible 4G LTE and 5G SA mobile
 network laboratories. It deploys and manages open-source RAN, core, IMS, and
 simulation components through Docker Compose, a command-line interface, and a
 web application. Designed for research, testing, and education, it provides a
-customizable environment with software-only scenarios, guarded X-Series USRP
+customizable environment with software-only scenarios, guarded USRP
 workflows, declarative configuration, automated validation, and traceable run
 evidence.
 
@@ -57,7 +57,7 @@ prerequisites manually.
 | Container runtime | Docker Engine and Docker Compose v2 installed; daemon startup attempted where supported |
 | User access | Docker group membership configured only when the host uses that access model |
 | Private state | Ignored profile and application files created with restrictive permissions |
-| Components | All unique images required by the four public profiles downloaded |
+| Components | All unique images required by the five public profiles downloaded |
 | RF behavior | No RF transmission; hardware operation remains separately authorized and fail-closed |
 
 If setup changed Docker-group membership and the current shell still lacks
@@ -138,8 +138,8 @@ over-air UE evidence remains `NOT_TESTED`.
 | --- | --- | --- | --- |
 | `4g-lte-sim` | Software only | Open5GS EPC + srsENB/srsUE over ZMQ | Clean-VM sanitized summary: [14/14 `PASS`](results/public/4g-lte-sim/run-20260730-021702.json) |
 | `5g-sa` | Software only | Open5GS 5GC + UERANSIM gNB/UE + data PDU session | Clean-VM sanitized summary: [15/15 `PASS`](results/public/5g-sa-sim/run-20260730-021914.json) |
-| `4g-lte-x310` | Guarded RF | Open5GS EPC + compact IMS infrastructure + srsRAN eNB + compatible X-Series USRP | Guarded workflow with run-correlated local RF evidence |
-| `5g-sa-x310` | Guarded RF | Open5GS 5GC + compact IMS infrastructure + srsRAN Project gNB + compatible X-Series USRP | Guarded workflow with run-correlated local RF evidence |
+| `4g-lte-x310` | Guarded RF | Open5GS EPC + compact IMS infrastructure + srsRAN eNB + compatible USRP | Guarded workflow with run-correlated local RF evidence |
+| `5g-sa-x310` | Guarded RF | Open5GS 5GC + compact IMS infrastructure + srsRAN Project gNB + compatible USRP | Guarded workflow with run-correlated local RF evidence |
 
 The current LTE and 5G SA summaries are sanitized validator records from a clean
 Ubuntu 24.04 virtual machine, not raw protocol traces. They identify
@@ -252,6 +252,7 @@ separately by the scenario validators.
 - **Willian Roy Canazas Rosas**
 - **Manuel Ismael Prieto Tito**
 - **Alberth Ronal Tamo Calla**
+- **Alexander Beremiz Hilario Tacuri**
 
 Software-release affiliation for all authors: **National University of San Agustin of
 Arequipa**. See [`AUTHORS.md`](AUTHORS.md).
