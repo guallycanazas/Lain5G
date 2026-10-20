@@ -52,7 +52,11 @@ class ComponentPullImageProgress(BaseModel):
     local_image: str
     source_image: str
     description: str
+    reason: str = ""
     state: Literal["pending", "pulling", "tagging", "succeeded", "failed"] = "pending"
+    started_at: datetime | None = None
+    finished_at: datetime | None = None
+    duration_ms: int | None = None
     error_code: str | None = None
     error_message: str | None = None
 
@@ -74,3 +78,40 @@ class ComponentPullJob(BaseModel):
     finished_at: datetime | None = None
     error_code: str | None = None
     error_message: str | None = None
+
+
+class InstallationStep(BaseModel):
+    name: str
+    reason: str
+    status: Literal["pending", "running", "succeeded", "failed", "skipped"]
+    started_at: datetime | None = None
+    finished_at: datetime | None = None
+    duration_ms: int | None = None
+    exit_code: int | None = None
+    message: str | None = None
+
+
+class InstallationEnvironment(BaseModel):
+    host_os: str
+    host_architecture: str
+    machine_type: str
+    detection_method: str
+    runtime: str
+    runtime_os: str
+    runtime_architecture: str
+
+
+class InstallationRecord(BaseModel):
+    id: str
+    kind: Literal["bootstrap", "component_download"]
+    scope: str
+    status: Literal["running", "succeeded", "failed", "dry_run", "partial"]
+    reason: str
+    created_at: datetime
+    started_at: datetime | None = None
+    finished_at: datetime | None = None
+    duration_ms: int | None = None
+    environment: InstallationEnvironment
+    installed_components: list[str] = Field(default_factory=list)
+    steps: list[InstallationStep] = Field(default_factory=list)
+    log_available: bool = False

@@ -16,6 +16,16 @@ configures group access when that model applies; generates private
 configuration; and downloads the published images. Each privileged command is
 displayed before `sudo` is used.
 
+Each `bootstrap`/`install` run saves a timestamped JSON report and text log under
+`runs/installation-logs/`. The Preparation page lists these records and lets
+operators download either file. Reports include the outcome, components and
+dependencies, why they were needed, per-step results and durations, total
+elapsed time, and detected operating system and machine type (for example,
+VirtualBox, VMware, or KVM). When the web backend runs inside Docker, it reports
+that the host machine type is not visible rather than guessing. The log is local
+runtime data and is ignored by Git. A `--dry-run` report is labelled as a
+simulation and does not claim that software was installed.
+
 Other distributions, rootless Docker installations, managed workstations, and
 nonstandard init systems should satisfy the requirements below manually. The
 installer does not override host policy when daemon or group management is not

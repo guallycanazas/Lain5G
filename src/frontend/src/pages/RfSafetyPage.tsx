@@ -32,7 +32,7 @@ export function RfSafetyPage() {
       <div className="scenario-grid" style={{ marginTop: 18 }}>
         {profiles.data?.filter((profile) => profile.rf_capable).map((profile) => <article className="panel scenario-card" key={profile.profile}><div className="scenario-meta"><strong>{profile.profile}</strong><StatusBadge status={profile.rf_allowed ? 'warning' : 'stopped'} /></div><p className="muted-text">Local RF policy and safety manifest are evaluated server-side before any guarded action.</p><dl className="facts"><dt>RF capable</dt><dd>{String(profile.rf_capable)}</dd><dt>Default authorization</dt><dd>{String(profile.rf_allowed)}</dd></dl></article>)}
       </div>
-      <ConfirmDialog open={confirm} title="Emergency stop RF service" message="This sends the guarded emergency-stop action for the LTE X310 deployment. It stops the RF service and clears the local active-session marker." confirmLabel="Emergency stop" onConfirm={() => { actions.emergencyStop.mutate(); setConfirm(false); }} onCancel={() => setConfirm(false)} />
+      <ConfirmDialog open={confirm} title="Emergency stop RF service" message="This sends the guarded emergency-stop action for the LTE RF deployment. It stops the RF service and clears the local active-session marker." confirmLabel="Emergency stop" onConfirm={() => { actions.emergencyStop.mutate(); setConfirm(false); }} onCancel={() => setConfirm(false)} />
     </section>
   );
 }

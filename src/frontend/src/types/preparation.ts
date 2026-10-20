@@ -43,9 +43,48 @@ export interface ComponentPullImageProgress {
   local_image: string;
   source_image: string;
   description: string;
+  reason: string;
   state: ComponentPullImageState;
+  started_at: string | null;
+  finished_at: string | null;
+  duration_ms: number | null;
   error_code: string | null;
   error_message: string | null;
+}
+
+export interface InstallationStep {
+  name: string;
+  reason: string;
+  status: 'pending' | 'running' | 'succeeded' | 'failed' | 'skipped';
+  started_at: string | null;
+  finished_at: string | null;
+  duration_ms: number | null;
+  exit_code: number | null;
+  message: string | null;
+}
+
+export interface InstallationRecord {
+  id: string;
+  kind: 'bootstrap' | 'component_download';
+  scope: string;
+  status: 'running' | 'succeeded' | 'failed' | 'dry_run' | 'partial';
+  reason: string;
+  created_at: string;
+  started_at: string | null;
+  finished_at: string | null;
+  duration_ms: number | null;
+  environment: {
+    host_os: string;
+    host_architecture: string;
+    machine_type: string;
+    detection_method: string;
+    runtime: string;
+    runtime_os: string;
+    runtime_architecture: string;
+  };
+  installed_components: string[];
+  steps: InstallationStep[];
+  log_available: boolean;
 }
 
 export interface ComponentPullJob {

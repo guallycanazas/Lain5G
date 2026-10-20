@@ -102,6 +102,23 @@ def main() -> int:
 
     with tempfile.TemporaryDirectory(prefix="lain5g-compose-verify-") as temporary:
         verification_root = Path(temporary) / "source"
+        docker_config = Path(temporary) / "docker-config"
+        docker_plugin_dir = docker_config / "cli-plugins"
+        docker_plugin_dir.mkdir(parents=True)
+        # Docker Desktop on macOS installs Compose under the user's CLI plugin
+        # directory. The verifier isolates Docker config and HOME so it cannot
+        # read credentials, so expose only the Compose executable in that
+        # temporary config when it is not installed system-wide.
+        compose_candidates = (
+            Path.home() / ".docker" / "cli-plugins" / "docker-compose",
+            Path("/Applications/Docker.app/Contents/Resources/cli-plugins/docker-compose"),
+            Path("/usr/local/lib/docker/cli-plugins/docker-compose"),
+            Path("/usr/lib/docker/cli-plugins/docker-compose"),
+        )
+        for candidate in compose_candidates:
+            if candidate.is_file():
+                (docker_plugin_dir / "docker-compose").symlink_to(candidate.resolve())
+                break
         inputs = {path for check in CHECKS for path in (*check.files, check.env_file)}
         for relative_path in sorted(inputs):
             source = ROOT / relative_path
@@ -121,7 +138,7 @@ def main() -> int:
         env = {
             "PATH": os.environ.get("PATH", ""),
             "HOME": temporary,
-            "DOCKER_CONFIG": temporary,
+            "DOCKER_CONFIG": str(docker_config),
             "DOCKER_HOST": f"unix://{temporary}/docker-socket-does-not-exist",
             "LANG": "C.UTF-8",
             "LC_ALL": "C.UTF-8",

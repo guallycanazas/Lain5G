@@ -15,6 +15,6 @@ export function TopologyPage() {
     <div className="page-heading"><div><span className="eyebrow">Observability</span><h1>Topology</h1><p className="page-subtitle">Container health and validation evidence are shown independently.</p></div><label>Scenario<select value={scenario} onChange={(event) => setScenario(event.target.value)}>{(deployments.data || []).map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</select></label></div>
     {status.isLoading ? <LoadingState /> : null}
     {status.error ? <ErrorAlert error={status.error} onRetry={() => status.refetch()} /> : null}
-    <TopologyPanel containers={status.data?.containers || []} checks={validation.data?.scenario === scenario ? validation.data.checks : []} checkedAt={status.data?.checked_at} title={`${scenario} topology`} />
+    <TopologyPanel containers={status.data?.containers || []} checks={validation.data?.scenario === scenario ? validation.data.checks : []} checkedAt={status.data?.checked_at} title={`${(deployments.data || []).find((item) => item.id === scenario)?.name || 'Profile'} topology`} />
   </section>;
 }

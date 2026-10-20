@@ -1,8 +1,8 @@
 # OpenLain5G Backend
 
 FastAPI backend for preparing, operating, and validating the 4G LTE/VoLTE and
-5G SA/VoNR lab networks, together with the controlled X-Series RF profiles and
-the experimental NSA profile. The API reuses each scenario's version-controlled
+5G SA/VoNR lab networks, together with the controlled USRP RF profiles and
+the 5G NSA profile. The API reuses each scenario's version-controlled
 scripts under `deployments/` and preserves their security boundaries.
 
 ## Development

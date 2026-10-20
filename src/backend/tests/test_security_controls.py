@@ -19,7 +19,7 @@ from backend.app.settings import Settings
 ROOT = Path(__file__).resolve().parents[3]
 RF_REQUEST = {
     "execute": True,
-    "confirmation_phrase": "START 4G-LTE-X310 RF",
+    "confirmation_phrase": "START 4G LTE RF",
     "operator_note": "Authorized cabled test",
     "acknowledgements": {
         "legal_authorization_valid": True,

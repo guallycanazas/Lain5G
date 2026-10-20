@@ -35,6 +35,15 @@
         "@type": "Organization",
         "name": "National University of San Agustin of Arequipa"
       }
+    },
+    {
+      "@type": "Person",
+      "givenName": "Alexander Beremiz Hilario",
+      "familyName": "Tacuri",
+      "affiliation": {
+        "@type": "Organization",
+        "name": "National University of San Agustin of Arequipa"
+      }
     }
   ],
   "programmingLanguage": [

@@ -1,4 +1,5 @@
 import os
+import shlex
 import subprocess
 from pathlib import Path
 
@@ -13,7 +14,7 @@ def test_public_catalog_contains_data_and_guarded_rf_scenarios(client):
     assert response.status_code == 200
     payload = response.json()
     ids = {item["id"] for item in payload}
-    assert ids == {"5g-sa", "4g-lte-sim", "4g-lte-x310", "5g-sa-x310"}
+    assert ids == {"5g-sa", "4g-lte-sim", "4g-lte-x310", "5g-sa-x310", "5g-nsa-x310"}
     assert all(item["status"] == "dry_run" for item in payload)
 
 
@@ -58,7 +59,7 @@ def test_5g_sa_runtime_renderer_matches_provisioned_credentials(tmp_path: Path):
     runtime_dir = tmp_path / "ueransim"
     rendered_path = runtime_dir / "ue.yaml"
     command = command.replace("/tmp/ueransim", str(runtime_dir))
-    command = command.replace("/etc/ueransim/ue.yaml", str(root / "deployments/5g-sa/ueransim/ue.yaml"))
+    command = command.replace("/etc/ueransim/ue.yaml", shlex.quote(str(root / "deployments/5g-sa/ueransim/ue.yaml")))
     command = command.replace(f"exec nr-ue -c {rendered_path}", "true")
     credentials = {
         "SUBSCRIBER_IMSI": "001010000000001",
@@ -124,11 +125,12 @@ def test_rf_core_start_prepares_private_ims_environment(deployment_service, monk
     ]
 
 
-def test_experimental_nsa_is_not_public(client):
+def test_nsa_is_available_in_catalog_and_remains_rf_guarded(client):
     catalog = client.get("/api/deployments").json()
-    assert "5g-nsa-x310" not in {item["id"] for item in catalog}
+    assert "5g-nsa-x310" in {item["id"] for item in catalog}
     response = client.get("/api/deployments/5g-nsa-x310")
-    assert response.status_code == 404
+    assert response.status_code == 200
+    assert response.json()["rf_capable"] is True
 
 
 def test_unknown_deployment_returns_404(client):

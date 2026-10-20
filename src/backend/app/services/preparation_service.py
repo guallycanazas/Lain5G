@@ -3,22 +3,25 @@ from __future__ import annotations
 import shutil
 import threading
 from datetime import UTC, datetime
+from pathlib import Path
 from uuid import uuid4
 
 from ..models.preparation import ComponentImageStatus, ComponentPullImageProgress, ComponentPullJob, ComponentPullResponse, PreparationCheck, PreparationReport, ProfileComponentStatus
+from ..models.preparation import InstallationRecord, InstallationStep
 from ..settings import Settings
 from .command_service import CommandService
 from .image_catalog import IMAGE_CATALOG, PROFILE_IMAGES, PUBLIC_PROFILE_IDS, RF_ACCESS_IMAGES, required_images
+from .installation_history import InstallationHistoryService, detect_installation_environment
 from .scenario_environment import prepare_scenario_environment
 
 
 PROFILE_NAMES = {
     "4g-lte-sim": "4G LTE simulation",
     "4g-volte-sim": "4G VoLTE simulation",
-    "4g-lte-x310": "4G LTE X310",
+    "4g-lte-x310": "4G LTE RF",
     "5g-sa": "5G SA simulation",
-    "5g-sa-x310": "5G SA X310",
-    "5g-nsa-x310": "5G NSA X310",
+    "5g-sa-x310": "5G SA RF",
+    "5g-nsa-x310": "5G NSA RF",
     "5g-vonr": "5G VoNR simulation",
 }
 
@@ -39,6 +42,7 @@ class PreparationService:
         self._jobs_lock = threading.Lock()
         self._jobs: dict[str, ComponentPullJob] = {}
         self._active_job_id: str | None = None
+        self.installation_history = InstallationHistoryService(settings.project_root)
 
     def report(self) -> PreparationReport:
         diagnostics = self.diagnostics()
@@ -146,21 +150,34 @@ class PreparationService:
                         local_image=image.local_image,
                         source_image=image.source_image,
                         description=image.description,
+                        reason=(
+                            f"Required by at least one supported profile ({image.description})."
+                            if profile_id == "all"
+                            else f"Required by the selected {PROFILE_NAMES.get(profile_id, profile_id)} profile ({image.description})."
+                        ),
                     )
                     for image in missing
                 ],
                 total_count=len(missing),
                 overall_percent=0 if missing else 100,
                 created_at=datetime.now(UTC),
+                started_at=None if missing else datetime.now(UTC),
                 finished_at=None if missing else datetime.now(UTC),
             )
             self._jobs[job.job_id] = job
             if not missing:
-                return job.model_copy(deep=True)
-            if not self._pull_lock.acquire(blocking=False):
-                del self._jobs[job.job_id]
-                raise PreparationError(409, "IMAGE_PULL_BUSY", "A component download is already in progress.")
-            self._active_job_id = job.job_id
+                snapshot = job.model_copy(deep=True)
+            else:
+                snapshot = None
+            if missing:
+                if not self._pull_lock.acquire(blocking=False):
+                    del self._jobs[job.job_id]
+                    raise PreparationError(409, "IMAGE_PULL_BUSY", "A component download is already in progress.")
+                self._active_job_id = job.job_id
+        if snapshot is not None:
+            self._persist_pull_job(job.job_id, "No components were missing; no installation was needed.")
+            return snapshot
+        self._persist_pull_job(job.job_id, f"Queued component preparation for profile {profile_id}.")
         worker = threading.Thread(target=self._run_pull_job, args=(job.job_id,), daemon=True, name=f"lain5g-{job.job_id}")
         worker.start()
         with self._jobs_lock:
@@ -184,45 +201,59 @@ class PreparationService:
                 job = self._jobs[job_id]
                 job.state = "running"
                 job.started_at = datetime.now(UTC)
+            self._persist_pull_job(job_id, "Component preparation started.")
             for index in range(self._jobs[job_id].total_count):
                 with self._jobs_lock:
                     job = self._jobs[job_id]
                     image = job.images[index]
                     image.state = "pulling"
+                    image.started_at = datetime.now(UTC)
                     job.current_image = image.local_image
                     job.current_index = index + 1
                     source_image = image.source_image
                     local_image = image.local_image
+                    reason = image.reason
+                self._persist_pull_job(job_id, f"Downloading {source_image}. Reason: {reason}")
                 result = self.command_service.execute_command(
                     ["docker", "pull", source_image], dry_run=False, timeout=self.settings.image_pull_timeout
                 )
                 if result.timed_out:
+                    self._append_pull_command_log(job_id, "docker pull", source_image, result)
                     self._fail_pull_job(job_id, index, "IMAGE_PULL_TIMEOUT", f"The download exceeded the allowed time: {source_image}")
                     return
                 if result.exit_code != 0:
+                    self._append_pull_command_log(job_id, "docker pull", source_image, result)
                     self._fail_pull_job(job_id, index, "IMAGE_PULL_FAILED", f"Could not download {source_image}.")
                     return
+                self._append_pull_command_log(job_id, "docker pull", source_image, result)
                 if source_image != local_image:
                     with self._jobs_lock:
                         self._jobs[job_id].images[index].state = "tagging"
+                    self._persist_pull_job(job_id, f"Preparing local image tag {local_image}.")
                     tagged = self.command_service.execute_command(
                         ["docker", "tag", source_image, local_image], dry_run=False, timeout=30
                     )
-                    if tagged.exit_code != 0:
+                    self._append_pull_command_log(job_id, "docker tag", f"{source_image} {local_image}", tagged)
+                    if tagged.timed_out or tagged.exit_code != 0:
                         self._fail_pull_job(job_id, index, "IMAGE_TAG_FAILED", f"Could not prepare {local_image}.")
                         return
                 with self._jobs_lock:
                     job = self._jobs[job_id]
                     job.images[index].state = "succeeded"
+                    job.images[index].finished_at = datetime.now(UTC)
+                    if job.images[index].started_at:
+                        job.images[index].duration_ms = max(0, int((job.images[index].finished_at - job.images[index].started_at).total_seconds() * 1000))
                     job.pulled.append(source_image)
                     job.completed_count = index + 1
                     job.overall_percent = round(job.completed_count * 100 / job.total_count)
+                self._persist_pull_job(job_id, f"Prepared {local_image} successfully.")
             with self._jobs_lock:
                 job = self._jobs[job_id]
                 job.state = "succeeded"
                 job.current_image = None
                 job.finished_at = datetime.now(UTC)
                 job.overall_percent = 100
+            self._persist_pull_job(job_id, "Component preparation completed successfully.")
         except Exception:
             self._fail_pull_job(job_id, None, "IMAGE_PULL_FAILED", "The component download ended unexpectedly.")
         finally:
@@ -241,8 +272,71 @@ class PreparationService:
             if image_index is not None:
                 image = job.images[image_index]
                 image.state = "failed"
+                image.finished_at = datetime.now(UTC)
+                if image.started_at:
+                    image.duration_ms = max(0, int((image.finished_at - image.started_at).total_seconds() * 1000))
                 image.error_code = code
                 image.error_message = message
+        self._persist_pull_job(job_id, f"ERROR {code}: {message}")
+
+    def _append_pull_command_log(self, job_id: str, action: str, target: str, result) -> None:
+        self.installation_history.append_log(
+            job_id,
+            f"[{result.started_at.isoformat()}] {action} {target} | duration_ms={result.duration_ms} | exit_code={result.exit_code} | timed_out={result.timed_out}\n{result.stdout}{result.stderr}",
+        )
+
+    def _persist_pull_job(self, job_id: str, message: str | None = None) -> None:
+        with self._jobs_lock:
+            job = self._jobs.get(job_id)
+            if job is None:
+                return
+            snapshot = job.model_copy(deep=True)
+        duration_ms = None
+        if snapshot.started_at and snapshot.finished_at:
+            duration_ms = max(0, int((snapshot.finished_at - snapshot.started_at).total_seconds() * 1000))
+        steps = [
+            InstallationStep(
+                name=image.local_image,
+                reason=image.reason,
+                status="running" if image.state in {"pulling", "tagging"} else image.state,
+                started_at=image.started_at,
+                finished_at=image.finished_at,
+                duration_ms=image.duration_ms,
+                exit_code=0 if image.state == "succeeded" else 1 if image.state == "failed" else None,
+                message=image.error_message,
+            )
+            for image in snapshot.images
+        ]
+        record = InstallationRecord(
+            id=snapshot.job_id,
+            kind="component_download",
+            scope=snapshot.scope,
+            status=snapshot.state if snapshot.state in {"succeeded", "failed"} else "running",
+            reason=(
+                f"Download missing components required by profile {snapshot.scope}."
+                if snapshot.scope != "all"
+                else "Download missing components required by the supported profiles."
+            ),
+            created_at=snapshot.created_at,
+            started_at=snapshot.started_at,
+            finished_at=snapshot.finished_at,
+            duration_ms=duration_ms,
+            environment=detect_installation_environment(),
+            installed_components=[image.local_image for image in snapshot.images if image.state == "succeeded"],
+            steps=steps,
+        )
+        self.installation_history.write_record(record)
+        if message:
+            self.installation_history.append_log(job_id, f"[{datetime.now(UTC).isoformat()}] {message}")
+
+    def installation_records(self, limit: int = 50) -> list[InstallationRecord]:
+        return self.installation_history.list_records(limit)
+
+    def installation_record(self, record_id: str) -> InstallationRecord | None:
+        return self.installation_history.get_record(record_id)
+
+    def installation_log_path(self, record_id: str) -> Path | None:
+        return self.installation_history.log_path(record_id)
 
     def ensure_ready(self, profile_id: str, core_only: bool = False) -> None:
         status = self.profile_status(profile_id, core_only)

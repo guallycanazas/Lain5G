@@ -15,14 +15,19 @@ manifest="$scenario_dir/rf/safety-manifest.yaml"
 if [ "${LAIN5G_ALLOW_5G_RF_START:-false}" != true ]; then echo "5G RF start refused: set LAIN5G_ALLOW_5G_RF_START=true" >&2; exit 2; fi
 [ -f "$env_file" ] || { echo "5G RF start refused: missing deployments/5g-sa-x310/.env" >&2; exit 2; }
 [ -f "$manifest" ] || { echo "5G RF start refused: missing rf/safety-manifest.yaml" >&2; exit 2; }
-command -v flock >/dev/null 2>&1 || { echo "5G RF start refused: flock is required" >&2; exit 2; }
 exec 9<"$repo_dir"
-flock -n -x 9 || { echo "5G RF start refused: another RF start is in progress" >&2; exit 2; }
+if command -v flock >/dev/null 2>&1; then
+  flock -n -x 9 || { echo "5G RF start refused: another RF start is in progress" >&2; exit 2; }
+else
+  python3 -c 'import fcntl, sys
+try: fcntl.flock(9, fcntl.LOCK_EX | fcntl.LOCK_NB)
+except OSError: sys.exit(1)' || { echo "5G RF start refused: another RF start is in progress" >&2; exit 2; }
+fi
 for marker in "$repo_dir/deployments/4g-volte/x310/.rf-active" "$repo_dir/deployments/5g-sa-x310/.rf-active" "$repo_dir/deployments/5g-nsa-x310/.rf-active"; do
   [ ! -f "$marker" ] || { echo "5G RF start refused: another RF session is active" >&2; exit 2; }
 done
 REQUIRE_RF_READY=true "$script_dir/preflight.sh"
-# Let the UHD probe release the X310 management channel before the gNB opens it.
+# Let the UHD probe release the radio management channel before the gNB opens it.
 sleep 5
 maximum_duration="$(sed -n 's/^maximum_duration_seconds:[[:space:]]*//p' "$manifest" | head -n1)"
 duration="${LAIN5G_RF_DURATION_SECONDS:-$maximum_duration}"
@@ -46,11 +51,17 @@ fi
 
 started_at="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 printf 'started_at=%s\nrun_id=%s\nduration_seconds=%s\noperator_note=%s\n' "$started_at" "$run_id" "$duration" "${LAIN5G_RF_OPERATOR_NOTE:-not supplied}" > "$scenario_dir/.rf-active"
-(cd "$scenario_dir" && LAIN5G_RF_DURATION_SECONDS="$duration" docker compose --env-file "$env_file" -f docker-compose.yml --profile rf up -d gnb-x310)
+if ! (cd "$scenario_dir" && LAIN5G_RF_DURATION_SECONDS="$duration" docker compose --env-file "$env_file" -f docker-compose.yml --profile rf up -d gnb-x310); then
+  rm -f "$scenario_dir/.rf-active"
+  echo "5G RF start failed while creating the gNB service; recent service logs follow:" >&2
+  (cd "$scenario_dir" && docker compose --env-file "$env_file" -f docker-compose.yml --profile rf logs --no-color --tail=200 gnb-x310) >&2 || true
+  exit 1
+fi
 sleep 3
 if [ "$(docker inspect -f '{{.State.Running}}' lain5g-lab-5g-sa-x310-gnb 2>/dev/null || true)" != true ]; then
   rm -f "$scenario_dir/.rf-active"
-  echo "5G RF start failed: gNB exited during UHD initialization" >&2
+  echo "5G RF start failed: gNB exited during radio initialization; recent service logs follow:" >&2
+  (cd "$scenario_dir" && docker compose --env-file "$env_file" -f docker-compose.yml --profile rf logs --no-color --tail=200 gnb-x310) >&2 || true
   exit 1
 fi
 (

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 if [ "${LAIN5G_DRY_RUN:-false}" = true ]; then
-  echo "DRY RUN: 4G LTE X310 preflight plan; no configuration, hardware, UHD, Docker, network, file, or marker action was performed"
+  echo "DRY RUN: 4G LTE RF preflight plan; no configuration, hardware, UHD, Docker, network, file, or marker action was performed"
   exit 0
 fi
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -36,7 +36,12 @@ fi
 if [ -f "$channel" ]; then
   grep -Eq '^downlink_frequency_hz:[[:space:]]*[0-9]+' "$channel" && add channel_frequency PASS "frequency configured" || add channel_frequency FAIL "frequency not configured"
 fi
-"$script_dir/hardware-check.sh" >"$run_dir/logs/hardware-check.log" 2>&1 && add hardware PASS "hardware check passed" || add hardware FAIL "hardware check failed"
+if "$script_dir/hardware-check.sh" >"$run_dir/logs/hardware-check.log" 2>&1; then
+  add hardware PASS "USRP hardware check passed"
+else
+  add hardware FAIL "USRP hardware check failed; probe details follow"
+  sed -n '1,180p' "$run_dir/logs/hardware-check.log"
+fi
 "$script_dir/uhd-check.sh" >"$run_dir/logs/uhd-check.log" 2>&1 && add uhd PASS "UHD check passed" || add uhd FAIL "UHD check failed"
 "$script_dir/fpga-check.sh" "$run_dir/logs/uhd-check.log" >"$run_dir/logs/fpga-check.log" 2>&1 && add fpga PASS "FPGA compatible" || add fpga FAIL "FPGA unknown or incompatible"
 missing_services=()

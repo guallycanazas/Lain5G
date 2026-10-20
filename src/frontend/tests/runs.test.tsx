@@ -7,10 +7,10 @@ import { jsonResponse, renderRoute, renderWithClient, runSummary, validationRepo
 describe('Run evidence', () => {
   beforeEach(() => vi.restoreAllMocks());
   it('renders run timeline entries with status', async () => {
-    vi.stubGlobal('fetch', vi.fn((url: string) => url.includes('/api/runs') ? jsonResponse([runSummary]) : jsonResponse([])));
+    vi.stubGlobal('fetch', vi.fn((url: string) => url.includes('/api/runs') ? jsonResponse([runSummary]) : url === '/api/deployments' ? jsonResponse([{ id: '5g-sa', name: 'Simulated 5G with UERANSIM', components: [] }]) : jsonResponse([])));
     renderWithClient(<RunsPage />);
     expect(await screen.findByText('run-valid')).toBeInTheDocument();
-    expect(screen.getByText('5g-sa', { exact: false })).toBeInTheDocument();
+    expect(await screen.findAllByText('Simulated 5G with UERANSIM', { exact: false })).not.toHaveLength(0);
   });
   it('renders immutable run metadata and available artifacts', async () => {
     vi.stubGlobal('fetch', vi.fn(() => jsonResponse({ run_id: 'run-valid', metadata: { ...runSummary, status: 'PASS' }, validation: validationReport, metrics: { ping_ms: 11 }, logs: ['docker-compose.log'], loaded_at: '2026-07-10T02:00:00Z' })));

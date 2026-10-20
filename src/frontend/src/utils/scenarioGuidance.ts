@@ -30,7 +30,7 @@ export const scenarioGuidance: Record<string, ScenarioGuidance> = {
   '4g-lte-x310': {
     generation: '4G',
     variant: 'GUARDED LTE RF',
-    profileTitle: '4G LTE with X-Series radio',
+    profileTitle: '4G LTE with USRP radio',
     purpose: 'Operate LTE over controlled RF with an Open5GS EPC, compact IMS infrastructure, and a guarded srsRAN eNB.',
     includes: ['Open5GS EPC', 'Always-on compact IMS infrastructure', 'srsRAN eNB with a compatible USRP', 'Preflight, auto-stop, and emergency stop'],
     excludes: ['RF transmission remains authorization-gated', 'Evidence is recorded for each operator run'],
@@ -39,11 +39,20 @@ export const scenarioGuidance: Record<string, ScenarioGuidance> = {
   '5g-sa-x310': {
     generation: '5G',
     variant: 'GUARDED SA RF',
-    profileTitle: '5G SA with X-Series radio',
+    profileTitle: '5G SA with USRP radio',
     purpose: 'Operate a guarded 5G SA RF base with Open5GS, compact IMS infrastructure, and srsRAN Project.',
     includes: ['Open5GS 5GC', 'Always-on compact IMS infrastructure', 'srsRAN Project gNB with a compatible USRP', 'Preflight, auto-stop, and emergency stop'],
     excludes: ['RF transmission remains authorization-gated', 'Evidence is recorded for each operator run'],
     hardware: 'Requires a compatible USRP, 5G SA laboratory UE/SIM, isolation, and RF authorization.',
+  },
+  '5g-nsa-x310': {
+    generation: '5G',
+    variant: 'GUARDED NSA RF',
+    profileTitle: '5G NSA with USRP radio',
+    purpose: 'Operate LTE and NR together using EN-DC in a controlled, authorized laboratory.',
+    includes: ['Open5GS EPC', 'srsRAN 4G eNB with LTE and NR RF chains', 'NR secondary-cell and LTE attach checks', 'RF preflight, auto-stop, and emergency stop'],
+    excludes: ['RF transmission remains blocked until the required authorization and safety checks pass'],
+    hardware: 'Requires a compatible USRP, LTE/NR laboratory UE, connected RF paths, isolation, and authorization for both frequencies.',
   },
 };
 

@@ -48,7 +48,8 @@ def test_lte_simulation_uses_srsenb_and_srsue_over_zmq():
 
 
 def test_lte_simulation_runtime_renderer_matches_provisioned_credentials(tmp_path: Path):
-    template = DEPLOY / "ran" / "ue.conf"
+    template = tmp_path / "ue.conf"
+    template.write_text((DEPLOY / "ran" / "ue.conf").read_text(encoding="utf-8"), encoding="utf-8")
     entrypoint = (ROOT / "images/srsran4g-sim/entrypoint.sh").read_text(encoding="utf-8")
     runtime_config = tmp_path / "runtime-ue.conf"
     captured_config = tmp_path / "captured-ue.conf"
@@ -110,15 +111,17 @@ def test_lte_simulation_scripts_never_start_rf():
 
 def test_lte_simulation_validation_bounds_growing_logs():
     validate = (DEPLOY / "scripts" / "validate.sh").read_text(encoding="utf-8")
-    assert "timeout 10s docker compose" in validate
+    assert "logs --since \"$run_started_at\" --no-color \"$1\" 2>/dev/null | head -n 100000" in validate
     assert "grep -Eiq -m1" in validate
 
 
 def test_lte_simulation_validation_waits_for_attach_and_proves_user_plane():
     validate = (DEPLOY / "scripts" / "validate.sh").read_text(encoding="utf-8")
 
-    assert "for _ in 1 2 3 4 5 6" in validate
-    assert "Number of MME-Sessions is now [1-9][0-9]*" in validate
+    assert "logs --since \"$run_started_at\"" in validate
+    assert "for _ in {1..12}" in validate
+    assert "for _ in {1..6}" in validate
+    assert "Registered EPS bearer" in validate
     assert "ip -o -4 addr show dev tun_srsue" in validate
     assert "ip link show dev tun_srsue" in validate
     assert "ping -I tun_srsue -c 3" in validate

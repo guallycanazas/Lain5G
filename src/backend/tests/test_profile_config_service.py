@@ -95,6 +95,7 @@ def test_loads_profiles_and_blocks_invalid_rf_defaults(tmp_path: Path):
     assert {item["profile"] for item in profiles} == {
         "4g-lte-sim",
         "4g-lte-x310",
+        "5g-nsa-x310",
         "5g-sa",
         "5g-sa-x310",
     }

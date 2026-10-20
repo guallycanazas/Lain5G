@@ -1,7 +1,8 @@
-from fastapi import APIRouter, Depends, Query, Response, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
+from fastapi.responses import FileResponse
 
 from ..dependencies import get_preparation_service, require_mutations_enabled
-from ..models.preparation import ComponentPullJob, ComponentPullRequest, PreparationReport, ProfileComponentStatus
+from ..models.preparation import ComponentPullJob, ComponentPullRequest, InstallationRecord, PreparationReport, ProfileComponentStatus
 from ..services.image_catalog import PUBLIC_PROFILE_IDS
 from ..services.preparation_service import PreparationError, PreparationService
 
@@ -32,6 +33,57 @@ def profile_components(
 @router.get("/pulls/active", response_model=ComponentPullJob | None)
 def active_pull(service: PreparationService = Depends(get_preparation_service)) -> ComponentPullJob | None:
     return service.active_pull()
+
+
+@router.get("/installations", response_model=list[InstallationRecord])
+def installation_history(
+    limit: int = Query(default=50, ge=1, le=200),
+    service: PreparationService = Depends(get_preparation_service),
+) -> list[InstallationRecord]:
+    return service.installation_records(limit)
+
+
+@router.get("/installations/{record_id}", response_model=InstallationRecord)
+def installation_report(
+    record_id: str,
+    service: PreparationService = Depends(get_preparation_service),
+) -> InstallationRecord:
+    try:
+        record = service.installation_record(record_id)
+    except ValueError:
+        record = None
+    if record is None:
+        raise HTTPException(status_code=404, detail={"code": "INSTALLATION_REPORT_NOT_FOUND", "message": "Installation report was not found."})
+    return record
+
+
+@router.get("/installations/{record_id}/download")
+def download_installation_report(
+    record_id: str,
+    service: PreparationService = Depends(get_preparation_service),
+) -> FileResponse:
+    try:
+        record = service.installation_record(record_id)
+    except ValueError:
+        record = None
+    if record is None:
+        raise HTTPException(status_code=404, detail={"code": "INSTALLATION_REPORT_NOT_FOUND", "message": "Installation report was not found."})
+    path = service.installation_history.directory / f"{record_id}.json"
+    return FileResponse(path, media_type="application/json", filename=f"{record_id}.json")
+
+
+@router.get("/installations/{record_id}/log")
+def download_installation_log(
+    record_id: str,
+    service: PreparationService = Depends(get_preparation_service),
+) -> FileResponse:
+    try:
+        path = service.installation_log_path(record_id)
+    except ValueError:
+        path = None
+    if path is None:
+        raise HTTPException(status_code=404, detail={"code": "INSTALLATION_LOG_NOT_FOUND", "message": "Installation log was not found."})
+    return FileResponse(path, media_type="text/plain", filename=path.name)
 
 
 @router.get("/pulls/{job_id}", response_model=ComponentPullJob)

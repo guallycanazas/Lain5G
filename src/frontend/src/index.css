@@ -197,6 +197,7 @@ button.scenario-card.selected { border-color: #818cf8; box-shadow: 0 0 0 3px rgb
 .profile-mode-dot { padding: 4px 6px; color: #3f4d63; background: #eef2f7; border-radius: 6px; font-family: "JetBrains Mono", monospace; font-size: .58rem; font-weight: 900; }
 .profile-card-footnote { margin-top: auto; padding-top: 10px; color: #526178; border-top: 1px solid #e7ebf1; font-size: .67rem; font-weight: 750; }
 .profile-group-rf .profile-card-footnote { color: #875111; border-top-color: #f0dfc5; }
+.profile-choice:hover:not(:disabled) { color: #243047; background: #fff; border-color: #818cf8; box-shadow: 0 0 0 3px rgba(79, 70, 229, .11); transform: none; }
 
 .topology { position: relative; min-height: 360px; padding: 30px; overflow: auto; background: radial-gradient(circle at 50% 50%, #f1eeff, #fffefa 68%); border: 1px solid #e2deef; border-radius: 16px; }
 .topology-grid { position: relative; display: grid; grid-template-columns: repeat(3, minmax(150px, 1fr)); gap: 22px; align-items: center; min-width: 620px; }
@@ -229,6 +230,16 @@ button.scenario-card.selected { border-color: #818cf8; box-shadow: 0 0 0 3px rgb
 .logs-toolbar { display: flex; flex-wrap: wrap; align-items: end; gap: 10px; margin-bottom: 14px; }
 .logs-toolbar .spacer { flex: 1; }
 .log-state { display: inline-flex; align-items: center; gap: 6px; color: #667085; font-size: .76rem; font-weight: 700; }
+.log-live-toggle { display: inline-flex; align-items: center; gap: 7px; color: #344054; font-size: .8rem; font-weight: 700; }
+.log-diagnostics { margin: 0 0 12px; padding: 12px 14px; color: #7f1d1d; background: #fff7f7; border: 1px solid #fecaca; border-radius: 12px; }
+.log-diagnostics > strong { display: block; margin-bottom: 8px; }
+.log-diagnostics details { margin-top: 6px; }
+.log-diagnostics summary { cursor: pointer; font-weight: 700; }
+.log-diagnostics summary span { margin-left: 6px; color: #667085; font-weight: 500; }
+.log-diagnostics ul { margin: 6px 0 0; padding-left: 18px; }
+.log-diagnostics li { margin: 4px 0; }
+.log-diagnostics code { overflow-wrap: anywhere; font-size: .76rem; }
+.log-clear-state { margin: 0 0 10px; color: #475467; font-size: .82rem; }
 .run-timeline { display: grid; gap: 10px; }
 .run-card { display: grid; grid-template-columns: 8px minmax(0, 1fr) auto; gap: 14px; align-items: center; padding: 14px; color: inherit; background: #fff; border: 1px solid #e4e9f1; border-radius: 14px; }
 .run-card:hover { border-color: #c7c5f8; }
@@ -693,6 +704,11 @@ button.row-action.danger:hover:not(:disabled) { color: #a8382d; background: #fff
 .component-profile-state { display: flex; align-items: center; gap: 12px; }
 .component-profile-state strong { color: #46517c; font-family: "SFMono-Regular", Consolas, monospace; font-size: .75rem; }
 .component-profile .table-wrap { border-right: 0; border-left: 0; border-radius: 0; }
+.component-profile .table-wrap table { min-width: 0; table-layout: fixed; }
+.component-profile .table-wrap th:first-child, .component-profile .table-wrap td:first-child { width: 29%; }
+.component-profile .table-wrap th:nth-child(2), .component-profile .table-wrap td:nth-child(2) { width: 55%; }
+.component-profile .table-wrap th:last-child, .component-profile .table-wrap td:last-child { width: 16%; }
+.component-profile .table-wrap td code { white-space: normal; overflow-wrap: anywhere; word-break: break-word; }
 .component-download { display: flex; align-items: center; justify-content: space-between; gap: 20px; padding: 13px 17px; background: #fff8e8; }
 .component-download p { max-width: 720px; margin: 0; color: #715a2d; font-size: .7rem; }
 .scenario-components { display: flex; align-items: center; justify-content: space-between; gap: 22px; padding: 15px 18px; }
@@ -935,3 +951,47 @@ html[data-theme="dark"] .operational-proof-footer { background: rgba(12, 16, 34,
 .component-pull-progress li { display: flex; justify-content: space-between; gap: 1rem; font-size: .78rem; color: #666e85; }
 .component-pull-progress li.succeeded small { color: #18845c; }
 .component-pull-progress li.failed small, .component-pull-error { color: #b4233d; }
+.component-pull-progress li > span { display: grid; gap: .2rem; }
+.component-pull-progress li > span > small { color: #666e85; font-size: .7rem; }
+.component-pull-progress-heading small { color: #7b8295; font-size: .7rem; }
+.installation-history { display: grid; gap: 1rem; }
+.installation-history .panel-heading h2 { display: flex; align-items: center; gap: .55rem; }
+.installation-history .quiet-button { border: 1px solid var(--line, #dce1ec); border-radius: 10px; padding: .55rem .8rem; color: inherit; background: transparent; font: inherit; cursor: pointer; }
+.installation-history .quiet-button:disabled { opacity: .6; cursor: wait; }
+.installation-history-message { margin: 0; color: var(--muted, #666e85); }
+.installation-history-message.error { color: #b4233d; }
+.installation-record-list { display: grid; gap: .8rem; }
+.installation-record { display: grid; gap: .8rem; padding: 1rem; border: 1px solid #dce1ec; border-radius: 14px; background: #f8f9fc; }
+.installation-record.failed { border-color: #e6a6ae; }
+.installation-record-heading { display: flex; justify-content: space-between; gap: 1rem; align-items: flex-start; }
+.installation-record-heading h3 { margin: .3rem 0; font-size: 1rem; }
+.installation-record-heading code { color: #70778b; font-size: .72rem; }
+.installation-status { display: inline-flex; border-radius: 999px; padding: .2rem .55rem; background: #e7f6ef; color: #18845c; font-size: .7rem; font-weight: 700; }
+.installation-status.failed { background: #fdebed; color: #b4233d; }
+.installation-status.running { background: #fff3d7; color: #8a5a00; }
+.installation-status.dry_run, .installation-status.partial { background: #edf0fa; color: #55519a; }
+.installation-record-links { display: flex; flex-wrap: wrap; gap: .7rem; }
+.installation-record-links a { display: inline-flex; align-items: center; gap: .3rem; color: #5148b8; font-size: .8rem; font-weight: 650; text-decoration: none; }
+.installation-record-reason { margin: 0; color: #535b70; font-size: .84rem; }
+.installation-record-meta { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .65rem; margin: 0; }
+.installation-record-meta div { min-width: 0; }
+.installation-record-meta dt { color: #737b90; font-size: .7rem; }
+.installation-record-meta dd { margin: .15rem 0 0; overflow-wrap: anywhere; font-size: .78rem; }
+.installation-components > strong { font-size: .8rem; }
+.installation-components ul { display: flex; flex-wrap: wrap; gap: .4rem; margin: .4rem 0 0; padding: 0; list-style: none; }
+.installation-components li { padding: .25rem .45rem; border-radius: 6px; background: #edf0f7; font-size: .7rem; overflow-wrap: anywhere; }
+.installation-steps summary { cursor: pointer; color: #5148b8; font-size: .8rem; font-weight: 650; }
+.installation-steps ul { display: grid; gap: .5rem; margin: .6rem 0 0; padding: 0; list-style: none; }
+.installation-steps li { display: flex; justify-content: space-between; gap: 1rem; padding-top: .55rem; border-top: 1px solid #e1e5ef; font-size: .75rem; }
+.installation-steps li > div { min-width: 0; }
+.installation-steps li p { margin: .15rem 0; color: #737b90; }
+.installation-step-message { color: #b4233d !important; overflow-wrap: anywhere; }
+.installation-steps li > span { flex: none; color: #737b90; }
+html[data-theme="dark"] .installation-record { background: #151a39; border-color: var(--line); }
+html[data-theme="dark"] .installation-record-reason, html[data-theme="dark"] .installation-record-meta dd { color: var(--ink-900); }
+html[data-theme="dark"] .installation-components li { background: #222743; }
+html[data-theme="dark"] .installation-steps li { border-color: var(--line); }
+@media (max-width: 700px) {
+  .installation-record-heading { flex-direction: column; }
+  .installation-record-meta { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}

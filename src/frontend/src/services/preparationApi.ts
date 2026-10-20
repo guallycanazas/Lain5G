@@ -1,5 +1,5 @@
 import { apiRequest } from './apiClient';
-import type { ComponentPullJob, PreparationReport, ProfileComponentStatus } from '../types/preparation';
+import type { ComponentPullJob, InstallationRecord, PreparationReport, ProfileComponentStatus } from '../types/preparation';
 
 
 export const preparationApi = {
@@ -13,4 +13,5 @@ export const preparationApi = {
   ),
   pullJob: (jobId: string) => apiRequest<ComponentPullJob>(`/api/preparation/pulls/${encodeURIComponent(jobId)}`),
   activePull: () => apiRequest<ComponentPullJob | null>('/api/preparation/pulls/active'),
+  installations: () => apiRequest<InstallationRecord[]>('/api/preparation/installations?limit=50'),
 };

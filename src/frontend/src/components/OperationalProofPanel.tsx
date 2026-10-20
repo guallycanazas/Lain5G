@@ -30,15 +30,16 @@ const core5g = ['mongo', 'nrf', 'amf', 'smf', 'upf', 'ausf', 'udm', 'udr', 'pcf'
 
 function stagesFor(scenarioId: string, rfCapable: boolean): ProofStage[] {
   const is4g = scenarioId.startsWith('4g-');
+  const isNsa = scenarioId === '5g-nsa-x310';
   if (rfCapable) {
     return [
       {
-        label: 'X310 detected',
-        description: 'Host, Ethernet and UHD evidence for the physical SDR.',
+        label: isNsa ? 'Dual RF chains detected' : 'USRP detected',
+        description: isNsa ? 'UHD probe reports the USRP and both RF chains needed for LTE and NR.' : 'Host, Ethernet and UHD evidence for the physical SDR.',
         source: 'hardware-check + UHD probe',
         checkIds: is4g
           ? ['hardware_detected', 'ethernet_link', 'uhd_available', 'uhd_fpga_compatible']
-          : ['hardware_detected', 'uhd_available'],
+          : isNsa ? ['dual_rf_chains'] : ['hardware_detected', 'uhd_available'],
       },
       {
         label: 'RF safety gate',
@@ -47,28 +48,28 @@ function stagesFor(scenarioId: string, rfCapable: boolean): ProofStage[] {
         checkIds: ['rf_preflight'],
       },
       {
-        label: is4g ? 'EPC + IMS ready' : '5G Core + IMS ready',
-        description: 'Core and compact IMS services required by the RF profile are ready.',
+        label: isNsa ? 'LTE EPC ready' : is4g ? 'EPC + IMS ready' : '5G Core + IMS ready',
+        description: isNsa ? 'The LTE EPC required by the NSA eNB is ready.' : 'Core and compact IMS services required by the RF profile are ready.',
         source: 'Docker runtime + core readiness logs',
-        checkIds: is4g ? ['epc_services', 'mme_ready', 'ims_services'] : ['core_services', 'amf_ready', 'ims_services'],
+        checkIds: isNsa ? ['epc_ready'] : is4g ? ['epc_services', 'mme_ready', 'ims_services'] : ['core_services', 'amf_ready', 'ims_services'],
       },
       {
-        label: is4g ? 'LTE eNB active' : '5G gNB active',
+        label: isNsa ? 'LTE eNB + NR carrier active' : is4g ? 'LTE eNB active' : '5G gNB active',
         description: 'Time-limited RF-capable process observed; this alone does not prove over-air reception.',
-        source: is4g ? 'enb-x310 session log' : 'gnb-x310 session log',
-        checkIds: [is4g ? 'enb_started' : 'gnb_started'],
+        source: isNsa ? 'NSA eNB service logs' : is4g ? 'LTE eNB session log' : '5G SA gNB session log',
+        checkIds: isNsa ? ['nr_secondary_cell'] : [is4g ? 'enb_started' : 'gnb_started'],
       },
       {
-        label: is4g ? 'S1 control link' : 'NG control link',
+        label: isNsa || is4g ? 'S1 control link' : 'NG control link',
         description: 'RAN-to-core signaling found in session-scoped logs.',
-        source: is4g ? 'eNB/MME logs' : 'gNB/AMF logs',
-        checkIds: [is4g ? 's1_setup' : 'ng_setup'],
+        source: isNsa || is4g ? 'eNB/MME logs' : 'gNB/AMF logs',
+        checkIds: [isNsa || is4g ? 's1_setup' : 'ng_setup'],
       },
       {
-        label: 'UE over air',
-        description: 'External UE reception and registration; never inferred from a running RAN process.',
-        source: 'UE/core registration evidence',
-        checkIds: ['ue_registration'],
+        label: isNsa ? 'LTE UE attach' : 'UE over air',
+        description: isNsa ? 'The LTE UE attach is confirmed from eNB/EPC evidence; inspect live logs for rejects and drops.' : 'External UE reception and registration; never inferred from a running RAN process.',
+        source: isNsa ? 'srsRAN eNB + MME logs' : 'UE/core registration evidence',
+        checkIds: [isNsa ? 'lte_attach' : 'ue_registration'],
       },
     ];
   }

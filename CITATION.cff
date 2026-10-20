@@ -15,6 +15,9 @@ authors:
   - family-names: "Tamo Calla"
     given-names: "Alberth Ronal"
     affiliation: "National University of San Agustin of Arequipa"
+  - family-names: "Tacuri"
+    given-names: "Alexander Beremiz Hilario"
+    affiliation: "National University of San Agustin of Arequipa"
 abstract: >-
   OpenLain5G is a modular framework for reproducible 4G LTE and 5G SA mobile
   network laboratories. It deploys and manages open-source RAN, core, IMS, and

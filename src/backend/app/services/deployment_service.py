@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import re
 from datetime import UTC, datetime
+from pathlib import Path
 from typing import TYPE_CHECKING
 
 from ..models.deployment import (
@@ -94,14 +95,14 @@ class DeploymentService:
         self._ensure_action(definition, "hardware-check")
         self._ensure_components(definition)
         if scenario == "4g-lte-x310":
-            return self._x310_host_network_action(definition, "hardware-check", "X310_HARDWARE_CHECK_FAILED", "X310 hardware check failed.", "hardware-check.sh")
-        return self._script_action(definition, "hardware-check", "X310_HARDWARE_CHECK_FAILED", "X310 hardware check failed.")
+            return self._x310_host_network_action(definition, "hardware-check", "USRP_HARDWARE_CHECK_FAILED", "USRP hardware check failed.", "hardware-check.sh")
+        return self._script_action(definition, "hardware-check", "USRP_HARDWARE_CHECK_FAILED", "USRP hardware check failed.")
 
     def preflight(self, scenario: str) -> DeploymentActionResponse:
         definition = self._definition(scenario)
         self._ensure_action(definition, "preflight")
         self._ensure_components(definition)
-        return self._script_action(definition, "preflight", "X310_PREFLIGHT_FAILED", "X310 preflight failed.")
+        return self._script_action(definition, "preflight", "RF_PREFLIGHT_FAILED", "RF preflight failed.")
 
     def start_epc(self, scenario: str) -> DeploymentActionResponse:
         definition = self._definition(scenario)
@@ -109,7 +110,7 @@ class DeploymentService:
         self._ensure_components(definition, core_only=True)
         self._prepare_environment(definition)
         self._ensure_no_conflict(definition)
-        return self._script_action(definition, "start-epc", "X310_EPC_START_FAILED", "X310 EPC could not be started.", script="start-epc")
+        return self._script_action(definition, "start-epc", "EPC_START_FAILED", "EPC could not be started.", script="start-epc")
 
     def start_core(self, scenario: str) -> DeploymentActionResponse:
         definition = self._definition(scenario)
@@ -119,14 +120,15 @@ class DeploymentService:
         self._ensure_no_conflict(definition)
         if not definition.core_start_script:
             raise ValueError(f"Core start is not configured for {scenario}")
-        return self._script_action(definition, "start-core", "X310_CORE_START_FAILED", f"{definition.name} core could not be started.", script=definition.core_start_script)
+        return self._script_action(definition, "start-core", "CORE_START_FAILED", f"{definition.name} core could not be started.", script=definition.core_start_script)
 
     def start_rf(self, scenario: str, payload: RfStartRequest) -> DeploymentActionResponse:
         definition = self._definition(scenario)
         self._ensure_action(definition, "start-rf")
         if not definition.rf_start_script or not definition.rf_guard_variable:
             raise ValueError(f"RF start is not configured for {scenario}")
-        expected_phrase = f"START {scenario.upper()} RF"
+        phrase_profile = {"4g-lte-x310": "4G LTE", "5g-sa-x310": "5G SA", "5g-nsa-x310": "5G NSA"}.get(scenario, scenario.upper())
+        expected_phrase = f"START {phrase_profile} RF"
         if payload.execute and payload.confirmation_phrase != expected_phrase:
             raise ValueError(f"Confirmation phrase must be: {expected_phrase}")
 
@@ -152,16 +154,16 @@ class DeploymentService:
             raise ValueError(f"Core start is not configured for {scenario}")
         core_result = self._execute_script(definition, definition.core_start_script)
         if self._failed(core_result):
-            raise DeploymentCommandError("X310_CORE_START_FAILED", f"{definition.name} core could not be started.", core_result)
+            raise DeploymentCommandError("CORE_START_FAILED", f"{definition.name} core could not be started.", core_result)
         result = self.command_service.execute_command(command, cwd=definition.deployment_path, dry_run=False)
         if self._failed(result):
-            raise DeploymentCommandError("X310_RF_START_FAILED", f"{definition.name} guarded RF session could not be started.", result)
+            raise DeploymentCommandError("RF_START_FAILED", f"{definition.name} guarded RF session could not be started.", result)
         return DeploymentActionResponse(id=scenario, action="start-rf", status=self.get_status(scenario).status, command=result, message="Guarded RF session started with container-enforced auto-stop")
 
     def emergency_stop(self, scenario: str) -> DeploymentActionResponse:
         definition = self._definition(scenario)
         self._ensure_action(definition, "emergency-stop")
-        return self._script_action(definition, "emergency-stop", "X310_EMERGENCY_STOP_FAILED", "X310 emergency stop failed.", script="emergency-stop")
+        return self._script_action(definition, "emergency-stop", "RF_EMERGENCY_STOP_FAILED", "RF emergency stop failed.", script="emergency-stop")
 
     def get_status(self, scenario: str) -> DeploymentStatus:
         definition = self._definition(scenario)
@@ -190,7 +192,15 @@ class DeploymentService:
             result = self._execute_script(definition, "logs")
         else:
             profile = "rf" if definition.rf_capable else "sip"
-            command = ["docker", "compose", "--env-file", self._env_file(definition), "-f", "docker-compose.yml", "--profile", profile, "logs", "--no-color", "--tail", str(resolved_tail)]
+            env_file = Path(definition.deployment_path) / self._env_file(definition)
+            if not env_file.is_file():
+                example_file = env_file.with_name(".env.example")
+                env_file = example_file if example_file.is_file() else env_file
+            env_file = env_file.resolve()
+            command = ["docker", "compose"]
+            if env_file.is_file():
+                command.extend(["--env-file", str(env_file)])
+            command.extend(["-f", "docker-compose.yml", "--profile", profile, "logs", "--no-color", "--tail", str(resolved_tail)])
             if container:
                 command.append(container)
             result = self.command_service.execute_command(command, cwd=definition.deployment_path)

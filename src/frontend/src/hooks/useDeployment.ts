@@ -41,10 +41,16 @@ export function useDeploymentActions() {
 export function useScenarioActions(scenarioId: string) {
   const queryClient = useQueryClient();
   const invalidate = async () => {
-    await queryClient.invalidateQueries({ queryKey: ['deployments'] });
-    await queryClient.invalidateQueries({ queryKey: ['deployment', scenarioId] });
-    await queryClient.invalidateQueries({ queryKey: ['deployment-status', scenarioId] });
-    await queryClient.invalidateQueries({ queryKey: ['runs'] });
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: ['deployments'] }),
+      queryClient.invalidateQueries({ queryKey: ['deployment', scenarioId] }),
+      queryClient.invalidateQueries({ queryKey: ['deployment-status', scenarioId] }),
+      queryClient.invalidateQueries({ queryKey: ['runs'] }),
+      // The scenario page keeps the selected run detail cached separately from
+      // the runs list. Validation can finish writing its evidence after the
+      // initial run record is visible, so refresh both views after an action.
+      queryClient.invalidateQueries({ queryKey: ['run'] }),
+    ]);
   };
   return {
     start: useMutation({ mutationFn: () => deploymentsApi.start(scenarioId), onSuccess: invalidate }),

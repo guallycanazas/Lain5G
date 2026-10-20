@@ -280,7 +280,7 @@ class ProfileConfigService:
                     errors.append(f"radio.earfcn is outside LTE band {band} downlink EARFCN range")
         if profile_id == "5g-nsa-x310":
             if radio.get("device") != "x300":
-                errors.append("radio.device must be x300 for the current X310 NSA runtime")
+                errors.append("The NSA radio configuration must use a supported USRP device type")
             if radio.get("lte_band") != 7:
                 errors.append("radio.lte_band must be 7 for the current NSA anchor")
             if radio.get("nr_band") != 3:
@@ -411,7 +411,7 @@ class ProfileConfigService:
         lte_dl, lte_ul = _lte_band7_frequencies_mhz(radio["earfcn"])
         nr_dl, nr_ul = _nr_n3_frequencies_mhz(radio["nr_dl_arfcn"])
         channel.update({
-            "mode": "NSA_EN_DC_EXPERIMENTAL", "lte_band": radio["lte_band"], "lte_dl_earfcn": radio["earfcn"],
+            "mode": "NSA_EN_DC", "lte_band": radio["lte_band"], "lte_dl_earfcn": radio["earfcn"],
             "lte_bandwidth_mhz": radio["bandwidth_mhz"], "lte_downlink_frequency_mhz": lte_dl, "lte_uplink_frequency_mhz": lte_ul,
             "nr_band": radio["nr_band"], "nr_dl_arfcn": radio["nr_dl_arfcn"], "nr_bandwidth_mhz": radio["bandwidth_mhz"],
             "nr_downlink_frequency_mhz": nr_dl, "nr_uplink_frequency_mhz": nr_ul, "subcarrier_spacing_khz": radio["subcarrier_spacing_khz"],

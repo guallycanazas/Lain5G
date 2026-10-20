@@ -8,7 +8,7 @@ const profile = { profile: '5g-sa', network: { mcc: '001', mnc: '01', tac: 1, dn
 const x310 = { profile: '4g-lte-x310', network: { mcc: '001', mnc: '01', tac: 7, apn_internet: 'internet' }, core: { mme_addr: '10.42.0.10' }, ran: { enb_bind_addr: '10.42.0.1' }, subscriber: { imsi: '001011234567895' }, radio: { device: 'x300', usrp_addr: '192.168.10.2', lte_band: 7, earfcn: 3150, bandwidth_mhz: 5, tx_gain: 20, rx_gain: 30, clock_source: 'internal', time_source: 'internal' }, safety: { maximum_duration_seconds: 60, environment: 'cabled', attenuation_db: 60, antenna_connected: false, shielded_environment: false, auto_stop: true, authorization_confirmed: false, operator_note: '' } };
 const x3105g = { profile: '5g-sa-x310', network: { mcc: '001', mnc: '01', tac: 1, dnn: 'internet', slice: { sst: 1, sd: '000001' } }, core: { amf_addr: '10.20.0.5', gnb_bind_addr: '0.0.0.0', n3_bind_addr: '0.0.0.0' }, radio: { device: 'x300', usrp_addr: '192.168.10.2', band: 78, dl_arfcn: 632628, bandwidth_mhz: 10, tx_gain: 20, rx_gain: 30, clock_source: 'internal', time_source: 'internal' }, safety: { maximum_duration_seconds: 600, environment: 'shielded', attenuation_db: 60, antenna_connected: true, shielded_environment: true, auto_stop: true, authorization_confirmed: true, operator_note: 'Authorized 5G test' } };
 const nsa = { profile: '5g-nsa-x310', network: { mcc: '001', mnc: '01', tac: 7, apn_internet: 'internet' }, core: { mme_addr: '10.42.0.10' }, ran: { enb_bind_addr: '10.42.0.1' }, radio: { device: 'x300', usrp_addr: '192.168.10.2', lte_band: 7, earfcn: 3150, bandwidth_mhz: 10, nr_band: 3, nr_dl_arfcn: 368500, subcarrier_spacing_khz: 15, tx_gain: 20, rx_gain: 31.5, clock_source: 'internal', time_source: 'internal' }, safety: { maximum_duration_seconds: 600, environment: 'shielded', attenuation_db: 60, antenna_connected: true, nr_rf_path_connected: true, shielded_environment: true, auto_stop: true, authorization_confirmed: true, authorized_lab_frequencies: true, operator_note: 'Authorized NSA test' } };
-const summaries = [{ profile: '5g-sa', rf_capable: false, rf_allowed: false }, { profile: '4g-lte-sim', rf_capable: false, rf_allowed: false }, { profile: '4g-lte-x310', rf_capable: true, rf_allowed: false }, { profile: '5g-sa-x310', rf_capable: true, rf_allowed: false }];
+const summaries = [{ profile: '5g-sa', rf_capable: false, rf_allowed: false }, { profile: '4g-lte-sim', rf_capable: false, rf_allowed: false }, { profile: '4g-lte-x310', rf_capable: true, rf_allowed: false }, { profile: '5g-sa-x310', rf_capable: true, rf_allowed: false }, { profile: '5g-nsa-x310', rf_capable: true, rf_allowed: false }];
 
 describe('Deployment configuration', () => {
   beforeEach(() => vi.stubGlobal('fetch', vi.fn((url: string, init?: RequestInit) => {
@@ -28,8 +28,8 @@ describe('Deployment configuration', () => {
     expect(await screen.findByRole('heading', { name: 'Simulated, no RF' })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Guarded real RF' })).toBeInTheDocument();
     expect(screen.getByText('Simulated 4G with srsENB + srsUE')).toBeInTheDocument();
-    expect(screen.getByText('5G SA with X-Series radio')).toBeInTheDocument();
-    await userEvent.click(await screen.findByText('5g-sa'));
+    expect(screen.getByText('5G SA with USRP radio')).toBeInTheDocument();
+    await userEvent.click(await screen.findByText('Simulated 5G with UERANSIM'));
     expect(await screen.findByLabelText('MCC')).toHaveValue('001');
     expect(screen.getByLabelText('DNN')).toHaveValue('internet');
     expect(document.querySelector('textarea')).toBeNull();
@@ -48,7 +48,7 @@ describe('Deployment configuration', () => {
 
   it('shows guarded RF profile fields', async () => {
     renderRoute('/deployments', <ProfileConfigPage />);
-    await userEvent.click(await screen.findByText('4g-lte-x310'));
+    await userEvent.click(await screen.findByText('4G LTE with USRP radio'));
     expect(await screen.findByLabelText('Bandwidth MHz')).toHaveValue(5);
     expect(screen.getByLabelText('Attenuation dB')).toHaveValue(60);
     expect(screen.getByLabelText('RF authorization confirmed')).toHaveValue('false');
@@ -58,9 +58,9 @@ describe('Deployment configuration', () => {
     expect(screen.queryByLabelText('eNB bind address')).not.toBeInTheDocument();
   });
 
-  it('exposes the effective 5G X310 radio and safety fields', async () => {
+  it('exposes the effective 5G SA radio and safety fields', async () => {
     renderRoute('/deployments', <ProfileConfigPage />);
-    await userEvent.click(await screen.findByText('5g-sa-x310'));
+    await userEvent.click(await screen.findByText('5G SA with USRP radio'));
     expect(await screen.findByLabelText('NR band')).toHaveValue(78);
     expect(screen.getByLabelText('DL ARFCN')).toHaveValue(632628);
     expect(screen.getByLabelText('USRP address')).toHaveValue('192.168.10.2');
@@ -68,11 +68,11 @@ describe('Deployment configuration', () => {
     expect(screen.getByLabelText('Shielded environment')).toHaveValue('true');
   });
 
-  it('hides signaling and experimental profiles from the public catalog', async () => {
+  it('hides signaling profiles and shows NSA in the guarded catalog', async () => {
     renderRoute('/deployments', <ProfileConfigPage />);
-    await screen.findByText('5g-sa');
+    await screen.findByText('Simulated 5G with UERANSIM');
     expect(screen.queryByText('4g-volte-sim')).not.toBeInTheDocument();
     expect(screen.queryByText('5g-vonr')).not.toBeInTheDocument();
-    expect(screen.queryByText('5g-nsa-x310')).not.toBeInTheDocument();
+    expect(screen.getByText('5G NSA with USRP radio')).toBeInTheDocument();
   });
 });

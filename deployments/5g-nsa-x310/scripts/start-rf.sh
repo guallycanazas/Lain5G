@@ -13,14 +13,19 @@ repo_dir="$(cd "$scenario_dir/../.." && pwd)"
 env_file="$scenario_dir/.env"; [ -f "$env_file" ] || env_file="$scenario_dir/.env.example"
 manifest="$scenario_dir/rf/safety-manifest.yaml"
 [ "${LAIN5G_ALLOW_5G_NSA_RF_START:-false}" = true ] || { echo "NSA RF start refused: set LAIN5G_ALLOW_5G_NSA_RF_START=true" >&2; exit 2; }
-command -v flock >/dev/null 2>&1 || { echo "NSA RF start refused: flock is required" >&2; exit 2; }
 exec 9<"$repo_dir"
-flock -n -x 9 || { echo "NSA RF start refused: another RF start is in progress" >&2; exit 2; }
+if command -v flock >/dev/null 2>&1; then
+  flock -n -x 9 || { echo "NSA RF start refused: another RF start is in progress" >&2; exit 2; }
+else
+  python3 -c 'import fcntl, sys
+try: fcntl.flock(9, fcntl.LOCK_EX | fcntl.LOCK_NB)
+except OSError: sys.exit(1)' || { echo "NSA RF start refused: another RF start is in progress" >&2; exit 2; }
+fi
 for marker in "$repo_dir/deployments/4g-volte/x310/.rf-active" "$repo_dir/deployments/5g-sa-x310/.rf-active" "$repo_dir/deployments/5g-nsa-x310/.rf-active"; do
   [ ! -f "$marker" ] || { echo "NSA RF start refused: another RF session is active" >&2; exit 2; }
 done
 REQUIRE_RF_READY=true "$script_dir/preflight.sh"
-# Let the UHD probe release the X310 management channel before srsENB opens it.
+# Let the UHD probe release the radio management channel before srsENB opens it.
 sleep 5
 maximum_duration="$(sed -n 's/^maximum_duration_seconds:[[:space:]]*//p' "$manifest" | head -n1)"
 duration="${LAIN5G_RF_DURATION_SECONDS:-$maximum_duration}"
@@ -30,11 +35,17 @@ run_dir="$repo_dir/runs/$run_id"
 mkdir -p "$run_dir/logs"
 started_at="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 printf 'started_at=%s\nrun_id=%s\nduration_seconds=%s\noperator_note=%s\n' "$started_at" "$run_id" "$duration" "${LAIN5G_RF_OPERATOR_NOTE:-not supplied}" >"$scenario_dir/.rf-active"
-(cd "$scenario_dir" && LAIN5G_RF_DURATION_SECONDS="$duration" docker compose --env-file "$env_file" -f docker-compose.yml --profile rf up -d enb-nsa-x310)
+if ! (cd "$scenario_dir" && LAIN5G_RF_DURATION_SECONDS="$duration" docker compose --env-file "$env_file" -f docker-compose.yml --profile rf up -d enb-nsa-x310); then
+  rm -f "$scenario_dir/.rf-active"
+  echo "NSA RF start failed while creating the eNB service; recent service logs follow:" >&2
+  (cd "$scenario_dir" && docker compose --env-file "$env_file" -f docker-compose.yml --profile rf logs --no-color --tail=200 enb-nsa-x310) >&2 || true
+  exit 1
+fi
 sleep 3
 if [ "$(docker inspect -f '{{.State.Running}}' lain5g-lab-5g-nsa-x310-enb 2>/dev/null || true)" != true ]; then
   rm -f "$scenario_dir/.rf-active"
-  echo "NSA RF start failed: eNB exited during UHD initialization" >&2
+  echo "NSA RF start failed: eNB exited during UHD initialization; recent service logs follow:" >&2
+  (cd "$scenario_dir" && docker compose --env-file "$env_file" -f docker-compose.yml --profile rf logs --no-color --tail=200 enb-nsa-x310) >&2 || true
   exit 1
 fi
 (
@@ -44,5 +55,5 @@ fi
   (cd "$scenario_dir" && docker compose --env-file "$env_file" -f docker-compose.yml --profile rf stop enb-nsa-x310 >/dev/null 2>&1 || true)
   rm -f "$scenario_dir/.rf-active"
 ) </dev/null >/dev/null 2>&1 &
-echo "Experimental NSA RF session $run_id started; container auto-stop is enforced after ${duration}s"
+echo "NSA RF session $run_id started; container auto-stop is enforced after ${duration}s"
 echo "Emergency stop remains available through the app"

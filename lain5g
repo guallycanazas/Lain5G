@@ -2,6 +2,8 @@
 from __future__ import annotations
 
 import fcntl
+import contextlib
+import datetime
 import getpass
 import json
 import os
@@ -11,6 +13,7 @@ import shutil
 import subprocess
 import sys
 import tempfile
+import time
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -19,6 +22,8 @@ if str(SOURCE_ROOT) not in sys.path:
     sys.path.insert(0, str(SOURCE_ROOT))
 
 from backend.app.services.image_catalog import IMAGE_CATALOG, PROFILE_IMAGES, PUBLIC_PROFILE_IDS, RF_ACCESS_IMAGES, required_images
+from backend.app.models.preparation import InstallationRecord, InstallationStep
+from backend.app.services.installation_history import InstallationHistoryService, detect_installation_environment
 from backend.app.services.profile_config_service import ProfileConfigError, ProfileConfigService
 from backend.app.services.scenario_environment import prepare_scenario_environment
 
@@ -85,9 +90,9 @@ FIELDS = {
 PROFILE_INFO = {
     "4g-lte-sim": ("4G simulado", "SIM", "srsENB + srsUE sobre ZMQ; sin SDR ni transmision RF"),
     "5g-sa": ("5G SA simulado", "SIM", "Open5GS + UERANSIM; registro y datos sin RF"),
-    "4g-lte-x310": ("4G LTE con X310", "RF PROTEGIDA", "LTE fisico con controles de seguridad RF"),
-    "5g-sa-x310": ("5G SA con X310", "RF PROTEGIDA", "5G SA fisico con controles de seguridad RF"),
-    "5g-nsa-x310": ("5G NSA B7+n3 con X310", "EXPERIMENTAL", "Ancla LTE y portadora NR sobre dos cadenas RF"),
+    "4g-lte-x310": ("4G LTE con USRP", "RF PROTEGIDA", "LTE fisico con controles de seguridad RF"),
+    "5g-sa-x310": ("5G SA con USRP", "RF PROTEGIDA", "5G SA fisico con controles de seguridad RF"),
+    "5g-nsa-x310": ("5G NSA B7+n3 con USRP", "RF PROTEGIDA", "Ancla LTE y portadora NR sobre dos cadenas RF"),
     "4g-volte-sim": ("4G VoLTE simulado", "SIM", "Perfil de simulacion LTE e IMS"),
     "5g-vonr": ("5G SA VoNR simulado", "SIM", "Perfil de simulacion 5G e IMS"),
 }
@@ -180,7 +185,7 @@ def main(argv: list[str]) -> int:
         if not flags <= {"--yes", "--dry-run"}:
             print("Uso: lain5g bootstrap [--yes] [--dry-run]", file=sys.stderr)
             return 2
-        return _bootstrap_machine(
+        return _logged_bootstrap(
             service,
             assume_yes="--yes" in flags,
             dry_run="--dry-run" in flags or os.environ.get("LAIN5G_DRY_RUN", "false").lower() == "true",
@@ -324,11 +329,155 @@ def _run_bootstrap_step(command: list[str], *, dry_run: bool) -> bool:
     print(f"$ {shlex.join(command)}", flush=True)
     if dry_run:
         return True
+    started = time.monotonic()
     try:
-        return subprocess.run(command, check=False).returncode == 0
+        completed = subprocess.run(command, text=True, capture_output=True, check=False)
+        if completed.stdout:
+            print(completed.stdout, end="" if completed.stdout.endswith("\n") else "\n", flush=True)
+        if completed.stderr:
+            print(completed.stderr, end="" if completed.stderr.endswith("\n") else "\n", file=sys.stderr, flush=True)
+        elapsed = time.monotonic() - started
+        print(f"[tiempo] {shlex.join(command)}: {elapsed:.1f} s | codigo={completed.returncode}", flush=True)
+        return completed.returncode == 0
     except (FileNotFoundError, PermissionError, OSError) as exc:
         print(f"ERROR: no se pudo ejecutar {command[0]}: {exc}", file=sys.stderr)
         return False
+
+
+class _Tee:
+    def __init__(self, terminal, log):
+        self.terminal = terminal
+        self.log = log
+
+    def write(self, value):
+        self.terminal.write(value)
+        self.log.write(value)
+        self.flush()
+        return len(value)
+
+    def flush(self):
+        self.terminal.flush()
+        self.log.flush()
+
+
+def _machine_type() -> str:
+    try:
+        detected = subprocess.run(
+            ["systemd-detect-virt"], text=True, capture_output=True, check=False, timeout=3
+        )
+    except (FileNotFoundError, OSError, subprocess.TimeoutExpired):
+        return "No determinado (systemd-detect-virt no disponible)"
+    value = detected.stdout.strip()
+    if detected.returncode == 0 and value and value != "none":
+        if value in {"docker", "podman", "lxc", "openvz", "systemd-nspawn", "wsl"}:
+            return f"Contenedor/entorno virtualizado ({value}); host fisico o VM no determinado"
+        names = {
+            "oracle": "Oracle VirtualBox",
+            "vmware": "VMware",
+            "microsoft": "Microsoft Hyper-V",
+            "qemu": "QEMU/KVM",
+            "kvm": "KVM",
+            "xen": "Xen",
+            "amazon": "Amazon EC2",
+            "google": "Google Compute Engine",
+        }
+        return f"Virtual ({names.get(value, value)})"
+    if detected.returncode == 1 or value == "none":
+        return "Fisica (no se detecto hipervisor; deteccion orientativa)"
+    return f"No determinado (systemd-detect-virt: {value or 'sin resultado'})"
+
+
+def _logged_bootstrap(service: ProfileConfigService, *, assume_yes: bool, dry_run: bool) -> int:
+    log_dir = service.root / "runs" / "installation-logs"
+    log_dir.mkdir(parents=True, exist_ok=True)
+    started_at = datetime.datetime.now().astimezone()
+    log_path = log_dir / f"installation-{started_at.strftime('%Y%m%d-%H%M%S')}.log"
+    start = time.monotonic()
+    result = 1
+    finished_at = started_at
+    with log_path.open("a", encoding="utf-8") as log:
+        stdout, stderr = sys.stdout, sys.stderr
+        with contextlib.redirect_stdout(_Tee(stdout, log)), contextlib.redirect_stderr(_Tee(stderr, log)):
+            print("Registro de instalacion OpenLain5G")
+            print(f"Inicio: {started_at.isoformat(timespec='seconds')}")
+            print(f"Equipo: {platform_name()}")
+            print(f"Tipo de maquina: {_machine_type()}")
+            print(f"Modo: {'DRY-RUN (sin cambios)' if dry_run else 'instalacion'}")
+            print(f"Log: {log_path}")
+            try:
+                result = _bootstrap_machine_impl(service, assume_yes=assume_yes, dry_run=dry_run)
+            except Exception as exc:
+                print(f"ERROR inesperado durante la instalacion: {exc}", file=sys.stderr)
+                result = 1
+            elapsed = time.monotonic() - start
+            finished_at = datetime.datetime.now().astimezone()
+            status = "SIMULACION COMPLETADA" if dry_run and result == 0 else ("COMPLETADA" if result == 0 else "FALLIDA")
+            if dry_run and result == 0:
+                print("\nSIMULACION COMPLETADA: no se instalo ningun componente.")
+            elif result == 0:
+                print("\nINSTALACION CORRECTA: todos los pasos de preparacion terminaron sin errores.")
+            else:
+                print(f"\nINSTALACION INCOMPLETA: uno o mas pasos fallaron. Revisa el registro: {log_path}", file=sys.stderr)
+            print(f"\nResultado: {status} (codigo={result})")
+            print(f"Tiempo total: {elapsed:.1f} s ({elapsed / 60:.1f} min)")
+            print(f"Fin: {finished_at.isoformat(timespec='seconds')}")
+            print(f"Log guardado en: {log_path}")
+    steps = []
+    installed_components = []
+    for line in log_path.read_text(encoding="utf-8", errors="replace").splitlines():
+        if line.startswith("  FALTA: "):
+            dependency = line.removeprefix("  FALTA: ")
+            name, separator, reason = dependency.partition(" — ")
+            steps.append(InstallationStep(name=name, reason=reason if separator else "Missing prerequisite detected by bootstrap.", status="succeeded" if result == 0 else "failed", message="Required dependency"))
+        elif line.startswith("ERROR:") or line.startswith("ERROR inesperado"):
+            steps.append(InstallationStep(name=line.split(":", 1)[0], reason="The installer reported a failure; consult the downloadable log for command context.", status="failed", message=line))
+        elif line.startswith("Descargando "):
+            installed_components.append(line.removeprefix("Descargando "))
+        elif line.startswith("[tiempo] "):
+            detail = line.removeprefix("[tiempo] ")
+            name, separator, remainder = detail.rpartition(": ")
+            seconds_text, _, code_text = remainder.partition(" s | codigo=")
+            try:
+                duration_ms = int(float(seconds_text) * 1000)
+            except ValueError:
+                duration_ms = None
+            try:
+                exit_code = int(code_text)
+            except ValueError:
+                exit_code = None
+            succeeded = exit_code == 0 or (exit_code is None and result == 0)
+            steps.append(InstallationStep(name=name if separator else detail, reason="Installer command or image operation; see the downloadable log for its context.", status="succeeded" if succeeded else "failed", duration_ms=duration_ms, exit_code=exit_code))
+    history = InstallationHistoryService(service.root)
+    history.write_record(InstallationRecord(
+        id=log_path.stem,
+        kind="bootstrap",
+        scope="system bootstrap",
+        status="dry_run" if dry_run and result == 0 else "succeeded" if result == 0 else "failed",
+        reason="Install missing Lain5G prerequisites, prepare private configuration, and download required images.",
+        created_at=started_at,
+        started_at=started_at,
+        finished_at=finished_at,
+        duration_ms=max(0, int((finished_at - started_at).total_seconds() * 1000)),
+        environment=detect_installation_environment(),
+        installed_components=installed_components if result == 0 and not dry_run else [],
+        steps=steps,
+        log_available=True,
+    ))
+    return result
+
+
+def _bootstrap_machine(service: ProfileConfigService, *, assume_yes: bool = False, dry_run: bool = False) -> int:
+    return _logged_bootstrap(service, assume_yes=assume_yes, dry_run=dry_run)
+
+
+def platform_name() -> str:
+    try:
+        completed = subprocess.run(["uname", "-srmo"], text=True, capture_output=True, check=False, timeout=3)
+        if completed.returncode == 0 and completed.stdout.strip():
+            return completed.stdout.strip()
+    except (FileNotFoundError, OSError, subprocess.TimeoutExpired):
+        pass
+    return sys.platform
 
 
 def _bootstrap_package_manager() -> str:
@@ -414,7 +563,7 @@ def _bootstrap_install_commands(manager: str, features: set[str], privileged: li
     return []
 
 
-def _bootstrap_machine(service: ProfileConfigService, *, assume_yes: bool = False, dry_run: bool = False) -> int:
+def _bootstrap_machine_impl(service: ProfileConfigService, *, assume_yes: bool = False, dry_run: bool = False) -> int:
     print("\nPreparacion completa de Lain5G-Lab")
     print("===================================")
     print("Instala herramientas base, activa Docker, prepara archivos privados y descarga todos los componentes.")
@@ -463,6 +612,25 @@ def _bootstrap_machine(service: ProfileConfigService, *, assume_yes: bool = Fals
         features.add("docker")
     if not compose_present:
         features.add("compose")
+
+    feature_reasons = {
+        "python": "Python 3.10+ es necesario para ejecutar la CLI y el backend.",
+        "venv": "venv/ensurepip permite crear el entorno Python aislado del proyecto.",
+        "node": "Node.js permite compilar y servir la interfaz web.",
+        "npm": "npm instala las dependencias bloqueadas de la interfaz web.",
+        "git": "Git permite obtener y administrar el código fuente.",
+        "make": "GNU Make ofrece los comandos reproducibles de operación y validación.",
+        "util-linux": "flock, incluido en util-linux, evita ejecuciones RF simultáneas.",
+        "docker": "Docker ejecuta los componentes de red en contenedores.",
+        "compose": "Docker Compose v2 coordina los servicios de cada perfil.",
+    }
+    detected_features = sorted(features)
+    print("\nDependencias detectadas:")
+    if detected_features:
+        for feature in detected_features:
+            print(f"  FALTA: {feature} — {feature_reasons[feature]}")
+    else:
+        print("  Las herramientas base ya estaban instaladas; no se solicitan paquetes del sistema.")
 
     privileged: list[str] = []
     if os.geteuid() != 0:
@@ -558,8 +726,12 @@ def _bootstrap_machine(service: ProfileConfigService, *, assume_yes: bool = Fals
             print(f"$ docker pull {shlex.quote(remote_image)}")
             if remote_image != local_image:
                 print(f"$ docker tag {shlex.quote(remote_image)} {shlex.quote(local_image)}")
-    elif not _download_images("all", docker_command=docker_command):
-        return 1
+    else:
+        image_started = time.monotonic()
+        if not _download_images("all", docker_command=docker_command):
+            print(f"[tiempo] descarga/preparacion de imagenes: {time.monotonic() - image_started:.1f} s")
+            return 1
+        print(f"[tiempo] descarga/preparacion de imagenes: {time.monotonic() - image_started:.1f} s")
 
     print("\nMAQUINA PREPARADA")
     if group_activation_required:
@@ -989,12 +1161,24 @@ def _download_images(scope: str, core_only: bool = False, docker_command: list[s
     for local_image in missing:
         remote_image = IMAGE_CATALOG.get(local_image, (local_image, ""))[0]
         print(f"\nDescargando {remote_image}", flush=True)
-        pulled = subprocess.run([*docker, "pull", remote_image], check=False)
+        image_started = time.monotonic()
+        pulled = subprocess.run([*docker, "pull", remote_image], text=True, capture_output=True, check=False)
+        if pulled.stdout:
+            print(pulled.stdout, end="" if pulled.stdout.endswith("\n") else "\n", flush=True)
+        if pulled.stderr:
+            print(pulled.stderr, end="" if pulled.stderr.endswith("\n") else "\n", file=sys.stderr, flush=True)
+        print(f"[tiempo] docker pull {remote_image}: {time.monotonic() - image_started:.1f} s | codigo={pulled.returncode}", flush=True)
         if pulled.returncode != 0:
             print(f"ERROR: no se pudo descargar {remote_image}.")
             return False
         if remote_image != local_image:
-            tagged = subprocess.run([*docker, "tag", remote_image, local_image], check=False)
+            tag_started = time.monotonic()
+            tagged = subprocess.run([*docker, "tag", remote_image, local_image], text=True, capture_output=True, check=False)
+            if tagged.stdout:
+                print(tagged.stdout, end="" if tagged.stdout.endswith("\n") else "\n", flush=True)
+            if tagged.stderr:
+                print(tagged.stderr, end="" if tagged.stderr.endswith("\n") else "\n", file=sys.stderr, flush=True)
+            print(f"[tiempo] docker tag {remote_image}: {time.monotonic() - tag_started:.1f} s | codigo={tagged.returncode}", flush=True)
             if tagged.returncode != 0:
                 print(f"ERROR: no se pudo preparar la etiqueta local {local_image}.")
                 return False
@@ -1057,7 +1241,7 @@ def _print_profiles(service: ProfileConfigService) -> None:
     print("=" * 88)
     groups = [
         ("SIMULADOS - SIN RADIO REAL", "No requieren USRP y nunca transmiten RF.", False),
-        ("RF REAL - X310 Y PROTECCIONES", "Requieren hardware, aislamiento y validacion de seguridad.", True),
+        ("RF REAL - USRP Y PROTECCIONES", "Requieren hardware, aislamiento y validacion de seguridad.", True),
     ]
     for title, description, rf_capable in groups:
         print(f"\n+-- {title} {'-' * max(1, 82 - len(title))}")

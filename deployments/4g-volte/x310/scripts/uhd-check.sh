@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 if [ "${LAIN5G_DRY_RUN:-false}" = true ]; then
-  echo "DRY RUN: 4G LTE X310 UHD-check plan; no device, network, UHD, Docker, or file access was performed"
+  echo "DRY RUN: 4G LTE USRP UHD-check plan; no device, network, UHD, Docker, or file access was performed"
   exit 0
 fi
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -28,5 +28,5 @@ fi
 redact <"$raw_log" >"$log"
 cat "$log"
 grep -Eiq 'compat number mismatch|incompatible|Expected FPGA' "$log" && { echo "uhd_fpga_compatible FAIL incompatible FPGA/UHD"; exit 1; }
-grep -Eiq 'Device: X-Series Device|Mboard: X300|product: X300|type: x300' "$log" && echo "uhd_probe PASS X-series device probed" || { echo "uhd_probe FAIL expected X300/X310 markers missing"; exit 1; }
+grep -Eiq 'Device: X-Series Device|Mboard: X300|product: X300|type: x300' "$log" && echo "uhd_probe PASS compatible USRP probed" || { echo "uhd_probe FAIL compatible USRP markers missing"; exit 1; }
 grep -Eiq 'FPGA Version|fpga:' "$log" && echo "uhd_fpga_compatible PASS FPGA reported by successful UHD probe" || { echo "uhd_fpga_compatible FAIL FPGA details missing"; exit 1; }

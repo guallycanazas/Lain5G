@@ -1,0 +1,13 @@
+{
+  "host_os": "macOS",
+  "docker_runtime": "Docker Desktop Linux VM",
+  "docker_engine": "29.1.3",
+  "host_architecture": "arm64",
+  "open5gs_image_architecture": "arm64",
+  "mongo_image_architecture": "arm64",
+  "ueransim_image_architecture": "amd64 (emulated by Docker Desktop)",
+  "rf_hardware_used": false,
+  "repository_head": "583c350",
+  "working_tree_had_local_modifications": true,
+  "test_run_id": "run-20261020-102719"
+}

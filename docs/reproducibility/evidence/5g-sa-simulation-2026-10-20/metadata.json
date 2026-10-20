@@ -1,0 +1,10 @@
+{
+  "run_id": "run-20261020-102719",
+  "scenario": "5g-sa",
+  "deployment_path": "deployments/5g-sa",
+  "started_at": "2026-10-20T10:27:19Z",
+  "finished_at": "2026-10-20T10:27:46Z",
+  "status": "stopped",
+  "git_commit": "583c350",
+  "validated_claims": ["gNB connected to AMF","UE registered","PDU session established","UERANSIM TUN interface created","UE IP assigned","ping succeeded"]
+}

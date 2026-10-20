@@ -1,0 +1,16 @@
+{
+  "run_id": "run-20261020-113613",
+  "scenario": "4g-lte-sim",
+  "started_at": "2026-10-20T11:36:13Z",
+  "validation_at": "2026-10-20T11:36:59Z",
+  "finished_at": "2026-10-20T11:37:36Z",
+  "execution_status": "PASS",
+  "checks_passed": 14,
+  "checks_total": 14,
+  "elapsed_seconds": 83,
+  "source_base_commit": "583c350",
+  "working_tree_modified": true,
+  "notes": [
+    "Local software-only simulation. This run predates the final commit for the revision branch."
+  ]
+}
