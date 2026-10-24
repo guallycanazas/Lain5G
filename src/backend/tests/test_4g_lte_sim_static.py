@@ -127,6 +127,16 @@ def test_lte_simulation_validation_waits_for_attach_and_proves_user_plane():
     assert 'metadata["validated_claims"] = sys.argv[2:]' in validate
 
 
+def test_lte_stop_archives_logs_and_resets_ran_containers():
+    stop = (DEPLOY / "scripts" / "stop.sh").read_text(encoding="utf-8")
+    logs = (DEPLOY / "scripts" / "logs.sh").read_text(encoding="utf-8")
+
+    assert 'compose logs --no-color > "$latest_run/logs/docker-compose.log"' in stop
+    assert "compose rm --force enb ue" in stop
+    assert 'cat "$latest_run/logs/$service.log"' in logs
+    assert 'cat "$latest_run/logs/docker-compose.log"' in logs
+
+
 def test_5g_simulation_validation_uses_scenario_run_and_waits_for_registration():
     validate = (ROOT / "deployments/5g-sa/scripts/validate.sh").read_text(encoding="utf-8")
 

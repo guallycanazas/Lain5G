@@ -110,6 +110,7 @@ jobs:
             --mongo-uri mongodb://127.0.0.1:27028/openlain5g_e2e
 
       - name: Exercise LTE simulation twice
+        id: lte-e2e
         shell: bash
         run: |
           set -euo pipefail
@@ -123,6 +124,25 @@ jobs:
               4g-lte-sim "$iteration" e2e-artifacts/profile-results.jsonl
             ./lain5g scenario stop 4g-lte-sim
           done
+
+      - name: Capture redacted LTE restart diagnostics
+        if: failure() && steps.lte-e2e.outcome == 'failure'
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p e2e-artifacts
+          compose=(docker compose --env-file deployments/4g-volte/common/.env -f deployments/4g-lte-sim/docker-compose.yml)
+          {
+            for service in ue enb mme; do
+              echo "[$service]"
+              "${compose[@]}" logs --no-color --tail 160 "$service" 2>&1 \
+                | sed -E -e 's/[0-9]{15}/[IMSI]/g' -e 's/[[:xdigit:]]{32}/[KEY]/g' \
+                | grep -Ei 'error|warn|attach|reject|registration|bearer|tunnel|radio|rrc|nas|s1ap|tun' \
+                | tail -n 80 || true
+            done
+            echo "[UE network state]"
+            "${compose[@]}" exec -T ue sh -lc 'ip -brief link; ip -brief -4 addr' 2>&1 || true
+          } > e2e-artifacts/lte-restart-diagnostics.txt
 
       - name: Exercise 5G SA simulation twice
         shell: bash
