@@ -48,7 +48,30 @@ jobs:
             echo "attempt=${{ matrix.attempt }}"
             echo "date_utc=$(date -u +%Y-%m-%dT%H:%M:%SZ)"
             echo "git_commit=$(git rev-parse HEAD)"
+            echo "runner_os=${RUNNER_OS:-unknown}"
+            echo "runner_arch=${RUNNER_ARCH:-unknown}"
+            echo "runner_image_os=${ImageOS:-unknown}"
+            echo "runner_image_version=${ImageVersion:-unknown}"
+            . /etc/os-release
+            echo "distribution=${PRETTY_NAME:-unknown}"
             echo "uname=$(uname -a)"
+            echo "logical_cpu_count=$(nproc)"
+            lscpu | awk -F: '/^Model name:/ {gsub(/^[ \t]+/, "", $2); print "cpu_model=" $2}'
+            awk '/^MemTotal:/ {printf "memory_total_kib=%s\n", $2}' /proc/meminfo
+            echo "virtualization=$(systemd-detect-virt 2>/dev/null || echo unknown)"
+            for iface_path in /sys/class/net/*; do
+              iface="${iface_path##*/}"
+              [ "$iface" = lo ] && continue
+              driver=unknown
+              vendor=unknown
+              device=unknown
+              speed=unknown
+              if [ -L "$iface_path/device/driver" ]; then driver="$(basename "$(readlink -f "$iface_path/device/driver")")"; fi
+              if [ -r "$iface_path/device/vendor" ]; then vendor="$(cat "$iface_path/device/vendor")"; fi
+              if [ -r "$iface_path/device/device" ]; then device="$(cat "$iface_path/device/device")"; fi
+              if [ -r "$iface_path/speed" ]; then speed="$(cat "$iface_path/speed" 2>/dev/null || echo unknown)"; fi
+              echo "network_interface=$iface driver=$driver vendor=$vendor device=$device speed_mbps=$speed"
+            done
             python3 --version
             node --version
             docker version

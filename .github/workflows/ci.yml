@@ -13,9 +13,13 @@ concurrency:
 
 jobs:
   softwarex-check:
-    name: Safe SoftwareX check
-    runs-on: ubuntu-24.04
+    name: Safe SoftwareX check (${{ matrix.host_os }})
+    runs-on: ${{ matrix.host_os }}
     timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        host_os: [ubuntu-22.04, ubuntu-24.04]
     steps:
       - name: Check out source
         # actions/checkout stable tag v4, resolved with git ls-remote.
@@ -42,6 +46,51 @@ jobs:
           cache: npm
           cache-dependency-path: src/frontend/package-lock.json
 
+      - name: Record runner environment
+        shell: bash
+        run: |
+          set -euo pipefail
+          {
+            echo "runner_os=${RUNNER_OS:-unknown}"
+            echo "runner_arch=${RUNNER_ARCH:-unknown}"
+            echo "runner_image_os=${ImageOS:-unknown}"
+            echo "runner_image_version=${ImageVersion:-unknown}"
+            . /etc/os-release
+            echo "distribution=${PRETTY_NAME:-unknown}"
+            echo "kernel=$(uname -r)"
+            echo "architecture=$(uname -m)"
+            echo "logical_cpu_count=$(nproc)"
+            lscpu | awk -F: '/^Model name:/ {gsub(/^[ \t]+/, "", $2); print "cpu_model=" $2}'
+            awk '/^MemTotal:/ {printf "memory_total_kib=%s\n", $2}' /proc/meminfo
+            echo "virtualization=$(systemd-detect-virt 2>/dev/null || echo unknown)"
+            for iface_path in /sys/class/net/*; do
+              iface="${iface_path##*/}"
+              [ "$iface" = lo ] && continue
+              driver=unknown
+              vendor=unknown
+              device=unknown
+              speed=unknown
+              if [ -L "$iface_path/device/driver" ]; then driver="$(basename "$(readlink -f "$iface_path/device/driver")")"; fi
+              if [ -r "$iface_path/device/vendor" ]; then vendor="$(cat "$iface_path/device/vendor")"; fi
+              if [ -r "$iface_path/device/device" ]; then device="$(cat "$iface_path/device/device")"; fi
+              if [ -r "$iface_path/speed" ]; then speed="$(cat "$iface_path/speed" 2>/dev/null || echo unknown)"; fi
+              echo "network_interface=$iface driver=$driver vendor=$vendor device=$device speed_mbps=$speed"
+            done
+            python3 --version
+            node --version
+            npm --version
+            docker version --format 'docker_client={{.Client.Version}} docker_server={{.Server.Version}}'
+            docker compose version
+          } | tee runner-environment.txt
+
+      - name: Upload runner environment
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: runner-environment-${{ github.run_id }}-${{ github.run_attempt }}
+          path: runner-environment.txt
+          if-no-files-found: error
+          retention-days: 30
+
       - name: Confirm Docker Compose parser
         run: docker compose version
 
@@ -49,3 +98,50 @@ jobs:
       # dry-run guards), frontend tests/typecheck/build, and all static checks.
       - name: Run unified safe check
         run: make softwarex-check
+
+  distro-bootstrap-smoke:
+    name: Distro package bootstrap (${{ matrix.distro.name }})
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        distro:
+          - name: Debian 13
+            image: debian:13-slim
+            manager: apt-get
+          - name: Fedora
+            image: fedora:latest
+            manager: dnf
+    steps:
+      - name: Check out source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+
+      - name: Install Python in disposable distro container and verify bootstrap plan
+        env:
+          DISTRO_IMAGE: ${{ matrix.distro.image }}
+          EXPECTED_PACKAGE_MANAGER: ${{ matrix.distro.manager }}
+        run: |
+          set -euo pipefail
+          docker run --rm \
+            --env EXPECTED_PACKAGE_MANAGER \
+            --volume "$GITHUB_WORKSPACE:/workspace:ro" \
+            --workdir /workspace \
+            "$DISTRO_IMAGE" bash -euc '
+              case "$EXPECTED_PACKAGE_MANAGER" in
+                apt-get)
+                  apt-get update
+                  apt-get install -y python3
+                  ;;
+                dnf)
+                  dnf install -y python3
+                  ;;
+                *) exit 2 ;;
+              esac
+              output="$(LAIN5G_BOOTSTRAP_PACKAGE_MANAGER="$EXPECTED_PACKAGE_MANAGER" ./install.sh --dry-run)"
+              printf "%s\n" "$output"
+              grep -F "${EXPECTED_PACKAGE_MANAGER}" <<<"$output"
+              grep -F "RESULTADO DE INSTALACION: CORRECTO" <<<"$output"
+            '
