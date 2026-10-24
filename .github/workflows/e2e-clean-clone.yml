@@ -1,0 +1,148 @@
+name: Clean-clone end-to-end validation
+
+on:
+  workflow_dispatch:
+    inputs:
+      source_ref:
+        description: Branch, tag, or commit to clone and validate
+        required: true
+        default: main
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: clean-clone-e2e-${{ inputs.source_ref }}
+  cancel-in-progress: false
+
+jobs:
+  e2e:
+    name: Fresh Ubuntu 24.04 clone and simulations
+    runs-on: ubuntu-24.04
+    timeout-minutes: 120
+    steps:
+      - name: Check out requested source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: ${{ inputs.source_ref }}
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: "3.12"
+
+      - name: Set up Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: src/frontend/package-lock.json
+
+      - name: Record clean runner and source
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p e2e-artifacts
+          {
+            echo "source_ref=${{ inputs.source_ref }}"
+            echo "source_commit=$(git rev-parse HEAD)"
+            echo "runner_image_os=${ImageOS:-unknown}"
+            echo "runner_image_version=${ImageVersion:-unknown}"
+            . /etc/os-release
+            echo "distribution=${PRETTY_NAME:-unknown}"
+            echo "kernel=$(uname -r)"
+            echo "architecture=$(uname -m)"
+            echo "cpu_model=$(lscpu | awk -F: '/^Model name:/ {gsub(/^[ \t]+/, "", $2); print $2; exit}')"
+            echo "logical_cpu_count=$(nproc)"
+            awk '/^MemTotal:/ {printf "memory_total_kib=%s\n", $2}' /proc/meminfo
+            echo "virtualization=$(systemd-detect-virt 2>/dev/null || echo unknown)"
+            python3 --version
+            node --version
+            npm --version
+            docker version --format 'docker_client={{.Client.Version}} docker_server={{.Server.Version}}'
+            docker compose version
+          } | tee e2e-artifacts/environment.txt
+
+      - name: Install from the clean clone
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo modprobe sctp || true
+          ./install.sh
+          make backend-install
+
+      - name: Run software verification gate
+        run: make softwarex-check
+
+      - name: Start isolated MongoDB for subscriber CRUD
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker run --detach --rm --name openlain5g-e2e-mongo \
+            --publish 127.0.0.1:27028:27017 \
+            mongo@sha256:8b6d8f5bbedb25cb73517b65cf99f13aeb75ad5b157a56c479287a840bbad3ac
+          for attempt in $(seq 1 30); do
+            if docker exec openlain5g-e2e-mongo mongosh --quiet --eval "db.adminCommand('ping').ok" >/dev/null 2>&1; then
+              exit 0
+            fi
+            sleep 1
+          done
+          docker logs openlain5g-e2e-mongo --tail 30
+          exit 1
+
+      - name: Verify subscriber API against MongoDB
+        env:
+          PYTHONPATH: src
+        run: |
+          .venv/bin/python scripts/verify/subscriber_mongo_e2e.py \
+            --mongo-uri mongodb://127.0.0.1:27028/openlain5g_e2e
+
+      - name: Exercise LTE simulation twice
+        shell: bash
+        run: |
+          set -euo pipefail
+          trap './lain5g scenario stop 4g-lte-sim >/dev/null 2>&1 || true' EXIT
+          ./lain5g scenario setup 4g-lte-sim
+          for iteration in 1 2; do
+            sleep 2
+            ./lain5g scenario start 4g-lte-sim
+            ./lain5g scenario validate 4g-lte-sim
+            .venv/bin/python scripts/verify/profile_e2e_summary.py \
+              4g-lte-sim "$iteration" e2e-artifacts/profile-results.jsonl
+            ./lain5g scenario stop 4g-lte-sim
+          done
+
+      - name: Exercise 5G SA simulation twice
+        shell: bash
+        run: |
+          set -euo pipefail
+          trap './lain5g scenario stop 5g-sa >/dev/null 2>&1 || true' EXIT
+          ./lain5g scenario setup 5g-sa
+          printf '\nPING_TARGET=10.45.0.1\n' >> deployments/5g-sa/.env
+          for iteration in 1 2; do
+            sleep 2
+            ./lain5g scenario start 5g-sa
+            ./lain5g scenario validate 5g-sa
+            .venv/bin/python scripts/verify/profile_e2e_summary.py \
+              5g-sa "$iteration" e2e-artifacts/profile-results.jsonl
+            ./lain5g scenario stop 5g-sa
+          done
+
+      - name: Stop temporary database and lab scenarios
+        if: always()
+        shell: bash
+        run: |
+          ./lain5g scenario stop 4g-lte-sim >/dev/null 2>&1 || true
+          ./lain5g scenario stop 5g-sa >/dev/null 2>&1 || true
+          docker stop openlain5g-e2e-mongo >/dev/null 2>&1 || true
+
+      - name: Upload sanitized evidence
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: clean-clone-e2e-${{ github.run_id }}
+          path: e2e-artifacts/
+          if-no-files-found: warn
+          retention-days: 90
