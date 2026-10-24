@@ -87,7 +87,7 @@ jobs:
       - name: Upload runner environment
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
-          name: runner-environment-${{ github.run_id }}-${{ github.run_attempt }}
+          name: runner-environment-${{ matrix.host_os }}-${{ github.run_id }}-${{ github.run_attempt }}
           path: runner-environment.txt
           if-no-files-found: error
           retention-days: 30
