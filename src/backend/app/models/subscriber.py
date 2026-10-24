@@ -33,8 +33,8 @@ class SubscriberSecretInput(BaseModel):
     k: str | None = None
     op: str | None = None
     opc: str | None = None
-    amf: str | None = "8000"
-    sqn: str | None = "000000000001"
+    amf: str | None = None
+    sqn: str | None = None
 
     @field_validator("k", "op", "opc", mode="before")
     @classmethod
@@ -114,6 +114,19 @@ class SubscriberCreate(BaseModel):
     security: SubscriberSecretInput
     slice: SubscriberSliceInput = Field(default_factory=SubscriberSliceInput)
     dnn: str = "internet"
+    service_profile: Literal["data_only", "voice_data"] = "data_only"
+
+    @model_validator(mode="before")
+    @classmethod
+    def apply_lab_authentication_defaults(cls, value: Any) -> Any:
+        if not isinstance(value, dict):
+            return value
+        normalized = dict(value)
+        security = dict(normalized.get("security") or {})
+        security.setdefault("amf", "8000")
+        security.setdefault("sqn", "000000000001")
+        normalized["security"] = security
+        return normalized
 
     @field_validator("imsi", mode="before")
     @classmethod
@@ -164,6 +177,7 @@ class SubscriberUpdate(BaseModel):
     security: SubscriberSecretInput | None = None
     slice: SubscriberSliceInput | None = None
     dnn: str | None = None
+    service_profile: Literal["data_only", "voice_data"] | None = None
 
     model_config = ConfigDict(extra="forbid")
 
@@ -198,6 +212,7 @@ class SubscriberSummary(BaseModel):
     imsi: str
     msisdn: str | None = None
     dnn: str | None = None
+    apns: list[str] = Field(default_factory=list)
     sst: int | None = None
     sd: str | None = None
     security: SubscriberSecurityRedacted
@@ -205,7 +220,6 @@ class SubscriberSummary(BaseModel):
 
 class SubscriberDetail(SubscriberSummary):
     checked_at: datetime
-    note: str = "A subscriber record in Open5GS does not establish that the UE authenticated successfully."
 
 
 class SubscriberListResponse(BaseModel):

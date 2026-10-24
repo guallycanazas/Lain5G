@@ -10,7 +10,7 @@ describe('ValidationPage', () => {
   it('groups backend checks by operational layer and retains result states', async () => {
     vi.stubGlobal('fetch', vi.fn((url: string) => url.includes('/validation/latest') ? jsonResponse(validationReport) : jsonResponse([])));
     renderWithClient(<ValidationPage />);
-    expect(await screen.findByText('Infrastructure')).toBeInTheDocument();
+    expect(await screen.findByText('Infrastructure and SDR')).toBeInTheDocument();
     expect(screen.getByText('Core control plane')).toBeInTheDocument();
     expect(screen.getByText('MongoDB available')).toBeInTheDocument();
     expect(screen.getAllByText('FAIL')).toHaveLength(2);

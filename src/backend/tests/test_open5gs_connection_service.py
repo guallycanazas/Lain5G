@@ -99,7 +99,8 @@ def test_connection_status_timeout(real_settings, monkeypatch):
 
 
 def test_reserved_backend_ip_cannot_overlap_static_core_addresses():
-    with pytest.raises(ValueError, match="must remain 10.20.0.250"):
+    assert Settings(LAIN5G_OPEN5GS_DOCKER_IP="10.42.0.250").open5gs_docker_ip == "10.42.0.250"
+    with pytest.raises(ValueError, match="one of the reserved lab addresses"):
         Settings(LAIN5G_OPEN5GS_DOCKER_IP="10.20.0.3")
 
 
@@ -125,7 +126,7 @@ def test_network_attachment_uses_reserved_backend_ip(real_settings, monkeypatch)
 
     assert [
         "docker", "network", "connect", "--ip", "10.20.0.250",
-        "lain5g-lab-5g-sa-core", "backend-container-id",
+        "lain5g-lab-5g-sa-x310-core", "backend-container-id",
     ] in calls
 
 
@@ -152,11 +153,11 @@ def test_network_attachment_moves_backend_off_static_core_ip(real_settings, monk
     service._ensure_network_attachment()
 
     assert [
-        "docker", "network", "disconnect", "lain5g-lab-5g-sa-core", "backend-container-id",
+        "docker", "network", "disconnect", "lain5g-lab-5g-sa-x310-core", "backend-container-id",
     ] in calls
     assert [
         "docker", "network", "connect", "--ip", "10.20.0.250",
-        "lain5g-lab-5g-sa-core", "backend-container-id",
+        "lain5g-lab-5g-sa-x310-core", "backend-container-id",
     ] in calls
 
 

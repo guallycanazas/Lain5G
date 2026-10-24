@@ -22,7 +22,7 @@ radio:
   clock_source: internal
   time_source: internal
 safety:
-  maximum_duration_seconds: 120
+  maximum_duration_seconds: 60
   rf_allowed: false
   environment: cabled
   attenuation_db: 60

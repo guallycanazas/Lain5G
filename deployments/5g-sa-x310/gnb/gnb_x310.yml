@@ -19,7 +19,9 @@ cu_up:
 
 ru_sdr:
   device_driver: uhd
-  device_args: type=${USRP_TYPE},addr=${USRP_ADDR},num_recv_frames=64,num_send_frames=64
+  # The connected X310 link uses a 1500-byte Ethernet MTU (1472-byte UDP payload).
+  # Pin UHD's frame size to that limit instead of its 8000-byte default.
+  device_args: type=${USRP_TYPE},addr=${USRP_ADDR},num_recv_frames=64,num_send_frames=64,recv_frame_size=1472,send_frame_size=1472
   clock: ${USRP_CLOCK_SOURCE}
   sync: ${USRP_TIME_SOURCE}
   srate: ${SAMPLE_RATE_MHZ}

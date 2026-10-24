@@ -86,6 +86,8 @@ class ValidationService:
             return "WARNING"
         if all(status == "PASS" for status in statuses):
             return "PASS"
+        if "PASS" in statuses and "NOT_TESTED" in statuses:
+            return "PARTIAL"
         return "NOT_TESTED"
 
     @staticmethod

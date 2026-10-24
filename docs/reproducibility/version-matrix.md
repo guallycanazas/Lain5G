@@ -4,7 +4,7 @@
 
 | Item | Exact value | Authority |
 | --- | --- | --- |
-| OpenLain5G | `1.1.5` | Root `VERSION` |
+| OpenLain5G | `1.1.6` | Root `VERSION` |
 | Status | Stable source release | `CHANGELOG.md` |
 | Operational evidence baseline | `v1.1.0` | Immutable clean-VM scenario results |
 | Operational evidence captured | `2026-07-30T02:20:51Z` | Clean-VM UTC clock after scenario verification |
@@ -17,6 +17,11 @@
 Version `1.1.5` is a reproducibility and CI maintenance release. It adds
 five-run cloud reproduction evidence for the software-only profiles without
 introducing a new runtime or RF claim; RF evidence remains outside this scope.
+
+Version `1.1.6` includes the subscriber and IMS workflow, profile diagnostics,
+host inventory, and guarded RF lifecycle updates. The five-run cloud results
+remain tied to immutable v1.1.3. Physical NSA connection evidence was recorded
+with v1.1.3 and is separate from those software-only cloud runs.
 
 ## Source Builds
 
@@ -91,9 +96,11 @@ attestation was available. Every listed artifact is Linux/amd64-only. The local
 | Full closure | Every package and version is listed in `src/backend/constraints.txt`; source was `.venv/bin/pip freeze --all` before release tests |
 
 The npm transitive closure and registry integrity values remain authoritative in
-`src/frontend/package-lock.json`; the root package version is `1.1.5`.
-`npm audit` reports zero findings across the complete locked production and
-development dependency tree after the reviewed Vitest `4.1.10` upgrade.
+`src/frontend/package-lock.json`; the root package version is `1.1.6`.
+As checked on 2026-10-24, `npm audit` reports no production dependency findings
+and three moderate findings in the development-only Tailwind/PostCSS selector
+parser chain. The available automatic fix upgrades Tailwind across a major
+version, so the release retains Tailwind 3 and records this build-tool risk.
 
 ## RTPengine Evidence
 

@@ -12,6 +12,6 @@ rm -f "$scenario_dir/.rf-active"
 mkdir -p "$repo_dir/runs" 2>/dev/null || true
 stopped_at="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 audit_file="$repo_dir/runs/5g-nsa-x310-emergency-stop-$(date -u +%Y%m%d-%H%M%S).json"
-if ! printf '{"stopped_at":"%s","reason":"experimental NSA emergency stop"}\n' "$stopped_at" >"$audit_file"; then
+if ! printf '{"stopped_at":"%s","reason":"NSA emergency stop"}\n' "$stopped_at" >"$audit_file"; then
   echo "WARNING: RF stopped, but the emergency-stop audit record could not be written" >&2
 fi

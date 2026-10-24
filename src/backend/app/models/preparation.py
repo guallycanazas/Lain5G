@@ -29,11 +29,44 @@ class ProfileComponentStatus(BaseModel):
     images: list[ComponentImageStatus]
 
 
+class DockerHostInfo(BaseModel):
+    name: str | None = None
+    operating_system: str | None = None
+    os_type: str | None = None
+    os_version: str | None = None
+    architecture: str | None = None
+    manufacturer: str | None = None
+    product_name: str | None = None
+    firmware_vendor: str | None = None
+    firmware_version: str | None = None
+    board_name: str | None = None
+    virtualization: str | None = None
+    cpu_model: str | None = None
+    physical_cores: int | None = None
+    kernel_version: str | None = None
+    docker_version: str | None = None
+    storage_driver: str | None = None
+    docker_root_dir: str | None = None
+    cgroup_driver: str | None = None
+    cgroup_version: str | None = None
+    cpus: int | None = None
+    memory_bytes: int | None = None
+    swap_bytes: int | None = None
+    containers_total: int | None = None
+    containers_running: int | None = None
+    containers_paused: int | None = None
+    containers_stopped: int | None = None
+    images_count: int | None = None
+    workspace_disk_total_bytes: int | None = None
+    workspace_disk_free_bytes: int | None = None
+
+
 class PreparationReport(BaseModel):
     checked_at: datetime
     ready: bool
     diagnostics: list[PreparationCheck]
     profiles: list[ProfileComponentStatus]
+    docker_host: DockerHostInfo | None = None
 
 
 class ComponentPullRequest(BaseModel):

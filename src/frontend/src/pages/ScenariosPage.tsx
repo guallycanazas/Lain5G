@@ -13,11 +13,11 @@ export function ScenariosPage() {
   const deploymentList = Array.isArray(deployments.data) ? deployments.data : [];
   const runList = Array.isArray(runs.data) ? runs.data : [];
   return <section className="page-panel">
-    <header className="console-page-hero recipe-page-hero"><div className="console-page-hero-copy"><span className="eyebrow">🧪 Operation</span><h1>Scenarios</h1><p className="page-subtitle">Select a laboratory workspace. Each scenario retains its own deployment, evidence and safety constraints.</p></div><figure><img src="/images/lain5g/lab-recipes.webp" width="1536" height="500" alt="Illustrated workflow from laboratory recipe through validation, deployment, testing and observation" loading="lazy" decoding="async" /><figcaption><span>🧭 Reproducible workflow</span><strong>Recipe · validate · deploy · test · observe</strong></figcaption></figure></header>
+    <header className="console-page-hero recipe-page-hero"><div className="console-page-hero-copy"><span className="eyebrow">🧪 Operation</span><h1>Scenarios</h1><p className="page-subtitle">Select a laboratory workspace. Each scenario retains its own deployment, evidence and safety constraints.</p></div><figure><img src="/images/lain5g/scenario-workflow.webp" width="1983" height="793" alt="Isometric sequence for defining, validating, deploying, testing, and observing a lab scenario" loading="lazy" decoding="async" /><figcaption><span>🧭 Reproducible workflow</span><strong>Recipe · validate · deploy · test · observe</strong></figcaption></figure></header>
     {deployments.isLoading ? <LoadingState /> : null}
     {deployments.error ? <ErrorAlert error={deployments.error} onRetry={() => deployments.refetch()} /> : null}
     {(['4G', '5G'] as const).map((generation) => <section className="scenario-family" key={generation}>
-      <div className="scenario-family-heading"><span>{generation}</span><div><h2>{generation} laboratory profiles</h2><p>{generation === '4G' ? 'LTE simulation or guarded LTE RF preparation.' : 'SA simulation or guarded SA RF preparation.'}</p></div></div>
+      <div className="scenario-family-heading"><span>{generation}</span><div><h2>{generation} laboratory profiles</h2><p>{generation === '4G' ? 'LTE simulation or guarded LTE RF preparation.' : 'SA simulation and guarded SA or NSA RF preparation.'}</p></div></div>
       <div className="scenario-grid">
         {deploymentList.filter((deployment) => getScenarioGuidance(deployment.id)?.generation === generation).map((deployment) => {
           const lastRun = runList.find((run) => run.scenario === deployment.id);

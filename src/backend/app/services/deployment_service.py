@@ -27,6 +27,11 @@ if TYPE_CHECKING:
 
 
 CONTAINER_RE = re.compile(r"^(?P<name>lain5g-lab-[a-z0-9-]+-(?P<service>[a-z0-9-]+))\s+")
+SHARED_X310_RF_PAIRS = {
+    frozenset(("4g-lte-x310", "5g-nsa-x310")),
+    frozenset(("4g-lte-x310", "5g-sa-x310")),
+    frozenset(("5g-nsa-x310", "5g-sa-x310")),
+}
 
 
 class DeploymentNotFoundError(ValueError):
@@ -155,6 +160,17 @@ class DeploymentService:
             raise DeploymentCommandError("X310_CORE_START_FAILED", f"{definition.name} core could not be started.", core_result)
         result = self.command_service.execute_command(command, cwd=definition.deployment_path, dry_run=False)
         if self._failed(result):
+            diagnostic = f"{result.stdout}\n{result.stderr}"
+            if scenario == "5g-nsa-x310" and re.search(
+                r"RFNOC::GRAPH|RfnocError|RFNoC protocol mismatch|Failure to create rfnoc_graph|uhd_init failed|Management operation failed|Incorrect number of operations",
+                diagnostic,
+                re.IGNORECASE,
+            ):
+                raise DeploymentCommandError(
+                    "X310_RFNOC_INIT_FAILED",
+                    "The X310 was detected, but the NSA eNB could not initialize its UHD/RFNoC radio graph. Check that the FPGA image matches UHD 4.10 in the srsRAN image and verify the X310 management-link state.",
+                    result,
+                )
             raise DeploymentCommandError("X310_RF_START_FAILED", f"{definition.name} guarded RF session could not be started.", result)
         return DeploymentActionResponse(id=scenario, action="start-rf", status=self.get_status(scenario).status, command=result, message="Guarded RF session started with container-enforced auto-stop")
 
@@ -176,6 +192,15 @@ class DeploymentService:
             containers = self._parse_containers(result.stdout)
             always_expected = [service for service in definition.expected_services if service != definition.rf_service]
             state = self._state_from_containers(containers, always_expected)
+            # A healthy shared core is not the same as an active RF profile.
+            # Keep RF-capable deployments in partial state until their guarded
+            # RAN service is actually running.
+            rf_service_running = bool(
+                definition.rf_service
+                and any(container.service == definition.rf_service and container.running for container in containers)
+            )
+            if definition.rf_capable and state == "running" and not rf_service_running:
+                state = "partial"
         return DeploymentStatus(id=scenario, status=state, containers=containers, checked_at=datetime.now(UTC), command=result, output=result.stdout)
 
     def logs(self, scenario: str, *, container: str | None = None, tail: int | None = None) -> LogsResponse:
@@ -336,8 +361,19 @@ class DeploymentService:
                 continue
             if {other.id, definition.id} == {"5g-sa", "5g-sa-x310"}:
                 continue
-            status = self.get_status(other.id).status
-            if status in {"running", "partial"}:
+            other_status = self.get_status(other.id)
+            if frozenset((other.id, definition.id)) in SHARED_X310_RF_PAIRS:
+                # These X310 profiles can keep their separate cores running
+                # together. The shared SDR makes simultaneous RF sessions
+                # mutually exclusive, so only the other profile's RF service
+                # blocks a start.
+                if other.rf_service and any(
+                    container.service == other.rf_service and container.running
+                    for container in other_status.containers
+                ):
+                    raise DeploymentConflictError("Another laboratory scenario is currently running.", active_scenario=other.id)
+                continue
+            if other_status.status in {"running", "partial"}:
                 raise DeploymentConflictError("Another laboratory scenario is currently running.", active_scenario=other.id)
 
     def _ensure_components(self, definition: DeploymentDefinition, core_only: bool = False) -> None:

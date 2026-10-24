@@ -22,8 +22,8 @@ run_id="${LAIN5G_RUN_ID:-run-$(date -u +%Y%m%d-%H%M%S)}"
 run_dir="$repo_dir/runs/$run_id"
 mkdir -p "$run_dir/logs"
 REQUIRE_RF_READY=true LAIN5G_RUN_ID="$run_id" "$script_dir/preflight.sh"
-# Let the UHD probe release the X310 management channel before srsENB opens it.
-sleep 5
+# Let UHD's probe release the X310 management channel before srsENB opens it.
+sleep 10
 maximum_duration="$(sed -n 's/^maximum_duration_seconds:[[:space:]]*//p' "$manifest" | head -n1)"
 duration="${LAIN5G_RF_DURATION_SECONDS:-$maximum_duration}"
 [[ "$duration" =~ ^[0-9]+$ ]] && [ "$duration" -gt 0 ] && [ "$duration" -le "$maximum_duration" ] || { echo "RF start refused: duration must be 1..${maximum_duration} seconds" >&2; exit 2; }
@@ -42,17 +42,39 @@ fi
 
 started_at="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 printf 'started_at=%s\nrun_id=%s\nduration_seconds=%s\noperator_note=%s\n' "$started_at" "$run_id" "$duration" "${LAIN5G_RF_OPERATOR_NOTE:-not supplied}" > "$scenario_dir/.rf-active"
+session_file="$run_dir/rf-session.json"
+printf '{"scenario":"4g-lte-x310","run_id":"%s","status":"starting","started_at":"%s","duration_seconds":%s}\n' "$run_id" "$started_at" "$duration" > "$session_file"
 (cd "$scenario_dir" && LAIN5G_RF_DURATION_SECONDS="$duration" docker compose --env-file ../common/.env -f docker-compose.yml --profile rf up -d enb-x310)
 sleep 3
 if [ "$(docker inspect -f '{{.State.Running}}' lain5g-lab-4g-lte-x310-enb 2>/dev/null || true)" != true ]; then
+  (cd "$scenario_dir" && docker compose --env-file ../common/.env -f docker-compose.yml --profile rf logs --no-color --since "$started_at" enb-x310 >"$run_dir/logs/enb-x310.log" 2>/dev/null || true)
+  exit_code="$(docker inspect -f '{{.State.ExitCode}}' lain5g-lab-4g-lte-x310-enb 2>/dev/null || printf 'unknown')"
+  printf '{"scenario":"4g-lte-x310","run_id":"%s","status":"failed","started_at":"%s","finished_at":"%s","duration_seconds":%s,"container_exit_code":"%s","failure":"eNB exited during UHD initialization"}\n' \
+    "$run_id" "$started_at" "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "$duration" "$exit_code" > "$session_file"
   rm -f "$scenario_dir/.rf-active"
-  echo "RF start failed: eNB exited during UHD initialization" >&2
+  echo "RF start failed: eNB exited during UHD initialization (container exit ${exit_code}); session log: runs/${run_id}/logs/enb-x310.log" >&2
+  tail -n 45 "$run_dir/logs/enb-x310.log" >&2 || true
   exit 1
 fi
+printf '{"scenario":"4g-lte-x310","run_id":"%s","status":"running","started_at":"%s","duration_seconds":%s}\n' "$run_id" "$started_at" "$duration" > "$session_file"
 (
   exec 9>&-
   while [ "$(docker inspect -f '{{.State.Running}}' lain5g-lab-4g-lte-x310-enb 2>/dev/null || true)" = true ]; do sleep 2; done
   (cd "$scenario_dir" && docker compose --env-file ../common/.env -f docker-compose.yml --profile rf logs --no-color --since "$started_at" enb-x310 >"$run_dir/logs/enb-x310.log" 2>/dev/null || true)
+  exit_code="$(docker inspect -f '{{.State.ExitCode}}' lain5g-lab-4g-lte-x310-enb 2>/dev/null || printf 'unknown')"
+  finished_at="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+  started_epoch="$(date -u -d "$started_at" +%s 2>/dev/null || printf '0')"
+  finished_epoch="$(date -u +%s)"
+  elapsed=$((finished_epoch - started_epoch))
+  if [ "$exit_code" = 124 ] || { [ "$exit_code" = 143 ] && [ "$elapsed" -ge "$((duration - 3))" ]; }; then
+    session_status=auto_stopped
+    failure=null
+  else
+    session_status=failed
+    failure='"eNB exited before the requested auto-stop duration"'
+  fi
+  printf '{"scenario":"4g-lte-x310","run_id":"%s","status":"%s","started_at":"%s","finished_at":"%s","duration_seconds":%s,"elapsed_seconds":%s,"container_exit_code":"%s","failure":%s}\n' \
+    "$run_id" "$session_status" "$started_at" "$finished_at" "$duration" "$elapsed" "$exit_code" "$failure" > "$session_file"
   if grep -Fxq "run_id=$run_id" "$scenario_dir/.rf-active" 2>/dev/null; then
     (cd "$scenario_dir" && docker compose --env-file ../common/.env -f docker-compose.yml --profile rf stop enb-x310 >/dev/null 2>&1 || true)
     rm -f "$scenario_dir/.rf-active"

@@ -44,6 +44,13 @@ done
 # Sleep until permissions are set
 sleep 10;
 
+mysql -u root -h "${MYSQL_IP}" -e "CREATE USER IF NOT EXISTS 'scscf'@'%' IDENTIFIED BY 'heslo'"
+mysql -u root -h "${MYSQL_IP}" -e "ALTER USER 'scscf'@'%' IDENTIFIED BY 'heslo'"
+mysql -u root -h "${MYSQL_IP}" -e "CREATE USER IF NOT EXISTS 'scscf'@'${SCSCF_IP}' IDENTIFIED BY 'heslo'"
+mysql -u root -h "${MYSQL_IP}" -e "ALTER USER 'scscf'@'${SCSCF_IP}' IDENTIFIED BY 'heslo'"
+mysql -u root -h "${MYSQL_IP}" -e "GRANT ALL ON scscf.* TO 'scscf'@'%'"
+mysql -u root -h "${MYSQL_IP}" -e "GRANT ALL ON scscf.* TO 'scscf'@'${SCSCF_IP}'"
+
 # Create SCSCF database, populate tables and grant privileges
 if [[ -z "`mysql -u root -h ${MYSQL_IP} -qfsBe "SELECT SCHEMA_NAME FROM INFORMATION_SCHEMA.SCHEMATA WHERE SCHEMA_NAME='scscf'" 2>&1`" ]];
 then
@@ -56,8 +63,8 @@ then
 	SCSCF_USER_EXISTS=`mysql -u root -h ${MYSQL_IP} -s -N -e "SELECT EXISTS(SELECT 1 FROM mysql.user WHERE User = 'scscf' AND Host = '%')"`
 	if [[ "$SCSCF_USER_EXISTS" == 0 ]]
 	then
-		mysql -u root -h ${MYSQL_IP} -e "CREATE USER 'scscf'@'%' IDENTIFIED WITH mysql_native_password BY 'heslo'";
-		mysql -u root -h ${MYSQL_IP} -e "CREATE USER 'scscf'@'$SCSCF_IP' IDENTIFIED WITH mysql_native_password BY 'heslo'";
+		mysql -u root -h ${MYSQL_IP} -e "CREATE USER 'scscf'@'%' IDENTIFIED BY 'heslo'";
+		mysql -u root -h ${MYSQL_IP} -e "CREATE USER 'scscf'@'$SCSCF_IP' IDENTIFIED BY 'heslo'";
 		mysql -u root -h ${MYSQL_IP} -e "GRANT ALL ON scscf.* TO 'scscf'@'%'";
 		mysql -u root -h ${MYSQL_IP} -e "GRANT ALL ON scscf.* TO 'scscf'@'$SCSCF_IP'";
 		mysql -u root -h ${MYSQL_IP} -e "FLUSH PRIVILEGES;"

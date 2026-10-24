@@ -21,7 +21,7 @@ export function RfSafetyPage() {
           <button className="danger" onClick={() => setConfirm(true)}>Emergency stop</button>
         </div>
         <figure>
-          <img src="/images/lain5g/isolation-concept.webp" width="1100" height="650" alt="Concept illustration of isolated network zones and guarded boundaries" loading="lazy" decoding="async" />
+          <img src="/images/lain5g/rf-isolation.webp" width="1672" height="941" alt="Cabled SDR bench, attenuators, shielded test enclosure, and separated antenna area" loading="lazy" decoding="async" />
           <figcaption><span>🔒 Isolation concept</span><strong>Artwork only. Actual enforcement comes from local manifests, preflight and backend guardrails.</strong></figcaption>
         </figure>
       </header>

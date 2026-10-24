@@ -301,11 +301,14 @@ def main() -> int:
                 continue
             try:
                 value = _load(path)
+                current_release = _requires_current_release(rel, value)
                 validate_public_result(
                     value,
                     root=ROOT,
                     expected_scenario=scenario,
-                    require_current_release=_requires_current_release(rel, value),
+                    require_current_release=current_release,
+                    historical_source_commit=None if current_release else value.get("source_commit"),
+                    historical_snapshot_tag=None if current_release else f"v{value.get('release_version', '').split('-')[0]}",
                 )
                 if path.name != f"{value['run_id']}.json":
                     raise PublicResultError("scenario result filename does not match its run ID")

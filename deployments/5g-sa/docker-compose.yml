@@ -10,6 +10,8 @@ services:
     networks:
       core:
         ipv4_address: 10.20.0.2
+        aliases:
+          - lain5g-lab-5g-sa-x310-mongo
     healthcheck:
       test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping').ok"]
       interval: 5s
@@ -117,6 +119,8 @@ services:
     environment:
       UE_SUBNET: ${UE_SUBNET:-10.45.0.0/16}
       UE_GATEWAY: ${UE_GATEWAY:-10.45.0.1}
+      UE_IMS_SUBNET: ${UE_IMS_SUBNET:-10.46.0.0/16}
+      UE_IMS_GATEWAY: ${UE_IMS_GATEWAY:-10.46.0.1}
     command:
       - open5gs-upfd
       - -c
@@ -207,11 +211,8 @@ services:
 
 networks:
   core:
-    name: lain5g-lab-5g-sa-core
-    driver: bridge
-    ipam:
-      config:
-        - subnet: 10.20.0.0/24
+    name: lain5g-lab-5g-sa-x310-core
+    external: true
 
 volumes:
   mongo-data:

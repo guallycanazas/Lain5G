@@ -28,16 +28,17 @@ The public profile IDs retain `x310` for compatibility. Reader-facing
 documentation uses USRP as the broader hardware category and identifies concrete
 X-Series requirements where they apply.
 
-## IMS and Archived Scenarios
+## IMS and Internal Scenarios
 
 - [IMS integration](ims.md)
 - [4G LTE and VoLTE](4g_volte.md)
 - [VoLTE validation](volte_validation.md)
 - [Archived 5G VoNR scenario](5g_vonr.md)
-- [Real IMS package](real_ims.md)
+- [Isolated IMS runtime](real_ims.md)
 
-These documents include archived or internal scenarios that are not part of the
-four-profile public operational catalog. Their scope is stated in each guide.
+These guides describe the isolated IMS runtime and internal scenarios, which
+remain separate from the five-profile deployment catalog. Their operating and
+validation boundaries are stated in each guide.
 
 ## Development and Reproducibility
 

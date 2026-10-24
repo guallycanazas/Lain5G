@@ -2,9 +2,9 @@
   "@context": "https://w3id.org/codemeta/3.0",
   "@type": "SoftwareSourceCode",
   "name": "OpenLain5G",
-  "description": "OpenLain5G is a modular framework for reproducible 4G LTE and 5G SA mobile network laboratories. It deploys and manages open-source RAN, core, IMS, and simulation components through Docker Compose, command-line, and web interfaces, with customizable software scenarios, guarded X-Series USRP workflows, automated validation, and traceable run evidence.",
-  "version": "1.1.5",
-  "datePublished": "2026-08-17",
+  "description": "OpenLain5G is a modular framework for reproducible 4G LTE, 5G SA, and guarded 5G NSA mobile network laboratories. It deploys and manages open-source RAN, core, IMS, and simulation components through Docker Compose, command-line, and web interfaces, with customizable software scenarios, guarded X-Series USRP workflows, automated validation, and traceable run evidence.",
+  "version": "1.1.6",
+  "datePublished": "2026-10-24",
   "codeRepository": "https://github.com/guallycanazas/Lain5G",
   "url": "https://github.com/guallycanazas/Lain5G",
   "license": "https://spdx.org/licenses/MIT",
@@ -55,5 +55,5 @@
   ],
   "developmentStatus": "https://www.repostatus.org/#active",
   "issueTracker": "https://github.com/guallycanazas/Lain5G/issues",
-  "releaseNotes": "https://github.com/guallycanazas/Lain5G/releases/tag/v1.1.5"
+  "releaseNotes": "https://github.com/guallycanazas/Lain5G/releases/tag/v1.1.6"
 }

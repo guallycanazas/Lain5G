@@ -8,13 +8,16 @@ from backend.app.main import create_app
 ROOT = Path(__file__).resolve().parents[3]
 
 
-def test_real_ims_routes_are_not_public():
+def test_real_ims_routes_are_available_through_local_api():
     with TestClient(create_app()) as client:
         paths = client.get("/openapi.json").json()["paths"]
         response = client.get("/api/ims-real/status?mode=4g")
 
-    assert not any(path.startswith("/api/ims-real") for path in paths)
-    assert response.status_code == 404
+    assert "/api/ims-real/preflight" in paths
+    assert "/api/ims-real/status" in paths
+    assert "/api/ims-real/subscribers" in paths
+    assert "/api/ims-real/sync-subscriber" in paths
+    assert response.status_code == 200
 
 
 def test_internal_signaling_has_no_public_cli_entrypoint():

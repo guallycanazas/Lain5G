@@ -99,6 +99,7 @@ export const subscriberDetail = {
   imsi: '001010000000001',
   msisdn: '51999999999',
   dnn: 'internet',
+  apns: ['internet', 'ims'],
   sst: 1,
   sd: '000001',
   security: {
@@ -109,7 +110,6 @@ export const subscriberDetail = {
     sqn: '************',
   },
   checked_at: '2026-07-10T02:00:00Z',
-  note: 'A subscriber record in Open5GS does not establish that the UE authenticated successfully.',
 };
 
 export const subscriberList = {

@@ -10,12 +10,17 @@ export function useProfile(profile: string | null) {
   return useQuery({ queryKey: ['profile', profile], queryFn: () => profilesApi.detail(profile || ''), enabled: Boolean(profile) });
 }
 
+export function useProfileBackup(profile: string | null) {
+  return useQuery({ queryKey: ['profile-backup', profile], queryFn: () => profilesApi.latestBackup(profile || ''), enabled: Boolean(profile) });
+}
+
 export function useProfileActions(profile: string | null) {
   const queryClient = useQueryClient();
   const invalidate = async () => {
     await queryClient.invalidateQueries({ queryKey: ['profiles'] });
     await queryClient.invalidateQueries({ queryKey: ['profile', profile] });
     await queryClient.invalidateQueries({ queryKey: ['profile-diff', profile] });
+    await queryClient.invalidateQueries({ queryKey: ['profile-backup', profile] });
   };
   return {
     update: useMutation({ mutationFn: (payload: ProfileConfig) => profilesApi.update(profile || '', payload), onSuccess: invalidate }),

@@ -27,6 +27,8 @@ from .pyhss_service import PyHSSError, PyHSSService
 
 PYHSS_IMAGE = f"lain5g-lab/pyhss-secure:{VERSION}"
 FIRST_PARTY_IMAGES = {
+    # Real IMS Open5GS roles extend the user's own source-built OpenLain5G image.
+    "lain5g-lab/open5gs:local": "open5gs",
     f"lain5g-lab/ims-real-open5gs:{VERSION}": "ims-real-open5gs",
     f"lain5g-lab/ims-real-kamailio:{VERSION}": "ims-real-kamailio",
     PYHSS_IMAGE: "pyhss-secure",
@@ -128,7 +130,7 @@ class RealIMSService:
             RealIMSCheck(
                 id="first_party_images",
                 status="PASS" if not missing_images else "FAIL",
-                message="All first-party real IMS images are present" if not missing_images else "First-party images must be built explicitly",
+                message="All first-party real IMS images are present" if not missing_images else "Prepare the missing first-party images from the Preparation page before starting IMS",
                 evidence={"required": sorted(FIRST_PARTY_IMAGES), "missing": sorted(missing_images)},
             )
         )
@@ -151,7 +153,7 @@ class RealIMSService:
             if present and not force:
                 reused.append(image)
                 continue
-            self._run(["docker", "build", "-t", image, str(context)], timeout=600)
+            self._run(["docker", "build", "-t", image, str(context)], timeout=self.settings.image_pull_timeout)
             built.append(image)
         return {"status": "PASS", "executed": True, "built": built, "reused": reused}
 
@@ -170,7 +172,6 @@ class RealIMSService:
                 "command": command,
                 "rf_started": False,
             }
-        self._enforce_mutual_exclusion(mode)
         report = self.preflight(mode)
         failures = [check.message for check in report.checks if check.status == "FAIL"]
         if failures:
@@ -240,13 +241,118 @@ class RealIMSService:
         self._write_json(self._state_dir(mode) / "provisioning.json", report)
         return report
 
+    def sync_subscriber(self, source_mode: Mode, target_mode: Mode, imsi: str, mcc: str = "001", mnc: str = "01") -> dict[str, Any]:
+        """Copy an existing IMS identity to the other local IMS runtime without exposing its keys."""
+        self._validate_mode(source_mode)
+        self._validate_mode(target_mode)
+        if source_mode == target_mode:
+            raise RealIMSError("source and target IMS modes must be different")
+        if not re.fullmatch(r"[0-9]{14,15}", imsi) or not imsi.startswith(f"{mcc}{mnc}"):
+            raise RealIMSError("subscriber IMSI does not match the requested MCC/MNC")
+        source_env = self._require_matching_runtime(source_mode, mcc, mnc)
+        self._require_matching_runtime(target_mode, mcc, mnc)
+        source_listing = self.subscribers(source_mode)
+        source = next((item for item in source_listing.subscribers if item.imsi == imsi), None)
+        if source is None or not source.open5gs_present or not source.pyhss_present:
+            raise RealIMSError("subscriber must be fully synchronized in the source IMS mode before copying")
+
+        script = (
+            f"const value=db.getSiblingDB('open5gs').subscribers.findOne({{imsi:{json.dumps(imsi)}}}, "
+            "{imsi:1,msisdn:1,security:1,subscriber_status:1,slice:1,_id:0});\n"
+            "print(JSON.stringify(value));\n"
+        )
+        command = self._compose_command(source_mode, source_env, "exec") + ["-T", "mongo", "mongosh", "--quiet", "open5gs"]
+        record = _last_json_object(self._run(command, input_text=script).stdout)
+        security = record.get("security") if isinstance(record.get("security"), dict) else {}
+        ki = security.get("k")
+        opc = security.get("opc")
+        msisdn_raw = record.get("msisdn")
+        msisdn = msisdn_raw[0] if isinstance(msisdn_raw, list) and msisdn_raw else msisdn_raw
+        if not isinstance(ki, str) or not isinstance(opc, str) or not isinstance(msisdn, str):
+            raise RealIMSError("source subscriber is missing required authentication data")
+        try:
+            sqn_raw = security.get("sqn", "0")
+            sqn = int(sqn_raw, 16) if isinstance(sqn_raw, str) else int(sqn_raw)
+            subscriber = RealIMSSubscriber(
+                imsi=imsi,
+                msisdn=msisdn,
+                ki=ki,
+                opc=opc,
+                amf=str(security.get("amf", "8000")),
+                sqn=sqn,
+                enabled=int(record.get("subscriber_status", 0)) == 0,
+            )
+        except (TypeError, ValueError) as exc:
+            raise RealIMSError("source subscriber authentication data is invalid") from exc
+
+        report = self.provision(target_mode, subscriber, mcc, mnc, execute=True)
+        self._write_json(self._state_dir(target_mode) / "sync.json", {
+            "source_mode": source_mode,
+            "target_mode": target_mode,
+            "imsi": imsi,
+            "status": "PASS",
+        })
+        return {
+            "status": "PASS",
+            "source_mode": source_mode,
+            "target_mode": target_mode,
+            "imsi": imsi,
+            "subscriber": report,
+            "secrets_redacted": True,
+        }
+
+    def delete_subscriber(
+        self,
+        mode: Mode,
+        imsi: str,
+        mcc: str = "001",
+        mnc: str = "01",
+        *,
+        execute: bool = False,
+    ) -> dict[str, Any]:
+        self._validate_mode(mode)
+        PLMN(mcc=mcc, mnc=mnc)
+        if not re.fullmatch(r"[0-9]{14,15}", imsi) or not imsi.startswith(f"{mcc}{mnc}"):
+            raise RealIMSError("subscriber IMSI must match the requested MCC/MNC")
+        if not execute:
+            return {
+                "mode": mode,
+                "status": "DRY_RUN",
+                "executed": False,
+                "imsi": imsi,
+                "resources": ["open5gs", "pyhss:ims_subscriber", "pyhss:subscriber", "pyhss:auc"],
+                "shared_apns_deleted": False,
+            }
+        env_file = self._require_matching_runtime(mode, mcc, mnc)
+        pyhss_results = self._pyhss(mode, env_file).delete_subscriber(imsi)
+        script = (
+            f"const result = db.getSiblingDB('open5gs').subscribers.deleteOne({{imsi: {json.dumps(imsi)}}});\n"
+            "print(JSON.stringify({acknowledged: result.acknowledged, deleted: result.deletedCount}));\n"
+        )
+        command = self._compose_command(mode, env_file, "exec") + ["-T", "mongo", "mongosh", "--quiet", "open5gs"]
+        mongo_result = _last_json_object(self._run(command, input_text=script).stdout)
+        if not mongo_result.get("acknowledged"):
+            raise RealIMSError("Open5GS did not acknowledge subscriber deletion after pyHSS records were removed")
+        report = {
+            "mode": mode,
+            "status": "PASS",
+            "executed": True,
+            "imsi": imsi,
+            "open5gs_deleted": int(mongo_result.get("deleted", 0)) == 1,
+            "pyhss": [item.model_dump(mode="json") for item in pyhss_results],
+            "shared_apns_deleted": False,
+            "message": "Subscriber records removed. Shared APN profiles were kept; UE deregistration may be required.",
+        }
+        self._write_json(self._state_dir(mode) / "deletion.json", report)
+        return report
+
     def status(self, mode: Mode, imsi: str | None = None) -> RealIMSStatusReport:
         self._validate_mode(mode)
         if imsi is not None and not re.fullmatch(r"[0-9]{14,15}", imsi):
             raise RealIMSError("IMSI must contain 14 or 15 digits")
         env_file = self._state_dir(mode) / "stack.env"
-        if not env_file.is_file():
-            return self._report(mode, [self._check("runtime", False, "Real IMS mode has not been initialized")])
+        if not _runtime_file_available(env_file):
+            return self._report(mode, [self._check("runtime", False, "Real IMS runtime state is missing or inaccessible")])
         completed = self._run(self._compose_command(mode, env_file, "ps") + ["--format", "json"], check=False)
         running = _running_services(completed.stdout)
         required = set(self._services(mode))
@@ -275,7 +381,7 @@ class RealIMSService:
     def subscribers(self, mode: Mode) -> RealIMSSubscriberList:
         self._validate_mode(mode)
         env_file = self._state_dir(mode) / "stack.env"
-        if not env_file.is_file():
+        if not _runtime_file_available(env_file):
             raise RealIMSError("real IMS mode must be started before listing subscribers")
 
         pyhss = self._pyhss(mode, env_file)
@@ -525,17 +631,6 @@ class RealIMSService:
             raise RealIMSError("MCC/MNC conflict with the running real IMS stack")
         return env_file
 
-    def _enforce_mutual_exclusion(self, mode: Mode) -> None:
-        other: Mode = "5g" if mode == "4g" else "4g"
-        result = self._run(["docker", "compose", "ls", "--format", "json"], check=False)
-        try:
-            projects = json.loads(result.stdout or "[]")
-        except json.JSONDecodeError:
-            projects = []
-        other_project = self._project_name(other)
-        if any(isinstance(item, dict) and item.get("Name") == other_project and "running" in str(item.get("Status", "")).lower() for item in projects):
-            raise RealIMSError(f"real IMS {other} mode is already running")
-
     def _compose_command(self, mode: Mode, env_file: Path, action: str) -> list[str]:
         self._validate_mode(mode)
         if action not in ALLOWED_COMPOSE_ACTIONS:
@@ -678,6 +773,16 @@ class RealIMSService:
     def _report(mode: Mode, checks: list[RealIMSCheck]) -> RealIMSStatusReport:
         status = "FAIL" if any(item.status == "FAIL" for item in checks) else "WARNING" if any(item.status == "WARNING" for item in checks) else "PASS"
         return RealIMSStatusReport(mode=mode, status=status, checks=checks)
+
+
+def _runtime_file_available(path: Path) -> bool:
+    try:
+        return path.is_file()
+    except OSError:
+        # A containerized backend may own its private runtime file while a
+        # host-side read-only caller cannot stat it. Report unavailable state
+        # cleanly instead of turning the status/subscriber route into HTTP 500.
+        return False
 
 
 def _read_env(path: Path) -> dict[str, str]:

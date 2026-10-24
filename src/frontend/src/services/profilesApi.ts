@@ -1,5 +1,5 @@
 import { apiRequest } from './apiClient';
-import type { ProfileApplyResult, ProfileConfig, ProfileDiff, ProfileSummary, ProfileValidation } from '../types/profile';
+import type { ProfileApplyResult, ProfileBackupInfo, ProfileConfig, ProfileDiff, ProfileSummary, ProfileValidation } from '../types/profile';
 
 export const profilesApi = {
   list: () => apiRequest<ProfileSummary[]>('/api/profiles'),
@@ -9,4 +9,5 @@ export const profilesApi = {
   diff: (profile: string) => apiRequest<ProfileDiff>(`/api/profiles/${encodeURIComponent(profile)}/diff`),
   apply: (profile: string) => apiRequest<ProfileApplyResult>(`/api/profiles/${encodeURIComponent(profile)}/apply`, { method: 'POST' }),
   restore: (profile: string) => apiRequest<ProfileApplyResult>(`/api/profiles/${encodeURIComponent(profile)}/restore`, { method: 'POST' }),
+  latestBackup: (profile: string) => apiRequest<ProfileBackupInfo>(`/api/profiles/${encodeURIComponent(profile)}/backups/latest`),
 };

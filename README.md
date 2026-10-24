@@ -5,7 +5,7 @@
 **Evidence-oriented orchestration for software 4G/5G networks and guarded X-Series USRP laboratory workflows**
 
 [![CI](https://github.com/guallycanazas/Lain5G/actions/workflows/ci.yml/badge.svg)](https://github.com/guallycanazas/Lain5G/actions/workflows/ci.yml)
-[![Release](https://img.shields.io/badge/release-v1.1.5-4051b5.svg)](https://github.com/guallycanazas/Lain5G/releases/tag/v1.1.5)
+[![Release](https://img.shields.io/badge/release-v1.1.6-4051b5.svg)](https://github.com/guallycanazas/Lain5G/releases/tag/v1.1.6)
 [![Project source: MIT](https://img.shields.io/badge/project_source-MIT-d9a441.svg)](LICENSE.txt)
 [![Platform](https://img.shields.io/badge/platform-GNU%2FLinux_x86__64-2f6f62.svg)](docs/installation.md)
 [![Python](https://img.shields.io/badge/Python-%E2%89%A53.10-3776ab.svg)](src/backend/requirements.txt)
@@ -14,15 +14,15 @@
 
 </div>
 
-OpenLain5G is a modular framework for reproducible 4G LTE and 5G SA mobile
-network laboratories. It deploys and manages open-source RAN, core, IMS, and
+OpenLain5G is a modular framework for reproducible 4G LTE, 5G SA, and guarded
+5G NSA mobile network laboratories. It deploys and manages open-source RAN, core, IMS, and
 simulation components through Docker Compose, a command-line interface, and a
 web application. Designed for research, testing, and education, it provides a
 customizable environment with software-only scenarios, guarded X-Series USRP
 workflows, declarative configuration, automated validation, and traceable run
 evidence.
 
-> **Release status:** [`v1.1.5`](https://github.com/guallycanazas/Lain5G/tree/v1.1.5)
+> **Release status:** [`v1.1.6`](https://github.com/guallycanazas/Lain5G/tree/v1.1.6)
 > is the latest immutable source release.
 
 > **Naming:** OpenLain5G is the current project name. The repository URL, `lain5g`
@@ -57,7 +57,7 @@ prerequisites manually.
 | Container runtime | Docker Engine and Docker Compose v2 installed; daemon startup attempted where supported |
 | User access | Docker group membership configured only when the host uses that access model |
 | Private state | Ignored profile and application files created with restrictive permissions |
-| Components | All unique images required by the four public profiles downloaded |
+| Components | All unique images required by the five public profiles downloaded |
 | RF behavior | No RF transmission; hardware operation remains separately authorized and fail-closed |
 
 If setup changed Docker-group membership and the current shell still lacks
@@ -140,6 +140,7 @@ over-air UE evidence remains `NOT_TESTED`.
 | `5g-sa` | Software only | Open5GS 5GC + UERANSIM gNB/UE + data PDU session | Clean-VM sanitized summary: [15/15 `PASS`](results/public/5g-sa-sim/run-20260730-021914.json) |
 | `4g-lte-x310` | Guarded RF | Open5GS EPC + compact IMS infrastructure + srsRAN eNB + compatible X-Series USRP | Guarded workflow with run-correlated local RF evidence |
 | `5g-sa-x310` | Guarded RF | Open5GS 5GC + compact IMS infrastructure + srsRAN Project gNB + compatible X-Series USRP | Guarded workflow with run-correlated local RF evidence |
+| `5g-nsa-x310` | Guarded RF | Shared Open5GS EPC + compact IMS infrastructure + srsRAN EN-DC eNB + compatible dual-chain X-Series USRP | Physical UE connection evidence recorded in v1.1.3; this is separate from software-only cloud runs |
 
 The current LTE and 5G SA summaries are sanitized validator records from a clean
 Ubuntu 24.04 virtual machine, not raw protocol traces. They identify
@@ -170,7 +171,8 @@ flowchart TB
     C --> S4[4G LTE ZMQ simulation]
     C --> S5[5G SA UERANSIM simulation]
     C --> R4[Guarded 4G USRP]
-    C --> R5[Guarded 5G USRP]
+    C --> R5[Guarded 5G SA USRP]
+    C --> R6[Guarded 5G NSA EN-DC USRP]
     O --> V[Scenario validators]
     V --> RUNS[Run metadata, checks, and bounded logs]
     RUNS --> UI
@@ -193,7 +195,7 @@ After running the installer, execute the repository-wide safe gate:
 make softwarex-check
 ```
 
-The current gate passes **323 backend tests**, **51 frontend tests**, and **78%
+The current gate passes **350 backend tests**, **107 frontend tests**, and **79%
 backend line coverage**, followed by TypeScript checking, a production frontend
 build, safe Compose rendering, profile validation, version and citation metadata
 checks, internal-link validation, public-result schema checks, release-artifact
@@ -208,7 +210,7 @@ separately by the scenario validators.
 
 | Item | Repository value |
 | --- | --- |
-| Current immutable release | [`v1.1.5`](https://github.com/guallycanazas/Lain5G/releases/tag/v1.1.5) |
+| Current immutable release | [`v1.1.6`](https://github.com/guallycanazas/Lain5G/releases/tag/v1.1.6) |
 | Version control | Git and GitHub |
 | Project-source license | [MIT](LICENSE.txt), with separate upstream terms |
 | Languages | Python, TypeScript, and Shell |

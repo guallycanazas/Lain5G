@@ -35,6 +35,7 @@ export function aggregateValidationStatus(checks: ValidationCheck[]): Validation
   if (statuses.includes('FAIL')) return 'FAIL';
   if (statuses.includes('WARNING')) return 'WARNING';
   if (statuses.every((status) => status === 'PASS')) return 'PASS';
+  if (statuses.includes('PASS') && statuses.includes('NOT_TESTED')) return 'PARTIAL';
   return 'NOT_TESTED';
 }
 
@@ -75,6 +76,7 @@ export function validationDescription(id: string): string {
     sip_register: 'SIP registration observed',
     hardware: 'SDR hardware detected',
     preflight: 'Preflight passed',
+    rfnoc_initialization: 'UHD / RFNoC radio initialization',
   };
   return labels[id] || id;
 }

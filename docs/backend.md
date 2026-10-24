@@ -28,7 +28,7 @@ LAIN5G_OPEN5GS_MONGO_DATABASE=open5gs
 LAIN5G_OPEN5GS_SUBSCRIBER_COLLECTION=subscribers
 LAIN5G_SUBSCRIBER_SECRETS_VISIBLE=false
 LAIN5G_SUBSCRIBER_OPERATION_TIMEOUT=15
-LAIN5G_OPEN5GS_DOCKER_NETWORK=lain5g-lab-5g-sa-core
+LAIN5G_OPEN5GS_DOCKER_NETWORK=lain5g-lab-5g-sa-x310-core
 LAIN5G_OPEN5GS_DOCKER_IP=10.20.0.250
 ```
 
@@ -75,6 +75,13 @@ The backend does not start Docker during startup.
 - `PATCH /api/subscribers/{imsi}`
 - `POST /api/subscribers/{imsi}/clone`
 - `DELETE /api/subscribers/{imsi}`
+- `GET /api/ims-real/preflight?mode=4g|5g`
+- `GET /api/ims-real/status?mode=4g|5g`
+- `GET /api/ims-real/subscribers?mode=4g|5g`
+- `POST /api/ims-real/images`
+- `POST /api/ims-real/start`
+- `POST /api/ims-real/stop`
+- `POST /api/ims-real/provision`
 
 ## cURL Examples
 

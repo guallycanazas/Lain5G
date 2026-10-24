@@ -36,7 +36,7 @@ fi
 if [ -f "$channel" ]; then
   grep -Eq '^downlink_frequency_hz:[[:space:]]*[0-9]+' "$channel" && add channel_frequency PASS "frequency configured" || add channel_frequency FAIL "frequency not configured"
 fi
-"$script_dir/hardware-check.sh" >"$run_dir/logs/hardware-check.log" 2>&1 && add hardware PASS "hardware check passed" || add hardware FAIL "hardware check failed"
+"$script_dir/host-hardware-check.sh" >"$run_dir/logs/hardware-check.log" 2>&1 && add hardware PASS "hardware check passed" || add hardware FAIL "hardware check failed"
 "$script_dir/uhd-check.sh" >"$run_dir/logs/uhd-check.log" 2>&1 && add uhd PASS "UHD check passed" || add uhd FAIL "UHD check failed"
 "$script_dir/fpga-check.sh" "$run_dir/logs/uhd-check.log" >"$run_dir/logs/fpga-check.log" 2>&1 && add fpga PASS "FPGA compatible" || add fpga FAIL "FPGA unknown or incompatible"
 missing_services=()

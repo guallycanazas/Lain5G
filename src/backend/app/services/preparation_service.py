@@ -3,11 +3,12 @@ from __future__ import annotations
 import shutil
 import threading
 from datetime import UTC, datetime
+from pathlib import Path
 from uuid import uuid4
 
-from ..models.preparation import ComponentImageStatus, ComponentPullImageProgress, ComponentPullJob, ComponentPullResponse, PreparationCheck, PreparationReport, ProfileComponentStatus
+from ..models.preparation import ComponentImageStatus, ComponentPullImageProgress, ComponentPullJob, ComponentPullResponse, DockerHostInfo, PreparationCheck, PreparationReport, ProfileComponentStatus
 from ..settings import Settings
-from .command_service import CommandService
+from .command_service import DOCKER_HOST_INFO_FORMAT, CommandService
 from .image_catalog import IMAGE_CATALOG, PROFILE_IMAGES, PUBLIC_PROFILE_IDS, RF_ACCESS_IMAGES, required_images
 from .scenario_environment import prepare_scenario_environment
 
@@ -48,7 +49,141 @@ class PreparationService:
             ready=all(check.status != "FAIL" for check in diagnostics) and all(profile.ready for profile in profiles),
             diagnostics=diagnostics,
             profiles=profiles,
+            docker_host=self.docker_host_info(),
         )
+
+    def docker_host_info(self) -> DockerHostInfo | None:
+        result = self.command_service.execute_command(
+            ["docker", "info", "--format", DOCKER_HOST_INFO_FORMAT],
+            dry_run=False,
+            timeout=10,
+            preserve_stdout=True,
+        )
+        if result.exit_code != 0:
+            return None
+        values = result.stdout.split("|")
+        if len(values) != 19:
+            return None
+        disk = shutil.disk_usage(self.settings.project_root)
+        dmi = self._dmi_host_info()
+        return DockerHostInfo(
+            name=values[0] or None,
+            operating_system=values[1] or None,
+            os_version=values[2] or None,
+            os_type=values[3] or None,
+            architecture=values[4] or None,
+            manufacturer=dmi["manufacturer"],
+            product_name=dmi["product_name"],
+            firmware_vendor=dmi["firmware_vendor"],
+            firmware_version=dmi["firmware_version"],
+            board_name=dmi["board_name"],
+            virtualization=dmi["virtualization"],
+            cpu_model=self._cpu_model(),
+            physical_cores=self._physical_core_count(),
+            kernel_version=values[5] or None,
+            docker_version=values[6] or None,
+            storage_driver=values[7] or None,
+            docker_root_dir=values[8] or None,
+            cgroup_driver=values[9] or None,
+            cgroup_version=values[10] or None,
+            cpus=self._optional_int(values[11]),
+            memory_bytes=self._optional_int(values[12]),
+            containers_total=self._optional_int(values[14]),
+            containers_running=self._optional_int(values[15]),
+            containers_paused=self._optional_int(values[16]),
+            containers_stopped=self._optional_int(values[17]),
+            images_count=self._optional_int(values[18]),
+            workspace_disk_total_bytes=disk.total,
+            workspace_disk_free_bytes=disk.free,
+        )
+
+    @staticmethod
+    def _optional_int(value: str) -> int | None:
+        try:
+            return int(value)
+        except (TypeError, ValueError):
+            return None
+
+    @staticmethod
+    def _cpu_model() -> str | None:
+        try:
+            with open("/proc/cpuinfo", encoding="utf-8") as cpuinfo:
+                for line in cpuinfo:
+                    key, separator, value = line.partition(":")
+                    if separator and key.strip().lower() in {"model name", "hardware"} and value.strip():
+                        return value.strip()
+        except OSError:
+            pass
+        return None
+
+    @staticmethod
+    def _dmi_host_info() -> dict[str, str | None]:
+        dmi_root = Path("/sys/class/dmi/id")
+        fields = {
+            "manufacturer": "sys_vendor",
+            "product_name": "product_name",
+            "firmware_vendor": "bios_vendor",
+            "firmware_version": "bios_version",
+            "board_name": "board_name",
+        }
+        values: dict[str, str | None] = {}
+        for output_key, filename in fields.items():
+            try:
+                value = (dmi_root / filename).read_text(encoding="utf-8").strip()
+                values[output_key] = value or None
+            except OSError:
+                values[output_key] = None
+
+        vendor = values["manufacturer"] or ""
+        product = values["product_name"] or ""
+        dmi_signature = f"{vendor} {product}".lower()
+        virtual_signatures = {
+            "qemu": "QEMU/KVM",
+            "kvm": "KVM",
+            "vmware": "VMware",
+            "virtualbox": "VirtualBox",
+            "innotek": "VirtualBox",
+            "microsoft corporation virtual machine": "Microsoft Hyper-V",
+            "xen": "Xen",
+            "amazon ec2": "Amazon EC2 VM",
+            "google": "Google Cloud VM",
+            "openstack": "OpenStack VM",
+            "parallels": "Parallels",
+            "bhyve": "bhyve",
+            "bochs": "Bochs",
+            "libvirt": "libvirt VM",
+        }
+        virtualization = next((label for signature, label in virtual_signatures.items() if signature in dmi_signature), None)
+        if virtualization is None:
+            try:
+                cpuinfo = Path("/proc/cpuinfo").read_text(encoding="utf-8", errors="ignore").lower()
+                if any(line.startswith("flags") and " hypervisor " in f" {line} " for line in cpuinfo.splitlines()):
+                    virtualization = "Virtual machine (hypervisor flag)"
+            except OSError:
+                pass
+        physical_vendor_signatures = (
+            "asustek", "asus", "dell inc.", "hewlett-packard", "hp", "lenovo", "gigabyte", "micro-star",
+            "msi", "acer", "apple inc.", "framework", "system76", "purism",
+        )
+        if virtualization is None and product and any(signature in vendor.lower() for signature in physical_vendor_signatures):
+            virtualization = "Native hardware (DMI)"
+        values["virtualization"] = virtualization or "Unknown"
+        return values
+
+    @staticmethod
+    def _physical_core_count() -> int | None:
+        try:
+            cpuinfo = Path("/proc/cpuinfo").read_text(encoding="utf-8", errors="ignore")
+        except OSError:
+            return None
+        cores = set()
+        for processor in cpuinfo.split("\n\n"):
+            fields = {key.strip(): value.strip() for line in processor.splitlines() if ":" in line for key, value in [line.split(":", 1)]}
+            physical_id = fields.get("physical id", "0")
+            core_id = fields.get("core id", "")
+            if core_id:
+                cores.add((physical_id, core_id))
+        return len(cores) or None
 
     def diagnostics(self) -> list[PreparationCheck]:
         docker = self.command_service.execute_command(

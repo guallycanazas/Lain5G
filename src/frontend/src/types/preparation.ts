@@ -28,6 +28,37 @@ export interface PreparationReport {
   ready: boolean;
   diagnostics: PreparationCheck[];
   profiles: ProfileComponentStatus[];
+  docker_host?: {
+    name?: string | null;
+    operating_system?: string | null;
+    os_type?: string | null;
+    os_version?: string | null;
+    architecture?: string | null;
+    manufacturer?: string | null;
+    product_name?: string | null;
+    firmware_vendor?: string | null;
+    firmware_version?: string | null;
+    board_name?: string | null;
+    virtualization?: string | null;
+    cpu_model?: string | null;
+    physical_cores?: number | null;
+    kernel_version?: string | null;
+    docker_version?: string | null;
+    storage_driver?: string | null;
+    docker_root_dir?: string | null;
+    cgroup_driver?: string | null;
+    cgroup_version?: string | null;
+    cpus?: number | null;
+    memory_bytes?: number | null;
+    swap_bytes?: number | null;
+    containers_total?: number | null;
+    containers_running?: number | null;
+    containers_paused?: number | null;
+    containers_stopped?: number | null;
+    images_count?: number | null;
+    workspace_disk_total_bytes?: number | null;
+    workspace_disk_free_bytes?: number | null;
+  } | null;
 }
 
 export interface ComponentPullResponse {

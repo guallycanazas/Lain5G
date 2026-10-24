@@ -33,7 +33,7 @@
 .landing-page button:hover:not(:disabled) { box-shadow: none; transform: none; }
 
 .landing-container { width: min(1180px, calc(100% - 40px)); margin-inline: auto; }
-.landing-section { padding-block: clamp(72px, 9vw, 112px); }
+.landing-section { padding-block: clamp(60px, 7vw, 88px); }
 .landing-eyebrow { color: #6043f3; font-size: .72rem; font-weight: 800; letter-spacing: .16em; text-transform: uppercase; }
 .landing-display { font-family: Georgia, Cambria, "Times New Roman", serif; letter-spacing: -.045em; }
 .landing-copy { color: #566083; font-size: 1rem; line-height: 1.75; }

@@ -1,0 +1,17 @@
+--- a/lib/messaging.py
++++ b/lib/messaging.py
+@@ -139,2 +139,12 @@
+-            message =  self.redisClient.blmpop(0, 1, key, direction='RIGHT', count=count)
+-            return message
++            # Redis 6 (Ubuntu 22.04) does not provide BLMPOP. Preserve the
++            # expected [key, [values...]] shape with the older list commands.
++            first = self.redisClient.blpop(key)
++            if first is None:
++                return []
++            values = [first[1]]
++            while len(values) < count:
++                value = self.redisClient.rpop(key)
++                if value is None:
++                    break
++                values.append(value)
++            return [first[0], values]

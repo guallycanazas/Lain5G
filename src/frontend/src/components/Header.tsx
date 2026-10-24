@@ -6,14 +6,14 @@ import { useProfiles } from '../hooks/useProfiles';
 import { usePreferences } from '../preferences/PreferencesProvider';
 
 const commands = [
-  { to: '/dashboard', label: 'nav.overview' }, { to: '/scenarios', label: 'nav.scenarios' }, { to: '/validation', label: 'nav.validation' },
+  { to: '/dashboard', label: 'nav.overview' }, { to: '/scenarios', label: 'nav.scenarios' }, { to: '/troubleshooter', label: 'nav.troubleshooter' }, { to: '/validation', label: 'nav.validation' },
   { to: '/logs', label: 'nav.logs' }, { to: '/runs', label: 'nav.runs' }, { to: '/rf-safety', label: 'nav.rfSafety' },
   { to: '/preparation', label: 'nav.preparation' },
 ];
 
 const pageNames: Record<string, string> = {
   '/dashboard': 'nav.overview', '/scenarios': 'nav.scenarios', '/topology': 'nav.topology', '/subscribers': 'nav.subscribers',
-  '/validation': 'nav.validation', '/metrics': 'nav.metrics', '/logs': 'nav.logs', '/runs': 'nav.runs', '/deployments': 'nav.deployments', '/preparation': 'nav.preparation', '/settings': 'nav.settings', '/rf-safety': 'nav.rfSafety',
+  '/validation': 'nav.validation', '/troubleshooter': 'nav.troubleshooter', '/metrics': 'nav.metrics', '/logs': 'nav.logs', '/runs': 'nav.runs', '/deployments': 'nav.deployments', '/preparation': 'nav.preparation', '/settings': 'nav.settings', '/rf-safety': 'nav.rfSafety',
 };
 
 export function Header() {

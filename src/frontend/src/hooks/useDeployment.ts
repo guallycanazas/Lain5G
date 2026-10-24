@@ -41,21 +41,24 @@ export function useDeploymentActions() {
 export function useScenarioActions(scenarioId: string) {
   const queryClient = useQueryClient();
   const invalidate = async () => {
-    await queryClient.invalidateQueries({ queryKey: ['deployments'] });
-    await queryClient.invalidateQueries({ queryKey: ['deployment', scenarioId] });
-    await queryClient.invalidateQueries({ queryKey: ['deployment-status', scenarioId] });
-    await queryClient.invalidateQueries({ queryKey: ['runs'] });
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: ['deployments'] }),
+      queryClient.invalidateQueries({ queryKey: ['deployment', scenarioId] }),
+      queryClient.invalidateQueries({ queryKey: ['deployment-status', scenarioId] }),
+      queryClient.invalidateQueries({ queryKey: ['runs'] }),
+    ]);
   };
+  const refreshAfterAction = { onSettled: invalidate };
   return {
-    start: useMutation({ mutationFn: () => deploymentsApi.start(scenarioId), onSuccess: invalidate }),
-    stop: useMutation({ mutationFn: () => deploymentsApi.stop(scenarioId), onSuccess: invalidate }),
-    restart: useMutation({ mutationFn: () => deploymentsApi.restart(scenarioId), onSuccess: invalidate }),
-    validate: useMutation({ mutationFn: () => deploymentsApi.validate(scenarioId), onSuccess: invalidate }),
-    hardwareCheck: useMutation({ mutationFn: () => deploymentsApi.hardwareCheck(scenarioId), onSuccess: invalidate }),
-    preflight: useMutation({ mutationFn: () => deploymentsApi.preflight(scenarioId), onSuccess: invalidate }),
-    startEpc: useMutation({ mutationFn: deploymentsApi.startEpc, onSuccess: invalidate }),
-    startCore: useMutation({ mutationFn: () => deploymentsApi.startCore(scenarioId), onSuccess: invalidate }),
-    startRf: useMutation({ mutationFn: (payload: RfStartPayload) => deploymentsApi.startRf(scenarioId, payload), onSuccess: invalidate }),
-    emergencyStop: useMutation({ mutationFn: () => deploymentsApi.emergencyStop(scenarioId), onSuccess: invalidate }),
+    start: useMutation({ mutationFn: () => deploymentsApi.start(scenarioId), ...refreshAfterAction }),
+    stop: useMutation({ mutationFn: () => deploymentsApi.stop(scenarioId), ...refreshAfterAction }),
+    restart: useMutation({ mutationFn: () => deploymentsApi.restart(scenarioId), ...refreshAfterAction }),
+    validate: useMutation({ mutationFn: () => deploymentsApi.validate(scenarioId), ...refreshAfterAction }),
+    hardwareCheck: useMutation({ mutationFn: () => deploymentsApi.hardwareCheck(scenarioId), ...refreshAfterAction }),
+    preflight: useMutation({ mutationFn: () => deploymentsApi.preflight(scenarioId), ...refreshAfterAction }),
+    startEpc: useMutation({ mutationFn: deploymentsApi.startEpc, ...refreshAfterAction }),
+    startCore: useMutation({ mutationFn: () => deploymentsApi.startCore(scenarioId), ...refreshAfterAction }),
+    startRf: useMutation({ mutationFn: (payload: RfStartPayload) => deploymentsApi.startRf(scenarioId, payload), ...refreshAfterAction }),
+    emergencyStop: useMutation({ mutationFn: () => deploymentsApi.emergencyStop(scenarioId), ...refreshAfterAction }),
   };
 }

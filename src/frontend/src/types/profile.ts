@@ -28,4 +28,9 @@ export interface ProfileApplyResult {
   backup: string;
 }
 
+export interface ProfileBackupInfo {
+  profile: string;
+  backup: string | null;
+}
+
 export type ProfileConfig = Record<string, any>;

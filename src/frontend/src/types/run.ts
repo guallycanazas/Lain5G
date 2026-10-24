@@ -13,6 +13,7 @@ export interface RunDetail {
   run_id: string;
   metadata: Record<string, unknown>;
   validation: Record<string, unknown> | null;
+  preflight?: Record<string, unknown> | null;
   metrics: Record<string, unknown> | null;
   logs: string[];
   loaded_at: string;

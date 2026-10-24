@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import yaml
+
 ROOT = Path(__file__).resolve().parents[3]
 DEPLOY = ROOT / "deployments" / "5g-sa-x310"
 IMAGE = ROOT / "images" / "srsranproject-uhd"
@@ -74,10 +76,21 @@ def test_env_example_does_not_commit_rf_values_or_secrets():
     assert "IMS_AUTH_PASSWORD=\n" in env
 
 
+def test_5g_rf_duration_cap_matches_the_guarded_runtime_default():
+    profile = yaml.safe_load((ROOT / "config/profiles/5g-sa-x310.yaml").read_text(encoding="utf-8"))
+    env = (DEPLOY / ".env.example").read_text(encoding="utf-8")
+    manifest = yaml.safe_load((DEPLOY / "rf/safety-manifest.example.yaml").read_text(encoding="utf-8"))
+
+    assert profile["safety"]["maximum_duration_seconds"] == 60
+    assert "MAXIMUM_DURATION_SECONDS=60" in env
+    assert manifest["maximum_duration_seconds"] == 60
+
+
 def test_gnb_config_targets_x310_and_open5gs_mapping():
     gnb = (DEPLOY / "gnb" / "gnb_x310.yml").read_text(encoding="utf-8")
     assert "device_driver: uhd" in gnb
     assert "device_args: type=${USRP_TYPE},addr=${USRP_ADDR}" in gnb
+    assert "recv_frame_size=1472,send_frame_size=1472" in gnb
     assert "addr: ${AMF_ADDR}" in gnb
     assert "plmn: \"${MCC}${MNC}\"" in gnb
     assert "channel_bandwidth_MHz: ${CHANNEL_BANDWIDTH_MHZ}" in gnb
@@ -89,7 +102,11 @@ def test_rf_start_requires_guardrails_and_scripts_are_non_destructive():
     start = (DEPLOY / "scripts" / "start-gnb.sh").read_text(encoding="utf-8")
     preflight = (DEPLOY / "scripts" / "preflight.sh").read_text(encoding="utf-8")
     hardware = (DEPLOY / "scripts" / "hardware-check.sh").read_text(encoding="utf-8")
-    assert "ip route replace" in start_core
+    stop = (DEPLOY / "scripts" / "stop.sh").read_text(encoding="utf-8")
+    assert "--network host --cap-add NET_ADMIN" in start_core
+    assert 'host_route replace "$ue_subnet" via "$upf_ip"' in start_core
+    assert 'host_route del "$ue_subnet" via "$upf_ip"' in stop
+    assert '.ue-route-active' in start_core and '.ue-route-active' in stop
     assert "lain5g-lab-5g-sa-x310-upf" in start_core
     for service in ("ims-database", "ims-provisioner", "pcscf", "icscf", "scscf", "dns"):
         assert service in start_core
@@ -126,11 +143,19 @@ def test_5g_scenarios_stop_each_other_and_release_the_shared_address_space():
     start_core = (DEPLOY / "scripts" / "start-core.sh").read_text(encoding="utf-8")
     simulation_start = (ROOT / "deployments/5g-sa/scripts/start.sh").read_text(encoding="utf-8")
     simulation_stop = (ROOT / "deployments/5g-sa/scripts/stop.sh").read_text(encoding="utf-8")
+    simulation_compose = yaml.safe_load((ROOT / "deployments/5g-sa/docker-compose.yml").read_text(encoding="utf-8"))
+    x310_compose = yaml.safe_load((DEPLOY / "docker-compose.yml").read_text(encoding="utf-8"))
+    ensure_network = (DEPLOY / "scripts" / "ensure-core-network.sh").read_text(encoding="utf-8")
     assert "down --remove-orphans" in stop
     assert "down --remove-orphans" in simulation_stop
     assert 'x310_project="lain5g-lab-5g-sa-x310"' in simulation_start
     assert 'deployments/5g-sa-x310/scripts/stop.sh' in simulation_start
+    assert 'ensure-core-network.sh' in simulation_start
     assert 'simulation_project="lain5g-lab-5g-sa"' in start_core
     assert 'deployments/5g-sa/scripts/stop.sh' in start_core
     assert "Removed stopped 5G SA containers while preserving the reserved backend network" in simulation_start
     assert "up -d --remove-orphans" in simulation_start
+    assert simulation_compose["networks"]["core"] == {"name": "lain5g-lab-5g-sa-x310-core", "external": True}
+    assert x310_compose["networks"]["core"] == {"name": "lain5g-lab-5g-sa-x310-core", "external": True}
+    assert "lain5g-lab-5g-sa-x310-mongo" in simulation_compose["services"]["mongo"]["networks"]["core"]["aliases"]
+    assert 'subnet="10.20.0.0/24"' in ensure_network

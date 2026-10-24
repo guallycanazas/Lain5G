@@ -5,11 +5,13 @@ from fastapi import APIRouter, Body, Depends, Query
 from ..dependencies import get_real_ims_service, settings_dependency
 from ..models.real_ims import (
     Mode,
+    RealIMSDeleteRequest,
     RealIMSImagesRequest,
     RealIMSProvisionRequest,
     RealIMSStartRequest,
     RealIMSStatusReport,
     RealIMSStopRequest,
+    RealIMSSyncRequest,
     RealIMSSubscriberList,
 )
 from ..services.real_ims_service import RealIMSService
@@ -92,4 +94,37 @@ def provision(
         payload.mcc,
         payload.mnc,
         execute=payload.execute,
+    )
+
+
+@router.post("/delete-subscriber")
+def delete_subscriber(
+    payload: RealIMSDeleteRequest,
+    service: RealIMSService = Depends(get_real_ims_service),
+    settings: Settings = Depends(settings_dependency),
+) -> dict[str, Any]:
+    if payload.execute:
+        ensure_mutation_allowed(settings)
+    return service.delete_subscriber(
+        payload.mode,
+        payload.imsi,
+        payload.mcc,
+        payload.mnc,
+        execute=payload.execute,
+    )
+
+
+@router.post("/sync-subscriber")
+def sync_subscriber(
+    payload: RealIMSSyncRequest,
+    service: RealIMSService = Depends(get_real_ims_service),
+    settings: Settings = Depends(settings_dependency),
+) -> dict[str, Any]:
+    ensure_mutation_allowed(settings)
+    return service.sync_subscriber(
+        payload.source_mode,
+        payload.target_mode,
+        payload.imsi,
+        payload.mcc,
+        payload.mnc,
     )

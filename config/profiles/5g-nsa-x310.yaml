@@ -1,17 +1,13 @@
 profile: 5g-nsa-x310
-
 network:
   mcc: "001"
   mnc: "01"
-  tac: 7
+  tac: 1
   apn_internet: internet
-
 core:
   mme_addr: 10.42.0.10
-
 ran:
   enb_bind_addr: 10.42.0.1
-
 radio:
   device: x300
   usrp_addr: 192.168.10.2
@@ -25,10 +21,8 @@ radio:
   rx_gain: 31.5
   clock_source: internal
   time_source: internal
-
 subscriber:
   imsi: "001011234567895"
-
 safety:
   maximum_duration_seconds: 600
   rf_allowed: false

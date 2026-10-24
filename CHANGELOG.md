@@ -2,7 +2,31 @@
 
 All notable changes to OpenLain5G are recorded in this file.
 
-## [Unreleased]
+## [1.1.6] - 2026-10-24
+
+### Added
+
+- Added guided profile diagnostics, host hardware and OS inventory, clearer
+  scenario run order, button explanations, and easier-to-navigate logs.
+- Added local Real-IMS image builds and a unified subscriber workflow for the
+  LTE EPC, 5G core, and IMS provisioning services.
+- Added guarded 5G NSA EN-DC to the public X310 profile catalog. Physical UE
+  connection evidence is recorded separately for v1.1.3.
+
+### Changed
+
+- Improved guarded RF preflight, hardware checks, run evidence, and start/stop
+  cleanup for the LTE, 5G SA, and 5G NSA X310 profiles.
+- Updated configuration editing, subscriber/APN workflows, installation
+  reporting, and profile conflict handling.
+- Clarified that the five-run cloud evidence remains specific to v1.1.3.
+
+### Fixed
+
+- Hardened cleanup of guarded RF processes and shared core containers after
+  repeated profile starts and stops.
+- Improved IMS provisioning and subscriber synchronization between the web
+  application, Open5GS, and the local IMS database.
 
 ## [1.1.5] - 2026-08-17
 

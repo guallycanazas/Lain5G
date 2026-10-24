@@ -26,7 +26,7 @@ PROFILE_IMAGES = {
     "5g-vonr": ("lain5g-lab/open5gs:local", "lain5g-lab/ueransim:local", "lain5g-lab/kamailio:local", "lain5g-lab/ims-dns:local", "lain5g-lab/ims-sip:local", MONGO_IMAGE, MARIADB_IMAGE),
 }
 
-PUBLIC_PROFILE_IDS = ("4g-lte-sim", "4g-lte-x310", "5g-sa", "5g-sa-x310")
+PUBLIC_PROFILE_IDS = ("4g-lte-sim", "4g-lte-x310", "5g-sa", "5g-sa-x310", "5g-nsa-x310")
 
 RF_ACCESS_IMAGES = {
     "4g-lte-x310": "lain5g-lab/srsran4g-uhd:local",

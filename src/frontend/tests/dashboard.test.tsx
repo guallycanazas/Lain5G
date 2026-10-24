@@ -35,6 +35,24 @@ describe('DashboardPage', () => {
     await waitFor(() => expect(fetch).toHaveBeenCalledWith('/api/deployments/5g-sa/start', expect.objectContaining({ method: 'POST' })));
   });
 
+  it('offers to stop the active profile before continuing a dashboard start', async () => {
+    let stopped = false;
+    stubDashboard((url, init) => {
+      if (url === '/api/deployments/5g-sa/start' && init?.method === 'POST' && !stopped) {
+        return jsonResponse({ detail: { code: 'DEPLOYMENT_CONFLICT', message: 'Another laboratory scenario is currently running.', active_scenario: '4g-lte-x310' } }, 409);
+      }
+      if (url === '/api/deployments/4g-lte-x310/stop' && init?.method === 'POST') stopped = true;
+      if (url === '/api/deployments/5g-sa/start' && init?.method === 'POST') return jsonResponse({ id: '5g-sa', action: 'start', status: 'running', message: 'ok', command: deploymentStatus.command });
+      return undefined;
+    });
+    renderWithClient(<DashboardPage />);
+    await userEvent.click(await screen.findByRole('button', { name: 'Start' }));
+    expect(await screen.findByRole('dialog', { name: 'Another profile is active' })).toHaveTextContent('4g-lte-x310');
+    await userEvent.click(screen.getByRole('button', { name: 'Stop profile and continue' }));
+    await waitFor(() => expect(fetch).toHaveBeenCalledWith('/api/deployments/4g-lte-x310/stop', expect.objectContaining({ method: 'POST' })));
+    await waitFor(() => expect(fetch).toHaveBeenCalledWith('/api/deployments/5g-sa/start', expect.objectContaining({ method: 'POST' })));
+  });
+
   it('requires confirmation before stopping deployment', async () => {
     stubDashboard((url, init) => url.includes('/stop') && init?.method === 'POST' ? jsonResponse({ id: '5g-sa', action: 'stop', status: 'stopped', message: 'ok', command: deploymentStatus.command }) : undefined);
     renderWithClient(<DashboardPage />);

@@ -38,6 +38,13 @@ outside Git.
 At startup, Compose renders a temporary copy of the UE YAML using the IMSI, K,
 OPc, AMF, and SQN from `.env`. The runtime copy is not written to the repository.
 
+The software simulation and X310 core use the same externally managed
+`lain5g-lab-5g-sa-x310-core` network (`10.20.0.0/24`). The app backend remains
+attached there for Open5GS subscriber access, so stopping either profile leaves
+the network in place while its containers and services stop. The start scripts
+switch between the simulation and X310 service sets and preserve their data
+volumes; MongoDB keeps the same network alias for the subscriber API.
+
 ## Expected evidence
 
 The public summary reports 15 checks passed by the validator, including the

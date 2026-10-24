@@ -12,8 +12,8 @@ describe('LogsPage', () => {
     renderWithClient(<LogsPage />);
     await screen.findByRole('option', { name: 'amf' });
     await userEvent.selectOptions(await screen.findByLabelText('Service'), 'amf');
-    await userEvent.selectOptions(screen.getByLabelText('Tail'), '500');
-    await userEvent.selectOptions(screen.getByLabelText('Severity'), 'error');
+    await userEvent.selectOptions(screen.getByLabelText('Latest'), '500');
+    await userEvent.selectOptions(screen.getByLabelText('Level'), 'error');
     await userEvent.click(screen.getByRole('button', { name: 'Refresh' }));
     expect(await screen.findByText('ERROR amf failed')).toBeInTheDocument();
     expect(screen.queryByText('INFO amf ready')).not.toBeInTheDocument();

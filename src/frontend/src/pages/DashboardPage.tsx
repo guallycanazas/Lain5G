@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router';
+import { useQueryClient } from '@tanstack/react-query';
 import { ActionButton } from '../components/ActionButton';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import { ErrorAlert } from '../components/ErrorAlert';
@@ -12,6 +13,9 @@ import { useLatestValidation } from '../hooks/useValidation';
 import { useProfileComponents } from '../hooks/usePreparation';
 import { usePreferences } from '../preferences/PreferencesProvider';
 import { formatDate } from '../utils/dates';
+import { ApiError } from '../types/api';
+import { deploymentsApi } from '../services/deploymentsApi';
+import { useDeployments } from '../hooks/useDeployment';
 
 function checkState(checks: { id: string; status: string }[], id: string) {
   return checks.find((check) => check.id === id)?.status === 'PASS';
@@ -23,20 +27,65 @@ export function DashboardPage() {
   const validation = useLatestValidation();
   const runs = useRuns();
   const actions = useDeploymentActions();
+  const deployments = useDeployments();
+  const queryClient = useQueryClient();
   const components = useProfileComponents('5g-sa');
   const { t } = usePreferences();
   const [confirm, setConfirm] = useState<'stop' | 'restart' | null>(null);
+  const [activeConflict, setActiveConflict] = useState<string | null>(null);
+  const [conflictError, setConflictError] = useState<unknown>(null);
   const report = validation.data;
   const checks = report?.checks || [];
   const activeServices = status.data?.containers.filter((container) => container.running).length || 0;
+  const deploymentList = Array.isArray(deployments.data) ? deployments.data : [];
   const passRate = checks.length ? Math.round((checks.filter((check) => check.status === 'PASS').length / checks.length) * 100) : null;
   const busy = actions.start.isPending || actions.stop.isPending || actions.restart.isPending || actions.validate.isPending;
-  const actionError = actions.start.error || actions.stop.error || actions.restart.error || actions.validate.error;
+  const actionError = activeConflict ? null : actions.start.error || actions.stop.error || actions.restart.error || actions.validate.error;
+  const activeConflictName = deploymentList.find((item) => item.id === activeConflict)?.name || activeConflict;
 
   const runConfirmed = () => {
     if (confirm === 'stop') actions.stop.mutate();
     if (confirm === 'restart') actions.restart.mutate();
     setConfirm(null);
+  };
+  const startDefaultScenario = async () => {
+    try {
+      await actions.start.mutateAsync();
+    } catch (error) {
+      if (error instanceof ApiError && error.status === 409 && error.code === 'DEPLOYMENT_CONFLICT') {
+        const activeScenario = (error.details as { active_scenario?: unknown } | undefined)?.active_scenario;
+        if (typeof activeScenario === 'string' && activeScenario !== '5g-sa') {
+          actions.start.reset();
+          setActiveConflict(activeScenario);
+          setConflictError(null);
+        }
+      }
+    }
+  };
+  const stopActiveAndStartDefault = async () => {
+    if (!activeConflict) return;
+    const previous = activeConflict;
+    setActiveConflict(null);
+    setConflictError(null);
+    try {
+      await deploymentsApi.stop(previous);
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['deployments'] }),
+        queryClient.invalidateQueries({ queryKey: ['deployment-status'] }),
+        queryClient.invalidateQueries({ queryKey: ['deployment-status', previous] }),
+      ]);
+      await actions.start.mutateAsync();
+    } catch (error) {
+      if (error instanceof ApiError && error.status === 409 && error.code === 'DEPLOYMENT_CONFLICT') {
+        const nextActive = (error.details as { active_scenario?: unknown } | undefined)?.active_scenario;
+        if (typeof nextActive === 'string' && nextActive !== '5g-sa') {
+          actions.start.reset();
+          setActiveConflict(nextActive);
+          return;
+        }
+      }
+      setConflictError(error);
+    }
   };
 
   return (
@@ -49,12 +98,12 @@ export function DashboardPage() {
           <div className="hero-actions">
             {status.data ? <StatusBadge status={status.data.status} /> : <StatusBadge status="unknown" />}
             <ActionButton variant="secondary" onClick={() => status.refetch()} loading={status.isFetching}>{t('dashboard.sync')}</ActionButton>
-            <ActionButton loading={actions.start.isPending} disabled={busy || components.data?.ready !== true} onClick={() => actions.start.mutate()}>{t('dashboard.start')}</ActionButton>
+            <ActionButton loading={actions.start.isPending} disabled={busy || components.data?.ready !== true} onClick={() => void startDefaultScenario()}>{t('dashboard.start')}</ActionButton>
             <ActionButton variant="secondary" loading={actions.validate.isPending} disabled={busy} onClick={() => actions.validate.mutate()}>{t('dashboard.validate')}</ActionButton>
             <ActionButton variant="danger" disabled={busy} onClick={() => setConfirm('stop')}>{t('dashboard.stop')}</ActionButton>
           </div>
         </div>
-        <figure className="dashboard-hero-visual"><img src="/images/lain5g/hero-topology.webp" width="1536" height="1024" alt="Private mobile laboratory topology" decoding="async" /><figcaption><span>🛰️ Software first</span><strong>Move to guarded RF only when the laboratory is ready.</strong></figcaption></figure>
+        <figure className="dashboard-hero-visual"><img src="/images/lain5g/control-plane-topology.webp" width="1672" height="941" alt="Isometric private mobile network with radio access, core services, IMS, and a UE" decoding="async" /><figcaption><span>🛰️ Software first</span><strong>Move to guarded RF only when the laboratory is ready.</strong></figcaption></figure>
       </section>
 
       <section className="summary-grid wide" aria-label="Operations overview">
@@ -67,13 +116,13 @@ export function DashboardPage() {
       {health.error ? <ErrorAlert error={health.error} onRetry={() => health.refetch()} /> : null}
       {status.error ? <ErrorAlert error={status.error} onRetry={() => status.refetch()} /> : null}
       {components.error ? <ErrorAlert error={components.error} onRetry={() => components.refetch()} /> : null}
-      {actionError ? <ErrorAlert error={actionError} /> : null}
+      {actionError ? <ErrorAlert error={actionError} /> : null}{conflictError ? <ErrorAlert error={conflictError} /> : null}
       {status.isLoading ? <LoadingState /> : null}
 
       <section className="panel wide"><TopologyPanel containers={status.data?.containers || []} checks={checks} checkedAt={status.data?.checked_at} title="5G SA service topology" /></section>
 
       <section className="panel">
-        <div className="panel-heading"><div><span className="eyebrow">Execution</span><h3>Deployment control</h3></div><StatusBadge status={health.data?.dry_run ? 'dry_run' : 'running'} /></div>
+        <div className="panel-heading"><div><span className="eyebrow">API</span><h3>Backend service</h3></div><StatusBadge status={health.data?.dry_run ? 'dry_run' : 'running'} /></div>
         <dl className="facts"><dt>Backend</dt><dd>{health.data?.status || 'Unavailable'}</dd><dt>Mode</dt><dd>{health.data?.dry_run ? 'Dry-run' : 'Real'}</dd><dt>Last sync</dt><dd>{status.data ? formatDate(status.data.checked_at) : 'No telemetry'}</dd><dt>Action</dt><dd>{busy ? 'Operation in progress' : 'Ready'}</dd></dl>
         <div className="actions-row" style={{ marginTop: 18 }}><ActionButton variant="secondary" disabled={busy || components.data?.ready !== true} onClick={() => setConfirm('restart')}>Restart</ActionButton><Link className="action-link" to="/scenarios/5g-sa">Open workspace</Link></div>
       </section>
@@ -101,6 +150,7 @@ export function DashboardPage() {
       </section>
 
       <ConfirmDialog open={confirm !== null} title={confirm === 'stop' ? 'Stop 5G SA deployment' : 'Restart 5G SA deployment'} message="The backend will execute the configured operational script. Review the run and logs after completion." confirmLabel={confirm === 'stop' ? 'Stop deployment' : 'Restart deployment'} onConfirm={runConfirmed} onCancel={() => setConfirm(null)} />
+      <ConfirmDialog open={Boolean(activeConflict)} title="Another profile is active" message={`The backend detected ${activeConflictName} running. Stop that profile and its services, then start ${deploymentList.find((item) => item.id === '5g-sa')?.name || '5G SA simulation'}? If it is transmitting RF, this will stop its radio service.`} confirmLabel="Stop profile and continue" onConfirm={() => void stopActiveAndStartDefault()} onCancel={() => { setActiveConflict(null); actions.start.reset(); }} />
     </div>
   );
 }

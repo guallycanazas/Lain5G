@@ -14,6 +14,7 @@ vi.mock('../src/services/realImsApi', () => ({
     start: vi.fn(),
     stop: vi.fn(),
     provision: vi.fn(),
+    syncSubscriber: vi.fn(),
   },
 }));
 
@@ -33,42 +34,36 @@ describe('Real IMS operator page', () => {
     vi.mocked(realImsApi.start).mockResolvedValue({ status: 'ok' });
     vi.mocked(realImsApi.stop).mockResolvedValue({ status: 'ok' });
     vi.mocked(realImsApi.provision).mockResolvedValue({ status: 'ok' });
+    vi.mocked(realImsApi.syncSubscriber).mockResolvedValue({ status: 'PASS' });
   });
 
-  it('switches modes and refreshes first-party preflight and status reports', async () => {
+  it('switches IMS modes and checks status for the selected identity', async () => {
     const user = userEvent.setup();
     renderWithClient(<RealImsPage />);
 
-    expect(screen.getByRole('heading', { name: 'Real 4G/5G IMS operator' })).toBeInTheDocument();
-    expect(screen.getByText(/separate from legacy SIP probes/i)).toBeInTheDocument();
-    expect(await screen.findByText('P-CSCF is ready')).toBeInTheDocument();
-    expect(realImsApi.preflight).toHaveBeenCalledWith('4g');
+    expect(screen.getByRole('heading', { name: 'IMS synchronization' })).toBeInTheDocument();
+    expect(screen.getByText(/same IMSI as the packet-core record/i)).toBeInTheDocument();
+    await waitFor(() => expect(realImsApi.subscribers).toHaveBeenCalledWith('4g'));
 
-    await user.click(screen.getByRole('button', { name: '5G IMS' }));
-    await waitFor(() => expect(realImsApi.preflight).toHaveBeenCalledWith('5g'));
-    await user.type(screen.getByLabelText('Status IMSI'), '001010000000001');
-    await user.click(screen.getByRole('button', { name: 'Refresh status' }));
+    await user.click(screen.getByRole('button', { name: '5G' }));
+    await waitFor(() => expect(realImsApi.subscribers).toHaveBeenCalledWith('5g'));
+    await user.type(screen.getByLabelText('Optional IMSI'), '001010000000001');
+    await user.click(screen.getByRole('button', { name: 'Check status' }));
     await waitFor(() => expect(realImsApi.status).toHaveBeenCalledWith('5g', '001010000000001'));
-    expect(screen.queryByRole('button', { name: /RF start/i })).not.toBeInTheDocument();
   });
 
   it('requires confirmation for execution and clears secrets after successful provisioning', async () => {
     const user = userEvent.setup();
     renderWithClient(<RealImsPage />);
-    await screen.findByText('P-CSCF is ready');
-
-    await user.click(screen.getByRole('button', { name: 'Build images' }));
-    expect(realImsApi.images).not.toHaveBeenCalled();
-    await user.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Build images' }));
-    await waitFor(() => expect(vi.mocked(realImsApi.images).mock.calls[0]?.[0]).toBe(true));
+    await waitFor(() => expect(realImsApi.subscribers).toHaveBeenCalledWith('4g'));
 
     fireEvent.change(screen.getByLabelText('IMSI'), { target: { value: '001010000000001' } });
     fireEvent.change(screen.getByLabelText('MSISDN'), { target: { value: '15551234567' } });
     fireEvent.change(screen.getByLabelText('Ki'), { target: { value: '00112233445566778899aabbccddeeff' } });
     fireEvent.change(screen.getByLabelText('OPc'), { target: { value: 'ffeeddccbbaa99887766554433221100' } });
-    await user.click(screen.getByRole('button', { name: 'Provision subscriber' }));
+    await user.click(screen.getByRole('button', { name: 'Add subscriber' }));
     expect(realImsApi.provision).not.toHaveBeenCalled();
-    await user.click(screen.getByRole('button', { name: 'Provision now' }));
+    await user.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Add subscriber' }));
 
     await waitFor(() => expect(vi.mocked(realImsApi.provision).mock.calls[0]?.[0]).toEqual(expect.objectContaining({
       mode: '4g', execute: true, mcc: '001', mnc: '01', imsi: '001010000000001', enabled: true,
@@ -80,15 +75,26 @@ describe('Real IMS operator page', () => {
   it('uses dry-run provisioning by default', async () => {
     const user = userEvent.setup();
     renderWithClient(<RealImsPage />);
-    await screen.findByText('P-CSCF is ready');
+    await waitFor(() => expect(realImsApi.subscribers).toHaveBeenCalledWith('4g'));
     fireEvent.change(screen.getByLabelText('IMSI'), { target: { value: '001010000000001' } });
     fireEvent.change(screen.getByLabelText('MSISDN'), { target: { value: '15551234567' } });
     fireEvent.change(screen.getByLabelText('Ki'), { target: { value: '00112233445566778899aabbccddeeff' } });
     fireEvent.change(screen.getByLabelText('OPc'), { target: { value: 'ffeeddccbbaa99887766554433221100' } });
-    await user.click(screen.getByRole('button', { name: 'Preview provisioning' }));
+    await user.click(screen.getByRole('button', { name: 'Preview' }));
 
     await waitFor(() => expect(vi.mocked(realImsApi.provision).mock.calls[0]?.[0]).toEqual(expect.objectContaining({ execute: false })));
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+  });
+
+  it('starts the selected IMS services only after confirmation', async () => {
+    const user = userEvent.setup();
+    renderWithClient(<RealImsPage />);
+    await waitFor(() => expect(realImsApi.subscribers).toHaveBeenCalledWith('4g'));
+    await user.click(screen.getByRole('button', { name: '5G' }));
+    await user.click(screen.getByRole('button', { name: 'Start IMS services' }));
+    expect(realImsApi.start).not.toHaveBeenCalled();
+    await user.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Start IMS services' }));
+    await waitFor(() => expect(vi.mocked(realImsApi.start).mock.calls[0]?.[0]).toEqual({ mode: '5g', execute: true, mcc: '001', mnc: '01' }));
   });
 
   it('shows correlated IMS subscribers without authentication secrets', async () => {
@@ -106,6 +112,24 @@ describe('Real IMS operator page', () => {
     expect(await screen.findByText('001010000000001')).toBeInTheDocument();
     expect(screen.getByText('sip:15551234567@ims.example')).toBeInTheDocument();
     expect(screen.queryByText('00112233445566778899AABBCCDDEEFF')).not.toBeInTheDocument();
+  });
+
+  it('syncs an existing identity to the other IMS mode without asking for its keys again', async () => {
+    const user = userEvent.setup();
+    vi.mocked(realImsApi.subscribers).mockResolvedValue({
+      mode: '4g', count: 1, secrets_redacted: true,
+      subscribers: [{
+        imsi: '001010000000001', msisdn: '15551234567', impi: 'impi', impu: 'impu', domain: 'ims.example',
+        scscf: null, enabled: true, apns: ['internet', 'ims'], open5gs_present: true, pyhss_present: true,
+      }],
+    });
+    renderWithClient(<RealImsPage />);
+    await user.click(await screen.findByRole('button', { name: 'Sync to 5G' }));
+    await user.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Sync to 5G IMS' }));
+    await waitFor(() => expect(vi.mocked(realImsApi.syncSubscriber).mock.calls[0]?.[0]).toEqual({
+      source_mode: '4g', target_mode: '5g', mcc: '001', mnc: '01', imsi: '001010000000001',
+    }));
+    expect(await screen.findByRole('status')).toHaveTextContent(/synchronized from 4G IMS to 5G IMS/i);
   });
 });
 

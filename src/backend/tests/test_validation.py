@@ -27,6 +27,17 @@ def test_validation_report_does_not_convert_fail_to_pass(validation_service, run
     assert report.validation["nrf"] == "FAIL"
 
 
+def test_validation_report_is_partial_when_passed_checks_include_untested_ue(validation_service):
+    from backend.app.models.validation import ValidationCheck
+
+    status = validation_service._overall_status([
+        ValidationCheck(id="enb_started", status="PASS"),
+        ValidationCheck(id="ue_registration", status="NOT_TESTED"),
+    ])
+
+    assert status == "PARTIAL"
+
+
 def test_corrupt_optional_validation_json_is_ignored(project_root: Path, dry_settings):
     run_dir = project_root / "runs" / "run-corrupt-validation"
     run_dir.mkdir()

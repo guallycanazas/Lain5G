@@ -64,11 +64,13 @@ class RunService:
             derived_status = self._validation_status(validation)
             if derived_status:
                 validation["status"] = derived_status
+        preflight = self._read_optional_json(run_dir / "preflight.json")
         metrics = self._read_optional_json(run_dir / "metrics.json")
         return RunDetail(
             run_id=str(metadata.get("run_id", run_id)),
             metadata=metadata,
             validation=validation if isinstance(validation, dict) else None,
+            preflight=preflight if isinstance(preflight, dict) else None,
             metrics=metrics if isinstance(metrics, dict) else None,
             logs=self._list_logs(run_dir),
             loaded_at=datetime.now(UTC),
@@ -105,13 +107,26 @@ class RunService:
                 return "WARNING"
             if statuses and all(item == "PASS" for item in statuses):
                 return "PASS"
+            if "PASS" in statuses and "NOT_TESTED" in statuses:
+                return "PARTIAL"
             return "NOT_TESTED"
         status = validation.get("status")
         return status if isinstance(status, str) and status else None
 
     @staticmethod
     def _summary_sort_key(summary: RunSummary) -> str:
-        return summary.started_at or summary.run_id
+        if summary.started_at:
+            try:
+                started_at = datetime.fromisoformat(summary.started_at.replace("Z", "+00:00"))
+                if started_at.tzinfo is None:
+                    started_at = started_at.replace(tzinfo=UTC)
+                return started_at.astimezone(UTC).strftime("%Y%m%d%H%M%S%f")
+            except ValueError:
+                pass
+        run_timestamp = re.match(r"^run-(\d{8})-(\d{6})$", summary.run_id)
+        if run_timestamp:
+            return f"{run_timestamp.group(1)}{run_timestamp.group(2)}000000"
+        return summary.run_id
 
     def _run_dir(self, run_id: str) -> Path:
         if not RUN_ID_RE.fullmatch(run_id) or run_id in {".", ".."}:

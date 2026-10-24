@@ -4,6 +4,7 @@ import { formatDate } from '../utils/dates';
 import { validationDescription } from '../utils/status';
 import { ActionButton } from './ActionButton';
 import { StatusBadge } from './StatusBadge';
+import { ValidationDiagnosis } from './ValidationDiagnosis';
 
 interface ScenarioValidationPanelProps {
   expectedChecks: string[];
@@ -27,7 +28,7 @@ export function ScenarioValidationPanel({ expectedChecks, checks, status, checke
 
   return <div className="scenario-validation-overview">
     <div className="scenario-validation-summary"><div><span>{checks.length ? <CheckCircle2 size={17} /> : <Activity size={17} />}</span><div><strong>{passed}/{displayedChecks.length} checks passed</strong><small>{failed} failed · {warnings} warnings · {untested} not tested</small></div></div><StatusBadge status={effectiveStatus} kind="validation" /></div>
-    <div className="scenario-check-list">{displayedChecks.map((check) => <article key={check.id} className={check.status.toLowerCase()}><div><strong>{validationDescription(check.id)}</strong><code>{check.id}</code></div><StatusBadge status={check.status} kind="validation" /><p>{check.detail || 'No reason or evidence was reported by the validator.'}</p></article>)}</div>
+    <div className="scenario-check-list">{displayedChecks.map((check) => <article key={check.id} className={check.status.toLowerCase()}><div><strong>{validationDescription(check.id)}</strong><code>{check.id}</code></div><StatusBadge status={check.status} kind="validation" />{check.status === 'PASS' ? <p>{check.detail || 'Passed'}</p> : <ValidationDiagnosis check={check} />}</article>)}</div>
     <div className="scenario-validation-footer"><span>{runId ? <>Evidence from <code>{runId}</code>{checkedAt ? ` · ${formatDate(checkedAt)}` : ''}</> : 'No completed validation run is available.'}</span><ActionButton variant="secondary" loading={loading} onClick={onValidate}>Run validation</ActionButton></div>
   </div>;
 }

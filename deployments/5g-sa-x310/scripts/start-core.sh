@@ -11,6 +11,10 @@ source "$env_file"
 set +a
 [ -n "${IMS_AUTH_PASSWORD:-}" ] || { echo "Missing IMS_AUTH_PASSWORD. Run: ./lain5g scenario setup 5g-sa-x310" >&2; exit 2; }
 chmod 600 "$env_file"
+"$scenario_dir/scripts/ensure-core-network.sh"
+route_image="${LAIN5G_ROUTE_HELPER_IMAGE:-lain5g-lab/srsranproject-uhd:local}"
+route_state="$scenario_dir/.ue-route-active"
+host_route(){ docker run --rm --network host --cap-add NET_ADMIN "$route_image" ip route "$@"; }
 simulation_project="lain5g-lab-5g-sa"
 simulation_network="lain5g-lab-5g-sa-core"
 if [ -n "$(docker ps -aq --filter "label=com.docker.compose.project=$simulation_project")" ] || docker network inspect "$simulation_network" >/dev/null 2>&1; then
@@ -26,19 +30,24 @@ if [ -z "$upf_ip" ]; then
   exit 0
 fi
 
-route_cmd=(ip route replace)
-if [ "${EUID:-$(id -u)}" -ne 0 ]; then
-  if sudo -n true 2>/dev/null; then
-    route_cmd=(sudo -n ip route replace)
-  else
-    echo "WARNING: sudo is required to install host UE route" >&2
-    exit 0
+ue_subnets=("${UE_SUBNET:-10.45.0.0/16}" "${UE_IMS_SUBNET:-10.46.0.0/16}")
+route_state_tmp="$route_state.tmp"
+: > "$route_state_tmp"
+for ue_subnet in "${ue_subnets[@]}"; do
+  existing_route="$(host_route show exact "$ue_subnet" 2>/dev/null | head -n1 || true)"
+  managed_upf=""
+  if [ -f "$route_state" ]; then
+    while IFS= read -r previous_subnet && IFS= read -r previous_upf; do
+      if [ "$previous_subnet" = "$ue_subnet" ]; then managed_upf="$previous_upf"; fi
+    done < "$route_state"
   fi
-fi
-
-ue_subnet="${UE_SUBNET:-10.45.0.0/16}"
-if "${route_cmd[@]}" "$ue_subnet" via "$upf_ip" 2>/dev/null; then
-  echo "Installed host route: $ue_subnet via $upf_ip"
-else
-  echo "WARNING: core is running, but host route $ue_subnet could not be installed from this network namespace" >&2
-fi
+  if [ -n "$existing_route" ] && [[ "$existing_route" != *"via $upf_ip"* ]] && { [ -z "$managed_upf" ] || [[ "$existing_route" != *"via $managed_upf"* ]]; }; then
+    echo "WARNING: core is running, but an existing host route for $ue_subnet was preserved" >&2
+  elif host_route replace "$ue_subnet" via "$upf_ip" 2>/dev/null; then
+    printf '%s\n%s\n' "$ue_subnet" "$upf_ip" >> "$route_state_tmp"
+    echo "Installed host UE route: $ue_subnet via $upf_ip"
+  else
+    echo "WARNING: core is running, but Docker could not install the host UE route $ue_subnet" >&2
+  fi
+done
+if [ -s "$route_state_tmp" ]; then mv "$route_state_tmp" "$route_state"; else rm -f "$route_state_tmp" "$route_state"; fi

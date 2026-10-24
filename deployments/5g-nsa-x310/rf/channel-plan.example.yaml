@@ -1,4 +1,4 @@
-mode: NSA_EN_DC_EXPERIMENTAL
+mode: NSA_EN_DC
 lte_band: 7
 lte_dl_earfcn: 3150
 lte_bandwidth_mhz: 10

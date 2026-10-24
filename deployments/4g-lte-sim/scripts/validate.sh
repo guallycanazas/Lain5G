@@ -37,6 +37,11 @@ mkdir -p "$latest/logs"
 if [ "${LAIN5G_DRY_RUN:-false}" = "true" ]; then
   for id in mongo mme hss sgwc sgwu pgwc pgwu pcrf s1_setup ue_registration default_bearer ue_ip ue_tun data_ping; do add_check "$id" NOT_TESTED "dry-run mode"; done
 else
+  if [ -z "$(compose ps --status running -q 2>/dev/null)" ]; then
+    for id in mongo mme hss sgwc sgwu pgwc pgwu pcrf s1_setup ue_registration default_bearer ue_ip ue_tun data_ping; do
+      add_check "$id" NOT_TESTED "No 4G profile containers are running; start the profile before operational validation"
+    done
+  else
   for svc in mongo mme hss sgwc sgwu pgwc pgwu pcrf; do running "$svc" && add_check "$svc" PASS "container is running" || add_check "$svc" FAIL "container is not running"; done
   if running ue; then
     for _ in 1 2 3 4 5 6; do
@@ -51,6 +56,7 @@ else
   [ -n "$ue_ip" ] && { add_check ue_ip PASS "UE IP assigned on tun_srsue: $ue_ip"; claims+=("UE IP assigned"); } || add_check ue_ip WARNING "UE IPv4 address not found on tun_srsue"
   compose exec -T ue ip link show dev tun_srsue >/dev/null 2>&1 && add_check ue_tun PASS "tun_srsue exists in UE container" || add_check ue_tun WARNING "tun_srsue not found in UE container"
   compose exec -T ue ping -I tun_srsue -c 3 -W 2 10.57.0.1 >/dev/null 2>&1 && { add_check data_ping PASS "Ping to 10.57.0.1 succeeded through tun_srsue"; claims+=("Data ping succeeded"); } || add_check data_ping WARNING "Ping through tun_srsue was not validated"
+  fi
 fi
 
 status=PASS
@@ -72,4 +78,19 @@ done
   done
   printf ']}'
 } > "$latest/validation.json"
+if [ -f "$latest/metadata.json" ]; then
+  python3 - "$latest/metadata.json" "${claims[@]}" <<'PY'
+import json
+import sys
+from pathlib import Path
+
+metadata_path = Path(sys.argv[1])
+with metadata_path.open(encoding="utf-8") as handle:
+    metadata = json.load(handle)
+metadata["validated_claims"] = sys.argv[2:]
+with metadata_path.open("w", encoding="utf-8") as handle:
+    json.dump(metadata, handle, indent=2)
+    handle.write("\n")
+PY
+fi
 echo "Validation written to ${latest#$repo_dir/}"

@@ -1,12 +1,14 @@
 import { apiRequest } from './apiClient';
 import type {
   RealImsActionResponse,
+  RealImsDeletePayload,
   RealImsMode,
   RealImsProvisionPayload,
   RealImsReport,
   RealImsSubscriberList,
   RealImsStartPayload,
   RealImsStopPayload,
+  RealImsSyncPayload,
 } from '../types/realIms';
 
 const basePath = '/api/ims-real';
@@ -36,4 +38,6 @@ export const realImsApi = {
       subscriber: { ...subscriber, sqn: Number.parseInt(sqn, 16) },
     });
   },
+  deleteSubscriber: (payload: RealImsDeletePayload) => post<RealImsActionResponse>('/delete-subscriber', payload),
+  syncSubscriber: (payload: RealImsSyncPayload) => post<RealImsActionResponse>('/sync-subscriber', payload),
 };

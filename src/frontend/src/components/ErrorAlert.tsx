@@ -1,4 +1,4 @@
-import { errorMessage, errorTitle, technicalDetails } from '../utils/errors';
+import { diagnoseApplicationError, errorMessage, errorTitle, technicalDetails } from '../utils/errors';
 import { Link } from 'react-router';
 import { AlertTriangle, ExternalLink, RotateCcw, ScrollText } from 'lucide-react';
 
@@ -8,11 +8,13 @@ interface ErrorAlertProps {
 }
 
 export function ErrorAlert({ error, onRetry }: ErrorAlertProps) {
+  const diagnosis = diagnoseApplicationError(error);
   return (
     <div className="error-alert" role="alert">
       <div className="error-alert-icon"><AlertTriangle size={19} /></div>
       <div className="error-alert-body"><strong>{errorTitle(error)}</strong>
       <p>{errorMessage(error)}</p>
+      <div className="error-diagnosis"><div><strong>Likely cause</strong><span>{diagnosis.cause}</span></div><div><strong>Suggested fix</strong><span>{diagnosis.fix}</span></div></div>
       <details>
         <summary>Technical details</summary>
         <pre>{technicalDetails(error)}</pre>

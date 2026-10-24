@@ -1,4 +1,5 @@
 export type SubscriberConnectionState = 'connected' | 'disconnected' | 'timeout' | 'misconfigured' | 'error' | 'dry_run';
+export type SubscriberProfile = '4g-lte-x310' | '5g-sa-x310' | '5g-nsa-x310';
 
 export interface SubscriberConnectionStatus {
   status: SubscriberConnectionState;
@@ -22,6 +23,7 @@ export interface SubscriberSummary {
   imsi: string;
   msisdn?: string | null;
   dnn?: string | null;
+  apns?: string[];
   sst?: number | null;
   sd?: string | null;
   security: SubscriberSecurityRedacted;
@@ -29,7 +31,6 @@ export interface SubscriberSummary {
 
 export interface SubscriberDetail extends SubscriberSummary {
   checked_at: string;
-  note: string;
 }
 
 export interface SubscriberListResponse {
@@ -54,6 +55,7 @@ export interface SubscriberFormPayload {
     sd?: string | null;
   };
   dnn?: string;
+  service_profile?: 'data_only' | 'voice_data';
 }
 
 export interface SubscriberClonePayload {

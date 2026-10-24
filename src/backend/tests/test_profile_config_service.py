@@ -36,7 +36,7 @@ def make_profile_project(tmp_path: Path) -> Path:
         "deployments/5g-sa-x310/rf",
         "deployments/5g-nsa-x310",
     ]:
-        shutil.copytree(ROOT / rel, root / rel)
+        shutil.copytree(ROOT / rel, root / rel, ignore=shutil.ignore_patterns(".env"))
     for scenario in ("deployments/4g-volte/x310", "deployments/5g-sa-x310", "deployments/5g-nsa-x310"):
         for name in ("channel-plan", "safety-manifest"):
             shutil.copyfile(root / scenario / "rf" / f"{name}.example.yaml", root / scenario / "rf" / f"{name}.yaml")
@@ -62,7 +62,15 @@ def make_profile_project(tmp_path: Path) -> Path:
         .replace("shielded_environment: true", "shielded_environment: false")
         .replace("authorization_confirmed: true", "authorization_confirmed: false")
         .replace('operator_note: "Prueba RF autorizada en entorno blindado con antena conectada, atenuación 60 dB y auto-stop 600 s"', 'operator_note: ""')
-        .replace("operator_note: Prueba RF autorizada en entorno blindado con antena conectada, atenuación 60 dB y auto-stop 600 s", 'operator_note: ""'),
+        .replace("operator_note: Prueba RF autorizada en entorno blindado con antena conectada, atenuación 60 dB y auto-stop 600 s", 'operator_note: ""')
+        .replace("operator_note: Controlled RF session from OpenLain5G", 'operator_note: ""'),
+        encoding="utf-8",
+    )
+    # This workspace may contain the operator's already-applied profile.
+    # Restore the original MME fixture to keep apply/restore tests deterministic.
+    mme_config = root / "deployments/4g-volte/x310/open5gs/mme.yaml"
+    mme_config.write_text(
+        mme_config.read_text(encoding="utf-8").replace("      tac: 1", "      tac: 7"),
         encoding="utf-8",
     )
     profile_5g = root / "config/profiles/5g-sa-x310.yaml"
@@ -97,6 +105,7 @@ def test_loads_profiles_and_blocks_invalid_rf_defaults(tmp_path: Path):
         "4g-lte-x310",
         "5g-sa",
         "5g-sa-x310",
+        "5g-nsa-x310",
     }
     validation = svc.validate_profile("5g-sa-x310")
     assert not validation["valid"]
@@ -111,6 +120,7 @@ def test_loads_profiles_and_blocks_invalid_rf_defaults(tmp_path: Path):
 def test_diff_apply_backup_and_secret_preservation(tmp_path: Path):
     root = make_profile_project(tmp_path)
     svc = service(root)
+    assert svc.latest_backup("5g-sa") == {"profile": "5g-sa", "backup": None}
     tracked_before_update = snapshot_files(root)
     profile = svc.get_profile("5g-sa")
     profile["network"]["tac"] = 9
@@ -124,6 +134,7 @@ def test_diff_apply_backup_and_secret_preservation(tmp_path: Path):
     assert "SECRETOPC" not in "".join(file["diff"] for file in diff["files"])
     result = svc.apply_profile("5g-sa")
     assert result["backup"].startswith(".backups/config/5g-sa/")
+    assert svc.latest_backup("5g-sa")["backup"] == result["backup"]
     assert sorted(result["modified_files"]) == sorted(file["path"] for file in diff["files"] if file["changed"])
     env = (root / "deployments/5g-sa/.env").read_text(encoding="utf-8")
     assert "SUBSCRIBER_KEY=SECRETKEY" in env
@@ -253,6 +264,7 @@ def test_api_uses_profile_service_without_file_paths(tmp_path: Path):
     )
     with TestClient(app) as client:
         assert client.get("/api/profiles").status_code == 200
+        assert client.get("/api/profiles/5g-sa/backups/latest").json() == {"profile": "5g-sa", "backup": None}
         response = client.put("/api/profiles/5g-sa", json={"network": {"tac": 2}, "file": "/etc/passwd"})
         assert response.status_code == 422
         response = client.put("/api/profiles/5g-sa", json={"network": {"tac": 2}})
@@ -469,6 +481,9 @@ def test_5g_nsa_x310_profile_updates_dual_rat_radio_and_safety(tmp_path: Path):
     svc = service(root)
     assert svc.validate_profile("5g-nsa-x310")["valid"] is False
 
+    lte_profile = svc.get_profile("4g-lte-x310")
+    lte_profile["network"].update({"tac": 8, "apn_internet": "nsa-lab"})
+    svc.update_profile("4g-lte-x310", lte_profile)
     profile = svc.get_profile("5g-nsa-x310")
     profile["network"].update({"tac": 8, "apn_internet": "nsa-lab"})
     profile["radio"].update({"earfcn": 3200, "nr_dl_arfcn": 369000, "tx_gain": 21, "rx_gain": 30.5})
@@ -488,9 +503,6 @@ def test_5g_nsa_x310_profile_updates_dual_rat_radio_and_safety(tmp_path: Path):
 
     result = svc.apply_profile("5g-nsa-x310")
     assert set(result["modified_files"]) == {
-        "deployments/4g-volte/common/.env",
-        "deployments/4g-volte/x310/open5gs/mme.yaml",
-        "deployments/4g-volte/x310/open5gs/pgwc.yaml",
         "deployments/5g-nsa-x310/.env",
         "deployments/5g-nsa-x310/ran/enb.conf",
         "deployments/5g-nsa-x310/ran/rr.conf",
@@ -510,6 +522,48 @@ def test_5g_nsa_x310_profile_updates_dual_rat_radio_and_safety(tmp_path: Path):
     env = (root / "deployments/5g-nsa-x310/.env").read_text(encoding="utf-8")
     assert "RF_DURATION_SECONDS=300" in env
     assert "LAIN5G_ALLOW_5G_NSA_RF_START=false" in env
+
+
+def test_5g_nsa_apply_does_not_modify_the_shared_4g_core(tmp_path: Path):
+    root = make_profile_project(tmp_path)
+    svc = service(root)
+    nsa_profile = svc.get_profile("5g-nsa-x310")
+    nsa_profile["safety"].update({"authorization_confirmed": True, "nr_rf_path_connected": True, "authorized_lab_frequencies": True, "operator_note": "Controlled NSA test"})
+    svc.update_profile("5g-nsa-x310", nsa_profile)
+    common_env = root / "deployments/4g-volte/common/.env"
+    mme_config = root / "deployments/4g-volte/x310/open5gs/mme.yaml"
+    before = (common_env.read_text(encoding="utf-8"), mme_config.read_text(encoding="utf-8"))
+
+    result = svc.apply_profile("5g-nsa-x310")
+
+    assert "deployments/4g-volte/common/.env" not in result["modified_files"]
+    assert "deployments/4g-volte/x310/open5gs/mme.yaml" not in result["modified_files"]
+    assert (common_env.read_text(encoding="utf-8"), mme_config.read_text(encoding="utf-8")) == before
+    assert svc.validate_profile("5g-nsa-x310")["valid"] is True
+
+
+def test_5g_nsa_radio_plan_can_be_applied_without_authorizing_rf(tmp_path: Path):
+    root = make_profile_project(tmp_path)
+    svc = service(root)
+    profile = svc.get_profile("5g-nsa-x310")
+
+    assert svc.validate_profile("5g-nsa-x310")["valid"] is False
+    result = svc.apply_profile("5g-nsa-x310")
+
+    assert result["profile"] == "5g-nsa-x310"
+    assert "deployments/5g-nsa-x310/.env" in result["modified_files"]
+    assert "LAIN5G_ALLOW_5G_NSA_RF_START=false" in (root / "deployments/5g-nsa-x310/.env").read_text(encoding="utf-8")
+    assert "authorization_confirmed: false" in (root / "deployments/5g-nsa-x310/rf/safety-manifest.yaml").read_text(encoding="utf-8")
+    assert profile["safety"]["rf_allowed"] is False
+
+
+def test_5g_nsa_profile_requires_the_shared_4g_core_values_to_match(tmp_path: Path):
+    svc = service(make_profile_project(tmp_path))
+    lte_profile = svc.get_profile("4g-lte-x310")
+    lte_profile["network"]["tac"] = 9
+    svc.update_profile("4g-lte-x310", lte_profile)
+    errors = svc.validate_profile("5g-nsa-x310")["errors"]
+    assert "network.tac must match the shared 4G LTE X310 profile" in errors
 
 
 def test_5g_nsa_x310_rejects_unsupported_or_unsafe_values(tmp_path: Path):

@@ -99,6 +99,29 @@ class PyHSSService:
             for name, path, field in resources
         ]
 
+    def delete_subscriber(self, imsi: str) -> list[ResourceResult]:
+        resources = (
+            ("ims_subscriber", f"/ims_subscriber/ims_subscriber_imsi/{imsi}", "ims_subscriber_id"),
+            ("subscriber", f"/subscriber/imsi/{imsi}", "subscriber_id"),
+            ("auc", f"/auc/imsi/{imsi}", "auc_id"),
+        )
+        results: list[ResourceResult] = []
+        for resource, lookup_path, id_field in resources:
+            try:
+                existing = self._request("GET", lookup_path)
+            except PyHSSError as exc:
+                if exc.status_code in {400, 404}:
+                    results.append(ResourceResult(resource=resource, action="verified"))
+                    continue
+                raise
+            if not isinstance(existing, dict) or existing.get(id_field) is None:
+                results.append(ResourceResult(resource=resource, action="verified"))
+                continue
+            resource_id = _required_id(existing, id_field)
+            self._request("DELETE", f"/{resource}/{resource_id}")
+            results.append(ResourceResult(resource=resource, resource_id=resource_id, action="deleted"))
+        return results
+
     def list_packet_subscribers(self) -> list[dict[str, Any]]:
         return self._list("/subscriber/list")
 

@@ -21,15 +21,15 @@ SOFTWARE_PROFILES = {
 }
 RF_GUARD_FAILURES = {
     "4g-lte-x310": {
-        "RF authorization must be confirmed before apply",
+        "RF authorization must be confirmed before transmission",
         "safety.operator_note must not be empty",
     },
     "5g-sa-x310": {
-        "RF authorization must be confirmed before apply",
+        "RF authorization must be confirmed before transmission",
         "safety.operator_note must not be empty",
     },
     "5g-nsa-x310": {
-        "RF authorization must be confirmed before apply",
+        "RF authorization must be confirmed before transmission",
         "safety.operator_note must not be empty",
         "5G NSA requires nr_rf_path_connected=true",
         "5G NSA requires authorized_lab_frequencies=true",

@@ -11,11 +11,17 @@ addr="${USRP_ADDR:-192.168.10.2}"
 image="${LAIN5G_UHD_IMAGE:-lain5g-lab/srsran4g-uhd:local}"
 status=PASS
 check(){ printf '%-22s %s %s\n' "$1" "$2" "$3"; [ "$2" = FAIL ] && status=FAIL; return 0; }
-if ip -o addr show | grep -Eq '192\.168\.(10|30)\.'; then
-  check ethernet_link PASS "compatible local subnet found"
-else
-  check ethernet_link WARNING "no typical X310 local subnet found"
-fi
+route="$(ip -4 route get "$addr" 2>/dev/null | head -n1 || true)"
+route_source="$(awk '{for (i=1; i<=NF; i++) if ($i == "src") {print $(i+1); exit}}' <<< "$route")"
+route_device="$(awk '{for (i=1; i<=NF; i++) if ($i == "dev") {print $(i+1); exit}}' <<< "$route")"
+case "$route_source" in
+  192.168.10.*|192.168.30.*)
+    check ethernet_link PASS "route to $addr uses $route_device at $route_source"
+    ;;
+  *)
+    check ethernet_link WARNING "route to $addr uses ${route_device:-no interface} at ${route_source:-no local IPv4}, outside typical X310 subnets"
+    ;;
+esac
 ping -c 1 -W 1 "$addr" >/dev/null 2>&1 && check x310_ping PASS "X310 responds at $addr" || { check x310_ping FAIL "X310 did not respond at $addr"; }
 if command -v uhd_find_devices >/dev/null 2>&1; then
   out="$(uhd_find_devices --args "addr=$addr" 2>&1 || true)"

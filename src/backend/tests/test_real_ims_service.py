@@ -3,7 +3,7 @@ import subprocess
 
 import pytest
 
-from backend.app.models.real_ims import RealIMSSubscriber
+from backend.app.models.real_ims import RealIMSSubscriber, RealIMSSubscriberList, RealIMSSubscriberSummary
 from backend.app.services.real_ims_service import PYHSS_REQUEST_HELPER, RealIMSError, RealIMSService, _last_integer, _open5gs_document
 from backend.app.settings import Settings
 
@@ -35,6 +35,52 @@ def test_open5gs_document_contains_internet_and_ims_voice_policy():
     assert sessions[1]["qos"]["index"] == 5
     assert sessions[1]["qos"]["arp"]["priority_level"] == 1
     assert [rule["qos"]["index"] for rule in sessions[1]["pcc_rule"]] == [1, 2]
+
+
+def test_sync_subscriber_copies_local_authentication_data_without_returning_secrets(tmp_path, monkeypatch):
+    service = make_service(tmp_path)
+    source_env = service._state_dir("4g") / "stack.env"
+    target_env = service._state_dir("5g") / "stack.env"
+    source_env.parent.mkdir(parents=True)
+    target_env.parent.mkdir(parents=True)
+    source_env.write_text("MCC=001\nMNC=01\n", encoding="utf-8")
+    target_env.write_text("MCC=001\nMNC=01\n", encoding="utf-8")
+    (target_env.parent / "override.yaml").write_text("services: {}\n", encoding="utf-8")
+    service._state_dir("5g").mkdir(parents=True, exist_ok=True)
+    service._write_json = lambda *_: None
+    service.subscribers = lambda mode: RealIMSSubscriberList(
+        mode=mode,
+        count=1,
+        subscribers=[RealIMSSubscriberSummary(
+            imsi="001010000000001", msisdn="15551234567", impi="impi", impu="impu", domain="ims.example",
+            enabled=True, apns=["internet", "ims"], open5gs_present=True, pyhss_present=True,
+        )],
+    )
+    secret_ki = "00112233445566778899AABBCCDDEEFF"
+    secret_opc = "FFEEDDCCBBAA99887766554433221100"
+    monkeypatch.setattr(service, "_run", lambda *args, **kwargs: subprocess.CompletedProcess(
+        [], 0, json.dumps({"imsi": "001010000000001", "msisdn": ["15551234567"], "security": {
+            "k": secret_ki, "opc": secret_opc, "amf": "8000", "sqn": "00000000000A",
+        }, "subscriber_status": 0}), "",
+    ))
+    captured = {}
+
+    def fake_provision(mode, current, mcc, mnc, *, execute):
+        captured.update(mode=mode, subscriber=current, mcc=mcc, mnc=mnc, execute=execute)
+        return {"mode": mode, "status": "PASS", "imsi": current.imsi}
+
+    monkeypatch.setattr(service, "provision", fake_provision)
+    result = service.sync_subscriber("4g", "5g", "001010000000001")
+
+    assert captured["mode"] == "5g"
+    assert captured["execute"] is True
+    assert captured["subscriber"].ki == secret_ki
+    assert captured["subscriber"].opc == secret_opc
+    assert captured["subscriber"].sqn == 10
+    assert result["status"] == "PASS"
+    assert result["secrets_redacted"] is True
+    assert secret_ki not in json.dumps(result)
+    assert secret_opc not in json.dumps(result)
 
 
 def test_last_integer_accepts_mongosh_prompt():
@@ -92,6 +138,45 @@ def test_start_and_image_build_are_dry_run_by_default(tmp_path, monkeypatch):
     assert start["rf_started"] is False
     assert "lain5g-lab-ims-real-5g" in start["command"]
     assert images["executed"] is False
+
+
+def test_start_uses_prepared_images_without_building(tmp_path, monkeypatch):
+    service = make_service(tmp_path)
+    calls = []
+
+    class Report:
+        checks = []
+
+    env_file = service._state_dir("4g") / "stack.env"
+    env_file.parent.mkdir(parents=True)
+    env_file.write_text("MCC=001\nMNC=01\n", encoding="utf-8")
+    monkeypatch.setattr(service, "preflight", lambda mode: Report())
+    monkeypatch.setattr(service, "build_images", lambda **kwargs: (_ for _ in ()).throw(AssertionError("start must not build images")))
+    monkeypatch.setattr(service, "_prepare_runtime", lambda *args, **kwargs: env_file)
+    monkeypatch.setattr(service, "_compose_command", lambda *args: ["docker", "compose", "up"])
+    monkeypatch.setattr(service, "_run", lambda command, **kwargs: calls.append(command) or subprocess.CompletedProcess(command, 0, "", ""))
+
+    result = service.start("4g", execute=True)
+
+    assert calls == [["docker", "compose", "up", "-d", *service._services("4g")]]
+    assert result["status"] == "RUNNING"
+
+
+def test_start_blocks_when_preflight_reports_missing_images(tmp_path, monkeypatch):
+    service = make_service(tmp_path)
+
+    class Check:
+        status = "FAIL"
+        message = "Prepare missing IMS images first"
+
+    class Report:
+        checks = [Check()]
+
+    monkeypatch.setattr(service, "preflight", lambda mode: Report())
+    monkeypatch.setattr(service, "build_images", lambda **kwargs: (_ for _ in ()).throw(AssertionError("start must not build images")))
+
+    with pytest.raises(RealIMSError, match="Prepare missing IMS images first"):
+        service.start("4g", execute=True)
 
 
 def test_pyhss_request_uses_compose_exec_and_stdin_envelope(tmp_path, monkeypatch):

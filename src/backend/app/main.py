@@ -4,7 +4,7 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
-from .api import deployments, health, preparation, profiles, runs, subscribers, validation
+from .api import deployments, health, preparation, profiles, real_ims, runs, subscribers, validation
 from .models.deployment import ErrorDetail, ErrorResponse
 from .security import MutationDisabledError
 from .services.command_service import CommandSecurityError
@@ -22,7 +22,7 @@ def create_app() -> FastAPI:
     app = FastAPI(
         title="OpenLain5G API",
         version=VERSION,
-        description="Backend API for operating the validated OpenLain5G 5G SA deployment.",
+        description="Backend API for operating OpenLain5G 4G/5G deployments, subscribers, and the isolated IMS runtime.",
     )
 
     app.add_middleware(
@@ -37,6 +37,7 @@ def create_app() -> FastAPI:
     app.include_router(deployments.router)
     app.include_router(runs.router)
     app.include_router(subscribers.router)
+    app.include_router(real_ims.router)
     app.include_router(profiles.router)
     app.include_router(validation.router)
     app.include_router(preparation.router)
@@ -86,7 +87,7 @@ def register_exception_handlers(app: FastAPI) -> None:
 
     @app.exception_handler(RealIMSError)
     async def real_ims_error_handler(request: Request, exc: RealIMSError) -> JSONResponse:
-        return error_response(409, "REAL_IMS_CONFLICT", "The real IMS operation could not be completed.")
+        return error_response(409, "REAL_IMS_CONFLICT", str(exc))
 
     @app.exception_handler(PreparationError)
     async def preparation_error_handler(request: Request, exc: PreparationError) -> JSONResponse:

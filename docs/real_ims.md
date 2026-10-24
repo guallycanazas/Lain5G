@@ -1,9 +1,12 @@
-# Archived Real IMS Design
+# Isolated Real IMS Runtime
 
-OpenLain5G packages a real IMS core separately from its simulated and X310
-scenarios. The package includes Open5GS packet core roles, MongoDB, MySQL,
-Kamailio P/I/S-CSCF, pyHSS, DNS, and RTPengine. It does not include a RAN, RF
-control, UERANSIM, or an Open5GS WebUI.
+OpenLain5G exposes an isolated real IMS runtime at `/ims`, separately from its
+simulated and X310 scenarios. It follows the herlesupreeth pattern: Open5GS
+provides packet-core subscriber data; Kamailio provides P-/I-/S-CSCF; and pyHSS
+provides IMS subscriber data over Diameter Cx, backed by MySQL. The runtime has
+separate 4G and 5G Compose projects, networks, subnets, and volumes; both modes
+can run side by side. It does not include a RAN, RF control,
+UERANSIM, or a public pyHSS endpoint.
 
 The [canonical capability table](../README.md#canonical-capability-status)
 is the sole source of current scientific classifications. This guide defines
@@ -32,12 +35,21 @@ MySQL/Kamailio initialization also assumes an isolated Compose network and
 permits passwordless MySQL root access from that internal network. No database
 port is published to the host, but untrusted containers must not join it.
 
-## Archived Boundary
+## Operating Boundary
 
-The manifests, service implementation, provenance, and tests remain available
-for source review and historical traceability. Real IMS has no public web, API,
-Make, or standalone CLI entry point and is not one of the supported launchable
-profiles.
+The local IMS console and `/api/ims-real` endpoints operate this package. The
+manifests publish no host ports, and no action starts RF. Prepare missing
+first-party images from the Preparation page; runtime start only checks that
+they are present and starts services. Image building, runtime start/stop, and
+subscriber provisioning require an explicit in-page confirmation and the
+backend mutation gate. This runtime remains separate from the integrated IMS
+services included in the VoLTE/VoNR deployment scenarios.
+
+The Subscribers page can synchronize one existing IMS identity between the
+4G and 5G real-IMS runtimes. The source and target runtimes must be running.
+The backend reads the source Open5GS record locally and reconciles the target
+Open5GS, pyHSS/AuC, and `internet`/`ims` APN records without returning Ki or
+OPc in the API response.
 
 ## Generated Security
 
@@ -58,5 +70,7 @@ Cx sequence. Call and media validation use a correlated evidence scope covering
 dialog completion, teardown, and bidirectional RTP from the same run.
 
 The package's core-service checks, registration flow, and call/media flow are
-reported as distinct validation layers. IMS-capable UE and integrated RAN
-evidence can be correlated with the package under the same run identifier.
+reported as distinct validation layers. A passing readiness report is not
+evidence of VoLTE/VoNR registration or a completed call. IMS-capable UE and
+integrated RAN evidence must be correlated with the package under the same run
+identifier before making those claims.

@@ -31,7 +31,12 @@ write_json(){
   echo "Validation written to ${run_dir#$repo_dir/}/validation.json"
   [ "$status" = PASS ]
 }
-"$(dirname "${BASH_SOURCE[0]}")/hardware-check.sh" >"$run_dir/logs/hardware-check.log" 2>&1 && add hardware_detected PASS "X310 detected" || add hardware_detected FAIL "X310 not detected"
+"$(dirname "${BASH_SOURCE[0]}")/host-hardware-check.sh" >"$run_dir/logs/hardware-check.log" 2>&1 || true
+if grep -q '^status=PASS$' "$run_dir/logs/hardware-check.log"; then
+  add hardware_detected PASS "X310 detected"
+else
+  add hardware_detected FAIL "X310 not detected"
+fi
 grep -q 'ethernet_link.*PASS' "$run_dir/logs/hardware-check.log" && add ethernet_link PASS "compatible local subnet found" || add ethernet_link WARNING "ethernet not proven compatible"
 "$(dirname "${BASH_SOURCE[0]}")/uhd-check.sh" >"$run_dir/logs/uhd-check.log" 2>&1 && add uhd_available PASS "UHD probe passed" || add uhd_available FAIL "UHD probe failed"
 "$(dirname "${BASH_SOURCE[0]}")/fpga-check.sh" "$run_dir/logs/uhd-check.log" >"$run_dir/logs/fpga-check.log" 2>&1 && add uhd_fpga_compatible PASS "FPGA compatible" || add uhd_fpga_compatible FAIL "FPGA compatibility unknown"
@@ -47,10 +52,42 @@ if running enb-x310; then
   add auto_stop NOT_TESTED "RF session is still active; auto-stop cannot be confirmed yet"
   [ -s "$run_dir/logs/enb-x310.log" ] && add logs_captured PASS "active-session logs captured" || add logs_captured FAIL "no active-session eNB logs"
 else
-  add enb_started NOT_TESTED "No active RF session; enb-x310 remains in guarded standby"
-  add s1_setup NOT_TESTED "No active RF session from which to collect S1 evidence"
-  add auto_stop NOT_TESTED "No current RF session lifecycle to validate"
-  add logs_captured NOT_TESTED "No active RF session logs were requested"
+  latest_session=""
+  while IFS= read -r candidate; do
+    if grep -q '"scenario":"4g-lte-x310"' "$candidate"; then
+      latest_session="$candidate"
+      break
+    fi
+  done < <(find "$repo_dir/runs" -mindepth 2 -maxdepth 2 -type f -name rf-session.json -printf '%T@ %p\n' 2>/dev/null | sort -nr | cut -d' ' -f2-)
+  if [ -n "$latest_session" ]; then
+    session_status="$(sed -n 's/.*"status":"\([^"]*\)".*/\1/p' "$latest_session" | head -n1)"
+    session_log="$(dirname "$latest_session")/logs/enb-x310.log"
+    session_id="$(sed -n 's/.*"run_id":"\([^"]*\)".*/\1/p' "$latest_session" | head -n1)"
+    if [ "$session_status" = auto_stopped ]; then
+      add enb_started PASS "eNB ran for its requested time-limited RF session ($session_id)"
+      add auto_stop PASS "Container-enforced auto-stop completed ($session_id)"
+    elif [ "$session_status" = failed ]; then
+      add enb_started FAIL "Latest RF session failed during eNB startup ($session_id)"
+      add auto_stop FAIL "eNB exited before its requested auto-stop duration ($session_id)"
+    else
+      add enb_started NOT_TESTED "No active RF session; enb-x310 remains in guarded standby"
+      add auto_stop NOT_TESTED "Latest RF session lifecycle is incomplete ($session_id)"
+    fi
+    if [ -s "$session_log" ]; then
+      grep -Eiq 'S1 Setup|S1AP|MME connection|Connected to MME' "$session_log" \
+        && add s1_setup PASS "S1 setup evidence found in session $session_id" \
+        || add s1_setup FAIL "No S1 setup evidence in session $session_id"
+      add logs_captured PASS "Session-scoped eNB logs captured ($session_id)"
+    else
+      add s1_setup NOT_TESTED "Session-scoped eNB logs are unavailable ($session_id)"
+      add logs_captured FAIL "No eNB log was captured for session $session_id"
+    fi
+  else
+    add enb_started NOT_TESTED "No active RF session; enb-x310 remains in guarded standby"
+    add s1_setup NOT_TESTED "No active RF session from which to collect S1 evidence"
+    add auto_stop NOT_TESTED "No current RF session lifecycle to validate"
+    add logs_captured NOT_TESTED "No active RF session logs were requested"
+  fi
 fi
 add ue_registration NOT_TESTED "UE over RF not required in this profile"
 write_json

@@ -13,6 +13,11 @@ It starts alongside the core without enabling RF by itself:
 The `sip-register` client belongs to the internal software signaling scenarios;
 it does not run in the public USRP profiles.
 
+For the full HSS-backed IMS path, use the isolated `/ims` runtime described in
+[`real_ims.md`](real_ims.md). It runs Kamailio P-/I-/S-CSCF with pyHSS over
+Diameter Cx and provisions Open5GS and pyHSS together. The compact IMS services
+above do not implement that Cx-backed HSS flow.
+
 ## Configuration
 
 The IMS domains are defined in `deployments/4g-volte/common/.env`:

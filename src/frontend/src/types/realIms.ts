@@ -67,3 +67,19 @@ export interface RealImsProvisionPayload {
   apn_ims: string;
   enabled: boolean;
 }
+
+export interface RealImsDeletePayload {
+  mode: RealImsMode;
+  execute: boolean;
+  mcc: string;
+  mnc: string;
+  imsi: string;
+}
+
+export interface RealImsSyncPayload {
+  source_mode: RealImsMode;
+  target_mode: RealImsMode;
+  mcc: string;
+  mnc: string;
+  imsi: string;
+}

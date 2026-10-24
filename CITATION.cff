@@ -1,10 +1,10 @@
 cff-version: "1.2.0"
 message: >-
-  If you use OpenLain5G 1.1.5, cite the software metadata in this file.
+  If you use OpenLain5G 1.1.6, cite the software metadata in this file.
 title: "OpenLain5G"
 type: software
-version: "1.1.5"
-date-released: "2026-08-17"
+version: "1.1.6"
+date-released: "2026-10-24"
 authors:
   - family-names: "Canazas Rosas"
     given-names: "Willian Roy"
@@ -16,7 +16,8 @@ authors:
     given-names: "Alberth Ronal"
     affiliation: "National University of San Agustin of Arequipa"
 abstract: >-
-  OpenLain5G is a modular framework for reproducible 4G LTE and 5G SA mobile
+  OpenLain5G is a modular framework for reproducible 4G LTE, 5G SA, and guarded
+  5G NSA mobile
   network laboratories. It deploys and manages open-source RAN, core, IMS, and
   simulation components through Docker Compose, command-line, and web
   interfaces, with customizable software scenarios, guarded X-Series USRP

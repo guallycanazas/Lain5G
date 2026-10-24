@@ -198,7 +198,8 @@
     },
     {
       "path": "images/ims-real-kamailio/roles/icscf/icscf_init.sh",
-      "sha256": "09c766693b10a9cf3d676c105a24fac0ed105afa84b13a925631639ba87f04dc"
+      "sha256": "4e9322cc47053454ca57cc023fc641ee9ba95e940c65aeb5cba7a20497017b09",
+      "transformation": "Locally hardened for idempotent MariaDB initialization."
     },
     {
       "path": "images/ims-real-kamailio/roles/icscf/kamailio_icscf.cfg",
@@ -222,7 +223,8 @@
     },
     {
       "path": "images/ims-real-kamailio/roles/pcscf/pcscf_init.sh",
-      "sha256": "1a7e4fb432ac7251fc2b3f572f59c1989fdeca3b2be273971c4a57706a9a7c52"
+      "sha256": "ae57ae28dc2ab0aa0e52c69cba5bc50626275ac26443e90eaae5fe01658d78a1",
+      "transformation": "Locally hardened for idempotent MariaDB initialization."
     },
     {
       "path": "images/ims-real-kamailio/roles/pcscf/route/mo.cfg",
@@ -334,7 +336,8 @@
     },
     {
       "path": "images/ims-real-kamailio/roles/scscf/scscf_init.sh",
-      "sha256": "d358152af22e7507de9e33099fab907ac68055c0db6b6ee1ba50c01b551ee5a0"
+      "sha256": "0edf4d2202693bb079eb4fb14c2531400f420b566caeb0714a816172ca9c347a",
+      "transformation": "Locally hardened for idempotent MariaDB initialization."
     },
     {
       "path": "images/ims-real-dns/runtime/Dockerfile",
@@ -406,7 +409,13 @@
     },
     {
       "path": "images/pyhss-secure/runtime/pyhss_init.sh",
-      "sha256": "f813958f06bf09c3662d25d6bf7eae2a67d17808c005df2d13ece81a1b381f66"
+      "sha256": "655efeb500acbfeb4b655929e1dfbc86228322fa85a89003aceb7be6166b5b1e",
+      "transformation": "Locally hardened for idempotent MariaDB initialization."
+    },
+    {
+      "path": "images/ims-real-kamailio/roles/icscf/icscf.sql",
+      "sha256": "347bae64f05d22ab2b004263958304b3fa693056cb917d33a72dfdff27fbc68e",
+      "transformation": "OpenLain5G-owned schema required by the packaged I-CSCF role."
     }
   ]
 }

@@ -24,6 +24,19 @@ describe('Subscriber management', () => {
     expect(document.body.textContent).not.toContain('001122334455');
   });
 
+  it('keeps the selected network profile when opening subscriber details', async () => {
+    vi.stubGlobal('fetch', vi.fn((url: string) => {
+      if (url.includes('/connection')) return jsonResponse(subscriberConnection);
+      return jsonResponse(subscriberList);
+    }));
+
+    renderWithClient(<SubscribersPage />, '/subscribers?profile=5g-sa-x310');
+
+    expect(await screen.findByText('internet, ims')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'View' })).toHaveAttribute('href', '/subscribers/001010000000001?profile=5g-sa-x310');
+    expect(screen.getByRole('link', { name: 'Edit' })).toHaveAttribute('href', '/subscribers/001010000000001/edit?profile=5g-sa-x310');
+  });
+
   it('shows empty state and MongoDB errors', async () => {
     vi.stubGlobal('fetch', vi.fn((url: string) => {
       if (url.includes('/connection')) return jsonResponse({ ...subscriberConnection, status: 'disconnected', message: 'MongoDB is not available' });
@@ -63,11 +76,11 @@ describe('Subscriber management', () => {
 
     await userEvent.type(screen.getByLabelText('IMSI *'), '001010000000010');
     await userEvent.type(screen.getByLabelText('MSISDN'), '51999999991');
-    await userEvent.type(screen.getByLabelText('K *'), '00112233445566778899aabbccddeeff');
+    await userEvent.type(screen.getByLabelText('Ki *'), '00112233445566778899aabbccddeeff');
     await userEvent.type(screen.getByLabelText('OPc'), 'ffeeddccbbaa99887766554433221100');
     await userEvent.click(screen.getByRole('button', { name: 'Create subscriber' }));
 
-    await waitFor(() => expect(fetch).toHaveBeenCalledWith('/api/subscribers', expect.objectContaining({ method: 'POST' })));
+    await waitFor(() => expect(fetch).toHaveBeenCalledWith('/api/subscribers?profile=4g-lte-x310', expect.objectContaining({ method: 'POST' })));
   });
 
   it('edits while keeping secrets empty', async () => {
@@ -99,11 +112,11 @@ describe('Subscriber management', () => {
     await userEvent.click((await screen.findAllByRole('button', { name: 'Clone' }))[0]);
     await userEvent.type(screen.getByLabelText('New IMSI'), '001010000000002');
     await userEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Clone' }));
-    await waitFor(() => expect(fetch).toHaveBeenCalledWith('/api/subscribers/001010000000001/clone', expect.objectContaining({ method: 'POST' })));
+    await waitFor(() => expect(fetch).toHaveBeenCalledWith('/api/subscribers/001010000000001/clone?profile=4g-lte-x310', expect.objectContaining({ method: 'POST' })));
 
     await userEvent.click((await screen.findAllByRole('button', { name: 'Delete' }))[0]);
     await userEvent.type(screen.getByLabelText('Confirm IMSI'), '001010000000001');
     await userEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Delete' }));
-    await waitFor(() => expect(fetch).toHaveBeenCalledWith('/api/subscribers/001010000000001', expect.objectContaining({ method: 'DELETE' })));
+    await waitFor(() => expect(fetch).toHaveBeenCalledWith('/api/subscribers/001010000000001?profile=4g-lte-x310', expect.objectContaining({ method: 'DELETE' })));
   });
 });

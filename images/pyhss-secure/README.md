@@ -1,14 +1,16 @@
-# Hardened pyHSS Runtime
+# OpenLain5G pyHSS Image
 
-This small derivative uses a digest-locked pyHSS 1.0.2 base image, packages
-the reviewed runtime configuration in the OpenLain5G image context and removes
-API request-body logging. OpenLain5G also
-generates a runtime configuration that:
+This image builds pyHSS 1.0.2 from the pinned upstream source commit recorded
+in `deployments/ims-real/images.lock.yaml`, on a digest-pinned Ubuntu base. It
+does not use a third-party pyHSS container image. The pyHSS source is AGPL-3.0;
+redistribution must include the corresponding source and license.
+
+OpenLain5G packages the reviewed runtime configuration and generates a
+runtime-only configuration that:
 
 - enables the provisioning key;
 - disables insecure AUC reads;
 - disables SQLAlchemy SQL echo.
 
-It does not fork or vendor pyHSS source. pyHSS remains an AGPL-3.0 network
-service and its source/provenance must remain available with redistributed
-images.
+Provisioning credentials are accepted only by the internal pyHSS API and are
+not logged. The API and Diameter listeners remain unexposed on the host.

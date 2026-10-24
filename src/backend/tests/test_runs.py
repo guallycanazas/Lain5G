@@ -11,6 +11,23 @@ def test_list_runs_orders_descending(run_service):
     assert [run.run_id for run in runs] == ["run-valid", "run-partial"]
 
 
+def test_list_runs_uses_timestamp_in_id_when_started_at_is_missing(run_service, project_root):
+    run_dir = project_root / "runs/run-20261024-184854"
+    run_dir.mkdir()
+    (run_dir / "metadata.json").write_text(
+        json.dumps({"run_id": run_dir.name, "scenario": "4g-lte-sim", "status": "stopped"}),
+        encoding="utf-8",
+    )
+    (run_dir / "validation.json").write_text(
+        json.dumps({"checks": [{"id": "ue_registration", "status": "PASS"}]}),
+        encoding="utf-8",
+    )
+
+    runs = run_service.list_runs()
+
+    assert runs[0].run_id == "run-20261024-184854"
+
+
 def test_list_runs_filters(run_service):
     runs = run_service.list_runs(limit=1, scenario="5g-sa", status="PASS")
 
@@ -27,6 +44,21 @@ def test_get_run_reads_metadata_validation_metrics_and_logs(run_service):
     assert run.validation["checks"][0]["status"] == "PASS"
     assert run.metrics["metrics"] == []
     assert run.logs == ["docker-compose.log"]
+
+
+def test_get_run_reads_preflight_evidence(run_service, project_root):
+    preflight = {
+        "scenario": "4g-lte-x310",
+        "status": "FAIL",
+        "checked_at": "2026-10-22T22:46:46Z",
+        "checks": [{"id": "authorization", "status": "FAIL", "detail": "authorization not confirmed"}],
+    }
+    (project_root / "runs/run-valid/preflight.json").write_text(json.dumps(preflight), encoding="utf-8")
+
+    run = run_service.get_run("run-valid")
+
+    assert run is not None
+    assert run.preflight == preflight
 
 
 def test_get_run_tolerates_missing_metrics(run_service):
@@ -52,14 +84,15 @@ def test_run_status_is_derived_from_checks(run_service, project_root):
     assert detail.validation["status"] == "WARNING"
 
     validation["checks"][0]["status"] = "NOT_TESTED"
+    validation["checks"].append({"id": "ue_registration", "status": "NOT_TESTED"})
     validation_path.write_text(json.dumps(validation), encoding="utf-8")
 
     listed = run_service.list_runs(scenario="5g-sa")
     detail = run_service.get_run("run-valid")
 
-    assert listed[0].status == "NOT_TESTED"
+    assert listed[0].status == "PARTIAL"
     assert detail is not None
-    assert detail.validation["status"] == "NOT_TESTED"
+    assert detail.validation["status"] == "PARTIAL"
 
 
 def test_list_runs_ignores_corrupt_directories(run_service):

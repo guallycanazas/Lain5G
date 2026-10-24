@@ -1,6 +1,7 @@
 import type { ValidationCheck } from '../types/validation';
 import { extractDetectedValue, validationDescription } from '../utils/status';
 import { StatusBadge } from './StatusBadge';
+import { ValidationDiagnosis } from './ValidationDiagnosis';
 
 export function ValidationTable({ checks, checkedAt, expectedChecks = [] }: { checks: ValidationCheck[]; checkedAt?: string | null; expectedChecks?: string[] }) {
   const byId = new Map(checks.map((check) => [check.id, check]));
@@ -20,7 +21,7 @@ export function ValidationTable({ checks, checkedAt, expectedChecks = [] }: { ch
                 <td>{validationDescription(check.id)}<span className="validation-item-id">{check.id}</span></td>
                 <td><StatusBadge status={check.status} kind="validation" /></td>
                 <td>{extractDetectedValue(check.detail)}</td>
-                <td>{check.detail || 'No evidence reported'}</td>
+                <td><ValidationDiagnosis check={check} />{check.status === 'PASS' ? check.detail || 'Passed' : null}</td>
                 <td>{checkedAt || 'No date'}</td>
               </tr>
             );

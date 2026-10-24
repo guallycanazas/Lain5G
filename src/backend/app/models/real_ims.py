@@ -101,10 +101,48 @@ class RealIMSProvisionRequest(RealIMSAction, PLMN):
         return self
 
 
+class RealIMSDeleteRequest(RealIMSAction, PLMN):
+    imsi: str
+
+    @field_validator("imsi")
+    @classmethod
+    def validate_imsi(cls, value: str) -> str:
+        if not re.fullmatch(r"[0-9]{14,15}", value):
+            raise ValueError("IMSI must contain 14 or 15 digits")
+        return value
+
+    @model_validator(mode="after")
+    def validate_subscriber_plmn(self) -> "RealIMSDeleteRequest":
+        if not self.imsi.startswith(f"{self.mcc}{self.mnc}"):
+            raise ValueError("subscriber IMSI does not match the requested MCC/MNC")
+        return self
+
+
+class RealIMSSyncRequest(PLMN):
+    source_mode: Mode
+    target_mode: Mode
+    imsi: str
+
+    @field_validator("imsi")
+    @classmethod
+    def validate_imsi(cls, value: str) -> str:
+        if not re.fullmatch(r"[0-9]{14,15}", value):
+            raise ValueError("IMSI must contain 14 or 15 digits")
+        return value
+
+    @model_validator(mode="after")
+    def validate_sync_target(self) -> "RealIMSSyncRequest":
+        if self.source_mode == self.target_mode:
+            raise ValueError("source and target IMS modes must be different")
+        if not self.imsi.startswith(f"{self.mcc}{self.mnc}"):
+            raise ValueError("subscriber IMSI does not match the requested MCC/MNC")
+        return self
+
+
 class ResourceResult(RealIMSModel):
     resource: str
     resource_id: int | None = None
-    action: Literal["created", "updated", "verified"]
+    action: Literal["created", "updated", "verified", "deleted"]
     status: Literal["PASS", "FAIL"] = "PASS"
 
 

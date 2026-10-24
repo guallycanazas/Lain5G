@@ -30,7 +30,19 @@ const core5g = ['mongo', 'nrf', 'amf', 'smf', 'upf', 'ausf', 'udm', 'udr', 'pcf'
 
 function stagesFor(scenarioId: string, rfCapable: boolean): ProofStage[] {
   const is4g = scenarioId.startsWith('4g-');
+  const isNsa = scenarioId === '5g-nsa-x310';
   if (rfCapable) {
+    if (isNsa) {
+      return [
+        { label: 'X310 dual chains detected', description: 'The host detects the SDR, UHD, and both RF daughterboards.', source: 'NSA hardware check + UHD probe', checkIds: ['hardware_detected', 'dual_rf_chains'] },
+        { label: 'NSA RF safety gate', description: 'Both carriers, paths, authorization, attenuation, and the time limit are checked before RF.', source: 'NSA RF preflight artifact', checkIds: ['rf_preflight'] },
+        { label: 'UHD / RFNoC radio initialization', description: 'The captured eNB log is checked for RFNoC graph startup failures and confirms when the radio initialization completes.', source: 'UHD probe + eNB session log', checkIds: ['rfnoc_initialization'] },
+        { label: 'LTE EPC + IMS ready', description: 'The shared LTE core and compact IMS services are active.', source: 'Docker runtime + EPC checks', checkIds: ['epc_services', 'ims_services'] },
+        { label: 'LTE anchor + NR carrier tuning', description: 'The guarded eNB session and NR tuning on the second RF port are checked. UE EN-DC attachment is verified separately.', source: 'enb-nsa-x310 session log', checkIds: ['enb_started', 'nr_secondary_cell'] },
+        { label: 'LTE S1 control link', description: 'The LTE eNB-to-MME control link is found in session-scoped logs.', source: 'eNB/MME session logs', checkIds: ['s1_setup'] },
+        { label: 'NSA UE attach', description: 'Requires an external UE that supports the configured B7+n3 EN-DC band combination.', source: 'External UE and EPC registration evidence', checkIds: ['ue_registration'] },
+      ];
+    }
     return [
       {
         label: 'X310 detected',
@@ -54,7 +66,7 @@ function stagesFor(scenarioId: string, rfCapable: boolean): ProofStage[] {
       },
       {
         label: is4g ? 'LTE eNB active' : '5G gNB active',
-        description: 'Time-limited RF-capable process observed; this alone does not prove over-air reception.',
+        description: 'Time-limited RF-capable process observed.',
         source: is4g ? 'enb-x310 session log' : 'gnb-x310 session log',
         checkIds: [is4g ? 'enb_started' : 'gnb_started'],
       },
@@ -130,7 +142,7 @@ export function OperationalProofPanel({ scenarioId, rfCapable, checks, checkedAt
       </div>
       <div className="operational-proof-result"><strong>{passed}/{stages.length} stages proven</strong><StatusBadge status={overall} kind="validation" /></div>
     </div>
-    <p className="proof-trust-note">Green means the validator observed the required command or log evidence. A running container alone never proves registration, RF reception, an assigned IP, or user-plane traffic.</p>
+    <p className="proof-trust-note">Checks are grouped by the evidence collected at each network stage.</p>
     <div className="proof-chain">
       {resolved.map(({ stage, status }, index) => {
         const observed = stage.checkIds.filter((id) => byId.get(id)?.status === 'PASS').length;

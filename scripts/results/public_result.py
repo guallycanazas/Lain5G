@@ -555,6 +555,8 @@ def _validate_hashed_reference(
     allowed_prefixes: Sequence[str],
     allowed_suffixes: set[str],
     require_versionable: bool,
+    source_commit: str | None = None,
+    source_snapshot_tag: str | None = None,
 ) -> tuple[str, Path]:
     if not isinstance(item, Mapping) or set(item) != {"reference", "sha256"}:
         raise PublicResultError("input contains an invalid hashed public reference")
@@ -565,6 +567,21 @@ def _validate_hashed_reference(
     if not isinstance(digest, str) or _SHA256_RE.fullmatch(digest) is None:
         raise PublicResultError("input contains an invalid public file hash")
     target = _safe_target(root, reference, require_versionable=require_versionable)
+    if sha256_file(target) != digest:
+        for revision in (source_commit, source_snapshot_tag):
+            if revision is None:
+                continue
+            try:
+                historical = subprocess.run(
+                    ["git", "-C", os.fspath(root), "show", f"{revision}:{reference}"],
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.DEVNULL,
+                    check=False,
+                )
+            except OSError:
+                continue
+            if historical.returncode == 0 and hashlib.sha256(historical.stdout).hexdigest() == digest:
+                return reference, target
     if sha256_file(target) != digest:
         raise PublicResultError("a referenced public file hash does not match")
     return reference, target
@@ -594,6 +611,8 @@ def validate_public_result(
     expected_scenario: str | None = None,
     require_versionable: bool = True,
     require_current_release: bool = True,
+    historical_source_commit: str | None = None,
+    historical_snapshot_tag: str | None = None,
 ) -> None:
     scan_value(value)
     if not isinstance(value, Mapping) or set(value) != RESULT_FIELDS:
@@ -641,6 +660,8 @@ def validate_public_result(
             allowed_prefixes=("config/", "deployments/"),
             allowed_suffixes={".cfg", ".conf", ".ini", ".json", ".toml", ".yaml", ".yml"},
             require_versionable=require_versionable,
+            source_commit=historical_source_commit,
+            source_snapshot_tag=historical_snapshot_tag,
         )
         configuration_references.append(reference)
     if configuration_references != sorted(set(configuration_references)):

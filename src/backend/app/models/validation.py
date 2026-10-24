@@ -3,7 +3,7 @@ from typing import Literal
 
 from pydantic import BaseModel, Field
 
-ValidationState = Literal["PASS", "FAIL", "WARNING", "NOT_TESTED"]
+ValidationState = Literal["PASS", "PARTIAL", "FAIL", "WARNING", "NOT_TESTED"]
 
 
 class ValidationCheck(BaseModel):

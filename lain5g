@@ -11,6 +11,7 @@ import shutil
 import subprocess
 import sys
 import tempfile
+import time
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -87,7 +88,7 @@ PROFILE_INFO = {
     "5g-sa": ("5G SA simulado", "SIM", "Open5GS + UERANSIM; registro y datos sin RF"),
     "4g-lte-x310": ("4G LTE con X310", "RF PROTEGIDA", "LTE fisico con controles de seguridad RF"),
     "5g-sa-x310": ("5G SA con X310", "RF PROTEGIDA", "5G SA fisico con controles de seguridad RF"),
-    "5g-nsa-x310": ("5G NSA B7+n3 con X310", "EXPERIMENTAL", "Ancla LTE y portadora NR sobre dos cadenas RF"),
+    "5g-nsa-x310": ("5G NSA B7+n3 con X310", "RF PROTEGIDO", "Ancla LTE y portadora NR sobre dos cadenas RF"),
     "4g-volte-sim": ("4G VoLTE simulado", "SIM", "Perfil de simulacion LTE e IMS"),
     "5g-vonr": ("5G SA VoNR simulado", "SIM", "Perfil de simulacion 5G e IMS"),
 }
@@ -414,7 +415,36 @@ def _bootstrap_install_commands(manager: str, features: set[str], privileged: li
     return []
 
 
+def _bootstrap_host_type() -> str:
+    detector = shutil.which("systemd-detect-virt")
+    if detector is None:
+        return "undetermined (systemd-detect-virt is unavailable)"
+    for option, label in (("--vm", "virtual machine"), ("--container", "container")):
+        try:
+            result = subprocess.run(
+                [detector, option], text=True, capture_output=True, check=False, timeout=3
+            )
+        except (OSError, subprocess.TimeoutExpired):
+            return "undetermined (virtualization detection failed)"
+        if result.returncode == 0:
+            technology = result.stdout.strip()
+            translated_label = "maquina virtual" if label == "virtual machine" else "contenedor"
+            return f"{translated_label} ({technology})" if technology else translated_label
+    return "maquina fisica (no se detecto VM ni contenedor)"
+
+
+def _bootstrap_elapsed_seconds(started_monotonic: float) -> int:
+    try:
+        started_at = float(os.environ.get("LAIN5G_INSTALL_STARTED_AT", ""))
+    except ValueError:
+        started_at = 0
+    if started_at > 0:
+        return max(0, int(time.time() - started_at))
+    return max(0, int(time.monotonic() - started_monotonic))
+
+
 def _bootstrap_machine(service: ProfileConfigService, *, assume_yes: bool = False, dry_run: bool = False) -> int:
+    started_monotonic = time.monotonic()
     print("\nPreparacion completa de Lain5G-Lab")
     print("===================================")
     print("Instala herramientas base, activa Docker, prepara archivos privados y descarga todos los componentes.")
@@ -471,12 +501,26 @@ def _bootstrap_machine(service: ProfileConfigService, *, assume_yes: bool = Fals
             return 2
         privileged = ["sudo"]
 
+    manager = "no requerido"
+    ensured_dependencies: list[str] = []
     if features:
         manager = _bootstrap_package_manager()
         if not manager:
             print("ERROR: gestor compatible no encontrado (apt-get, dnf, pacman o zypper).", file=sys.stderr)
             return 2
         print(f"\nInstalando dependencias con {manager}: {', '.join(sorted(features))}")
+        dependency_labels = {
+            "python": "Python 3.10+",
+            "venv": "Python venv/ensurepip",
+            "node": "Node.js",
+            "npm": "npm",
+            "git": "Git",
+            "make": "GNU Make",
+            "docker": "Docker Engine",
+            "util-linux": "flock (util-linux)",
+            "compose": "Docker Compose v2",
+        }
+        ensured_dependencies = [dependency_labels.get(feature, feature) for feature in sorted(features)]
         for command in _bootstrap_install_commands(manager, features, privileged, dry_run=dry_run):
             if not _run_bootstrap_step(command, dry_run=dry_run):
                 print("ERROR: fallo la instalacion de dependencias.", file=sys.stderr)
@@ -552,6 +596,12 @@ def _bootstrap_machine(service: ProfileConfigService, *, assume_yes: bool = Fals
             print(f"$ ./lain5g scenario setup {profile_id}")
 
     print("\nDescargando todos los componentes publicados")
+    required_image_list = _required_images("all")
+    existing_images = (
+        {image for image in required_image_list if _image_exists(image, docker_command)}
+        if not dry_run
+        else set()
+    )
     if dry_run:
         for local_image in _required_images("all"):
             remote_image = IMAGE_CATALOG.get(local_image, (local_image, ""))[0]
@@ -561,7 +611,27 @@ def _bootstrap_machine(service: ProfileConfigService, *, assume_yes: bool = Fals
     elif not _download_images("all", docker_command=docker_command):
         return 1
 
-    print("\nMAQUINA PREPARADA")
+    print("\nPLAN DE PREPARACION" if dry_run else "\nMAQUINA PREPARADA")
+    print("\nRESUMEN DE INSTALACION")
+    print("Proposito: preparar este equipo para ejecutar Lain5G y sus perfiles con Docker.")
+    print(f"Host: {_bootstrap_host_type()}")
+    print(f"Sistema: {sys.platform} / {os.uname().machine if hasattr(os, 'uname') else 'arquitectura desconocida'}")
+    print(f"Gestor de paquetes: {manager}")
+    print(f"Configuracion privada: {'planificada para ' if dry_run else 'preparada para '}{len(PUBLIC_PROFILE_IDS)} perfiles y la aplicacion web")
+    if dry_run:
+        print(f"Dependencias: planificado {', '.join(ensured_dependencies) if ensured_dependencies else 'sin cambios'} (dry-run; no instalado)")
+        print(f"Imagenes: planificada la descarga de {len(required_image_list)} componentes (dry-run; no descargadas)")
+    else:
+        if os.environ.get("LAIN5G_BOOTSTRAP_PYTHON_INSTALLED", "").lower() == "true":
+            ensured_dependencies.insert(0, "Python 3.10+ (bootstrap)")
+        print(f"Dependencias: {', '.join(ensured_dependencies) if ensured_dependencies else 'todas ya estaban disponibles'}")
+        downloaded_count = max(0, len(required_image_list) - len(existing_images))
+        print(f"Imagenes Docker: {len(required_image_list)} listas ({downloaded_count} descargadas, {len(existing_images)} ya estaban presentes)")
+        print(f"Docker accesible para esta sesion: {'si' if normal_access else 'requiere activar permisos'}")
+    print(f"Duracion: {_bootstrap_elapsed_seconds(started_monotonic)} s")
+    install_log = os.environ.get("LAIN5G_INSTALL_LOG", "").strip()
+    if install_log:
+        print(f"Registro completo: {install_log}")
     if group_activation_required:
         print("PASO REQUERIDO: ejecuta 'newgrp docker' o vuelve a iniciar sesion.")
         print("Despues ejecuta: ./lain5g app start --operations --open")

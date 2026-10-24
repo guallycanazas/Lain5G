@@ -1,6 +1,7 @@
 from functools import lru_cache
+from typing import Literal
 
-from fastapi import Depends
+from fastapi import Depends, Query
 
 from .security import ensure_mutation_allowed
 from .services.command_service import CommandService
@@ -42,9 +43,34 @@ def get_open5gs_connection_service() -> Open5GSConnectionService:
     return Open5GSConnectionService(get_settings())
 
 
-@lru_cache
-def get_subscriber_service() -> SubscriberService:
-    return SubscriberService(get_settings(), get_open5gs_connection_service())
+SubscriberProfile = Literal["4g-lte-x310", "5g-sa-x310", "5g-nsa-x310"]
+
+
+def get_subscriber_service(
+    profile: SubscriberProfile = Query(default="4g-lte-x310"),
+) -> SubscriberService:
+    settings = get_settings()
+    profile_connection = {
+        "4g-lte-x310": {
+            "open5gs_mongo_uri": "mongodb://lain5g-lab-4g-lte-x310-mongo:27017/open5gs",
+            "open5gs_docker_network": "lain5g-lab-4g-lte-x310-core",
+            "open5gs_docker_ip": "10.42.0.250",
+        },
+        "5g-sa-x310": {
+            "open5gs_mongo_uri": "mongodb://lain5g-lab-5g-sa-x310-mongo:27017/open5gs",
+            "open5gs_docker_network": "lain5g-lab-5g-sa-x310-core",
+            "open5gs_docker_ip": "10.20.0.250",
+        },
+        # NSA uses the LTE EPC and its subscriber database.
+        "5g-nsa-x310": {
+            "open5gs_mongo_uri": "mongodb://lain5g-lab-4g-lte-x310-mongo:27017/open5gs",
+            "open5gs_docker_network": "lain5g-lab-4g-lte-x310-core",
+            "open5gs_docker_ip": "10.42.0.250",
+        },
+    }[profile]
+    scoped_settings = settings.model_copy(update=profile_connection)
+    connection = Open5GSConnectionService(scoped_settings)
+    return SubscriberService(scoped_settings, connection)
 
 
 @lru_cache

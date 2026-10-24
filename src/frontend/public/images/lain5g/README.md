@@ -6,6 +6,18 @@ the high-quality sources; the website uses optimized WebP variants.
 
 Console placements:
 
+- `control-plane-topology.webp`: consistent overview art for the dashboard and
+  landing page; labels and runtime status are rendered by the application.
+- `scenario-workflow.webp`: scenario and deployment workflow; contains no
+  runtime claims.
+- `host-preparation-v2.webp`: Linux workstation, SDR radio, and local service
+  containers for host readiness.
+- `logs-investigation-v2.webp`: log viewer and service fault tracing; contains
+  no live log data.
+- `metrics-observability.webp`: spectrum and telemetry concepts; the artwork
+  contains no values and does not imply live RF telemetry.
+- `rf-isolation.webp`: cabled lab bench, attenuation path, and shielded test
+  enclosure; actual enforcement remains in local manifests and backend checks.
 - `voice-topology.webp`: IMS workspace concept; validation claims come from the
   scenario run evidence, not from the illustration itself.
 - `subscriber-provisioning.webp`: subscriber workflow; eSIM remains a design

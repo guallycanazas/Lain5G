@@ -34,6 +34,7 @@ src/frontend/.env.local
 **/rf/*.local.yaml
 **/rf/*-local.yaml
 **/.rf-active
+deployments/5g-sa-x310/.ue-route-active
 !**/rf/*.example.yaml
 
 # Private keys, certificates, SSH material, and secret bundles

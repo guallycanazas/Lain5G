@@ -1,12 +1,12 @@
 import { motion } from 'framer-motion';
 
 const features = [
-  { image: '/images/lain5g/hero-topology.webp', imageClass: 'topology', title: 'End-to-end building blocks', text: 'Compose RAN, EPC or 5GC, subscribers, and validation without hiding component boundaries.' },
-  { image: '/images/lain5g/lab-recipes.webp', imageClass: 'recipe-start', title: 'Docker first', text: 'Keep software scenarios isolated, repeatable, and straightforward to inspect on one workstation.' },
-  { image: '/images/lain5g/deployment-cluster.webp', imageClass: 'cluster', title: 'Orchestration path', text: 'Carry clear component boundaries from the local lab toward a future cluster-managed deployment.' },
-  { image: '/images/lain5g/lab-recipes.webp', imageClass: 'recipe-middle', title: 'Declarative profiles', text: 'Version network intent while keeping site-specific and sensitive values outside Git.' },
-  { image: '/images/lain5g/sdr-hardware.webp', imageClass: 'hardware', title: 'Guarded operations', text: 'Observation is the default; mutations, Docker control, and RF each require explicit opt-in.' },
-  { image: '/images/lain5g/lab-recipes.webp', imageClass: 'recipe-end', title: 'Evidence aware', text: 'Separate passing software checks from hardware, commercial-UE, voice, and RF claims.' },
+  { image: '/images/lain5g/control-plane-topology.webp', imageClass: 'topology', title: 'End-to-end building blocks', text: 'Compose RAN, EPC or 5GC, subscribers, and validation without hiding component boundaries.' },
+  { image: '/images/lain5g/host-preparation-v2.webp', imageClass: 'recipe-start', title: 'Docker first', text: 'Keep software scenarios isolated, repeatable, and straightforward to inspect on one workstation.' },
+  { image: '/images/lain5g/control-plane-topology.webp', imageClass: 'cluster', title: 'Orchestration path', text: 'Carry clear component boundaries from the local lab toward a future cluster-managed deployment.' },
+  { image: '/images/lain5g/scenario-workflow.webp', imageClass: 'recipe-middle', title: 'Declarative profiles', text: 'Version network intent while keeping site-specific and sensitive values outside Git.' },
+  { image: '/images/lain5g/rf-isolation.webp', imageClass: 'hardware', title: 'Guarded operations', text: 'Observation is the default; mutations, Docker control, and RF each require explicit opt-in.' },
+  { image: '/images/lain5g/logs-investigation-v2.webp', imageClass: 'recipe-end', title: 'Evidence aware', text: 'Separate passing software checks from hardware, commercial-UE, voice, and RF claims.' },
 ];
 
 export function FeaturesGrid() {

@@ -83,10 +83,28 @@ class ProfileConfigService:
         return {"profile": profile_id, "files": [self._change_payload(change) for change in changes]}
 
     def apply_profile(self, profile_id: str) -> dict[str, Any]:
+        profile = self.get_profile(profile_id)
         validation = self.validate_profile(profile_id)
+        if profile_id == "5g-nsa-x310":
+            # Applying an NSA radio plan only writes configuration. It must
+            # remain possible while RF is unauthorized so operators can review
+            # the profile; the guard and RF preflight still block transmission.
+            safety = profile.get("safety") or {}
+            apply_errors = self._validate_shape(profile) + self._validate_rf_readiness(profile) + self._validate_consistency(profile)
+            if safety.get("auto_stop") is not True:
+                apply_errors.append("RF profiles require auto_stop=true")
+            if not _is_int(safety.get("maximum_duration_seconds"), 1, 600):
+                apply_errors.append("maximum_duration_seconds must be 1..600")
+            environment = str(safety.get("environment", "")).strip().lower()
+            if environment not in {"cabled", "shielded"}:
+                apply_errors.append("5G NSA laboratory mode must be cabled or shielded")
+            if not _is_int(safety.get("attenuation_db"), 30, 120):
+                apply_errors.append("5G NSA profile apply requires at least 30 dB attenuation")
+            if safety.get("antenna_connected") is True and safety.get("shielded_environment") is not True:
+                apply_errors.append("antenna_connected=true requires shielded_environment=true")
+            validation = {"valid": not apply_errors, "errors": apply_errors}
         if not validation["valid"]:
             raise ProfileConfigError(422, "PROFILE_VALIDATION_FAILED", "; ".join(validation["errors"]))
-        profile = self.get_profile(profile_id)
         changes = self._planned_changes(profile)
         backup_dir = self._backup(profile_id, changes)
         for change in changes:
@@ -130,6 +148,13 @@ class ProfileConfigService:
             shutil.copy2(resolved_source, target)
             restored.append(str(rel))
         return {"profile": profile_id, "restored_files": restored, "backup": self._rel(latest)}
+
+    def latest_backup(self, profile_id: str) -> dict[str, Any]:
+        self._assert_profile(profile_id)
+        profile_backup_dir = self._confined(self.backups_dir / profile_id)
+        backups = sorted(path for path in profile_backup_dir.glob("*") if path.is_dir()) if profile_backup_dir.exists() else []
+        latest = self._confined(backups[-1]) if backups else None
+        return {"profile": profile_id, "backup": self._rel(latest) if latest else None}
 
     def _summary(self, profile: dict[str, Any]) -> dict[str, Any]:
         return {"profile": profile["profile"], "rf_capable": bool(profile.get("radio")), "rf_allowed": bool(profile.get("safety", {}).get("rf_allowed"))}
@@ -241,7 +266,7 @@ class ProfileConfigService:
         if environment != "cabled" and not shielded:
             errors.append("RF profiles require a cabled laboratory mode or shielded environment")
         if safety.get("authorization_confirmed") is not True:
-            errors.append("RF authorization must be confirmed before apply")
+            errors.append("RF authorization must be confirmed before transmission")
         if safety.get("auto_stop") is not True:
             errors.append("RF profiles require auto_stop=true")
         if not str(safety.get("operator_note") or "").strip():
@@ -293,6 +318,18 @@ class ProfileConfigService:
                 nr_arfcn = int(radio["nr_dl_arfcn"])
                 if not 361000 <= nr_arfcn <= 376000 or (nr_arfcn - 361000) % 20:
                     errors.append("radio.nr_dl_arfcn must use the NR n3 100 kHz raster (361000..376000)")
+            lte_profile = self.get_profile("4g-lte-x310")
+            nsa_network = profile.get("network", {})
+            lte_network = lte_profile.get("network", {})
+            for nsa_key, lte_key in (("mcc", "mcc"), ("mnc", "mnc"), ("tac", "tac"), ("apn_internet", "apn_internet")):
+                if nsa_network.get(nsa_key) != lte_network.get(lte_key):
+                    errors.append(f"network.{nsa_key} must match the shared 4G LTE X310 profile")
+            if profile.get("core", {}).get("mme_addr") != lte_profile.get("core", {}).get("mme_addr"):
+                errors.append("core.mme_addr must match the shared 4G LTE X310 profile")
+            if profile.get("ran", {}).get("enb_bind_addr") != lte_profile.get("ran", {}).get("enb_bind_addr"):
+                errors.append("ran.enb_bind_addr must match the shared 4G LTE X310 profile")
+            if profile.get("subscriber", {}).get("imsi") != lte_profile.get("subscriber", {}).get("imsi"):
+                errors.append("subscriber.imsi must match the shared 4G LTE X310 profile")
         return errors
 
     def _planned_changes(self, profile: dict[str, Any]) -> list[PlannedChange]:
@@ -389,12 +426,8 @@ class ProfileConfigService:
 
     def _changes_5g_nsa_x310(self, profile: dict[str, Any]) -> list[PlannedChange]:
         n, core, ran, radio = profile["network"], profile["core"], profile["ran"], profile["radio"]
-        subscriber, safety = profile["subscriber"], profile["safety"]
-        _, common_current = self._read_environment("deployments/4g-volte/common/.env")
+        safety = profile["safety"]
         _, nsa_current = self._read_environment("deployments/5g-nsa-x310/.env")
-        common_env = _update_env(common_current, {
-            "MCC": n["mcc"], "MNC": n["mnc"], "TAC": n["tac"], "APN_INTERNET": n["apn_internet"], "SUBSCRIBER_IMSI": subscriber["imsi"],
-        })
         nsa_env = _update_env(nsa_current, {
             "USRP_ADDR": radio["usrp_addr"], "USRP_TYPE": radio["device"], "RF_DURATION_SECONDS": safety["maximum_duration_seconds"],
             "LAIN5G_ALLOW_5G_NSA_RF_START": "false",
@@ -411,7 +444,7 @@ class ProfileConfigService:
         lte_dl, lte_ul = _lte_band7_frequencies_mhz(radio["earfcn"])
         nr_dl, nr_ul = _nr_n3_frequencies_mhz(radio["nr_dl_arfcn"])
         channel.update({
-            "mode": "NSA_EN_DC_EXPERIMENTAL", "lte_band": radio["lte_band"], "lte_dl_earfcn": radio["earfcn"],
+            "mode": "NSA_EN_DC", "lte_band": radio["lte_band"], "lte_dl_earfcn": radio["earfcn"],
             "lte_bandwidth_mhz": radio["bandwidth_mhz"], "lte_downlink_frequency_mhz": lte_dl, "lte_uplink_frequency_mhz": lte_ul,
             "nr_band": radio["nr_band"], "nr_dl_arfcn": radio["nr_dl_arfcn"], "nr_bandwidth_mhz": radio["bandwidth_mhz"],
             "nr_downlink_frequency_mhz": nr_dl, "nr_uplink_frequency_mhz": nr_ul, "subcarrier_spacing_khz": radio["subcarrier_spacing_khz"],
@@ -426,9 +459,6 @@ class ProfileConfigService:
             "shielded_environment": safety["shielded_environment"], "operator_note": safety["operator_note"],
         })
         return [
-            self._change("deployments/4g-volte/common/.env", common_env),
-            self._change("deployments/4g-volte/x310/open5gs/mme.yaml", _patch_4g_mme(_read(self.root / "deployments/4g-volte/x310/open5gs/mme.yaml"), n)),
-            self._change("deployments/4g-volte/x310/open5gs/pgwc.yaml", _patch_4g_pgwc(_read(self.root / "deployments/4g-volte/x310/open5gs/pgwc.yaml"), n)),
             self._change("deployments/5g-nsa-x310/.env", nsa_env),
             self._change(enb_rel, enb),
             self._change(rr_rel, rr),

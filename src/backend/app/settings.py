@@ -30,7 +30,7 @@ class Settings(BaseSettings):
     open5gs_subscriber_collection: str = Field(default="subscribers", alias="LAIN5G_OPEN5GS_SUBSCRIBER_COLLECTION")
     subscriber_secrets_visible: bool = Field(default=False, alias="LAIN5G_SUBSCRIBER_SECRETS_VISIBLE")
     subscriber_operation_timeout: int = Field(default=15, ge=1, le=120, alias="LAIN5G_SUBSCRIBER_OPERATION_TIMEOUT")
-    open5gs_docker_network: str = Field(default="lain5g-lab-5g-sa-core", alias="LAIN5G_OPEN5GS_DOCKER_NETWORK")
+    open5gs_docker_network: str = Field(default="lain5g-lab-5g-sa-x310-core", alias="LAIN5G_OPEN5GS_DOCKER_NETWORK")
     open5gs_docker_ip: str = Field(default="10.20.0.250", alias="LAIN5G_OPEN5GS_DOCKER_IP")
     rf_web_control_enabled: bool = Field(default=False, alias="LAIN5G_RF_WEB_CONTROL_ENABLED")
     image_pull_enabled: bool = Field(default=False, alias="LAIN5G_IMAGE_PULL_ENABLED")
@@ -70,8 +70,15 @@ class Settings(BaseSettings):
             IPv4Address(value)
         except AddressValueError as exc:
             raise ValueError("Docker network attachment IP must be an IPv4 address") from exc
-        if value != "10.20.0.250":
-            raise ValueError("Docker network attachment IP must remain 10.20.0.250")
+        reserved_lab_ips = {
+            "10.20.0.250",  # shared 5G SA X310 core
+            "10.41.0.250",  # 4G VoLTE simulation
+            "10.42.0.250",  # 4G LTE X310 core
+            "10.43.0.250",  # 4G LTE simulation
+            "10.50.0.250",  # 5G VoNR simulation
+        }
+        if value not in reserved_lab_ips:
+            raise ValueError("Docker network attachment IP must be one of the reserved lab addresses")
         return value
 
 

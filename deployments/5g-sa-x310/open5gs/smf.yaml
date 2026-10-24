@@ -30,6 +30,9 @@ smf:
     - subnet: 10.45.0.0/16
       gateway: 10.45.0.1
       dnn: internet
+    - subnet: 10.46.0.0/16
+      gateway: 10.46.0.1
+      dnn: ims
   dns: [8.8.8.8, 1.1.1.1]
   mtu: 1400
   info:
@@ -38,3 +41,4 @@ smf:
           sd: 000001
           dnn:
             - internet
+            - ims

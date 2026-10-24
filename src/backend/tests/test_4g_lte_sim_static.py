@@ -122,6 +122,7 @@ def test_lte_simulation_validation_waits_for_attach_and_proves_user_plane():
     assert "ip -o -4 addr show dev tun_srsue" in validate
     assert "ip link show dev tun_srsue" in validate
     assert "ping -I tun_srsue -c 3" in validate
+    assert 'metadata["validated_claims"] = sys.argv[2:]' in validate
 
 
 def test_5g_simulation_validation_uses_scenario_run_and_waits_for_registration():

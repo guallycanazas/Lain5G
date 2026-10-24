@@ -182,6 +182,20 @@ def test_repository_verifier_limits_historical_mode_to_approved_artifacts():
         public_results_verifier._requires_current_release(relative_path, changed)
 
 
+def test_historical_public_result_hashes_config_at_its_source_commit():
+    relative_path = "results/public/5g-sa-sim/run-20260723-054913.json"
+    value = json.loads((ROOT / relative_path).read_text(encoding="utf-8"))
+
+    validate_public_result(
+        value,
+        root=ROOT,
+        expected_scenario="5g-sa-sim",
+        require_current_release=False,
+        historical_source_commit=value["source_commit"],
+        historical_snapshot_tag="v1.0.0",
+    )
+
+
 def test_exporter_cli_does_not_echo_rejected_input(tmp_path: Path):
     unsafe_value = "token=synthetic-cli-credential"
     value = _synthetic_result()

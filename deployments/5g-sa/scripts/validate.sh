@@ -54,6 +54,11 @@ if [ "${LAIN5G_DRY_RUN:-false}" = "true" ]; then
     add_check "$id" "NOT_TESTED" "dry-run mode"
   done
 else
+  if [ -z "$(compose ps --status running -q 2>/dev/null)" ]; then
+    for id in mongo nrf amf smf upf ausf udm udr pcf ng_setup ue_registration pdu_session ue_tun ue_ip ping; do
+      add_check "$id" "NOT_TESTED" "No 5G SA profile containers are running; start the profile before operational validation"
+    done
+  else
   if compose exec -T mongo mongosh --quiet --eval "db.adminCommand('ping').ok" >/dev/null 2>&1; then
     add_check "mongo" "PASS" "MongoDB responds to ping"
   else
@@ -125,6 +130,7 @@ else
     add_check "ping" "FAIL" "Ping to $ping_target failed from UE"
   else
     add_check "ping" "NOT_TESTED" "UE is not running"
+  fi
   fi
 fi
 

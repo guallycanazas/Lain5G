@@ -33,16 +33,14 @@ done
 # Sleep until permissions are set
 sleep 10;
 
-# Create IMS HSS database user
-PYHSS_USER_EXISTS=`mysql -u root -h ${MYSQL_IP} -s -N -e "SELECT EXISTS(SELECT 1 FROM mysql.user WHERE User = 'pyhss' AND Host = '$PYHSS_IP')"`
-if [[ "$PYHSS_USER_EXISTS" == 0 ]]
-then
-	mysql -u root -h ${MYSQL_IP} -e "CREATE USER 'pyhss'@'%' IDENTIFIED WITH mysql_native_password BY 'ims_db_pass'";
-	mysql -u root -h ${MYSQL_IP} -e "CREATE USER 'pyhss'@'$PYHSS_IP' IDENTIFIED WITH mysql_native_password BY 'ims_db_pass'";
-	mysql -u root -h ${MYSQL_IP} -e "GRANT ALL ON *.* TO 'pyhss'@'%'";
-	mysql -u root -h ${MYSQL_IP} -e "GRANT ALL ON *.* TO 'pyhss'@'$PYHSS_IP'";
-	mysql -u root -h ${MYSQL_IP} -e "FLUSH PRIVILEGES;"
-fi
+# Keep role creation idempotent for both new and persisted database volumes.
+mysql -u root -h "${MYSQL_IP}" -e "CREATE USER IF NOT EXISTS 'pyhss'@'%' IDENTIFIED BY 'ims_db_pass'"
+mysql -u root -h "${MYSQL_IP}" -e "ALTER USER 'pyhss'@'%' IDENTIFIED BY 'ims_db_pass'"
+mysql -u root -h "${MYSQL_IP}" -e "CREATE USER IF NOT EXISTS 'pyhss'@'${PYHSS_IP}' IDENTIFIED BY 'ims_db_pass'"
+mysql -u root -h "${MYSQL_IP}" -e "ALTER USER 'pyhss'@'${PYHSS_IP}' IDENTIFIED BY 'ims_db_pass'"
+mysql -u root -h "${MYSQL_IP}" -e "GRANT ALL ON *.* TO 'pyhss'@'%'"
+mysql -u root -h "${MYSQL_IP}" -e "GRANT ALL ON *.* TO 'pyhss'@'${PYHSS_IP}'"
+mysql -u root -h "${MYSQL_IP}" -e "FLUSH PRIVILEGES"
 
 [ ${#MNC} == 3 ] && EPC_DOMAIN="epc.mnc${MNC}.mcc${MCC}.3gppnetwork.org" || EPC_DOMAIN="epc.mnc0${MNC}.mcc${MCC}.3gppnetwork.org"
 [ ${#MNC} == 3 ] && IMS_DOMAIN="ims.mnc${MNC}.mcc${MCC}.3gppnetwork.org" || IMS_DOMAIN="ims.mnc0${MNC}.mcc${MCC}.3gppnetwork.org"

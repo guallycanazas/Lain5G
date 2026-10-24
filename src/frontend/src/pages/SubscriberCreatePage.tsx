@@ -1,17 +1,20 @@
-import { useNavigate } from 'react-router';
+import { useNavigate, useSearchParams } from 'react-router';
 import { ErrorAlert } from '../components/ErrorAlert';
 import { SubscriberForm } from '../components/subscribers/SubscriberForm';
 import { useSubscriberActions } from '../hooks/useSubscribers';
+import type { SubscriberProfile } from '../types/subscriber';
 
 export function SubscriberCreatePage() {
   const navigate = useNavigate();
-  const actions = useSubscriberActions();
+  const [searchParams] = useSearchParams();
+  const profile = (searchParams.get('profile') || '4g-lte-x310') as SubscriberProfile;
+  const actions = useSubscriberActions(profile);
   return (
     <section className="panel page-panel">
       <div className="panel-heading"><h2>New subscriber</h2></div>
       {actions.create.error ? <ErrorAlert error={actions.create.error} /> : null}
       {actions.create.data ? <p className="result-line">{actions.create.data.message}</p> : null}
-      <SubscriberForm mode="create" loading={actions.create.isPending} onSubmit={(payload) => actions.create.mutate(payload, { onSuccess: (result) => navigate(`/subscribers/${result.subscriber?.imsi || ''}`) })} />
+      <SubscriberForm mode="create" loading={actions.create.isPending} onSubmit={(payload) => actions.create.mutate(payload, { onSuccess: (result) => navigate(`/subscribers/${result.subscriber?.imsi || ''}?profile=${profile}`) })} />
     </section>
   );
 }

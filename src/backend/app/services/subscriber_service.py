@@ -122,7 +122,7 @@ class SubscriberService:
         cloned.pop("_id", None)
         cloned["imsi"] = clone.new_imsi
         if clone.new_msisdn is not None:
-            cloned["msisdn"] = clone.new_msisdn
+            cloned["msisdn"] = [clone.new_msisdn]
         cloned["createdAt"] = datetime.now(UTC)
         cloned["updatedAt"] = datetime.now(UTC)
         try:
@@ -219,22 +219,15 @@ class SubscriberService:
                     "sst": data.slice.sst,
                     "sd": data.slice.sd,
                     "default_indicator": True,
-                    "session": [
-                        {
-                            "name": data.dnn,
-                            "type": 3,
-                            "ambr": {"uplink": {"value": 1, "unit": 3}, "downlink": {"value": 1, "unit": 3}},
-                            "qos": {"index": 9, "arp": {"priority_level": 8, "pre_emption_capability": 1, "pre_emption_vulnerability": 1}},
-                            "pcc_rule": [],
-                        }
-                    ],
+                    "session": self._sessions(data.dnn, data.service_profile),
                 }
             ],
             "createdAt": now,
             "updatedAt": now,
         }
         if data.msisdn:
-            doc["msisdn"] = data.msisdn
+            # Open5GS stores MSISDNs as an array, even when there is one number.
+            doc["msisdn"] = [data.msisdn]
         return doc
 
     def _apply_update(self, current: dict[str, Any], data: SubscriberUpdate) -> dict[str, Any]:
@@ -244,7 +237,7 @@ class SubscriberService:
             if data.msisdn is None:
                 updated.pop("msisdn", None)
             else:
-                updated["msisdn"] = data.msisdn
+                updated["msisdn"] = [data.msisdn]
         if data.security is not None:
             security = updated.setdefault("security", {})
             for key in ("k", "op", "opc", "amf", "sqn"):
@@ -262,6 +255,9 @@ class SubscriberService:
         if data.dnn is not None:
             session = self._first_session(updated)
             session["name"] = data.dnn
+        if data.service_profile is not None:
+            slice_doc = self._first_slice(updated)
+            slice_doc["session"] = self._sessions(data.dnn or self._first_session(updated).get("name", "internet"), data.service_profile)
         return updated
 
     def _validate_final_document(self, doc: dict[str, Any]) -> None:
@@ -275,10 +271,21 @@ class SubscriberService:
         security = doc.get("security") or {}
         slice_doc = self._first_slice(doc, create=False)
         session = self._first_session(doc, create=False)
+        msisdn = doc.get("msisdn")
+        if isinstance(msisdn, (list, tuple)):
+            msisdn = next((str(value) for value in msisdn if value is not None and str(value).strip()), None)
+        elif msisdn is not None:
+            msisdn = str(msisdn)
+        sessions = (slice_doc.get("session") or []) if slice_doc else []
+        apns = list(dict.fromkeys(
+            str(item.get("name")) for item in sessions
+            if isinstance(item, dict) and item.get("name")
+        ))
         return SubscriberSummary(
             imsi=str(doc.get("imsi", "")),
-            msisdn=doc.get("msisdn"),
+            msisdn=msisdn,
             dnn=session.get("name") if session else None,
+            apns=apns,
             sst=slice_doc.get("sst") if slice_doc else None,
             sd=slice_doc.get("sd") if slice_doc else None,
             security=SubscriberSecurityRedacted(
@@ -312,3 +319,46 @@ class SubscriberService:
             return {}
         sessions.append({})
         return sessions[0]
+
+    @staticmethod
+    def _sessions(internet_dnn: str, service_profile: str) -> list[dict[str, Any]]:
+        """Build the documented Open5GS data or voice+data subscription preset."""
+        ambr = {"uplink": {"value": 1, "unit": 3}, "downlink": {"value": 1, "unit": 3}}
+        arp_default = {"priority_level": 8, "pre_emption_capability": 1, "pre_emption_vulnerability": 1}
+        sessions: list[dict[str, Any]] = [
+            {
+                "name": internet_dnn,
+                "type": 3,
+                "ambr": deepcopy(ambr),
+                "qos": {"index": 9, "arp": deepcopy(arp_default)},
+                "pcc_rule": [],
+            }
+        ]
+        if service_profile == "voice_data":
+            sessions.append({
+                "name": "ims",
+                "type": 3,
+                "ambr": deepcopy(ambr),
+                "qos": {
+                    "index": 5,
+                    "arp": {"priority_level": 1, "pre_emption_capability": 1, "pre_emption_vulnerability": 1},
+                    "mbr": {"downlink": {"value": 3580, "unit": 1}, "uplink": {"value": 1530, "unit": 1}},
+                },
+                "pcc_rule": [
+                    SubscriberService._pcc_rule(1, 2, 128),
+                    SubscriberService._pcc_rule(2, 4, 812),
+                ],
+            })
+        return sessions
+
+    @staticmethod
+    def _pcc_rule(qci: int, priority: int, rate: int) -> dict[str, Any]:
+        return {
+            "flow": [],
+            "qos": {
+                "index": qci,
+                "arp": {"priority_level": priority, "pre_emption_capability": 1, "pre_emption_vulnerability": 1},
+                "mbr": {"downlink": {"value": rate, "unit": 1}, "uplink": {"value": rate, "unit": 1}},
+                "gbr": {"downlink": {"value": rate, "unit": 1}, "uplink": {"value": rate, "unit": 1}},
+            },
+        }

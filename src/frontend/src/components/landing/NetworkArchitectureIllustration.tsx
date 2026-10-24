@@ -2,9 +2,9 @@ export function NetworkArchitectureIllustration() {
   return (
     <figure className="architecture-visual">
       <img
-        src="/images/lain5g/hero-topology.webp"
-        width="1536"
-        height="1024"
+        src="/images/lain5g/control-plane-topology.webp"
+        width="1672"
+        height="941"
         alt="Illustrated private mobile network with radio access, core services, a SIM, and a laboratory handset"
         decoding="async"
         fetchPriority="high"

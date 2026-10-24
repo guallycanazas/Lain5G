@@ -133,11 +133,14 @@ def test_create_dry_run_does_not_persist(dry_settings, collection):
 
 
 def test_create_and_get_redacts_secrets(service):
-    response = service.create_subscriber(load_payload("subscriber_valid.json"))
+    payload = load_payload("subscriber_valid.json")
+    response = service.create_subscriber(payload)
 
-    detail = service.get_subscriber("001010000000001")
+    detail = service.get_subscriber(payload["imsi"])
 
     assert response.persisted is True
+    assert response.subscriber.msisdn == payload["msisdn"]
+    assert service.connection_service._collection.docs[payload["imsi"]]["msisdn"] == [payload["msisdn"]]
     assert detail.security.k_configured is True
     assert detail.security.opc_configured is True
     assert detail.security.sqn == "************"
@@ -163,6 +166,19 @@ def test_list_and_search(service):
 
     assert listed.total == 1
     assert listed.items[0].imsi == payload["imsi"]
+
+
+def test_list_normalizes_open5gs_msisdn_arrays(service, collection):
+    collection.docs["001010000000003"] = {
+        "imsi": "001010000000003",
+        "msisdn": ["51999999999", "51888888888"],
+        "security": {"k": "configured", "opc": "configured"},
+        "slice": [{"sst": 1, "sd": "000001", "session": [{"name": "internet"}]}],
+    }
+
+    listed = service.list_subscribers()
+
+    assert listed.items[0].msisdn == "51999999999"
 
 
 def test_update_keeps_existing_secret_when_empty(service, collection):

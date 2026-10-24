@@ -52,6 +52,9 @@ npm test
 - `/scenarios`: scenario catalog and guarded workspaces.
 - `/deployments`: profile editing, validation, comparison, and application.
 - `/subscribers`: Open5GS subscriber administration.
+- `/ims`: isolated Open5GS, Kamailio, and pyHSS runtime with dual-stack
+  subscriber provisioning. Runtime actions remain confirmation-gated and do not
+  start RF.
 - `/validation`: latest validation report and manual execution.
 - `/logs`: deployment logs by service and line count.
 - `/runs`: execution history.

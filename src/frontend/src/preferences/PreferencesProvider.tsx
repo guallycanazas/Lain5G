@@ -31,6 +31,7 @@ const messages: Record<string, string> = {
   'nav.topology': 'Topology',
   'nav.subscribers': 'Subscribers',
   'nav.validation': 'Validation',
+  'nav.troubleshooter': 'Troubleshooter',
   'nav.metrics': 'Metrics',
   'nav.logs': 'Logs',
   'nav.runs': 'Runs',

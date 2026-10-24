@@ -37,6 +37,7 @@ DOCKER_PATH_OPTIONS = {"-f", "--file", "--env-file", "--project-directory"}
 COMPOSE_OPTIONS_WITH_VALUE = DOCKER_PATH_OPTIONS | {"-p", "--profile", "--project-name"}
 RUN_OPTIONS_WITH_VALUE = {"--network", "-v", "--volume", "-w", "--workdir"}
 IMAGE_REFERENCE_RE = re.compile(r"[A-Za-z0-9][A-Za-z0-9._/:@-]{0,255}")
+DOCKER_HOST_INFO_FORMAT = "{{.Name}}|{{.OperatingSystem}}|{{.OSVersion}}|{{.OSType}}|{{.Architecture}}|{{.KernelVersion}}|{{.ServerVersion}}|{{.Driver}}|{{.DockerRootDir}}|{{.CgroupDriver}}|{{.CgroupVersion}}|{{.NCPU}}|{{.MemTotal}}||{{.Containers}}|{{.ContainersRunning}}|{{.ContainersPaused}}|{{.ContainersStopped}}|{{.Images}}"
 
 
 class CommandSecurityError(ValueError):
@@ -81,12 +82,19 @@ class CommandService:
         cwd: str | Path | None = None,
         dry_run: bool | None = None,
         timeout: int | None = None,
+        preserve_stdout: bool = False,
     ) -> CommandResult:
         if not command:
             raise CommandSecurityError("Command must not be empty")
         cwd_path = self._resolve_inside_project(cwd or ".")
         self._validate_command(command, cwd_path)
-        return self._run(command, cwd_path, dry_run=self.settings.dry_run if dry_run is None else dry_run, timeout=timeout)
+        return self._run(
+            command,
+            cwd_path,
+            dry_run=self.settings.dry_run if dry_run is None else dry_run,
+            timeout=timeout,
+            preserve_stdout=preserve_stdout,
+        )
 
     def redact(self, value: str) -> str:
         if isinstance(value, bytes):
@@ -116,7 +124,7 @@ class CommandService:
                 if len(command) != 4 or command[2] != "inspect" or not IMAGE_REFERENCE_RE.fullmatch(command[3]):
                     raise CommandSecurityError("Docker image command is not allowlisted")
             elif command[1] == "info":
-                if len(command) > 4 or any(argument not in {"--format", "{{.ServerVersion}}"} for argument in command[2:]):
+                if len(command) > 4 or any(argument not in {"--format", "{{.ServerVersion}}", "{{json .}}", DOCKER_HOST_INFO_FORMAT} for argument in command[2:]):
                     raise CommandSecurityError("Docker info command is not allowlisted")
             elif command[1] == "pull":
                 if len(command) != 3 or not IMAGE_REFERENCE_RE.fullmatch(command[2]):
@@ -188,7 +196,15 @@ class CommandService:
         self._ensure_inside_project(resolved)
         return resolved
 
-    def _run(self, command: list[str], cwd_path: Path, *, dry_run: bool, timeout: int | None = None) -> CommandResult:
+    def _run(
+        self,
+        command: list[str],
+        cwd_path: Path,
+        *,
+        dry_run: bool,
+        timeout: int | None = None,
+        preserve_stdout: bool = False,
+    ) -> CommandResult:
         started_at = datetime.now(UTC)
         if dry_run:
             finished_at = datetime.now(UTC)
@@ -224,7 +240,7 @@ class CommandService:
                 command=[self._display_arg(arg) for arg in command],
                 cwd=self._display_path(cwd_path),
                 exit_code=completed.returncode,
-                stdout=self._limit_output(self.redact(completed.stdout or "")),
+                stdout=self._limit_output(completed.stdout or "") if preserve_stdout else self._limit_output(self.redact(completed.stdout or "")),
                 stderr=self._limit_output(self.redact(completed.stderr or "")),
                 started_at=started_at,
                 finished_at=finished_at,

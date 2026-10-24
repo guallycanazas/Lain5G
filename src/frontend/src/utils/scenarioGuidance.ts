@@ -45,6 +45,15 @@ export const scenarioGuidance: Record<string, ScenarioGuidance> = {
     excludes: ['RF transmission remains authorization-gated', 'Evidence is recorded for each operator run'],
     hardware: 'Requires a compatible USRP, 5G SA laboratory UE/SIM, isolation, and RF authorization.',
   },
+  '5g-nsa-x310': {
+    generation: '5G',
+    variant: 'GUARDED NSA EN-DC RF',
+    profileTitle: '5G NSA with X-Series radio',
+    purpose: 'Operate a lab-validated LTE Band 7 anchor with an NR n3 secondary carrier using srsRAN EN-DC and the shared Open5GS EPC.',
+    includes: ['Shared Open5GS EPC and compact IMS services', 'srsRAN eNB with LTE and NR RF chains', 'Hardware check, preflight, session auto-stop, and emergency stop'],
+    excludes: ['A compatible EN-DC UE and matching LTE/NR band combination are required for attachment', 'RF transmission stays blocked until the NSA profile and both RF paths are authorized'],
+    hardware: 'Requires an X-Series USRP with two compatible RF chains, a cabled or shielded lab, attenuated LTE and NR paths, an EN-DC UE/SIM, and authorization for both carriers.',
+  },
 };
 
 export function getScenarioGuidance(id: string) {

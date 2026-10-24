@@ -9,7 +9,6 @@ const msisdnRe = /^\d{5,20}$/;
 const amfRe = /^[0-9a-fA-F]{4}$/;
 const sqnRe = /^[0-9a-fA-F]{12}$/;
 const sdRe = /^[0-9a-fA-F]{6}$/;
-const dnnRe = /^[A-Za-z0-9][A-Za-z0-9.-]{0,62}$/;
 
 interface SubscriberFormProps {
   mode: 'create' | 'edit';
@@ -32,6 +31,9 @@ export function SubscriberForm({ mode, initial, loading, onSubmit }: SubscriberF
     sst: String(initial?.sst ?? 1),
     sd: initial?.sd || '000001',
     dnn: initial?.dnn || 'internet',
+    serviceProfile: editing
+      ? (initial?.apns?.includes('ims') ? 'voice_data' : 'data_only')
+      : 'voice_data',
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -56,13 +58,25 @@ export function SubscriberForm({ mode, initial, loading, onSubmit }: SubscriberF
       </fieldset>
       <SubscriberSecurityFields showSecrets={showSecrets} editing={editing} values={values} errors={errors} onChange={setField} onToggle={() => setShowSecrets((value) => !value)} />
       <fieldset className="form-section">
-        <legend>Slice and DNN</legend>
-        <label>SST *<input type="number" value={values.sst} onChange={(event) => setField('sst', event.target.value)} /></label>
-        {errors.sst ? <p className="field-error">{errors.sst}</p> : null}
-        <label>SD<input value={values.sd} onChange={(event) => setField('sd', event.target.value)} /></label>
-        {errors.sd ? <p className="field-error">{errors.sd}</p> : null}
-        <label>DNN *<input value={values.dnn} onChange={(event) => setField('dnn', event.target.value)} /></label>
-        {errors.dnn ? <p className="field-error">{errors.dnn}</p> : null}
+        <legend>Services</legend>
+        <p className="muted-text">Choose the subscription services. Voice + data adds the internet and ims APNs/DNNs with the recommended IMS QoS.</p>
+        <div className="subscriber-service-options" role="radiogroup" aria-label="Subscriber services">
+          <label className={`subscriber-service-option${values.serviceProfile === 'voice_data' ? ' selected' : ''}`}>
+            <input type="radio" name="service-profile" value="voice_data" checked={values.serviceProfile === 'voice_data'} onChange={() => setField('serviceProfile', 'voice_data')} />
+            <span><strong>Voice + data</strong><small>internet + ims · QCI/5QI 9 and 5, with voice/video policies</small></span>
+          </label>
+          <label className={`subscriber-service-option${values.serviceProfile === 'data_only' ? ' selected' : ''}`}>
+            <input type="radio" name="service-profile" value="data_only" checked={values.serviceProfile === 'data_only'} onChange={() => setField('serviceProfile', 'data_only')} />
+            <span><strong>Data only</strong><small>internet access without IMS voice</small></span>
+          </label>
+        </div>
+        <details className="subscriber-advanced-settings">
+          <summary>Advanced network settings</summary>
+          <label>SST<input type="number" value={values.sst} onChange={(event) => setField('sst', event.target.value)} /></label>
+          {errors.sst ? <p className="field-error">{errors.sst}</p> : null}
+          <label>SD<input value={values.sd} onChange={(event) => setField('sd', event.target.value)} /></label>
+          {errors.sd ? <p className="field-error">{errors.sd}</p> : null}
+        </details>
       </fieldset>
       <p className="muted-text">Changing authentication may require restarting the UE or forcing a new registration.</p>
       <ActionButton loading={loading}>{editing ? 'Save changes' : 'Create subscriber'}</ActionButton>
@@ -85,21 +99,22 @@ function validate(values: Record<string, string>, editing: boolean) {
   const sst = Number(values.sst);
   if (!Number.isInteger(sst) || sst < 1 || sst > 255) errors.sst = 'SST must be between 1 and 255.';
   if (values.sd && !sdRe.test(values.sd)) errors.sd = 'SD must contain 6 hexadecimal characters.';
-  if (!values.dnn || values.dnn.includes(' ') || !dnnRe.test(values.dnn)) errors.dnn = 'DNN must be a safe name without spaces.';
   return errors;
 }
 
 function toPayload(values: Record<string, string>, editing: boolean): SubscriberFormPayload {
   const security: NonNullable<SubscriberFormPayload['security']> = {};
-  for (const key of ['k', 'op', 'opc', 'amf', 'sqn'] as const) {
+  for (const key of ['k', 'op', 'opc', 'amf'] as const) {
     const value = values[key].trim();
     if (value || !editing && ['amf', 'sqn'].includes(key)) security[key] = value || null;
   }
+  if (values.sqn.trim()) security.sqn = values.sqn.trim();
   return {
     ...(!editing ? { imsi: values.imsi.trim() } : {}),
     msisdn: values.msisdn.trim() || null,
     security,
     slice: { sst: Number(values.sst), sd: values.sd.trim() || null },
     dnn: values.dnn.trim(),
+    service_profile: values.serviceProfile as 'data_only' | 'voice_data',
   };
 }

@@ -2,9 +2,12 @@ import os
 import subprocess
 from pathlib import Path
 
+import pytest
 import yaml
 
-from backend.app.models.deployment import CommandResult, DeploymentStatus
+from backend.app.models.deployment import CommandResult, ContainerStatus, DeploymentStatus
+from backend.app.services.deployment_registry import get_deployment_definition
+from backend.app.services.deployment_service import DeploymentConflictError
 
 
 def test_public_catalog_contains_data_and_guarded_rf_scenarios(client):
@@ -13,7 +16,7 @@ def test_public_catalog_contains_data_and_guarded_rf_scenarios(client):
     assert response.status_code == 200
     payload = response.json()
     ids = {item["id"] for item in payload}
-    assert ids == {"5g-sa", "4g-lte-sim", "4g-lte-x310", "5g-sa-x310"}
+    assert ids == {"5g-sa", "4g-lte-sim", "4g-lte-x310", "5g-sa-x310", "5g-nsa-x310"}
     assert all(item["status"] == "dry_run" for item in payload)
 
 
@@ -45,10 +48,9 @@ def test_5g_sa_ue_renders_private_credentials_at_runtime():
         assert f"__{variable}__" in ue
         assert variable in compose
     assert "00000000000000000000000000000000" not in ue
-    assert 'docker network connect --ip "$backend_ip"' in start
-    assert "backend_ip=10.20.0.250" in start
+    assert 'deployments/5g-sa-x310/scripts/ensure-core-network.sh' in start
     assert "docker compose --env-file .env -f docker-compose.yml rm -f" in start
-    assert start.index('if [ "${LAIN5G_DRY_RUN:-false}" != "true" ]') < start.index('docker network connect --ip "$backend_ip"')
+    assert start.index('if [ "${LAIN5G_DRY_RUN:-false}" != "true" ]') < start.index("ensure-core-network.sh")
 
 
 def test_5g_sa_runtime_renderer_matches_provisioned_credentials(tmp_path: Path):
@@ -93,7 +95,7 @@ def test_x310_is_rf_controlled(client):
 
 
 def test_public_x310_profiles_require_compact_ims_services(client):
-    for scenario in ("4g-lte-x310", "5g-sa-x310"):
+    for scenario in ("4g-lte-x310", "5g-sa-x310", "5g-nsa-x310"):
         payload = client.get(f"/api/deployments/{scenario}").json()
         assert {"ims-database", "pcscf", "icscf", "scscf", "dns"}.issubset(payload["components"])
         assert "ims_services" in payload["validation_checks"]
@@ -124,11 +126,17 @@ def test_rf_core_start_prepares_private_ims_environment(deployment_service, monk
     ]
 
 
-def test_experimental_nsa_is_not_public(client):
+def test_lab_validated_nsa_is_public_but_stays_rf_guarded(client):
     catalog = client.get("/api/deployments").json()
-    assert "5g-nsa-x310" not in {item["id"] for item in catalog}
+    assert "5g-nsa-x310" in {item["id"] for item in catalog}
     response = client.get("/api/deployments/5g-nsa-x310")
-    assert response.status_code == 404
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["rf_capable"] is True
+    assert "start-rf" in payload["supported_actions"]
+    assert "validate" in payload["supported_actions"]
+    assert "start" not in payload["supported_actions"]
+    assert "enb-nsa-x310" in payload["conditional_components"]
 
 
 def test_unknown_deployment_returns_404(client):
@@ -287,6 +295,129 @@ def test_start_conflict_reports_active_scenario(deployment_service, monkeypatch)
         assert getattr(exc, "active_scenario", None) == "5g-sa"
     else:
         raise AssertionError("Expected conflict")
+
+
+def test_shared_lte_core_does_not_make_nsa_x310_a_conflict(deployment_service, monkeypatch):
+    command = CommandResult(
+        command=["status"], cwd=".", exit_code=0, stdout="", stderr="",
+        started_at="2026-01-01T00:00:00Z", finished_at="2026-01-01T00:00:00Z", duration_ms=0,
+    )
+
+    def fake_status(scenario: str):
+        containers = []
+        if scenario == "5g-nsa-x310":
+            containers = [ContainerStatus(name=f"shared-{service}", service=service, status="running", running=True)
+                          for service in ("mme", "hss", "sgwc", "sgwu", "pgwc", "pgwu", "pcrf")]
+        state = "partial" if containers else "stopped"
+        return DeploymentStatus(id=scenario, status=state, containers=containers, checked_at="2026-01-01T00:00:00Z", command=command, output="")
+
+    deployment_service.settings.dry_run = False
+    monkeypatch.setattr(deployment_service, "get_status", fake_status)
+
+    deployment_service._ensure_no_conflict(get_deployment_definition("4g-lte-x310"))
+
+
+def test_nsa_status_is_partial_when_shared_core_runs_but_guarded_ran_is_standby(deployment_service, monkeypatch):
+    command = CommandResult(
+        command=["status"], cwd=".", exit_code=0, stdout="", stderr="",
+        started_at="2026-01-01T00:00:00Z", finished_at="2026-01-01T00:00:00Z", duration_ms=0,
+    )
+    services = ("mongo", "mme", "hss", "sgwc", "sgwu", "pgwc", "pgwu", "ims-database", "pcscf", "icscf", "scscf", "dns")
+    output = "\n".join(f"lain5g-lab-4g-lte-x310-{service} Up 1 minute" for service in services)
+    command = command.model_copy(update={"stdout": output})
+    monkeypatch.setattr(deployment_service, "_execute_script", lambda *args: command)
+
+    status = deployment_service.get_status("5g-nsa-x310")
+
+    assert status.status == "partial"
+    assert all(container.running for container in status.containers)
+    assert not any(container.service == "enb-nsa-x310" for container in status.containers)
+
+
+def test_4g_core_does_not_block_5g_sa_x310_core_start(deployment_service, monkeypatch):
+    command = CommandResult(
+        command=["status"], cwd=".", exit_code=0, stdout="", stderr="",
+        started_at="2026-01-01T00:00:00Z", finished_at="2026-01-01T00:00:00Z", duration_ms=0,
+    )
+
+    def fake_status(scenario: str):
+        containers = []
+        if scenario == "4g-lte-x310":
+            containers = [ContainerStatus(name=f"4g-{service}", service=service, status="running", running=True)
+                          for service in ("mme", "hss", "ims-database")]
+        state = "partial" if containers else "stopped"
+        return DeploymentStatus(id=scenario, status=state, containers=containers, checked_at="2026-01-01T00:00:00Z", command=command, output="")
+
+    deployment_service.settings.dry_run = False
+    monkeypatch.setattr(deployment_service, "get_status", fake_status)
+
+    deployment_service._ensure_no_conflict(get_deployment_definition("5g-sa-x310"))
+
+
+def test_nsa_view_of_shared_4g_core_does_not_block_5g_sa_x310(deployment_service, monkeypatch):
+    command = CommandResult(
+        command=["status"], cwd=".", exit_code=0, stdout="", stderr="",
+        started_at="2026-01-01T00:00:00Z", finished_at="2026-01-01T00:00:00Z", duration_ms=0,
+    )
+
+    def fake_status(scenario: str):
+        containers = []
+        if scenario == "5g-nsa-x310":
+            containers = [ContainerStatus(name=f"shared-{service}", service=service, status="running", running=True)
+                          for service in ("mme", "hss", "sgwc", "sgwu", "pgwc", "pgwu", "pcrf")]
+        state = "partial" if containers else "stopped"
+        return DeploymentStatus(id=scenario, status=state, containers=containers, checked_at="2026-01-01T00:00:00Z", command=command, output="")
+
+    deployment_service.settings.dry_run = False
+    monkeypatch.setattr(deployment_service, "get_status", fake_status)
+
+    deployment_service._ensure_no_conflict(get_deployment_definition("5g-sa-x310"))
+
+
+def test_5g_sa_gnb_blocks_simultaneous_4g_x310_rf(deployment_service, monkeypatch):
+    command = CommandResult(
+        command=["status"], cwd=".", exit_code=0, stdout="", stderr="",
+        started_at="2026-01-01T00:00:00Z", finished_at="2026-01-01T00:00:00Z", duration_ms=0,
+    )
+
+    def fake_status(scenario: str):
+        containers = []
+        if scenario == "5g-sa-x310":
+            containers = [ContainerStatus(name="5g-amf", service="amf", status="running", running=True),
+                          ContainerStatus(name="5g-gnb", service="gnb-x310", status="running", running=True)]
+        state = "partial" if containers else "stopped"
+        return DeploymentStatus(id=scenario, status=state, containers=containers, checked_at="2026-01-01T00:00:00Z", command=command, output="")
+
+    deployment_service.settings.dry_run = False
+    monkeypatch.setattr(deployment_service, "get_status", fake_status)
+
+    with pytest.raises(DeploymentConflictError) as exc_info:
+        deployment_service._ensure_no_conflict(get_deployment_definition("4g-lte-x310"))
+
+    assert exc_info.value.active_scenario == "5g-sa-x310"
+
+
+def test_shared_core_still_blocks_when_other_x310_ran_is_active(deployment_service, monkeypatch):
+    command = CommandResult(
+        command=["status"], cwd=".", exit_code=0, stdout="", stderr="",
+        started_at="2026-01-01T00:00:00Z", finished_at="2026-01-01T00:00:00Z", duration_ms=0,
+    )
+
+    def fake_status(scenario: str):
+        containers = []
+        if scenario == "5g-nsa-x310":
+            containers = [ContainerStatus(name="shared-mme", service="mme", status="running", running=True),
+                          ContainerStatus(name="nsa-enb", service="enb-nsa-x310", status="running", running=True)]
+        state = "partial" if containers else "stopped"
+        return DeploymentStatus(id=scenario, status=state, containers=containers, checked_at="2026-01-01T00:00:00Z", command=command, output="")
+
+    deployment_service.settings.dry_run = False
+    monkeypatch.setattr(deployment_service, "get_status", fake_status)
+
+    with pytest.raises(DeploymentConflictError) as exc_info:
+        deployment_service._ensure_no_conflict(get_deployment_definition("4g-lte-x310"))
+
+    assert exc_info.value.active_scenario == "5g-nsa-x310"
 
 
 def test_failed_validation_returns_new_failure_evidence(deployment_service, run_service, monkeypatch):

@@ -5,7 +5,7 @@
 **Orquestación basada en evidencia para redes software 4G/5G y laboratorios USRP X-Series protegidos**
 
 [![CI](https://github.com/guallycanazas/Lain5G/actions/workflows/ci.yml/badge.svg)](https://github.com/guallycanazas/Lain5G/actions/workflows/ci.yml)
-[![Release](https://img.shields.io/badge/release-v1.1.5-4051b5.svg)](https://github.com/guallycanazas/Lain5G/releases/tag/v1.1.5)
+[![Release](https://img.shields.io/badge/release-v1.1.6-4051b5.svg)](https://github.com/guallycanazas/Lain5G/releases/tag/v1.1.6)
 [![Código propio: MIT](https://img.shields.io/badge/c%C3%B3digo_propio-MIT-d9a441.svg)](LICENSE.txt)
 [![Plataforma](https://img.shields.io/badge/plataforma-GNU%2FLinux_x86__64-2f6f62.svg)](docs/installation.md)
 [![Python](https://img.shields.io/badge/Python-%E2%89%A53.10-3776ab.svg)](src/backend/requirements.txt)
@@ -22,7 +22,7 @@ ofrece un entorno personalizable con escenarios completamente software, flujos
 USRP X-Series protegidos, configuración declarativa, validación automatizada y
 evidencia trazable de cada ejecución.
 
-> **Estado de publicación:** [`v1.1.5`](https://github.com/guallycanazas/Lain5G/tree/v1.1.5)
+> **Estado de publicación:** [`v1.1.6`](https://github.com/guallycanazas/Lain5G/tree/v1.1.6)
 > es la última release inmutable.
 
 > **Nombres:** OpenLain5G es el nombre actual del proyecto. La URL del
@@ -57,7 +57,7 @@ de inicio no estándar deben satisfacer los requisitos documentados manualmente.
 | Contenedores | Docker Engine y Docker Compose v2 instalados; el daemon se inicia cuando el sistema lo permite |
 | Acceso | Membresía del grupo Docker configurada solo si el equipo usa ese modelo |
 | Estado privado | Perfiles y configuración local ignorados, con permisos restrictivos |
-| Componentes | Todas las imágenes únicas de los cuatro perfiles públicos descargadas |
+| Componentes | Todas las imágenes únicas de los cinco perfiles públicos descargadas |
 | RF | Ninguna transmisión; la operación de hardware sigue separada, autorizada y bloqueada por defecto |
 
 Si la instalación cambió la membresía del grupo Docker y la sesión actual aún no
@@ -134,6 +134,7 @@ externo. Sin prueba por aire, esa etapa permanece `NOT_TESTED`.
 | `5g-sa` | Solo software | 5GC Open5GS + gNB/UE UERANSIM + PDU de datos | Resumen sanitizado en VM limpia: [15/15 `PASS`](results/public/5g-sa-sim/run-20260730-021914.json) |
 | `4g-lte-x310` | RF protegido | EPC Open5GS + IMS compacto + eNB srsRAN + USRP X-Series compatible | Flujo protegido con evidencia RF local correlacionada por ejecución |
 | `5g-sa-x310` | RF protegido | 5GC Open5GS + IMS compacto + gNB srsRAN Project + USRP X-Series compatible | Flujo protegido con evidencia RF local correlacionada por ejecución |
+| `5g-nsa-x310` | RF protegido | EPC Open5GS compartido + IMS compacto + eNB srsRAN EN-DC + USRP X-Series de dos cadenas compatible | Evidencia física de conexión UE registrada en v1.1.3; separada de las pruebas de nube solo software |
 
 Los resultados LTE y 5G SA actuales son resúmenes sanitizados de una VM Ubuntu
 24.04 limpia, no trazas de protocolo, e identifican
@@ -184,7 +185,7 @@ Después del instalador, ejecute el gate seguro del repositorio:
 make softwarex-check
 ```
 
-El gate actual aprueba **323 pruebas backend**, **51 pruebas frontend** y **78%
+El gate actual aprueba **350 pruebas backend**, **107 pruebas frontend** y **79%
 de cobertura backend**, además de TypeScript, build de producción, render seguro
 de Compose, perfiles, versión y metadatos de citación, enlaces internos,
 resultados públicos, artefactos de release y archivos sensibles.
@@ -198,7 +199,7 @@ validadores de escenario.
 
 | Elemento | Valor del repositorio |
 | --- | --- |
-| Release inmutable | [`v1.1.5`](https://github.com/guallycanazas/Lain5G/releases/tag/v1.1.5) |
+| Release inmutable | [`v1.1.6`](https://github.com/guallycanazas/Lain5G/releases/tag/v1.1.6) |
 | Control de versiones | Git y GitHub |
 | Licencia de código propio | [MIT](LICENSE.txt), con términos upstream separados |
 | Lenguajes | Python, TypeScript y Shell |

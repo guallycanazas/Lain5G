@@ -38,6 +38,12 @@ def diff_profile(profile_id: str, service: ProfileConfigService = Depends(get_pr
     return service.diff_profile(profile_id)
 
 
+@router.get("/{profile_id}/backups/latest")
+def latest_profile_backup(profile_id: str, service: ProfileConfigService = Depends(get_profile_config_service)) -> dict[str, Any]:
+    require_public_profile(profile_id)
+    return service.latest_backup(profile_id)
+
+
 @router.put("/{profile_id}", dependencies=[Depends(require_mutations_enabled)])
 def update_profile(profile_id: str, payload: dict[str, Any] = Body(...), service: ProfileConfigService = Depends(get_profile_config_service)) -> dict[str, Any]:
     require_public_profile(profile_id)

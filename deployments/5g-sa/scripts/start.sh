@@ -22,26 +22,7 @@ if [ "${LAIN5G_DRY_RUN:-false}" != "true" ]; then
     exit 2
   fi
 
-  network=lain5g-lab-5g-sa-core
-  backend=lain5g-lab-app-backend
-  backend_ip=10.20.0.250
-  backend_network_ip(){
-    docker network inspect "$network" --format '{{range .Containers}}{{if eq .Name "lain5g-lab-app-backend"}}{{.IPv4Address}}{{end}}{{end}}' 2>/dev/null | cut -d/ -f1 || true
-  }
-  if docker network inspect "$network" >/dev/null 2>&1; then
-    current_ip="$(backend_network_ip)"
-    if [ -n "$current_ip" ] && [ "$current_ip" != "$backend_ip" ]; then
-      docker network disconnect "$network" "$backend" >/dev/null 2>&1 || true
-      if ! docker network connect --ip "$backend_ip" "$network" "$backend"; then
-        if [ "$(backend_network_ip)" = "$backend_ip" ] || ! docker network inspect "$network" >/dev/null 2>&1 || ! docker inspect "$backend" >/dev/null 2>&1; then
-          :
-        else
-          echo "Could not reserve $backend_ip for $backend" >&2
-          exit 2
-        fi
-      fi
-    fi
-  fi
+  "$repo_dir/deployments/5g-sa-x310/scripts/ensure-core-network.sh"
 
   x310_project="lain5g-lab-5g-sa-x310"
   x310_network="lain5g-lab-5g-sa-x310-core"

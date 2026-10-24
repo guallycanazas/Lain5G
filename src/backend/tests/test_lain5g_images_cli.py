@@ -123,9 +123,9 @@ def test_main_menu_exposes_preparation_without_publishing():
         check=False,
     )
     assert profiles.returncode == 0
-    for profile in ("4g-lte-sim", "5g-sa", "4g-lte-x310", "5g-sa-x310"):
+    for profile in ("4g-lte-sim", "5g-sa", "4g-lte-x310", "5g-sa-x310", "5g-nsa-x310"):
         assert profile in profiles.stdout
-    for hidden in ("4g-volte-sim", "5g-vonr", "5g-nsa-x310"):
+    for hidden in ("4g-volte-sim", "5g-vonr"):
         assert hidden not in profiles.stdout
     hidden_start = subprocess.run(
         [str(ROOT / "lain5g"), "scenario", "start", "5g-vonr-sim"],
@@ -161,7 +161,57 @@ def test_bootstrap_dry_run_installs_tools_and_downloads_everything():
     assert "./lain5g scenario setup 5g-sa-x310" in result.stdout
     assert "docker pull gually/lain5g-open5gs" in result.stdout
     assert "docker pull gually/lain5g-srsranproject-uhd" in result.stdout
-    assert "MAQUINA PREPARADA" in result.stdout
+    assert "PLAN DE PREPARACION" in result.stdout
+    assert "RESUMEN DE INSTALACION" in result.stdout
+    assert "dry-run; no instalado" in result.stdout
+    assert "dry-run; no descargadas" in result.stdout
+
+
+def test_shell_installer_writes_transcript_and_reports_result(tmp_path: Path):
+    state_dir = tmp_path / "state"
+    env = {**os.environ, "XDG_STATE_HOME": str(state_dir)}
+
+    result = subprocess.run(
+        [str(ROOT / "install.sh"), "--dry-run"],
+        cwd=ROOT,
+        env=env,
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+
+    assert result.returncode == 0
+    assert "RESUMEN DE INSTALACION" in result.stdout
+    assert "RESULTADO DE INSTALACION: CORRECTO" in result.stdout
+    logs = list((state_dir / "lain5g").glob("install-*.log"))
+    assert len(logs) == 1
+    assert "Registro completo de instalacion:" in result.stdout
+    assert "RESULTADO DE INSTALACION: CORRECTO" in logs[0].read_text(encoding="utf-8")
+
+
+def test_shell_installer_logs_failure_and_preserves_exit_code(tmp_path: Path):
+    state_dir = tmp_path / "state"
+    env = {
+        **os.environ,
+        "XDG_STATE_HOME": str(state_dir),
+        "LAIN5G_BOOTSTRAP_FORCE_MISSING": "node",
+        "LAIN5G_BOOTSTRAP_PACKAGE_MANAGER": "unsupported",
+    }
+
+    result = subprocess.run(
+        [str(ROOT / "install.sh"), "--dry-run"],
+        cwd=ROOT,
+        env=env,
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+
+    assert result.returncode == 2
+    assert "RESULTADO DE INSTALACION: ERROR (codigo 2;" in result.stdout
+    logs = list((state_dir / "lain5g").glob("install-*.log"))
+    assert len(logs) == 1
+    assert "gestor compatible no encontrado" in logs[0].read_text(encoding="utf-8")
 
 
 def test_bootstrap_requires_group_activation_in_the_current_shell(tmp_path: Path):

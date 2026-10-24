@@ -111,6 +111,7 @@ def test_core_only_does_not_require_the_rf_access_image(tmp_path: Path):
     (
         ("4g-lte-x310", "deployments/4g-volte/common", {"SUBSCRIBER_KEY", "SUBSCRIBER_OPC", "IMS_AUTH_PASSWORD"}),
         ("5g-sa-x310", "deployments/5g-sa-x310", {"IMS_AUTH_PASSWORD"}),
+        ("5g-nsa-x310", "deployments/5g-nsa-x310", set()),
     ),
 )
 def test_prepare_environment_supports_rf_ims_profiles(tmp_path: Path, profile: str, directory: str, required_secrets: set[str]):
@@ -119,7 +120,7 @@ def test_prepare_environment_supports_rf_ims_profiles(tmp_path: Path, profile: s
     (environment_dir / ".env.example").write_text("".join(f"{name}=\n" for name in sorted(required_secrets)), encoding="utf-8")
 
     target = service(tmp_path, FakeCommands()).prepare_environment(profile)
-    values = dict(line.split("=", 1) for line in target.read_text(encoding="utf-8").splitlines())
+    values = dict(line.split("=", 1) for line in target.read_text(encoding="utf-8").splitlines() if "=" in line)
 
     assert all(len(values[name]) == 32 for name in required_secrets)
     assert target.stat().st_mode & 0o777 == 0o600

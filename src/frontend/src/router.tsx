@@ -17,6 +17,7 @@ import { SubscriberEditPage } from './pages/SubscriberEditPage';
 import { SubscribersPage } from './pages/SubscribersPage';
 import { SettingsPage } from './pages/SettingsPage';
 import { TopologyPage } from './pages/TopologyPage';
+import { TroubleshooterPage } from './pages/TroubleshooterPage';
 import { ValidationPage } from './pages/ValidationPage';
 
 export const router = createBrowserRouter([
@@ -26,6 +27,7 @@ export const router = createBrowserRouter([
     children: [
       { path: 'dashboard', element: <DashboardPage /> },
       { path: 'validation', element: <ValidationPage /> },
+      { path: 'troubleshooter', element: <TroubleshooterPage /> },
       { path: 'topology', element: <TopologyPage /> },
       { path: 'metrics', element: <MetricsPage /> },
       { path: 'logs', element: <LogsPage /> },
@@ -40,6 +42,7 @@ export const router = createBrowserRouter([
       { path: 'subscribers/new', element: <SubscriberCreatePage /> },
       { path: 'subscribers/:imsi', element: <SubscriberDetailPage /> },
       { path: 'subscribers/:imsi/edit', element: <SubscriberEditPage /> },
+      { path: 'ims', element: <Navigate to="/subscribers?view=ims" replace /> },
       { path: 'runs', element: <RunsPage /> },
       { path: 'runs/:runId', element: <RunDetailPage /> },
     ],

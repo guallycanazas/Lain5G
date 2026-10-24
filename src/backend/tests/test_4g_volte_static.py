@@ -60,20 +60,45 @@ def test_x310_rf_start_requires_guardrails():
     assert "maximum_duration_seconds" in start_enb
     assert "stop enb-x310" in start_enb
     assert 'grep -Fxq "run_id=$run_id"' in start_enb
-    assert "sleep 5" in start_enb
+    assert "sleep 10" in start_enb
     assert ".State.Running" in start_enb
     assert "--network host" in uhd_check
     assert "uhd_usrp_probe" in uhd_check
+    assert uhd_check.index('if docker image inspect "$image"') < uhd_check.index('elif command -v uhd_usrp_probe')
+    assert 'cmd=(docker run --rm --network host "$image" uhd_usrp_probe' in uhd_check
+    assert "for attempt in 1 2 3" in uhd_check
+    assert "probe failed after 3 attempts" in uhd_check
     assert "uhd_find_devices" in hardware_check
+    assert 'ip -4 route get "$addr"' in hardware_check
+    assert 'route_source="$(awk' in hardware_check
+    assert 'check ethernet_link PASS "route to $addr uses $route_device at $route_source"' in hardware_check
 
 
-def test_x310_validation_does_not_reuse_inactive_rf_logs():
+def test_x310_validation_uses_session_scoped_logs_and_marks_idle_standby():
     validate = (DEPLOY / "x310" / "scripts" / "validate.sh").read_text(encoding="utf-8")
 
+    host_hardware_check = (DEPLOY / "x310" / "scripts" / "host-hardware-check.sh").read_text(encoding="utf-8")
+    preflight = (DEPLOY / "x310" / "scripts" / "preflight.sh").read_text(encoding="utf-8")
+
+    assert 'docker run --rm --network host' in host_hardware_check
+    assert 'host-hardware-check.sh' in validate
+    assert 'host-hardware-check.sh' in preflight
     assert 'add enb_started NOT_TESTED "No active RF session' in validate
     assert 'add s1_setup NOT_TESTED "No active RF session' in validate
     assert 'add auto_stop NOT_TESTED "No current RF session lifecycle' in validate
     assert 'add enb_started PASS "RF session completed"' not in validate
+
+
+def test_x310_rf_start_captures_failed_initialization_evidence():
+    start_enb = (DEPLOY / "x310" / "scripts" / "start-enb.sh").read_text(encoding="utf-8")
+    validate = (DEPLOY / "x310" / "scripts" / "validate.sh").read_text(encoding="utf-8")
+
+    assert 'status":"failed"' in start_enb
+    assert 'logs --no-color --since "$started_at" enb-x310' in start_enb
+    assert 'tail -n 45 "$run_dir/logs/enb-x310.log"' in start_enb
+    assert 'name rf-session.json' in validate
+    assert 'Latest RF session failed during eNB startup' in validate
+    assert 'S1 setup evidence found in session' in validate
 
 
 def test_x310_uses_profile_specific_addresses():

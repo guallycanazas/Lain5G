@@ -19,6 +19,7 @@ class RunDetail(BaseModel):
     run_id: str
     metadata: dict[str, Any]
     validation: dict[str, Any] | None = None
+    preflight: dict[str, Any] | None = None
     metrics: dict[str, Any] | None = None
     logs: list[str] = Field(default_factory=list)
     loaded_at: datetime

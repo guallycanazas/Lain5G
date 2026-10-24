@@ -7,12 +7,12 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[3]
 DEPLOY = ROOT / "deployments" / "ims-real"
 IMAGE_CONTEXTS = {
-    "ims-real-open5gs": ("441d40e16f76ae79fc25eaaa92245850ed833bdd3d0d0dc78acbffd958cdc2c6", "MIT AND AGPL-3.0-only AND BSD-2-Clause"),
-    "ims-real-kamailio": ("67dc92b423ca5ef0b827a049d0cabeff741f3eafd9222608036494f4d7611821", "MIT AND GPL-2.0-only AND BSD-2-Clause"),
+    "ims-real-open5gs": ("d25affe90c39adb35bfef312e725b27d2ef6b139ec1d8b2fe9f5d0da6d82753c", "MIT AND AGPL-3.0-only AND BSD-2-Clause"),
+    "ims-real-kamailio": ("7b140f374b289a7c2befc338f42ebe6441b7ea838a042bbd5acbfca6ec875818", "MIT AND GPL-2.0-only AND BSD-2-Clause"),
     "ims-real-dns": ("0e0a0fc6d18feda9db1590da249ac93e8d5abfea8f4c3c0c849ce512b5ef8982", "MIT AND BSD-2-Clause"),
-    "ims-real-mysql": ("324d3d4c5089feea787684f0dbf1a646dde8d356170085ac0b6538aee6910057", "MIT AND GPL-2.0-only AND BSD-2-Clause"),
+    "ims-real-mysql": ("efb4959ef2c835cd735dbc388eb9ad6aab0c78dd64febcd51bc17481111890c4", "MIT AND GPL-2.0-only AND BSD-2-Clause"),
     "ims-real-rtpengine": ("60eac759739651111db372c07be67863818726f754804b8707c90979bda511df", "MIT AND GPL-3.0-only AND BSD-2-Clause"),
-    "pyhss-secure": ("90206eb3cbe862bfa71e0bfaf038fe3ddbefba1df531eb2157c9642ac732e6fb", "MIT AND AGPL-3.0-only AND BSD-2-Clause"),
+    "pyhss-secure": ("0e0a0fc6d18feda9db1590da249ac93e8d5abfea8f4c3c0c849ce512b5ef8982", "MIT AND AGPL-3.0-only AND BSD-2-Clause"),
 }
 
 

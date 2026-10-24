@@ -16,6 +16,15 @@ configures group access when that model applies; generates private
 configuration; and downloads the published images. Each privileged command is
 displayed before `sudo` is used.
 
+At completion, the CLI prints an installation summary with the detected host
+type, package manager, dependencies ensured, Docker image counts, Docker access,
+and elapsed time. `install.sh` also saves the full terminal transcript with
+permissions restricted to the current user at
+`${XDG_STATE_HOME:-~/.local/state}/lain5g/install-<UTC timestamp>.log` and
+prints its exact path. A successful report means the prerequisites and images
+were prepared; it does not mean that a network scenario has been started or
+validated. A dry run labels planned work and does not claim it was installed.
+
 Other distributions, rootless Docker installations, managed workstations, and
 nonstandard init systems should satisfy the requirements below manually. The
 installer does not override host policy when daemon or group management is not

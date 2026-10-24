@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { Link } from 'react-router';
-import { Database, Download, Plus, RefreshCw, Search, ShieldCheck, Upload, UsersRound } from 'lucide-react';
+import { Link, useSearchParams } from 'react-router';
+import { Download, Plus, RefreshCw, Search, ShieldCheck } from 'lucide-react';
 import { ActionButton } from '../components/ActionButton';
 import { EmptyState } from '../components/EmptyState';
 import { ErrorAlert } from '../components/ErrorAlert';
@@ -9,22 +9,35 @@ import { SubscriberCloneDialog } from '../components/subscribers/SubscriberClone
 import { SubscriberConnectionStatus } from '../components/subscribers/SubscriberConnectionStatus';
 import { SubscriberDeleteDialog } from '../components/subscribers/SubscriberDeleteDialog';
 import { SubscriberTable } from '../components/subscribers/SubscriberTable';
+import { RealImsPage } from './RealImsPage';
 import { useSubscriberActions, useSubscriberConnection, useSubscribers } from '../hooks/useSubscribers';
-import type { SubscriberSummary } from '../types/subscriber';
+import type { SubscriberProfile, SubscriberSummary } from '../types/subscriber';
 
 const pageSize = 25;
+const subscriberProfiles: { id: SubscriberProfile; label: string }[] = [
+  { id: '4g-lte-x310', label: '4G LTE X310' },
+  { id: '5g-sa-x310', label: '5G SA X310' },
+  { id: '5g-nsa-x310', label: '5G NSA X310 · shared 4G EPC' },
+];
 
 export function SubscribersPage() {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const activeView = searchParams.get('view') === 'ims' ? 'ims' : 'open5gs';
+  const requestedProfile = searchParams.get('profile');
+  const profile: SubscriberProfile = subscriberProfiles.some((item) => item.id === requestedProfile)
+    ? requestedProfile as SubscriberProfile
+    : '4g-lte-x310';
   const [search, setSearch] = useState('');
   const [offset, setOffset] = useState(0);
   const [cloneTarget, setCloneTarget] = useState<SubscriberSummary | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<SubscriberSummary | null>(null);
-  const connection = useSubscriberConnection();
-  const subscribers = useSubscribers({ limit: pageSize, offset, search });
-  const actions = useSubscriberActions();
+  const connection = useSubscriberConnection(profile);
+  const subscribers = useSubscribers({ limit: pageSize, offset, search, profile });
+  const actions = useSubscriberActions(profile);
   const mutationError = actions.clone.error || actions.delete.error;
   const subscriberCount = subscribers.data?.total || 0;
   const connectionOnline = connection.data?.status === 'connected';
+
   const exportVisible = () => {
     const rows = subscribers.data?.items || [];
     const csv = ['imsi,msisdn,dnn,sst,sd,k_configured,op_configured,opc_configured', ...rows.map((item) => [item.imsi, item.msisdn || '', item.dnn || '', item.sst || '', item.sd || '', item.security.k_configured, item.security.op_configured, item.security.opc_configured].join(','))].join('\n');
@@ -34,45 +47,56 @@ export function SubscribersPage() {
 
   return (
     <section className="subscribers-workspace">
-      <div className="subscriber-hero">
-        <div>
-          <span className="eyebrow">👥 IDENTITY REGISTRY · OPEN5GS</span>
-          <h1>Subscribers</h1>
-          <p className="page-subtitle">Manage packet-core identities without exposing authentication material.</p>
-        </div>
-        <div className="subscriber-hero-stats"><div><span>Total records</span><strong>{subscribers.isLoading ? '—' : subscriberCount}</strong></div><div><span>Database link</span><strong className={connectionOnline ? 'text-good' : 'text-bad'}>{connectionOnline ? 'ONLINE' : 'OFFLINE'}</strong></div></div>
-        <figure className="subscriber-hero-visual"><img src="/images/lain5g/subscriber-provisioning.webp" width="1000" height="620" alt="Illustrated subscriber provisioning workstation and programmable SIM" loading="lazy" decoding="async" /><figcaption><span>🔐 Identity workflow</span><strong>SIM/USIM management is current. eSIM imagery remains a design concept.</strong></figcaption></figure>
-        <div className="subscriber-primary-actions"><button className="secondary" onClick={exportVisible} disabled={!subscribers.data?.items.length}><Download size={15} />Export CSV</button><button className="secondary" disabled title="Bulk import is not exposed by the current backend"><Upload size={15} />Import</button><Link className="action-link" to="/subscribers/new"><Plus size={16} />Create subscriber</Link></div>
-      </div>
+      <header className="subscribers-page-heading">
+        <div><span className="eyebrow">Identity management</span><h1>Subscribers</h1><p>Manage each SIM identity once. Packet-core and IMS views show the same IMSI in the systems that need it.</p></div>
+        {activeView === 'open5gs' ? <div className="subscriber-health-chip"><i className={connectionOnline ? 'online' : 'offline'} />{connectionOnline ? 'Packet core connected' : 'Packet core unavailable'}</div> : null}
+      </header>
 
-      <div className="subscriber-overview-grid">
-        <div>{connection.isLoading ? <LoadingState /> : null}{connection.error ? <ErrorAlert error={connection.error} onRetry={() => connection.refetch()} /> : null}{connection.data ? <SubscriberConnectionStatus status={connection.data} /> : null}</div>
-        <aside className="security-note"><span><ShieldCheck size={19} /></span><div><small>SECURITY BOUNDARY</small><strong>Secrets stay sealed</strong><p>Ki, OP and OPc are redacted from list views, exports and diagnostics.</p></div></aside>
-      </div>
+      <nav className="tab-list subscriber-workspace-tabs" aria-label="Subscriber records">
+        <button type="button" className={activeView === 'open5gs' ? 'active' : ''} aria-pressed={activeView === 'open5gs'} onClick={() => setSearchParams({ profile })}>
+          Packet core <span>{subscribers.isLoading ? '…' : subscriberCount}</span>
+        </button>
+        <button type="button" className={activeView === 'ims' ? 'active' : ''} aria-pressed={activeView === 'ims'} onClick={() => setSearchParams({ view: 'ims', profile })}>IMS provisioning</button>
+      </nav>
 
-      {mutationError ? <ErrorAlert error={mutationError} /> : null}
-
-      <section className="subscriber-registry panel">
-        <div className="registry-heading"><div><span className="registry-icon"><UsersRound size={18} /></span><div><h2>Subscriber registry</h2><p>{subscriberCount} records in the active Open5GS collection</p></div></div><span className={`registry-health ${connectionOnline ? 'online' : 'offline'}`}><i />{connectionOnline ? 'Database connected' : 'Database unavailable'}</span></div>
-        <div className="subscriber-toolbar">
-          <label className="search-field"><Search size={17} /><span className="sr-only">Search IMSI / MSISDN</span><input aria-label="Search IMSI / MSISDN" placeholder="Search IMSI or MSISDN…" value={search} onChange={(event) => { setOffset(0); setSearch(event.target.value); }} /></label>
-          <ActionButton variant="secondary" onClick={() => subscribers.refetch()} loading={subscribers.isFetching}><RefreshCw size={15} />Refresh</ActionButton>
-          <span className="registry-source"><Database size={14} />{connection.data?.database || 'open5gs'} / {connection.data?.collection || 'subscribers'}</span>
-        </div>
-
-        {subscribers.isLoading ? <LoadingState /> : null}
-        {subscribers.error ? <ErrorAlert error={subscribers.error} onRetry={() => subscribers.refetch()} /> : null}
-        {subscribers.data && subscribers.data.items.length > 0 ? <SubscriberTable subscribers={subscribers.data.items} onClone={setCloneTarget} onDelete={setDeleteTarget} /> : null}
-        {subscribers.data && subscribers.data.items.length === 0 ? <EmptyState title="No subscribers" message="No subscriber records match the current filters, or MongoDB is unavailable." /> : null}
-
-        {subscribers.data ? (
-          <div className="pagination-row">
-            <button className="secondary" disabled={offset === 0} onClick={() => setOffset(Math.max(0, offset - pageSize))}>Previous</button>
-            <span>{offset + 1}-{Math.min(offset + pageSize, subscribers.data.total)} of {subscribers.data.total}</span>
-            <button className="secondary" disabled={offset + pageSize >= subscribers.data.total} onClick={() => setOffset(offset + pageSize)}>Next</button>
+      {activeView === 'ims' ? <RealImsPage /> : <>
+        <div className="subscriber-intro-row">
+          <div><h2>Packet-core identities</h2><p>Create, edit, clone, or remove identities in the selected profile’s Open5GS database.</p></div>
+          <div className="subscriber-primary-actions">
+            <button className="secondary" onClick={exportVisible} disabled={!subscribers.data?.items.length}><Download size={15} />Export</button>
+            <Link className="action-link" to={`/subscribers/new?profile=${profile}`}><Plus size={16} />Add subscriber</Link>
           </div>
-        ) : null}
-      </section>
+        </div>
+
+        {connection.isLoading ? <LoadingState /> : null}
+        {connection.error ? <ErrorAlert error={connection.error} onRetry={() => connection.refetch()} /> : null}
+        {connection.data ? <details className="subscriber-connection-details"><summary><ShieldCheck size={16} />Database connection details</summary><SubscriberConnectionStatus status={connection.data} /></details> : null}
+        {mutationError ? <ErrorAlert error={mutationError} /> : null}
+
+        <section className="subscriber-registry panel">
+          <div className="subscriber-toolbar">
+            <label className="subscriber-profile-select">Network profile<select aria-label="Network profile" value={profile} onChange={(event) => setSearchParams({ profile: event.target.value })}>{subscriberProfiles.map((item) => <option key={item.id} value={item.id}>{item.label}</option>)}</select></label>
+            <label className="search-field"><Search size={17} /><span className="sr-only">Search IMSI / MSISDN</span><input aria-label="Search IMSI / MSISDN" placeholder="Search IMSI or phone number…" value={search} onChange={(event) => { setOffset(0); setSearch(event.target.value); }} /></label>
+            <ActionButton variant="secondary" onClick={() => subscribers.refetch()} loading={subscribers.isFetching}><RefreshCw size={15} />Refresh</ActionButton>
+            <span className="registry-source">{connection.data?.database || 'Open5GS'} · {connection.data?.collection || 'subscribers'}</span>
+          </div>
+
+          {subscribers.isLoading ? <LoadingState /> : null}
+          {subscribers.error ? <ErrorAlert error={subscribers.error} onRetry={() => subscribers.refetch()} /> : null}
+          {subscribers.data && subscribers.data.items.length > 0 ? <SubscriberTable subscribers={subscribers.data.items} profile={profile} onClone={setCloneTarget} onDelete={setDeleteTarget} /> : null}
+          {subscribers.data && subscribers.data.items.length === 0 ? <EmptyState title="No subscribers found" message={connectionOnline ? 'Add a subscriber to start managing SIM identities.' : 'The configured Open5GS database is unavailable. Check the connection details above.'} /> : null}
+
+          {subscribers.data ? (
+            <div className="pagination-row">
+              <button className="secondary" disabled={offset === 0} onClick={() => setOffset(Math.max(0, offset - pageSize))}>Previous</button>
+              <span>{subscriberCount === 0 ? '0' : `${offset + 1}–${Math.min(offset + pageSize, subscriberCount)}`} of {subscriberCount}</span>
+              <button className="secondary" disabled={offset + pageSize >= subscriberCount} onClick={() => setOffset(offset + pageSize)}>Next</button>
+            </div>
+          ) : null}
+        </section>
+
+        <p className="subscriber-secret-note"><ShieldCheck size={15} />Authentication secrets are never shown in the list or exported file.</p>
+      </>}
 
       <SubscriberCloneDialog
         subscriber={cloneTarget}

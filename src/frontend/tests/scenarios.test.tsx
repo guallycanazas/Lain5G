@@ -12,12 +12,13 @@ const scenarios = [
   { id: '4g-volte-sim', name: '4G LTE + VoLTE Signaling', description: 'LTE data and IMS signaling', path: 'deployments/4g-volte/sim', status: 'stopped', mode: 'simulation', supported_actions: ['start', 'stop', 'restart', 'status', 'logs', 'validate'], validation_checks: ['s1_setup', 'default_bearer', 'ims_dns', 'sip_register'], rf_capable: false, components: ['mme', 'enb', 'ue', 'pcscf', 'icscf', 'scscf', 'dns'] },
   { id: '4g-lte-x310', name: '4G - Guarded LTE RF', description: 'Guarded SDR with compact IMS infrastructure', path: 'deployments/4g-volte/x310', status: 'stopped', mode: 'rf-controlled', supported_actions: ['stop', 'status', 'logs', 'validate', 'hardware-check', 'preflight', 'start-core', 'start-rf', 'emergency-stop'], validation_checks: ['hardware_detected', 'ims_services'], rf_capable: true, components: ['mongo', 'mme', 'ims-database', 'pcscf', 'icscf', 'scscf', 'dns', 'enb-x310'], conditional_components: ['enb-x310'] },
   { id: '5g-sa-x310', name: '5G - Guarded SA RF', description: 'Guarded 5G SDR with compact IMS infrastructure', path: 'deployments/5g-sa-x310', status: 'stopped', mode: 'rf-controlled', supported_actions: ['stop', 'status', 'logs', 'validate', 'hardware-check', 'preflight', 'start-core', 'start-rf', 'emergency-stop'], validation_checks: ['hardware_detected', 'ims_services'], rf_capable: true, components: ['amf', 'ims-database', 'pcscf', 'icscf', 'scscf', 'dns', 'gnb-x310'], conditional_components: ['gnb-x310'] },
+  { id: '5g-nsa-x310', name: '5G NSA - Guarded EN-DC RF', description: 'Lab-validated LTE anchor plus NR secondary carrier', path: 'deployments/5g-nsa-x310', status: 'stopped', mode: 'rf-controlled', supported_actions: ['stop', 'status', 'logs', 'validate', 'hardware-check', 'preflight', 'start-core', 'start-rf', 'emergency-stop'], validation_checks: ['hardware_detected', 'dual_rf_chains', 'epc_services', 'ims_services', 'rf_preflight', 'enb_started', 's1_setup', 'nr_secondary_cell', 'ue_registration', 'auto_stop', 'logs_captured'], rf_capable: true, components: ['mme', 'hss', 'ims-database', 'pcscf', 'icscf', 'scscf', 'dns', 'enb-nsa-x310'], conditional_components: ['enb-nsa-x310'] },
 ];
 const publicScenarios = scenarios.filter((scenario) => !['4g-volte-sim', '5g-vonr-sim'].includes(scenario.id));
 const run = { run_id: 'run-5g', metadata: { scenario: '5g-sa', status: 'PASS', finished_at: '2026-07-10T13:36:33Z', git_commit: 'abc1234' }, validation: { status: 'PASS', checks: [{ id: 'pdu_session', status: 'PASS', detail: 'PDU session established' }] }, metrics: {}, logs: [], loaded_at: '2026-07-10T13:36:34Z' };
 const rfProfiles: Record<string, any> = {
   '4g-lte-x310': { profile: '4g-lte-x310', radio: { device: 'x300', usrp_addr: '192.168.10.2', lte_band: 7, earfcn: 3150, bandwidth_mhz: 5, tx_gain: 20, rx_gain: 40 }, safety: { rf_allowed: false, environment: 'shielded', attenuation_db: 60, antenna_connected: false, shielded_environment: true, auto_stop: true, authorization_confirmed: true, maximum_duration_seconds: 600, operator_note: 'Authorized 4G RF test' } },
-  '5g-sa-x310': { profile: '5g-sa-x310', radio: { device: 'x300', usrp_addr: '192.168.10.2', band: 78, dl_arfcn: 632628, bandwidth_mhz: 10, tx_gain: 20, rx_gain: 30 }, safety: { rf_allowed: false, environment: 'shielded', attenuation_db: 60, antenna_connected: false, shielded_environment: true, auto_stop: true, authorization_confirmed: true, maximum_duration_seconds: 600, operator_note: 'Authorized 5G RF test' } },
+  '5g-sa-x310': { profile: '5g-sa-x310', radio: { device: 'x300', usrp_addr: '192.168.10.2', band: 78, dl_arfcn: 632628, bandwidth_mhz: 10, tx_gain: 20, rx_gain: 30 }, safety: { rf_allowed: false, environment: 'shielded', attenuation_db: 60, antenna_connected: false, shielded_environment: true, auto_stop: true, authorization_confirmed: true, maximum_duration_seconds: 60, operator_note: 'Authorized 5G RF test' } },
 };
 
 function stubScenarioFetch(extra?: (url: string, init?: RequestInit) => Promise<Response> | undefined) {
@@ -52,8 +53,9 @@ describe('Scenario workspaces', () => {
     expect(screen.queryByText('5G SA + VoNR Signaling')).not.toBeInTheDocument();
     expect(screen.getByText('4G - Guarded LTE RF')).toBeInTheDocument();
     expect(screen.getByText('5G - Guarded SA RF')).toBeInTheDocument();
-    expect(screen.getAllByText('Real hardware')).toHaveLength(2);
-    expect(screen.getAllByText(/^\d+ checks$/)).toHaveLength(4);
+    expect(screen.getByText('5G NSA - Guarded EN-DC RF')).toBeInTheDocument();
+    expect(screen.getAllByText('Real hardware')).toHaveLength(3);
+    expect(screen.getAllByText(/^\d+ checks$/)).toHaveLength(5);
   });
   it('keeps scenario commands and workspace tabs reachable', async () => {
     stubScenarioFetch(); renderRoute('/scenarios/:scenarioId', <ScenarioDetailPage />, '/scenarios/5g-sa');
@@ -72,10 +74,65 @@ describe('Scenario workspaces', () => {
     expect(screen.queryByRole('button', { name: 'Start' })).not.toBeInTheDocument();
     expect(screen.getByText('Always-on compact IMS infrastructure')).toBeInTheDocument();
     expect(screen.getByText('Evidence is recorded for each operator run')).toBeInTheDocument();
+    expect(screen.getByText('Recommended 4G X310 run order')).toBeInTheDocument();
+    expect(screen.getByText('Button guide')).toBeInTheDocument();
+    expect(document.querySelector('.proof-evidence-note')).not.toBeInTheDocument();
+    expect(document.querySelector('.scenario-evidence-note')).not.toBeInTheDocument();
     const proof = await screen.findByLabelText('Operational proof');
     expect(within(proof).getByText('Guarded RF evidence chain')).toBeInTheDocument();
     expect(within(proof).getByText('UE over air')).toBeInTheDocument();
     expect(within(proof).getByText(/never inferred from a running RAN process/i)).toBeInTheDocument();
+  });
+  it('uses 5G SA wording in the guarded X310 run order', async () => {
+    stubScenarioFetch(); renderRoute('/scenarios/:scenarioId', <ScenarioDetailPage />, '/scenarios/5g-sa-x310');
+    expect(await screen.findByText('Recommended 5G SA X310 run order')).toBeInTheDocument();
+    expect(screen.getByText(/starts 5GC\/IMS, reruns preflight, then starts the gNB/)).toBeInTheDocument();
+    expect(screen.queryByText('Recommended 4G X310 run order')).not.toBeInTheDocument();
+  });
+  it('opens the 5G NSA workspace with its own guarded checks', async () => {
+    stubScenarioFetch(); renderRoute('/scenarios/:scenarioId', <ScenarioDetailPage />, '/scenarios/5g-nsa-x310');
+    expect(await screen.findByRole('button', { name: 'Hardware check' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'EPC + IMS, no RF' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Start X310 lab' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Validate' })).toBeInTheDocument();
+    expect(screen.getByText('Recommended 5G NSA X310 run order')).toBeInTheDocument();
+    expect(screen.getByText(/both RF paths are authorized/i)).toBeInTheDocument();
+  });
+  it('refreshes the displayed RF preflight evidence after a failed retry', async () => {
+    let retried = false;
+    stubScenarioFetch((url, init) => {
+      if (url.includes('/api/runs?') && url.includes('scenario=4g-lte-x310')) {
+        return jsonResponse(retried
+          ? [
+              { run_id: 'run-preflight-2', scenario: '4g-lte-x310', status: null },
+              { run_id: 'run-validation-1', scenario: '4g-lte-x310', status: 'FAIL' },
+            ]
+          : [{ run_id: 'run-validation-1', scenario: '4g-lte-x310', status: 'FAIL' }]);
+      }
+      if (url === '/api/runs/run-validation-1') return jsonResponse({
+        run_id: 'run-validation-1', metadata: { scenario: '4g-lte-x310', finished_at: '2026-10-22T22:40:00Z' },
+        validation: { status: 'FAIL', checked_at: '2026-10-22T22:40:00Z', checks: [{ id: 'rf_preflight', status: 'FAIL', detail: 'old preflight failure' }] },
+        preflight: null, metrics: null, logs: [],
+      });
+      if (url === '/api/runs/run-preflight-2') return jsonResponse({
+        run_id: 'run-preflight-2', metadata: { scenario: '4g-lte-x310' }, validation: null,
+        preflight: { status: 'FAIL', checked_at: '2026-10-22T22:50:00Z', checks: [{ id: 'authorization', status: 'FAIL', detail: 'authorization not confirmed' }] },
+        metrics: null, logs: [],
+      });
+      if (url === '/api/deployments/4g-lte-x310/preflight' && init?.method === 'POST') {
+        retried = true;
+        return jsonResponse({ detail: { code: 'X310_PREFLIGHT_FAILED', message: 'X310 preflight failed.' } }, 409);
+      }
+      return undefined;
+    });
+    renderRoute('/scenarios/:scenarioId', <ScenarioDetailPage />, '/scenarios/4g-lte-x310');
+
+    expect(await screen.findByText('old preflight failure')).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: 'Preflight' }));
+
+    expect(await screen.findByText('authorization: authorization not confirmed')).toBeInTheDocument();
+    expect(screen.getAllByText('run-preflight-2').length).toBeGreaterThan(0);
+    await waitFor(() => expect(fetch).toHaveBeenCalledWith('/api/deployments/4g-lte-x310/preflight', expect.objectContaining({ method: 'POST' })));
   });
   it('shows expected services that are missing from a partial deployment', async () => {
     stubScenarioFetch((url) => url.includes('/api/deployments/4g-lte-x310/status') ? jsonResponse({
@@ -125,7 +182,7 @@ describe('Scenario workspaces', () => {
     expect(within(proof).getAllByText('WARNING').length).toBeGreaterThan(0);
     expect(within(proof).getByText('MME/eNB/UE logs')).toBeInTheDocument();
     expect(within(proof).getByText('ping -I tun_srsue')).toBeInTheDocument();
-    expect(within(proof).getByText(/running container alone never proves registration/i)).toBeInTheDocument();
+    expect(within(proof).queryByText(/running container alone never proves registration/i)).not.toBeInTheDocument();
     await userEvent.click(within(proof).getByRole('button', { name: 'Run evidence check' }));
     await waitFor(() => expect(fetch).toHaveBeenCalledWith('/api/deployments/4g-lte-sim/validate', expect.objectContaining({ method: 'POST' })));
     await userEvent.click(within(proof).getByRole('button', { name: 'Inspect live logs' }));
@@ -185,6 +242,7 @@ describe('Scenario workspaces', () => {
     expect(await screen.findByText('n78 · ARFCN 632628')).toBeInTheDocument();
     expect(screen.getByText('10 MHz')).toBeInTheDocument();
     expect(screen.getByText('20 / 30 dB')).toBeInTheDocument();
+    expect(screen.getByText('60 seconds')).toBeInTheDocument();
   });
   it.each([
     ['4g-lte-x310', 'Start LTE eNB + X310'],
@@ -295,12 +353,23 @@ describe('Scenario workspaces', () => {
     await waitFor(() => expect(fetch).toHaveBeenCalledWith('/api/preparation/profiles/5g-sa/pull', expect.objectContaining({ method: 'POST' })));
     await waitFor(() => expect(fetch).toHaveBeenCalledWith('/api/deployments/5g-sa/start', expect.objectContaining({ method: 'POST' })));
   });
-  it('preserves deployment conflict errors', async () => {
-    stubScenarioFetch((url, init) => url.includes('/start') && init?.method === 'POST' ? jsonResponse({ detail: { code: 'DEPLOYMENT_CONFLICT', message: 'Another laboratory scenario is currently running.' } }, 409) : undefined);
-    renderRoute('/scenarios/:scenarioId', <ScenarioDetailPage />, '/scenarios/4g-lte-sim');
+  it('offers to stop the active profile and retries the requested simulation start', async () => {
+    let stopped = false;
+    stubScenarioFetch((url, init) => {
+      if (url === '/api/deployments/5g-sa/start' && init?.method === 'POST' && !stopped) {
+        return jsonResponse({ detail: { code: 'DEPLOYMENT_CONFLICT', message: 'Another laboratory scenario is currently running.', active_scenario: '4g-lte-x310' } }, 409);
+      }
+      if (url === '/api/deployments/4g-lte-x310/stop' && init?.method === 'POST') stopped = true;
+      return undefined;
+    });
+    renderRoute('/scenarios/:scenarioId', <ScenarioDetailPage />, '/scenarios/5g-sa');
     await userEvent.click(await screen.findByRole('button', { name: 'Start lab' }));
     await userEvent.click(screen.getByRole('button', { name: 'Start full simulation' }));
-    expect(await screen.findByText('State conflict')).toBeInTheDocument();
+    expect(await screen.findByRole('dialog', { name: 'Another profile is active' })).toHaveTextContent('4G - Guarded LTE RF');
+    await userEvent.click(screen.getByRole('button', { name: 'Stop profile and continue' }));
+    await waitFor(() => expect(fetch).toHaveBeenCalledWith('/api/deployments/4g-lte-x310/stop', expect.objectContaining({ method: 'POST' })));
+    await waitFor(() => expect(fetch).toHaveBeenCalledWith('/api/deployments/5g-sa/start', expect.objectContaining({ method: 'POST' })));
+    expect(await screen.findByText('Start lab')).toBeInTheDocument();
   });
   it('fetches logs only from the selected scenario workspace', async () => {
     stubScenarioFetch(); renderRoute('/scenarios/:scenarioId', <ScenarioDetailPage />, '/scenarios/4g-lte-sim');

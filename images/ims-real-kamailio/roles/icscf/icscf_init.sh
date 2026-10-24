@@ -32,6 +32,7 @@ mkdir -p /etc/kamailio_icscf
 cp /mnt/icscf/icscf.cfg /etc/kamailio_icscf
 cp /mnt/icscf/icscf.xml /etc/kamailio_icscf
 cp /mnt/icscf/kamailio_icscf.cfg /etc/kamailio_icscf
+cp /mnt/icscf/icscf.sql /etc/kamailio_icscf
 
 while ! mysqladmin ping -h ${MYSQL_IP} --silent; do
 	sleep 5;
@@ -40,19 +41,33 @@ done
 # Sleep until permissions are set
 sleep 10;
 
+# Make credentials compatible with MariaDB and repair them even when the
+# database schema already exists in a persistent Compose volume.
+mysql -u root -h "${MYSQL_IP}" -e "CREATE USER IF NOT EXISTS 'icscf'@'%' IDENTIFIED BY 'heslo'"
+mysql -u root -h "${MYSQL_IP}" -e "ALTER USER 'icscf'@'%' IDENTIFIED BY 'heslo'"
+mysql -u root -h "${MYSQL_IP}" -e "CREATE USER IF NOT EXISTS 'icscf'@'${ICSCF_IP}' IDENTIFIED BY 'heslo'"
+mysql -u root -h "${MYSQL_IP}" -e "ALTER USER 'icscf'@'${ICSCF_IP}' IDENTIFIED BY 'heslo'"
+mysql -u root -h "${MYSQL_IP}" -e "CREATE USER IF NOT EXISTS 'provisioning'@'%' IDENTIFIED BY 'provi'"
+mysql -u root -h "${MYSQL_IP}" -e "ALTER USER 'provisioning'@'%' IDENTIFIED BY 'provi'"
+mysql -u root -h "${MYSQL_IP}" -e "CREATE USER IF NOT EXISTS 'provisioning'@'${ICSCF_IP}' IDENTIFIED BY 'provi'"
+mysql -u root -h "${MYSQL_IP}" -e "ALTER USER 'provisioning'@'${ICSCF_IP}' IDENTIFIED BY 'provi'"
+mysql -u root -h "${MYSQL_IP}" -e "GRANT ALL ON icscf.* TO 'icscf'@'%'"
+mysql -u root -h "${MYSQL_IP}" -e "GRANT ALL ON icscf.* TO 'icscf'@'${ICSCF_IP}'"
+mysql -u root -h "${MYSQL_IP}" -e "GRANT ALL ON icscf.* TO 'provisioning'@'%'"
+mysql -u root -h "${MYSQL_IP}" -e "GRANT ALL ON icscf.* TO 'provisioning'@'${ICSCF_IP}'"
+
 # Create ICSCF database, populate tables and grant privileges
 if [[ -z "`mysql -u root -h ${MYSQL_IP} -qfsBe "SELECT SCHEMA_NAME FROM INFORMATION_SCHEMA.SCHEMATA WHERE SCHEMA_NAME='icscf'" 2>&1`" ]];
 then
 	mysql -u root -h ${MYSQL_IP} -e "create database icscf;"
-	mysql -u root -h ${MYSQL_IP} icscf < /usr/local/src/kamailio/misc/examples/ims/icscf/icscf.sql
 
 	ICSCF_USER_EXISTS=`mysql -u root -h ${MYSQL_IP} -s -N -e "SELECT EXISTS(SELECT 1 FROM mysql.user WHERE User = 'icscf' AND Host = '%')"`
 	if [[ "$ICSCF_USER_EXISTS" == 0 ]]
 	then
-		mysql -u root -h ${MYSQL_IP} -e "CREATE USER 'icscf'@'%' IDENTIFIED WITH mysql_native_password BY 'heslo'";
-		mysql -u root -h ${MYSQL_IP} -e "CREATE USER 'provisioning'@'%' IDENTIFIED WITH mysql_native_password BY 'provi'";
-		mysql -u root -h ${MYSQL_IP} -e "CREATE USER 'icscf'@'$ICSCF_IP' IDENTIFIED WITH mysql_native_password BY 'heslo'";
-		mysql -u root -h ${MYSQL_IP} -e "CREATE USER 'provisioning'@'$ICSCF_IP' IDENTIFIED WITH mysql_native_password BY 'provi'";
+		mysql -u root -h ${MYSQL_IP} -e "CREATE USER 'icscf'@'%' IDENTIFIED BY 'heslo'";
+		mysql -u root -h ${MYSQL_IP} -e "CREATE USER 'provisioning'@'%' IDENTIFIED BY 'provi'";
+		mysql -u root -h ${MYSQL_IP} -e "CREATE USER 'icscf'@'$ICSCF_IP' IDENTIFIED BY 'heslo'";
+		mysql -u root -h ${MYSQL_IP} -e "CREATE USER 'provisioning'@'$ICSCF_IP' IDENTIFIED BY 'provi'";
 		mysql -u root -h ${MYSQL_IP} -e "GRANT ALL ON icscf.* TO 'icscf'@'%'";
 		mysql -u root -h ${MYSQL_IP} -e "GRANT ALL ON icscf.* TO 'icscf'@'$ICSCF_IP'";
 		mysql -u root -h ${MYSQL_IP} -e "GRANT ALL ON icscf.* TO 'provisioning'@'%'";
@@ -60,6 +75,9 @@ then
 		mysql -u root -h ${MYSQL_IP} -e "FLUSH PRIVILEGES;"
 	fi
 fi
+
+# The schema file ships with this image; it remains idempotent across starts.
+mysql -u root -h "${MYSQL_IP}" icscf < /mnt/icscf/icscf.sql
 
 DOMAIN_PRESENT=`mysql -u root -h ${MYSQL_IP} icscf -s -N -e "SELECT count(*) FROM nds_trusted_domains WHERE trusted_domain='$IMS_DOMAIN';"`
 if [[ "$DOMAIN_PRESENT" == 0 ]]

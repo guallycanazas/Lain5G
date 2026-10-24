@@ -29,5 +29,7 @@ export function useRealImsActions() {
     start: useMutation({ mutationFn: realImsApi.start, onSuccess: refreshReports }),
     stop: useMutation({ mutationFn: realImsApi.stop, onSuccess: refreshReports }),
     provision: useMutation({ mutationFn: realImsApi.provision, onSuccess: refreshReports }),
+    deleteSubscriber: useMutation({ mutationFn: realImsApi.deleteSubscriber, onSuccess: refreshReports }),
+    syncSubscriber: useMutation({ mutationFn: realImsApi.syncSubscriber, onSuccess: refreshReports }),
   };
 }
