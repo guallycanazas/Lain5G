@@ -23,6 +23,13 @@ host inventory, and guarded RF lifecycle updates. The five-run cloud results
 remain tied to immutable v1.1.3. Physical NSA connection evidence was recorded
 with v1.1.3 and is separate from those software-only cloud runs.
 
+The v1.1.6 CI matrix passed on GitHub-hosted Ubuntu 22.04.5 and 24.04.5
+virtual machines. Each run archives the runner image version and guest-visible
+OS, kernel, CPU, memory, virtualization, network interfaces, and tool versions.
+Debian 13 and Fedora installation-bootstrap smoke tests passed in disposable
+containers; these validate the bootstrap package paths and do not claim full
+host-level testing on those distributions.
+
 ## Source Builds
 
 The following values were resolved with authoritative `git ls-remote --tags`

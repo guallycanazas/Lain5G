@@ -20,6 +20,8 @@ All notable changes to OpenLain5G are recorded in this file.
 - Updated configuration editing, subscriber/APN workflows, installation
   reporting, and profile conflict handling.
 - Clarified that the five-run cloud evidence remains specific to v1.1.3.
+- Expanded CI validation to Ubuntu 22.04 and 24.04, with Debian 13 and Fedora
+  installation-bootstrap smoke tests and per-run host-environment artifacts.
 
 ### Fixed
 
