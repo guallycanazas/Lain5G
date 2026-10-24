@@ -118,6 +118,8 @@ def test_lte_simulation_validation_waits_for_attach_and_proves_user_plane():
     validate = (DEPLOY / "scripts" / "validate.sh").read_text(encoding="utf-8")
 
     assert "for _ in 1 2 3 4 5 6" in validate
+    assert "for _ in 1 2 3 4 5 6 7 8 9 10" in validate
+    assert "[ -n \"$(ue_ipv4)\" ] && break" in validate
     assert "Number of MME-Sessions is now [1-9][0-9]*" in validate
     assert "ip -o -4 addr show dev tun_srsue" in validate
     assert "ip link show dev tun_srsue" in validate

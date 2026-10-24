@@ -17,6 +17,7 @@ logs_have(){
 }
 container_file_have(){ compose exec -T "$1" sh -lc 'grep -Eiq "$1" "$2"' sh "$3" "$2" 2>/dev/null; }
 registration_ready(){ container_file_have mme /var/log/open5gs/mme.log 'Attach complete' || logs_have ue 'Attach.*complete|RRC Connected|Network attach successful|Received Attach Accept'; }
+ue_ipv4(){ compose exec -T ue ip -o -4 addr show dev tun_srsue 2>/dev/null | grep -Eo '10\.57\.[0-9]+\.[0-9]+' | head -n 1 || true; }
 
 latest=""
 for metadata in "$repo_dir"/runs/run-*/metadata.json; do
@@ -48,11 +49,18 @@ else
       registration_ready && break
       sleep 5
     done
+    # The attach log can arrive just before srsUE creates tun_srsue and gets
+    # its bearer address, especially on a fast restart. Wait for the actual
+    # user-plane interface before recording IP/TUN/ping checks.
+    for _ in 1 2 3 4 5 6 7 8 9 10; do
+      [ -n "$(ue_ipv4)" ] && break
+      sleep 2
+    done
   fi
   { container_file_have mme /var/log/open5gs/mme.log 'eNB-S1 accepted|Number of eNBs is now 1' || logs_have enb 'S1 Setup|S1AP.*Setup|MME connection|S1 connection'; } && { add_check s1_setup PASS "eNB/MME S1 evidence found"; claims+=("eNB connected to MME"); } || add_check s1_setup WARNING "S1 evidence not found"
   registration_ready && { add_check ue_registration PASS "srsUE registration evidence found in MME/UE logs"; claims+=("LTE UE registered"); } || add_check ue_registration WARNING "UE registration evidence not found"
   { container_file_have mme /var/log/open5gs/mme.log 'Number of MME-Sessions is now [1-9][0-9]*' || logs_have ue 'Registered EPS bearer|Default EPS bearer|bearer.*established|Network attach successful' || logs_have enb 'InitialContextSetupResponse|New tunnel created|DRB1|User .*connected'; } && { add_check default_bearer PASS "default bearer evidence found in MME/RAN logs"; claims+=("Default bearer established"); } || add_check default_bearer WARNING "bearer evidence not found"
-  ue_ip="$(compose exec -T ue ip -o -4 addr show dev tun_srsue 2>/dev/null | grep -Eo '10\.57\.[0-9]+\.[0-9]+' | head -n 1 || true)"
+  ue_ip="$(ue_ipv4)"
   [ -n "$ue_ip" ] && { add_check ue_ip PASS "UE IP assigned on tun_srsue: $ue_ip"; claims+=("UE IP assigned"); } || add_check ue_ip WARNING "UE IPv4 address not found on tun_srsue"
   compose exec -T ue ip link show dev tun_srsue >/dev/null 2>&1 && add_check ue_tun PASS "tun_srsue exists in UE container" || add_check ue_tun WARNING "tun_srsue not found in UE container"
   compose exec -T ue ping -I tun_srsue -c 3 -W 2 10.57.0.1 >/dev/null 2>&1 && { add_check data_ping PASS "Ping to 10.57.0.1 succeeded through tun_srsue"; claims+=("Data ping succeeded"); } || add_check data_ping WARNING "Ping through tun_srsue was not validated"
