@@ -13,14 +13,18 @@ permissions:
   contents: read
 
 concurrency:
-  group: clean-clone-e2e-${{ inputs.source_ref }}
+  group: clean-clone-e2e-${{ inputs.source_ref }}-${{ github.run_id }}
   cancel-in-progress: false
 
 jobs:
   e2e:
-    name: Fresh Ubuntu 24.04 clone and simulations
+    name: Fresh Ubuntu 24.04 clone and simulations (${{ matrix.attempt }}/5)
     runs-on: ubuntu-24.04
     timeout-minutes: 120
+    strategy:
+      fail-fast: false
+      matrix:
+        attempt: [1, 2, 3, 4, 5]
     steps:
       - name: Check out requested source
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
@@ -42,12 +46,17 @@ jobs:
           cache-dependency-path: src/frontend/package-lock.json
 
       - name: Record clean runner and source
+        env:
+          SOURCE_REF: ${{ inputs.source_ref }}
+          MATRIX_ATTEMPT: ${{ matrix.attempt }}
         shell: bash
         run: |
           set -euo pipefail
           mkdir -p e2e-artifacts
           {
-            echo "source_ref=${{ inputs.source_ref }}"
+            echo "source_ref=$SOURCE_REF"
+            echo "attempt=$MATRIX_ATTEMPT"
+            echo "release_version=$(cat VERSION)"
             echo "source_commit=$(git rev-parse HEAD)"
             echo "runner_image_os=${ImageOS:-unknown}"
             echo "runner_image_version=${ImageVersion:-unknown}"
@@ -143,7 +152,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
-          name: clean-clone-e2e-${{ github.run_id }}
+          name: clean-clone-e2e-${{ github.run_id }}-attempt-${{ matrix.attempt }}
           path: e2e-artifacts/
           if-no-files-found: warn
           retention-days: 90
