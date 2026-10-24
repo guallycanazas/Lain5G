@@ -137,6 +137,28 @@ def test_lte_stop_archives_logs_and_resets_ran_containers():
     assert 'cat "$latest_run/logs/docker-compose.log"' in logs
 
 
+def test_clean_clone_lte_summary_runs_after_stop():
+    workflow = (ROOT / ".github/workflows/e2e-clean-clone.yml").read_text(encoding="utf-8")
+    lte_step = workflow.split("- name: Exercise LTE simulation twice", 1)[1].split(
+        "- name: Capture redacted LTE restart diagnostics", 1
+    )[0]
+
+    assert lte_step.index("./lain5g scenario stop 4g-lte-sim") < lte_step.index(
+        "scripts/verify/profile_e2e_summary.py"
+    )
+
+
+def test_clean_clone_5g_summary_runs_after_stop():
+    workflow = (ROOT / ".github/workflows/e2e-clean-clone.yml").read_text(encoding="utf-8")
+    sa_step = workflow.split("- name: Exercise 5G SA simulation twice", 1)[1].split(
+        "- name: Stop temporary database and lab scenarios", 1
+    )[0]
+
+    assert sa_step.index("./lain5g scenario stop 5g-sa") < sa_step.index(
+        "scripts/verify/profile_e2e_summary.py"
+    )
+
+
 def test_5g_simulation_validation_uses_scenario_run_and_waits_for_registration():
     validate = (ROOT / "deployments/5g-sa/scripts/validate.sh").read_text(encoding="utf-8")
 
