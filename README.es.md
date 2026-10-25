@@ -242,7 +242,6 @@ validadores de escenario.
 - **Alberth Ronal Tamo Calla**
 - **Willian Roy Canazas Rosas**
 - **Manuel Ismael Prieto Tito**
-- **Alexander Beremiz Hilario Tacuri**
 
 Consulte [`AUTHORS.md`](AUTHORS.md) y los metadatos de citación para ver las afiliaciones.
 

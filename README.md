@@ -257,7 +257,6 @@ separately by the scenario validators.
 - **Alberth Ronal Tamo Calla**
 - **Willian Roy Canazas Rosas**
 - **Manuel Ismael Prieto Tito**
-- **Alexander Beremiz Hilario Tacuri**
 
 See [`AUTHORS.md`](AUTHORS.md) and the citation metadata for affiliations.
 

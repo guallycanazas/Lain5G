@@ -15,8 +15,6 @@ authors:
   - family-names: "Prieto Tito"
     given-names: "Manuel Ismael"
     affiliation: "National University of San Agustin of Arequipa"
-  - family-names: "Tacuri"
-    given-names: "Alexander Beremiz Hilario"
 abstract: >-
   OpenLain5G is a modular framework for reproducible 4G LTE, 5G SA, and guarded
   5G NSA mobile
