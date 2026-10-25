@@ -12,6 +12,8 @@ The software VoLTE validation covers LTE, EPC, bearer/APN, data connectivity,
 IMS services, DNS, subscriber provisioning, and authenticated SIP registration.
 The [public result `run-20260723-055149`](../../results/public/4g-ims-sim/run-20260723-055149.json)
 records 22/22 `PASS` checks and a `SIMULATION_ONLY` classification.
+That historical result covers REGISTER only; it does not include the virtual
+call/media check documented below.
 
 ## Setup
 
@@ -28,8 +30,22 @@ without a public launcher.
 
 The `sip-register` evidence verifies the REGISTER exchange, 401 challenge,
 authenticated REGISTER, and final 200 OK response. Together with the LTE/EPC/IMS
-checks, it establishes the software-validated VoLTE signaling flow. Audio, voice
-quality, and RTP performance belong to a separate media test.
+checks, it establishes the software-validated VoLTE registration flow. Audio,
+voice quality, and RTP performance belong to a separate media test.
+
+The isolated simulator also offers a two-phone SIP call check:
+
+```bash
+docker compose --profile sip --env-file common/.env \
+  -f sim/docker-compose.yml run --rm virtual-phones
+```
+
+It registers two synthetic Digest-authenticated SIP endpoints through the
+simulated P-/I-/S-CSCF chain, completes INVITE/180/200/ACK/BYE, exchanges
+bidirectional PCMU silence packets directly between the virtual endpoints, and
+delivers a SIP MESSAGE to the virtual recipient. This software-only test does
+not validate pyHSS/Cx AKA, an IMS-capable UE, the LTE user-plane path, RTPengine
+relay, or an operator SMSC.
 
 ## X300/X310 Profile: Core Only (No RF)
 

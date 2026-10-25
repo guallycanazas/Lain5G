@@ -23,6 +23,12 @@ The validation retains evidence of:
 The `INVITE`/`ACK`/`BYE` dialog, bidirectional RTP, and audio metrics are
 evaluated in a separate media test when that scope is required.
 
+The isolated `4g-volte-sim` now includes a software-only two-phone test for the
+SIP dialog, direct bidirectional PCMU silence packets, and SIP MESSAGE delivery.
+Its local result is not part of the historical public 22/22 artifact and does
+not validate the real pyHSS/Cx AKA path, RTPengine relay, an SMSC, an LTE user
+plane, or a physical handset.
+
 ## SIP REGISTER
 
 To declare `sip_register PASS`, the validation requires actual evidence of:

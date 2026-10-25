@@ -44,11 +44,11 @@ const flows: Record<string, { label: string; summary: string; stages: { name: st
   },
   '5g-vonr-sim': {
     label: '5G SA + VoNR simulation',
-    summary: 'Starts the full 5G software path with internet and IMS PDU sessions plus SIP signaling.',
+    summary: 'Starts the 5G software path with internet and IMS PDU sessions, authenticates the UE on IMS, and separately validates a call between two synthetic SIP phones on the isolated IMS bridge.',
     stages: [
       { name: '5G Core', detail: 'Open5GS control and dual user plane' },
       { name: 'RAN + UE', detail: 'UERANSIM gNB and subscriber' },
-      { name: 'IMS', detail: 'P/I/S-CSCF, DNS and SIP registration' },
+      { name: 'IMS + call test', detail: 'UE SIP registration, two virtual SIP phones, call setup and bidirectional silent RTP check' },
     ],
   },
 };

@@ -77,3 +77,23 @@ export interface LogsResponse {
   tail: number;
   command: CommandResult;
 }
+
+export interface ImsActivityEvent {
+  timestamp: string | null;
+  service: string;
+  method: 'INVITE' | 'MESSAGE' | 'BYE' | 'CANCEL';
+  from_user: string;
+  to_user: string;
+  flow_id: string;
+  phase: 'observed' | 'forwarded' | 'response' | 'not_routed';
+  status_code: number | null;
+}
+
+export interface ImsActivityResponse {
+  id: string;
+  tail: number;
+  checked_at: string;
+  source: 'container_logs';
+  persisted: boolean;
+  events: ImsActivityEvent[];
+}

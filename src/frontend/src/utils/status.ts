@@ -74,6 +74,7 @@ export function validationDescription(id: string): string {
     ims_dns: 'IMS DNS resolved through IMS path',
     pcscf_reachable_over_ims: 'P-CSCF reachable through IMS tunnel',
     sip_register: 'SIP registration observed',
+    virtual_call: 'Virtual IMS call completed',
     hardware: 'SDR hardware detected',
     preflight: 'Preflight passed',
     rfnoc_initialization: 'UHD / RFNoC radio initialization',

@@ -7,14 +7,14 @@ import { deploymentStatus, jsonResponse, renderRoute, renderWithClient } from '.
 
 const scenarios = [
   { id: '5g-sa', name: '5G - UERANSIM Simulation', description: '5G standalone', path: 'deployments/5g-sa', status: 'stopped', mode: 'simulation', supported_actions: ['start', 'stop', 'restart', 'status', 'logs', 'validate'], validation_checks: ['ng_setup'], rf_capable: false, components: ['mongo', 'nrf', 'amf', 'gnb', 'ue'] },
-  { id: '5g-vonr-sim', name: '5G SA + VoNR Signaling', description: '5G SA data and IMS signaling', path: 'deployments/5g-vonr', status: 'stopped', mode: 'simulation', supported_actions: ['start', 'stop', 'restart', 'status', 'logs', 'validate'], validation_checks: ['ng_setup', 'pdu_internet', 'pdu_ims', 'ims_dns', 'sip_register'], rf_capable: false, components: ['mongo', 'nrf', 'amf', 'gnb', 'ue', 'ims-database', 'pcscf', 'icscf', 'scscf', 'dns'] },
+  { id: '5g-vonr-sim', name: '5G SA + VoNR Signaling', description: '5G SA, IMS and virtual call signaling', path: 'deployments/5g-vonr', status: 'stopped', mode: 'simulation', supported_actions: ['start', 'stop', 'restart', 'status', 'logs', 'validate'], validation_checks: ['ng_setup', 'pdu_internet', 'pdu_ims', 'ims_dns', 'sip_register', 'virtual_call'], rf_capable: false, components: ['mongo', 'nrf', 'amf', 'gnb', 'ue', 'ims-database', 'pcscf', 'icscf', 'scscf', 'dns'] },
   { id: '4g-lte-sim', name: '4G - srsRAN ZMQ Simulation', description: 'srsENB and srsUE over ZMQ', path: 'deployments/4g-lte-sim', status: 'stopped', mode: 'simulation', supported_actions: ['start', 'stop', 'restart', 'status', 'logs', 'validate'], validation_checks: ['s1_setup', 'ue_registration'], rf_capable: false, components: ['mme', 'enb', 'ue'] },
-  { id: '4g-volte-sim', name: '4G LTE + VoLTE Signaling', description: 'LTE data and IMS signaling', path: 'deployments/4g-volte/sim', status: 'stopped', mode: 'simulation', supported_actions: ['start', 'stop', 'restart', 'status', 'logs', 'validate'], validation_checks: ['s1_setup', 'default_bearer', 'ims_dns', 'sip_register'], rf_capable: false, components: ['mme', 'enb', 'ue', 'pcscf', 'icscf', 'scscf', 'dns'] },
+  { id: '4g-volte-sim', name: '4G LTE + VoLTE Signaling', description: 'LTE data and IMS signaling', path: 'deployments/4g-volte/sim', status: 'stopped', mode: 'simulation', supported_actions: ['start', 'stop', 'restart', 'status', 'logs', 'validate'], validation_checks: ['s1_setup', 'default_bearer', 'ims_dns', 'sip_register', 'virtual_phones'], rf_capable: false, components: ['mme', 'enb', 'ue', 'pcscf', 'icscf', 'scscf', 'dns'] },
   { id: '4g-lte-x310', name: '4G - Guarded LTE RF', description: 'Guarded SDR with compact IMS infrastructure', path: 'deployments/4g-volte/x310', status: 'stopped', mode: 'rf-controlled', supported_actions: ['stop', 'status', 'logs', 'validate', 'hardware-check', 'preflight', 'start-core', 'start-rf', 'emergency-stop'], validation_checks: ['hardware_detected', 'ims_services'], rf_capable: true, components: ['mongo', 'mme', 'ims-database', 'pcscf', 'icscf', 'scscf', 'dns', 'enb-x310'], conditional_components: ['enb-x310'] },
   { id: '5g-sa-x310', name: '5G - Guarded SA RF', description: 'Guarded 5G SDR with compact IMS infrastructure', path: 'deployments/5g-sa-x310', status: 'stopped', mode: 'rf-controlled', supported_actions: ['stop', 'status', 'logs', 'validate', 'hardware-check', 'preflight', 'start-core', 'start-rf', 'emergency-stop'], validation_checks: ['hardware_detected', 'ims_services'], rf_capable: true, components: ['amf', 'ims-database', 'pcscf', 'icscf', 'scscf', 'dns', 'gnb-x310'], conditional_components: ['gnb-x310'] },
   { id: '5g-nsa-x310', name: '5G NSA - Guarded EN-DC RF', description: 'Lab-validated LTE anchor plus NR secondary carrier', path: 'deployments/5g-nsa-x310', status: 'stopped', mode: 'rf-controlled', supported_actions: ['stop', 'status', 'logs', 'validate', 'hardware-check', 'preflight', 'start-core', 'start-rf', 'emergency-stop'], validation_checks: ['hardware_detected', 'dual_rf_chains', 'epc_services', 'ims_services', 'rf_preflight', 'enb_started', 's1_setup', 'nr_secondary_cell', 'ue_registration', 'auto_stop', 'logs_captured'], rf_capable: true, components: ['mme', 'hss', 'ims-database', 'pcscf', 'icscf', 'scscf', 'dns', 'enb-nsa-x310'], conditional_components: ['enb-nsa-x310'] },
 ];
-const publicScenarios = scenarios.filter((scenario) => !['4g-volte-sim', '5g-vonr-sim'].includes(scenario.id));
+const publicScenarios = scenarios;
 const run = { run_id: 'run-5g', metadata: { scenario: '5g-sa', status: 'PASS', finished_at: '2026-07-10T13:36:33Z', git_commit: 'abc1234' }, validation: { status: 'PASS', checks: [{ id: 'pdu_session', status: 'PASS', detail: 'PDU session established' }] }, metrics: {}, logs: [], loaded_at: '2026-07-10T13:36:34Z' };
 const rfProfiles: Record<string, any> = {
   '4g-lte-x310': { profile: '4g-lte-x310', radio: { device: 'x300', usrp_addr: '192.168.10.2', lte_band: 7, earfcn: 3150, bandwidth_mhz: 5, tx_gain: 20, rx_gain: 40 }, safety: { rf_allowed: false, environment: 'shielded', attenuation_db: 60, antenna_connected: false, shielded_environment: true, auto_stop: true, authorization_confirmed: true, maximum_duration_seconds: 600, operator_note: 'Authorized 4G RF test' } },
@@ -49,13 +49,13 @@ describe('Scenario workspaces', () => {
     stubScenarioFetch(); renderWithClient(<ScenariosPage />);
     expect(await screen.findByText('5G - UERANSIM Simulation')).toBeInTheDocument();
     expect(screen.getByText('4G - srsRAN ZMQ Simulation')).toBeInTheDocument();
-    expect(screen.queryByText('4G LTE + VoLTE Signaling')).not.toBeInTheDocument();
-    expect(screen.queryByText('5G SA + VoNR Signaling')).not.toBeInTheDocument();
+    expect(screen.getByText('4G LTE + VoLTE Signaling')).toBeInTheDocument();
+    expect(screen.getByText('5G SA + VoNR Signaling')).toBeInTheDocument();
     expect(screen.getByText('4G - Guarded LTE RF')).toBeInTheDocument();
     expect(screen.getByText('5G - Guarded SA RF')).toBeInTheDocument();
     expect(screen.getByText('5G NSA - Guarded EN-DC RF')).toBeInTheDocument();
     expect(screen.getAllByText('Real hardware')).toHaveLength(3);
-    expect(screen.getAllByText(/^\d+ checks$/)).toHaveLength(5);
+    expect(screen.getAllByText(/^\d+ checks$/)).toHaveLength(7);
   });
   it('keeps scenario commands and workspace tabs reachable', async () => {
     stubScenarioFetch(); renderRoute('/scenarios/:scenarioId', <ScenarioDetailPage />, '/scenarios/5g-sa');
@@ -72,8 +72,8 @@ describe('Scenario workspaces', () => {
     expect(screen.getByRole('button', { name: 'Start X310 lab' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Emergency stop' })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Start' })).not.toBeInTheDocument();
-    expect(screen.getByText('Always-on compact IMS infrastructure')).toBeInTheDocument();
-    expect(screen.getByText('Evidence is recorded for each operator run')).toBeInTheDocument();
+    expect(screen.getByText('Compact IMS and an isolated virtual SIP call check')).toBeInTheDocument();
+    expect(screen.getByText('Validation evidence is saved per run')).toBeInTheDocument();
     expect(screen.getByText('Recommended 4G X310 run order')).toBeInTheDocument();
     expect(screen.getByText('Button guide')).toBeInTheDocument();
     expect(document.querySelector('.proof-evidence-note')).not.toBeInTheDocument();

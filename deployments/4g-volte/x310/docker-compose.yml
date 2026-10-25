@@ -141,12 +141,21 @@ services:
     networks: { epc: { ipv4_address: 10.42.0.21 } }
 
   scscf:
-    image: lain5g-lab/kamailio:local
+    image: lain5g-lab/ims-sip:local
     container_name: lain5g-lab-4g-lte-x310-scscf
-    command: ["-DD", "-E", "-f", "/etc/kamailio/kamailio.cfg"]
+    command: ["scscf_server.py"]
+    environment:
+      IMS_DOMAIN: ${IMS_DOMAIN:-ims.mnc001.mcc001.3gppnetwork.org}
+      SUBSCRIBER_IMSI: ${SUBSCRIBER_IMSI:-}
+      SUBSCRIBER_MSISDN: ${SUBSCRIBER_MSISDN:-}
+      IMS_AUTH_PASSWORD: ${IMS_AUTH_PASSWORD:-}
+      SCSCF_BIND_IP: 10.42.0.22
+      VIRTUAL_PHONE_A_NUMBER: ${VIRTUAL_PHONE_A_NUMBER:-10004}
+      VIRTUAL_PHONE_A_PASSWORD: ${VIRTUAL_PHONE_A_PASSWORD:-virtual-phone-a-lab-only}
+      VIRTUAL_PHONE_B_NUMBER: ${VIRTUAL_PHONE_B_NUMBER:-10001}
+      VIRTUAL_PHONE_B_PASSWORD: ${VIRTUAL_PHONE_B_PASSWORD:-virtual-phone-b-lab-only}
     depends_on:
       ims-provisioner: { condition: service_completed_successfully }
-    volumes: ["./ims/scscf/kamailio.cfg:/etc/kamailio/kamailio.cfg:ro"]
     networks: { epc: { ipv4_address: 10.42.0.22 } }
 
   dns:
@@ -159,6 +168,25 @@ services:
       - ./ims/dns/Corefile:/etc/coredns/Corefile:ro
       - ./ims/dns/ims.hosts:/etc/coredns/ims.hosts:ro
     networks: { epc: { ipv4_address: 10.42.0.30 } }
+
+  virtual-phones:
+    image: lain5g-lab/ims-sip:local
+    container_name: lain5g-lab-4g-lte-x310-virtual-phones
+    profiles: ["sip"]
+    command: ["sip_virtual_phones.py"]
+    environment:
+      IMS_DOMAIN: ${IMS_DOMAIN:-ims.mnc001.mcc001.3gppnetwork.org}
+      VIRTUAL_PHONE_A_NUMBER: ${VIRTUAL_PHONE_A_NUMBER:-10004}
+      VIRTUAL_PHONE_A_PASSWORD: ${VIRTUAL_PHONE_A_PASSWORD:-virtual-phone-a-lab-only}
+      VIRTUAL_PHONE_B_NUMBER: ${VIRTUAL_PHONE_B_NUMBER:-10001}
+      VIRTUAL_PHONE_B_PASSWORD: ${VIRTUAL_PHONE_B_PASSWORD:-virtual-phone-b-lab-only}
+      SIP_PHONE_BIND_IP: 10.42.0.32
+      SIP_PCSCF_IP: 10.42.0.20
+      SIP_PCSCF_DOMAIN: ${PCSCF_DOMAIN:-pcscf.ims.mnc001.mcc001.3gppnetwork.org}
+    dns: [10.42.0.30]
+    depends_on: [dns, pcscf, icscf, scscf]
+    networks: { epc: { ipv4_address: 10.42.0.32 } }
+    restart: "no"
 
   ims-provisioner:
     image: mariadb@sha256:efb4959ef2c835cd735dbc388eb9ad6aab0c78dd64febcd51bc17481111890c4

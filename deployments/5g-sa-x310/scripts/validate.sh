@@ -49,6 +49,13 @@ running amf && add amf_ready PASS "AMF running" || add amf_ready FAIL "AMF not r
 
 for service in ims-database pcscf icscf scscf dns; do running "$service" || ims_fail=1; done
 [ "${ims_fail:-0}" = 0 ] && add ims_services PASS "Compact IMS infrastructure services running" || add ims_services FAIL "Compact IMS infrastructure incomplete"
+if "$script_dir/../../shared/validate-ims-virtual-call.sh" deployments/5g-sa-x310 .env >"$run_dir/logs/ims-virtual-call.log" 2>&1; then
+  add virtual_call PASS "Two virtual SIP phones completed call setup, silent bidirectional RTP, teardown, and MESSAGE on the isolated IMS bridge"
+elif grep -q 'IMS_VIRTUAL_CALL_NOT_TESTED' "$run_dir/logs/ims-virtual-call.log"; then
+  add virtual_call NOT_TESTED "A shared-network address is occupied; no IMS test container was started"
+else
+  add virtual_call FAIL "Virtual SIP call check failed; inspect ims-virtual-call.log (no RF was started by this check)"
+fi
 
 REQUIRE_RF_READY=true "$script_dir/preflight.sh" >"$run_dir/logs/preflight.log" 2>&1 && add rf_preflight PASS "RF preflight passed" || add rf_preflight FAIL "RF preflight failed; inspect preflight.log"
 if running gnb-x310; then

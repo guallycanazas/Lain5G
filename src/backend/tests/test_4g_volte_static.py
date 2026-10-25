@@ -133,6 +133,22 @@ def test_x310_compact_ims_is_always_started():
     assert "ims_services PASS" in validate
 
 
+def test_x310_virtual_call_path_is_separate_from_rf():
+    compose = (DEPLOY / "x310" / "docker-compose.yml").read_text(encoding="utf-8")
+    pcscf = (DEPLOY / "x310" / "ims/pcscf/kamailio.cfg").read_text(encoding="utf-8")
+    icscf = (DEPLOY / "x310" / "ims/icscf/kamailio.cfg").read_text(encoding="utf-8")
+    validate = (DEPLOY / "x310" / "scripts/validate.sh").read_text(encoding="utf-8")
+    helper = (ROOT / "deployments/shared/validate-ims-virtual-call.sh").read_text(encoding="utf-8")
+
+    assert "virtual-phones:" in compose
+    assert 'profiles: ["sip"]' in compose
+    assert 'is_method("REGISTER|INVITE|ACK|BYE|CANCEL|MESSAGE")' in pcscf
+    assert 'is_method("REGISTER|INVITE|ACK|BYE|CANCEL|MESSAGE")' in icscf
+    assert "validate-ims-virtual-call.sh" in validate
+    assert "--profile rf" not in helper
+    assert "enb-x310" not in helper
+
+
 def test_secret_values_are_not_committed_in_env_example():
     env = (DEPLOY / "common" / ".env.example").read_text(encoding="utf-8")
     assert "SUBSCRIBER_KEY=\n" in env

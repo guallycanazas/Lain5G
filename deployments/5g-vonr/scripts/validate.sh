@@ -32,7 +32,7 @@ write_outputs(){
   if [ "${LAIN5G_DRY_RUN:-false}" = "true" ]; then
     status="NOT_TESTED"
   fi
-  local critical="mongo nrf amf smf upf ausf udm udr pcf ng_setup ue_registration pdu_internet pdu_ims ue_internet_ip ue_ims_ip ue_internet_tun ue_ims_tun data_ping"
+  local critical="mongo nrf amf smf upf ausf udm udr pcf ng_setup ue_registration pdu_internet pdu_ims ue_internet_ip ue_ims_ip ue_internet_tun ue_ims_tun data_ping virtual_call"
   if [ "${LAIN5G_DRY_RUN:-false}" != "true" ]; then
     for check in "${checks[@]}"; do
       IFS='|' read -r id st _ <<< "$check"
@@ -88,7 +88,7 @@ write_outputs(){
 }
 
 if [ "${LAIN5G_DRY_RUN:-false}" = "true" ]; then
-  for id in mongo nrf amf smf upf ausf udm udr pcf ng_setup ue_registration pdu_internet pdu_ims ue_internet_ip ue_ims_ip ue_internet_tun ue_ims_tun data_ping ims_database pcscf icscf scscf ims_dns pcscf_reachable_over_ims sip_register; do
+  for id in mongo nrf amf smf upf ausf udm udr pcf ng_setup ue_registration pdu_internet pdu_ims ue_internet_ip ue_ims_ip ue_internet_tun ue_ims_tun data_ping ims_database pcscf icscf scscf ims_dns pcscf_reachable_over_ims sip_register virtual_call; do
     add_check "$id" NOT_TESTED "dry-run mode"
   done
   write_outputs
@@ -199,6 +199,28 @@ else
   [ -n "$final_code" ] && add_metric sip_final_code "$final_code"
   add_check sip_register FAIL "SIP REGISTER authenticated 200 OK evidence missing"
 fi
+
+if compose run --rm --no-deps virtual-phones >"$run_dir/logs/virtual-phones-run.log" 2>&1; then
+  if grep -Eiq 'VIRTUAL_PHONE_REGISTER_PASS user=.*challenge=401 final=200' "$run_dir/logs/virtual-phones-run.log" && \
+     grep -Eiq 'VIRTUAL_CALL_DIALOG_PASS invite=100,180,200 ack=received' "$run_dir/logs/virtual-phones-run.log" && \
+     grep -Eiq 'VIRTUAL_RTP_PASS direction_a_to_b=[1-9][0-9]* direction_b_to_a=[1-9][0-9]* codec=PCMU payload=silence' "$run_dir/logs/virtual-phones-run.log" && \
+     grep -Eiq 'VIRTUAL_CALL_TEARDOWN_PASS bye=200' "$run_dir/logs/virtual-phones-run.log" && \
+     grep -Eiq 'VIRTUAL_PHONES_RESULT=PASS registration=2 call=completed teardown=passed rtp=bidirectional sip_message=delivered' "$run_dir/logs/virtual-phones-run.log" && \
+     logs_have pcscf 'IMS_ACTIVITY method=INVITE .*phase=observed' && \
+     logs_have scscf 'IMS_ACTIVITY method=INVITE .*phase=response status=200'; then
+    add_check virtual_call PASS "Two synthetic SIP phones completed INVITE/180/200/ACK/BYE with bidirectional PCMU silence RTP"
+    add_metric virtual_call "completed"
+    add_claim "Virtual IMS call signaling completed; RTP test payload was silence"
+  else
+    add_check virtual_call FAIL "Virtual SIP call, teardown, RTP, or correlated IMS log evidence is missing"
+  fi
+else
+  add_check virtual_call FAIL "Virtual SIP phone call command failed; inspect virtual-phones-run.log"
+fi
+
+compose logs --no-color pcscf >"$run_dir/logs/pcscf.log" 2>/dev/null || true
+compose logs --no-color icscf >"$run_dir/logs/icscf.log" 2>/dev/null || true
+compose logs --no-color scscf >"$run_dir/logs/scscf.log" 2>/dev/null || true
 
 rm -f /tmp/lain5g-vonr-validate.$$
 write_outputs

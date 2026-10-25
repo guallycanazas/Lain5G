@@ -158,6 +158,10 @@ services:
     env_file: [.env]
     environment:
       SCSCF_BIND_IP: 10.50.0.23
+      VIRTUAL_PHONE_A_NUMBER: ${VIRTUAL_PHONE_A_NUMBER:-10004}
+      VIRTUAL_PHONE_A_PASSWORD: ${VIRTUAL_PHONE_A_PASSWORD:-virtual-phone-a-lab-only}
+      VIRTUAL_PHONE_B_NUMBER: ${VIRTUAL_PHONE_B_NUMBER:-10001}
+      VIRTUAL_PHONE_B_PASSWORD: ${VIRTUAL_PHONE_B_PASSWORD:-virtual-phone-b-lab-only}
     depends_on:
       ims-provisioner: { condition: service_completed_successfully }
     networks: { core: { ipv4_address: 10.50.0.23 } }
@@ -186,6 +190,10 @@ services:
             -e "s/__SUBSCRIBER_MSISDN__/$${SUBSCRIBER_MSISDN}/g" \
             -e "s/__IMS_DOMAIN__/$${IMS_DOMAIN}/g" \
             -e "s/__IMS_AUTH_PASSWORD__/$${IMS_AUTH_PASSWORD}/g" \
+            -e "s/__VIRTUAL_PHONE_A_NUMBER__/$${VIRTUAL_PHONE_A_NUMBER:-10004}/g" \
+            -e "s/__VIRTUAL_PHONE_A_PASSWORD__/$${VIRTUAL_PHONE_A_PASSWORD:-virtual-phone-a-lab-only}/g" \
+            -e "s/__VIRTUAL_PHONE_B_NUMBER__/$${VIRTUAL_PHONE_B_NUMBER:-10001}/g" \
+            -e "s/__VIRTUAL_PHONE_B_PASSWORD__/$${VIRTUAL_PHONE_B_PASSWORD:-virtual-phone-b-lab-only}/g" \
             /ims-subscriber-init.sql | mariadb --skip-ssl -h ims-database -uroot ims
     networks: { core: { ipv4_address: 10.50.0.31 } }
     restart: "no"
@@ -204,6 +212,25 @@ services:
       SIP_EXPECTED_SCSCF_IP: 10.50.0.23
     network_mode: "service:ue"
     depends_on: [ue, dns, pcscf, icscf, scscf]
+    restart: "no"
+
+  virtual-phones:
+    image: lain5g-lab/ims-sip:local
+    container_name: lain5g-lab-5g-vonr-sim-virtual-phones
+    profiles: ["sip"]
+    command: ["sip_virtual_phones.py"]
+    env_file: [.env]
+    environment:
+      VIRTUAL_PHONE_A_NUMBER: ${VIRTUAL_PHONE_A_NUMBER:-10004}
+      VIRTUAL_PHONE_A_PASSWORD: ${VIRTUAL_PHONE_A_PASSWORD:-virtual-phone-a-lab-only}
+      VIRTUAL_PHONE_B_NUMBER: ${VIRTUAL_PHONE_B_NUMBER:-10001}
+      VIRTUAL_PHONE_B_PASSWORD: ${VIRTUAL_PHONE_B_PASSWORD:-virtual-phone-b-lab-only}
+      SIP_PHONE_BIND_IP: 10.50.0.32
+      SIP_PCSCF_IP: 10.50.0.20
+      SIP_PCSCF_DOMAIN: pcscf.ims.mnc001.mcc001.3gppnetwork.org
+    dns: [10.50.0.30]
+    depends_on: [dns, pcscf, icscf, scscf]
+    networks: { core: { ipv4_address: 10.50.0.32 } }
     restart: "no"
 
 networks:

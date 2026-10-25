@@ -13,7 +13,7 @@ import { ValidationDiagnosis } from '../components/ValidationDiagnosis';
 const layers = [
   { title: 'Infrastructure and SDR', ids: ['mongo', 'hardware', 'ethernet', 'uhd', 'fpga', 'rfnoc', 'dual_rf_chains'] },
   { title: 'Core control plane', ids: ['nrf', 'amf', 'smf', 'ausf', 'udm', 'udr', 'pcf', 'mme', 'hss', 'epc_services', 'core_services', 'ng_connection', 'ng_setup', 's1_setup'] },
-  { title: 'IMS and voice', ids: ['ims', 'ims_services', 'ims_database', 'pcscf', 'icscf', 'scscf', 'ims_dns', 'pcscf_reachable_over_ims', 'sip_register'] },
+  { title: 'IMS and voice', ids: ['ims', 'ims_services', 'ims_database', 'pcscf', 'icscf', 'scscf', 'ims_dns', 'pcscf_reachable_over_ims', 'sip_register', 'virtual_call'] },
   { title: 'Radio access', ids: ['preflight', 'rf_preflight', 'rfnoc_initialization', 'enb_started', 'gnb_started', 'srsenb', 'auto_stop'] },
   { title: 'UE registration', ids: ['ue_registration', 'ue_attach'] },
   { title: 'Session establishment', ids: ['pdu_session', 'default_bearer', 'bearer'] },

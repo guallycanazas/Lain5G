@@ -6,7 +6,7 @@ import { ValidationDiagnosis } from './ValidationDiagnosis';
 export function ValidationTable({ checks, checkedAt, expectedChecks = [] }: { checks: ValidationCheck[]; checkedAt?: string | null; expectedChecks?: string[] }) {
   const byId = new Map(checks.map((check) => [check.id, check]));
   const ids = [...expectedChecks, ...checks.map((check) => check.id).filter((id) => !expectedChecks.includes(id))];
-  const displayedChecks: ValidationCheck[] = ids.map((id) => byId.get(id) || { id, status: 'NOT_TESTED', detail: 'No evidence was recorded for this check in the latest completed validation.' });
+  const displayedChecks: ValidationCheck[] = ids.map((id) => byId.get(id) || { id, status: 'NOT_TESTED', detail: 'Not included in the latest validation.' });
   if (!displayedChecks.length) return <div className="empty-state"><h3>No validation evidence</h3><p>Run validation to inspect infrastructure, control plane and user-plane checks.</p></div>;
   return (
     <div className="table-wrap">

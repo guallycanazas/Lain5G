@@ -6,8 +6,8 @@ export function ValidationDiagnosis({ check }: { check: ValidationCheck }) {
   if (!diagnosis) return null;
 
   return <div className={`validation-diagnosis ${check.status.toLowerCase()}`}>
-    <p><strong>Likely cause</strong>{diagnosis.cause}</p>
-    <p><strong>Suggested fix</strong>{diagnosis.fix}</p>
+    <p><strong>Cause</strong>{diagnosis.cause}</p>
+    <p><strong>Next step</strong>{diagnosis.fix}</p>
     {check.detail ? <details><summary>Technical evidence</summary><code>{check.detail}</code></details> : null}
   </div>;
 }

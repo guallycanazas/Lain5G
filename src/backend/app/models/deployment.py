@@ -118,5 +118,25 @@ class LogsResponse(BaseModel):
     command: CommandResult
 
 
+class ImsActivityEvent(BaseModel):
+    timestamp: datetime | None = None
+    service: str
+    method: str
+    from_user: str
+    to_user: str
+    flow_id: str
+    phase: str
+    status_code: int | None = None
+
+
+class ImsActivityResponse(BaseModel):
+    id: str
+    tail: int
+    checked_at: datetime
+    source: str = "container_logs"
+    persisted: bool = False
+    events: list[ImsActivityEvent] = Field(default_factory=list)
+
+
 class RawPayload(BaseModel):
     data: dict[str, Any]

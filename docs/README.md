@@ -33,7 +33,7 @@ X-Series requirements where they apply.
 - [IMS integration](ims.md)
 - [4G LTE and VoLTE](4g_volte.md)
 - [VoLTE validation](volte_validation.md)
-- [Archived 5G VoNR scenario](5g_vonr.md)
+- [5G VoNR simulation](5g_vonr.md)
 - [Isolated IMS runtime](real_ims.md)
 
 These guides describe the isolated IMS runtime and internal scenarios, which

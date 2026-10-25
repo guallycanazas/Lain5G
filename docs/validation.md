@@ -75,19 +75,31 @@ make validate-4g-lte-x310
 ```
 
 The `4g-lte-sim` path checks the EPC, S1 markers, srsUE registration, bearer, UE
-interface, and data ping without starting IMS. The historical `4g-volte-sim`
-evidence, whose public artifact uses the `4g-ims-sim` scope name, adds IMS
-services, DNS, and lab SIP registration evidence.
+interface, and data ping without starting IMS. The operational `4g-volte-sim`
+profile adds IMS services, DNS, authenticated SIP registration, and a separate
+two-phone call check through its isolated IMS bridge. That call validates
+signaling, teardown, silent bidirectional RTP packets, and SIP MESSAGE delivery;
+it does not validate audible speech or media through the srsUE. Its earlier
+public artifact uses the historical `4g-ims-sim` scope name.
 
 The X310 path separates hardware, UHD, FPGA, EPC, IMS infrastructure
 availability, RF preflight, auto-stop, and eNB log checks. Additional
 end-to-end evidence must be collected separately and correlated with the
 operator's `run-id`; it is not retained automatically. Dry-run mode does not
-start RF.
+start RF. For an X310 profile, validation also runs the two synthetic SIP
+phones against the compact IMS over its Docker bridge. This call check never
+starts an eNB/gNB or transmits RF; it tests the IMS signaling path and silent
+RTP only. The NSA profile uses the shared 4G IMS. The 5G SA X310 check reports
+`NOT_TESTED` without starting containers if the shared 5G SA network addresses
+are occupied by another active profile.
 
 `5g-sa-x310` likewise records its local evidence and correlated logs in `runs/`.
 
-Current VoLTE validation covers LTE registration, bearer/APN, data, IMS
-services, DNS, and the authenticated REGISTER exchange through 200 OK. Audio,
-call-dialog, and RTP performance criteria are handled as separate media tests;
-see [VoLTE criteria](volte_validation.md).
+The `5g-vonr-sim` profile checks the UE IMS PDU and authenticated SIP REGISTER
+over the IMS tunnel, then exercises a separate synthetic two-phone call through
+P-CSCF, I-CSCF, and S-CSCF. Its RTP payload is silence on the isolated bridge;
+this does not demonstrate a UERANSIM UE call, audible speech, or UE media-path
+RTP. Current VoLTE validation covers LTE registration, bearer/APN, data, IMS
+services, DNS, and authenticated SIP registration; separate virtual call and
+message checks run through the isolated IMS bridge. See
+[VoLTE criteria](volte_validation.md) for media-test boundaries.

@@ -10,13 +10,13 @@ from backend.app.services.deployment_registry import get_deployment_definition
 from backend.app.services.deployment_service import DeploymentConflictError
 
 
-def test_public_catalog_contains_data_and_guarded_rf_scenarios(client):
+def test_public_catalog_contains_simulation_and_guarded_rf_scenarios(client):
     response = client.get("/api/deployments")
 
     assert response.status_code == 200
     payload = response.json()
     ids = {item["id"] for item in payload}
-    assert ids == {"5g-sa", "4g-lte-sim", "4g-lte-x310", "5g-sa-x310", "5g-nsa-x310"}
+    assert ids == {"5g-sa", "4g-lte-sim", "4g-volte-sim", "5g-vonr-sim", "4g-lte-x310", "5g-sa-x310", "5g-nsa-x310"}
     assert all(item["status"] == "dry_run" for item in payload)
 
 
@@ -28,12 +28,29 @@ def test_get_deployment_detail(client):
     assert response.json()["rf_capable"] is False
 
 
-def test_hidden_signaling_scenarios_remain_internal(client):
+def test_voice_signaling_simulations_are_available_in_the_catalog(client):
     catalog = {item["id"] for item in client.get("/api/deployments").json()}
 
-    assert {"4g-volte-sim", "5g-vonr-sim"}.isdisjoint(catalog)
-    assert client.get("/api/deployments/4g-volte-sim").status_code == 404
-    assert client.get("/api/deployments/5g-vonr-sim").status_code == 404
+    assert {"4g-volte-sim", "5g-vonr-sim"}.issubset(catalog)
+    assert client.get("/api/deployments/4g-volte-sim").status_code == 200
+    assert client.get("/api/deployments/5g-vonr-sim").status_code == 200
+    assert "virtual_call" in client.get("/api/deployments/5g-vonr-sim").json()["validation_checks"]
+
+
+def test_logs_fall_back_to_example_env_when_local_secrets_file_is_absent(deployment_service, project_root):
+    vonr_path = project_root / "deployments/5g-vonr"
+    vonr_path.mkdir(parents=True)
+    (vonr_path / ".env.example").write_text("IMS_DOMAIN=example.invalid\n", encoding="utf-8")
+
+    volte_common = project_root / "deployments/4g-volte/common"
+    volte_common.mkdir(parents=True)
+    (volte_common / ".env.example").write_text("IMS_DOMAIN=example.invalid\n", encoding="utf-8")
+
+    assert deployment_service._available_env_file("deployments/5g-vonr", ".env") == ".env.example"
+    assert deployment_service._available_env_file("deployments/4g-volte/sim", "../common/.env") == "../common/.env.example"
+
+    (vonr_path / ".env").write_text("IMS_DOMAIN=private.invalid\n", encoding="utf-8")
+    assert deployment_service._available_env_file("deployments/5g-vonr", ".env") == ".env"
 
 
 def test_5g_sa_ue_renders_private_credentials_at_runtime():
@@ -99,6 +116,7 @@ def test_public_x310_profiles_require_compact_ims_services(client):
         payload = client.get(f"/api/deployments/{scenario}").json()
         assert {"ims-database", "pcscf", "icscf", "scscf", "dns"}.issubset(payload["components"])
         assert "ims_services" in payload["validation_checks"]
+        assert "virtual_call" in payload["validation_checks"]
 
 
 def test_rf_core_start_prepares_private_ims_environment(deployment_service, monkeypatch):

@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import json
+import hashlib
+import os
 import re
 from datetime import UTC, datetime
 from typing import TYPE_CHECKING
@@ -13,6 +15,8 @@ from ..models.deployment import (
     DeploymentStatus,
     DeploymentSummary,
     LogsResponse,
+    ImsActivityEvent,
+    ImsActivityResponse,
     RfStartRequest,
 )
 from ..models.validation import ValidationReport
@@ -27,6 +31,9 @@ if TYPE_CHECKING:
 
 
 CONTAINER_RE = re.compile(r"^(?P<name>lain5g-lab-[a-z0-9-]+-(?P<service>[a-z0-9-]+))\s+")
+IMS_ACTIVITY_ATTRIBUTE_RE = re.compile(r"(?P<key>[a-z_]+)=(?P<value>[^\s]+)")
+IMS_ACTIVITY_SERVICE_RE = re.compile(r"\b(?P<service>pcscf|scscf)\s+\|\s+")
+IMS_ACTIVITY_TIMESTAMP_RE = re.compile(r"(?P<timestamp>\d{4}-\d{2}-\d{2}T[^\s]+)")
 SHARED_X310_RF_PAIRS = {
     frozenset(("4g-lte-x310", "5g-nsa-x310")),
     frozenset(("4g-lte-x310", "5g-sa-x310")),
@@ -215,13 +222,99 @@ class DeploymentService:
             result = self._execute_script(definition, "logs")
         else:
             profile = "rf" if definition.rf_capable else "sip"
-            command = ["docker", "compose", "--env-file", self._env_file(definition), "-f", "docker-compose.yml", "--profile", profile, "logs", "--no-color", "--tail", str(resolved_tail)]
+            env_file = self._available_env_file(definition.deployment_path, self._env_file(definition))
+            command = ["docker", "compose", "--env-file", env_file, "-f", "docker-compose.yml", "--profile", profile, "logs", "--no-color", "--tail", str(resolved_tail)]
             if container:
                 command.append(container)
             result = self.command_service.execute_command(command, cwd=definition.deployment_path)
         if self._failed(result):
             raise DeploymentCommandError("DEPLOYMENT_LOGS_FAILED", "Logs could not be collected.", result)
         return LogsResponse(id=scenario, container=container, tail=resolved_tail, command=result)
+
+    def ims_activity(self, scenario: str, *, tail: int | None = None) -> ImsActivityResponse:
+        definition = self._definition(scenario)
+        self._ensure_action(definition, "logs")
+        resolved_tail = tail or self.settings.log_tail_lines
+        if resolved_tail < 1 or resolved_tail > 5000:
+            raise ValueError("tail must be between 1 and 5000")
+        services = [service for service in ("pcscf", "scscf") if service in definition.log_services]
+        if not services:
+            return ImsActivityResponse(id=scenario, tail=resolved_tail, checked_at=datetime.now(UTC))
+        activity_path = definition.deployment_path
+        env_file = self._env_file(definition)
+        if scenario == "5g-nsa-x310":
+            # NSA shares its IMS/EPC containers with the 4G X310 deployment.
+            activity_path = "deployments/4g-volte/x310"
+            env_file = "../common/.env"
+        env_file = self._available_env_file(activity_path, env_file)
+        profile = "rf" if definition.rf_capable else "sip"
+        command = [
+            "docker", "compose", "--env-file", env_file, "-f", "docker-compose.yml",
+            "--profile", profile, "logs", "--timestamps", "--no-color", "--tail", str(resolved_tail), *services,
+        ]
+        result = self.command_service.execute_command(command, cwd=activity_path, preserve_stdout=True)
+        if self._failed(result):
+            raise DeploymentCommandError("IMS_ACTIVITY_UNAVAILABLE", "IMS signaling activity could not be collected.", result)
+        events = self._parse_ims_activity(result.stdout)
+        events.sort(key=lambda event: event.timestamp or datetime.min.replace(tzinfo=UTC), reverse=True)
+        return ImsActivityResponse(id=scenario, tail=resolved_tail, checked_at=datetime.now(UTC), events=events)
+
+    def _available_env_file(self, working_directory: str, env_file: str) -> str:
+        """Use the local example file to read retained Compose logs after setup secrets are removed."""
+        working_path = (self.settings.project_root / working_directory).resolve()
+        configured_path = (working_path / env_file).resolve()
+        if configured_path.is_file():
+            return env_file
+        if configured_path.name == ".env":
+            example_path = configured_path.with_name(".env.example")
+            if example_path.is_file():
+                return os.path.relpath(example_path, working_path)
+        return env_file
+
+    @staticmethod
+    def _parse_ims_activity(output: str) -> list[ImsActivityEvent]:
+        events: list[ImsActivityEvent] = []
+        for line in output.splitlines():
+            if "IMS_ACTIVITY " not in line:
+                continue
+            marker = line.split("IMS_ACTIVITY ", 1)[1]
+            attributes = {match.group("key"): match.group("value") for match in IMS_ACTIVITY_ATTRIBUTE_RE.finditer(marker)}
+            method = attributes.get("method", "").upper()
+            from_user = attributes.get("from", "")
+            to_user = attributes.get("to", "")
+            phase = attributes.get("phase", "")
+            if method not in {"INVITE", "MESSAGE", "BYE", "CANCEL"} or phase not in {"observed", "forwarded", "response", "not_routed"}:
+                continue
+            if not re.fullmatch(r"[A-Za-z0-9_.+~-]{1,64}", from_user) or not re.fullmatch(r"[A-Za-z0-9_.+~-]{1,64}", to_user):
+                continue
+            flow_id = attributes.get("flow", "")
+            if not re.fullmatch(r"[a-f0-9]{12}", flow_id):
+                call_id = attributes.get("call", "")
+                cseq = attributes.get("cseq", "")
+                if not call_id or not cseq:
+                    continue
+                flow_id = hashlib.sha256(f"{call_id}:{cseq}".encode("utf-8")).hexdigest()[:12]
+            status_text = attributes.get("status", "")
+            status_code = int(status_text) if status_text.isdigit() and len(status_text) == 3 else None
+            timestamp_match = IMS_ACTIVITY_TIMESTAMP_RE.search(line)
+            timestamp: datetime | None = None
+            if timestamp_match:
+                try:
+                    timestamp = datetime.fromisoformat(timestamp_match.group("timestamp").replace("Z", "+00:00"))
+                except ValueError:
+                    timestamp = None
+            service_match = IMS_ACTIVITY_SERVICE_RE.search(line)
+            events.append(ImsActivityEvent(
+                timestamp=timestamp,
+                service=service_match.group("service") if service_match else "IMS",
+                method=method,
+                from_user=from_user,
+                to_user=to_user,
+                flow_id=flow_id,
+                phase=phase,
+                status_code=status_code,
+            ))
+        return events
 
     def validate(self, scenario: str) -> ValidationReport:
         definition = self._definition(scenario)

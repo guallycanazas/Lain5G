@@ -25,7 +25,7 @@ latest="$(find "$repo_dir/runs" -mindepth 1 -maxdepth 1 -type d -name 'run-*' | 
 mkdir -p "$latest/logs"
 
 if [ "${LAIN5G_DRY_RUN:-false}" = "true" ]; then
-  for id in mongo mme hss sgwc sgwu pgwc pgwu pcrf s1_setup ue_registration default_bearer ue_ip ue_tun data_ping ims_database ims_subscriber pcscf icscf scscf ims_dns ims_apn sip_register; do add_check "$id" NOT_TESTED "dry-run mode"; done
+  for id in mongo mme hss sgwc sgwu pgwc pgwu pcrf s1_setup ue_registration default_bearer ue_ip ue_tun data_ping ims_database ims_subscriber pcscf icscf scscf ims_dns ims_apn sip_register virtual_phones; do add_check "$id" NOT_TESTED "dry-run mode"; done
 else
   for svc in mongo mme hss sgwc sgwu pgwc pgwu pcrf; do running "$svc" && add_check "$svc" PASS "container is running" || add_check "$svc" FAIL "container is not running"; done
   { container_file_have mme /var/log/open5gs/mme.log 'eNB-S1 accepted|Number of eNBs is now 1' || logs_have enb 'S1 Setup|S1AP.*Setup|MME connection|S1 connection'; } && { add_check s1_setup PASS "eNB/MME S1 evidence found"; claims+=("eNB connected to MME"); } || add_check s1_setup WARNING "S1 evidence not found"
@@ -48,6 +48,15 @@ else
   else
     add_check sip_register NOT_TESTED "no SIP REGISTER client evidence"
   fi
+  compose run --rm --no-deps virtual-phones >"$latest/logs/virtual-phones-run.log" 2>&1 || true
+  if grep -Eiq 'VIRTUAL_PHONES_RESULT=PASS registration=2 call=completed teardown=passed rtp=bidirectional sip_message=delivered' "$latest/logs/virtual-phones-run.log" && logs_have pcscf 'P-CSCF_FORWARD_INVITE' && logs_have icscf 'I-CSCF_FORWARD_INVITE' && logs_have scscf 'SCSCF_FORWARDED method=INVITE' && logs_have scscf 'SCSCF_FORWARDED method=MESSAGE'; then
+    add_check virtual_phones PASS "two virtual SIP phones registered, completed a call, exchanged RTP, and delivered MESSAGE"
+    claims+=("Two virtual SIP phones completed an isolated call and MESSAGE test")
+  elif grep -Eiq 'VIRTUAL_PHONES_RESULT=FAIL|VIRTUAL_PHONES_RESULT=PASS' "$latest/logs/virtual-phones-run.log"; then
+    add_check virtual_phones FAIL "virtual SIP phone call/media/MESSAGE validation did not complete"
+  else
+    add_check virtual_phones NOT_TESTED "no virtual phone evidence"
+  fi
 fi
 
 status=PASS
@@ -57,7 +66,7 @@ for check in "${checks[@]}"; do
     mongo|mme|hss|sgwc|sgwu|pgwc|pgwu|pcrf|s1_setup|ue_registration|default_bearer|ue_ip|ue_tun|data_ping)
       { [ "$st" = FAIL ] || [ "$st" = WARNING ]; } && status=FAIL
       ;;
-    sip_register)
+    sip_register|virtual_phones)
       { [ "$st" = FAIL ] || [ "$st" = NOT_TESTED ]; } && [ "$status" = PASS ] && status=PARTIAL
       ;;
     *)

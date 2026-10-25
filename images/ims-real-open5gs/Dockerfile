@@ -1,7 +1,7 @@
 ARG BASE_IMAGE=gually/lain5g-open5gs:2.7.5-lain1@sha256:d25affe90c39adb35bfef312e725b27d2ef6b139ec1d8b2fe9f5d0da6d82753c
 FROM ${BASE_IMAGE}
 
-ARG LAIN5G_VERSION=1.1.6
+ARG LAIN5G_VERSION=1.1.7
 
 # The role configs refer to Open5GS' bundled freeDiameter extensions through
 # LD_LIBRARY_PATH/freeDiameter. The base image installs these under this path.

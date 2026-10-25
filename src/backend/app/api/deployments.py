@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, Query
 
 from ..dependencies import get_deployment_service, require_mutations_or_dry_run, settings_dependency
-from ..models.deployment import DeploymentActionResponse, DeploymentStatus, DeploymentSummary, LogsResponse, RfStartRequest
+from ..models.deployment import DeploymentActionResponse, DeploymentStatus, DeploymentSummary, ImsActivityResponse, LogsResponse, RfStartRequest
 from ..models.validation import ValidationReport
 from ..services.deployment_registry import get_deployment_definition
 from ..services.deployment_service import DeploymentNotFoundError, DeploymentService
@@ -55,6 +55,15 @@ def deployment_logs(
     service: DeploymentService = Depends(get_deployment_service),
 ) -> LogsResponse:
     return service.logs(scenario, container=container, tail=tail)
+
+
+@router.get("/{scenario}/ims-activity", response_model=ImsActivityResponse, dependencies=[Depends(require_public_scenario)])
+def deployment_ims_activity(
+    scenario: str,
+    tail: int | None = Query(default=None, ge=1, le=5000),
+    service: DeploymentService = Depends(get_deployment_service),
+) -> ImsActivityResponse:
+    return service.ims_activity(scenario, tail=tail)
 
 
 @router.post("/{scenario}/validate", response_model=ValidationReport, dependencies=[Depends(require_public_scenario), Depends(require_mutations_or_dry_run)])

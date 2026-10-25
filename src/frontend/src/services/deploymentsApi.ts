@@ -1,5 +1,5 @@
 import { apiRequest } from './apiClient';
-import type { DeploymentActionResponse, DeploymentStatus, DeploymentSummary, HealthResponse, LogsResponse, RfStartPayload } from '../types/deployment';
+import type { DeploymentActionResponse, DeploymentStatus, DeploymentSummary, HealthResponse, ImsActivityResponse, LogsResponse, RfStartPayload } from '../types/deployment';
 import type { ValidationReport } from '../types/validation';
 
 const defaultScenario = '5g-sa';
@@ -24,4 +24,5 @@ export const deploymentsApi = {
     if (container) params.set('container', container);
     return apiRequest<LogsResponse>(`/api/deployments/${scenario}/logs?${params.toString()}`);
   },
+  imsActivity: (tail: number, scenario = defaultScenario) => apiRequest<ImsActivityResponse>(`/api/deployments/${scenario}/ims-activity?tail=${tail}`),
 };

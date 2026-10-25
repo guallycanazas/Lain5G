@@ -69,8 +69,8 @@ describe('profile troubleshooter', () => {
 
     await user.click(await screen.findByRole('tab', { name: 'troubleshooter' }));
     expect(await screen.findByRole('heading', { name: 'Recommended repair order' })).toBeInTheDocument();
-    expect(screen.getByText('Likely cause')).toBeInTheDocument();
-    expect(screen.getByText('Suggested fix')).toBeInTheDocument();
+    expect(screen.getByText('Cause')).toBeInTheDocument();
+    expect(screen.getByText('Next step')).toBeInTheDocument();
     expect(screen.getAllByText(profile.detail).length).toBeGreaterThan(0);
 
     if (profile.rf) {
@@ -83,7 +83,7 @@ describe('profile troubleshooter', () => {
       await waitFor(() => expect(requests).toContainEqual({ url: `/api/deployments/${profile.id}/start`, method: 'POST' }));
     }
 
-    expect(await screen.findByRole('heading', { name: 'No failing checks detected' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Checks passed' })).toBeInTheDocument();
     expect(requests).toContainEqual({ url: `/api/deployments/${profile.id}/validate`, method: 'POST' });
     expect(requests.some((request) => request.url.includes('/start-rf'))).toBe(false);
   });

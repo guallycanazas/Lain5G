@@ -5,6 +5,7 @@ if [ "${LAIN5G_DRY_RUN:-false}" = true ]; then
   exit 0
 fi
 scenario_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 repo_dir="$(cd "$scenario_dir/../../.." && pwd)"
 run_id="${LAIN5G_RUN_ID:-run-$(date -u +%Y%m%d-%H%M%S)}"
 run_dir="$repo_dir/runs/$run_id"
@@ -43,6 +44,11 @@ grep -q 'ethernet_link.*PASS' "$run_dir/logs/hardware-check.log" && add ethernet
 for svc in mme hss sgwc sgwu pgwc pgwu pcrf; do running "$svc" || epc_fail=1; done; [ "${epc_fail:-0}" = 0 ] && add epc_services PASS "EPC services running" || add epc_services FAIL "EPC incomplete"
 running mme && add mme_ready PASS "MME running" || add mme_ready FAIL "MME not running"
 for svc in ims-database pcscf icscf scscf dns; do running "$svc" || ims_fail=1; done; [ "${ims_fail:-0}" = 0 ] && add ims_services PASS "Compact IMS infrastructure services running" || add ims_services FAIL "Compact IMS infrastructure incomplete"
+if "$script_dir/../../../shared/validate-ims-virtual-call.sh" deployments/4g-volte/x310 ../common/.env >"$run_dir/logs/ims-virtual-call.log" 2>&1; then
+  add virtual_call PASS "Two virtual SIP phones completed call setup, silent bidirectional RTP, teardown, and MESSAGE on the isolated IMS bridge"
+else
+  add virtual_call FAIL "Virtual SIP call check failed; inspect ims-virtual-call.log (no RF was started by this check)"
+fi
 REQUIRE_RF_READY=true LAIN5G_RUN_ID="$run_id" "$(dirname "${BASH_SOURCE[0]}")/preflight.sh" >"$run_dir/logs/preflight.log" 2>&1 && add rf_preflight PASS "RF preflight passed" || add rf_preflight FAIL "RF preflight failed; inspect preflight.log"
 if running enb-x310; then
   add enb_started PASS "enb-x310 is currently running"

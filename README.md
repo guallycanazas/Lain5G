@@ -5,7 +5,7 @@
 **Evidence-oriented orchestration for software 4G/5G networks and guarded X-Series USRP laboratory workflows**
 
 [![CI](https://github.com/guallycanazas/Lain5G/actions/workflows/ci.yml/badge.svg)](https://github.com/guallycanazas/Lain5G/actions/workflows/ci.yml)
-[![Release](https://img.shields.io/badge/release-v1.1.6-4051b5.svg)](https://github.com/guallycanazas/Lain5G/releases/tag/v1.1.6)
+[![Release](https://img.shields.io/badge/release-v1.1.7-4051b5.svg)](https://github.com/guallycanazas/Lain5G/releases/tag/v1.1.7)
 [![Project source: MIT](https://img.shields.io/badge/project_source-MIT-d9a441.svg)](LICENSE.txt)
 [![Platform](https://img.shields.io/badge/platform-GNU%2FLinux_x86__64-2f6f62.svg)](docs/installation.md)
 [![Python](https://img.shields.io/badge/Python-%E2%89%A53.10-3776ab.svg)](src/backend/requirements.txt)
@@ -22,7 +22,7 @@ customizable environment with software-only scenarios, guarded X-Series USRP
 workflows, declarative configuration, automated validation, and traceable run
 evidence.
 
-> **Release status:** [`v1.1.6`](https://github.com/guallycanazas/Lain5G/tree/v1.1.6)
+> **Release status:** [`v1.1.7`](https://github.com/guallycanazas/Lain5G/tree/v1.1.7)
 > is the latest immutable source release.
 
 > **Naming:** OpenLain5G is the current project name. The repository URL, `lain5g`
@@ -57,7 +57,7 @@ prerequisites manually.
 | Container runtime | Docker Engine and Docker Compose v2 installed; daemon startup attempted where supported |
 | User access | Docker group membership configured only when the host uses that access model |
 | Private state | Ignored profile and application files created with restrictive permissions |
-| Components | All unique images required by the five public profiles downloaded |
+| Components | All unique images required by the public profiles downloaded |
 | RF behavior | No RF transmission; hardware operation remains separately authorized and fail-closed |
 
 If setup changed Docker-group membership and the current shell still lacks
@@ -137,7 +137,9 @@ over-air UE evidence remains `NOT_TESTED`.
 | Profile | Mode | Integrated scope | Evidence boundary |
 | --- | --- | --- | --- |
 | `4g-lte-sim` | Software only | Open5GS EPC + srsENB/srsUE over ZMQ | Clean-VM sanitized summary: [14/14 `PASS`](results/public/4g-lte-sim/run-20260730-021702.json) |
+| `4g-volte-sim` | Software only | LTE ZMQ + Open5GS EPC + IMS + two synthetic SIP phones | Current validator checks LTE/IMS registration, a virtual SIP call, silent bidirectional RTP, and SIP MESSAGE; no audible speech or UE media path is claimed |
 | `5g-sa` | Software only | Open5GS 5GC + UERANSIM gNB/UE + data PDU session | Clean-VM sanitized summary: [15/15 `PASS`](results/public/5g-sa-sim/run-20260730-021914.json) |
+| `5g-vonr-sim` | Software only | 5G SA + internet/IMS PDU sessions + UE SIP registration + separate virtual SIP call | Call runs between synthetic phones on the isolated IMS bridge; it does not demonstrate a VoNR call or RTP through the UERANSIM UE |
 | `4g-lte-x310` | Guarded RF | Open5GS EPC + compact IMS infrastructure + srsRAN eNB + compatible X-Series USRP | Guarded workflow with run-correlated local RF evidence |
 | `5g-sa-x310` | Guarded RF | Open5GS 5GC + compact IMS infrastructure + srsRAN Project gNB + compatible X-Series USRP | Guarded workflow with run-correlated local RF evidence |
 | `5g-nsa-x310` | Guarded RF | Shared Open5GS EPC + compact IMS infrastructure + srsRAN EN-DC eNB + compatible dual-chain X-Series USRP | Physical UE connection evidence recorded in v1.1.3; this is separate from software-only cloud runs |
@@ -148,7 +150,8 @@ Ubuntu 24.04 virtual machine, not raw protocol traces. They identify
 as the source commit executed. Historical VoLTE and VoNR signaling records and
 older snapshots remain under
 [`results/public/`](results/public/README.md). Five independent clean-host runs of
-v1.1.3 passed both software profiles; see the [sanitized cloud-reproduction
+v1.1.3 passed the base data profiles (`4g-lte-sim` and `5g-sa`); they did not
+include the later VoLTE/VoNR call simulators. See the [sanitized cloud-reproduction
 summary](results/public/summaries/v1.1.3-cloud-five-run-20260818.md).
 
 SDR hardware, commercial UE, voice-media, and RF results use dedicated evidence
@@ -210,7 +213,7 @@ separately by the scenario validators.
 
 | Item | Repository value |
 | --- | --- |
-| Current immutable release | [`v1.1.6`](https://github.com/guallycanazas/Lain5G/releases/tag/v1.1.6) |
+| Current immutable release | [`v1.1.7`](https://github.com/guallycanazas/Lain5G/releases/tag/v1.1.7) |
 | Version control | Git and GitHub |
 | Project-source license | [MIT](LICENSE.txt), with separate upstream terms |
 | Languages | Python, TypeScript, and Shell |

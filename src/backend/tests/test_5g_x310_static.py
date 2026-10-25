@@ -64,6 +64,20 @@ def test_compose_is_isolated_and_rf_profile_only():
     assert "lain5g-lab/ueransim" not in compose
     assert "./open5gs/amf.yaml" in compose
     assert "./open5gs/smf.yaml" in compose
+    assert 'profiles: ["sip"]' in compose
+    assert "virtual-phones:" in compose
+    assert "SIP_PHONE_BIND_IP: 10.20.0.32" in compose
+
+
+def test_x310_virtual_call_validation_does_not_start_rf():
+    validate = (DEPLOY / "scripts" / "validate.sh").read_text(encoding="utf-8")
+    helper = (ROOT / "deployments/shared/validate-ims-virtual-call.sh").read_text(encoding="utf-8")
+
+    assert "validate-ims-virtual-call.sh" in validate
+    assert 'docker compose --env-file "$env_file" -f docker-compose.yml --profile sip "$@"' in helper
+    assert "--profile rf" not in helper
+    assert "gnb-x310" not in helper
+    assert "IMS_VIRTUAL_CALL_NOT_TESTED" in helper
 
 
 def test_env_example_does_not_commit_rf_values_or_secrets():

@@ -252,6 +252,21 @@ button.scenario-card.selected { border-color: #818cf8; box-shadow: 0 0 0 3px rgb
 .log-summary > span { display: inline-flex; align-items: center; gap: 5px; padding: 5px 9px; background: #f2f4f7; border: 1px solid #e4e7ec; border-radius: 999px; }
 .log-summary .log-count-error { color: #a93232; background: #fff2f0; border-color: #f3d0ca; }
 .log-summary .log-count-warning { color: #8c5b14; background: #fff8e8; border-color: #f0dfb6; }
+.ims-activity-panel { display: grid; gap: 12px; }
+.ims-activity-panel .panel-heading { margin-bottom: 0; }
+.ims-activity-note { margin: 0; color: #667085; font-size: .76rem; line-height: 1.55; }
+.ims-activity-table-wrap { border-radius: 11px; }
+.ims-activity-table { min-width: 780px; }
+.ims-activity-table td { vertical-align: middle; }
+.ims-activity-table td:nth-child(2) { min-width: 110px; }
+.ims-activity-table td:nth-child(2) small { display: block; margin-top: 4px; color: #7b8798; font-size: .68rem; }
+.ims-activity-table td:nth-child(3) { white-space: nowrap; }
+.ims-activity-table td:nth-child(3) code { padding: 3px 6px; color: #334155; background: #f1f5f9; border-radius: 5px; font-family: "SFMono-Regular", Consolas, monospace; font-size: .75rem; }
+.ims-activity-arrow { margin: 0 8px; color: #8b96a6; }
+.ims-method { display: inline-flex; padding: 4px 7px; color: #3b397a; background: #f0efff; border-radius: 6px; font-family: "SFMono-Regular", Consolas, monospace; font-size: .69rem; font-weight: 800; }
+.ims-activity-table .status-badge { max-width: 280px; white-space: normal; }
+.ims-activity-empty { padding: 20px; color: #667085; background: #f9fafc; border: 1px dashed #cbd5e1; border-radius: 11px; font-size: .78rem; }
+.ims-activity-empty p { margin: 5px 0 0; line-height: 1.5; }
 .logs-hero figure img { object-position: center; }
 .logs-page { gap: 14px; }
 .logs-hero { margin-bottom: 0; }
@@ -1010,6 +1025,11 @@ html[data-theme="dark"] .host-info-grid strong { color: var(--ink-800); }
 html[data-theme="dark"] .host-info-grid span { color: var(--muted); }
 html[data-theme="dark"] .host-info-section-title { color: var(--ink-800); }
 html[data-theme="dark"] .log-summary > span { color: var(--muted); background: #151a39; border-color: var(--line); }
+html[data-theme="dark"] .ims-activity-note { color: var(--muted); }
+html[data-theme="dark"] .ims-activity-table td:nth-child(2) small { color: var(--muted); }
+html[data-theme="dark"] .ims-activity-table td:nth-child(3) code { color: var(--ink-800); background: #151a39; }
+html[data-theme="dark"] .ims-method { color: #d4ccff; background: #282052; }
+html[data-theme="dark"] .ims-activity-empty { color: var(--muted); background: #151a39; border-color: var(--line); }
 html[data-theme="dark"] .log-search > div { background: #0c1230; border-color: var(--line); }
 html[data-theme="dark"] .log-search button { color: var(--muted); }
 html[data-theme="dark"] :is(.page-heading h1, .page-heading h2, .hero-title, .panel h2, .panel h3, .panel-heading h2, .panel-heading h3, .summary-value, .facts dd, .run-title, .topology-node strong, .empty-state h3, .profile-choice > strong, .scenario-family-heading h2, .scenario-guide-intro h2, .preference-card h2) { color: var(--ink-900); }
@@ -1362,20 +1382,6 @@ select:focus, input:focus, textarea:focus { border-color: #4b9589; box-shadow: 0
 .logs-hero figcaption { color: #526577; background: rgba(255, 255, 255, .94); border-color: var(--line); border-radius: 9px; box-shadow: 0 2px 8px rgba(24, 43, 61, .05); }
 .logs-hero figcaption span { color: #317f74; }
 .logs-hero figcaption strong { color: #294458; }
-.log-purpose {
-  display: flex;
-  align-items: flex-start;
-  gap: 10px;
-  padding: 13px 15px;
-  color: #41586b;
-  background: #f4f8f7;
-  border: 1px solid #dce9e5;
-  border-radius: 10px;
-}
-.log-purpose > svg { flex: 0 0 auto; margin-top: 2px; color: #317f74; }
-.log-purpose strong { color: #294458; font-size: .8rem; }
-.log-purpose p { margin: 3px 0 0; color: #66798b; font-size: .75rem; line-height: 1.5; }
-.log-purpose a { color: #247c70; font-weight: 700; text-decoration: underline; text-underline-offset: 2px; }
 .logs-empty-state {
   display: grid;
   align-content: center;

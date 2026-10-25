@@ -1,5 +1,5 @@
 schema_version: 1
-release_version: 1.1.6
+release_version: 1.1.7
 configuration_source:
   # Reference for the IMS service topology and role configuration only.
   repository: https://github.com/herlesupreeth/docker_open5gs
@@ -29,9 +29,9 @@ rtpengine_repository:
   keyring_url: https://rtpengine.dfx.at/26.0/pool/main/r/rtpengine-dfx-repo-keyring/rtpengine-dfx-repo-keyring_1.0_all.deb
   keyring_sha256: 78fe26f0251138f4e3c749c88dc4df29666c8efe0823858d3a4ab49d2fa2e088
 derived_images:
-  - lain5g-lab/ims-real-open5gs:1.1.6
-  - lain5g-lab/ims-real-kamailio:1.1.6
-  - lain5g-lab/pyhss-secure:1.1.6
-  - lain5g-lab/ims-real-mysql:1.1.6
-  - lain5g-lab/ims-real-dns:1.1.6
-  - lain5g-lab/ims-real-rtpengine:1.1.6
+  - lain5g-lab/ims-real-open5gs:1.1.7
+  - lain5g-lab/ims-real-kamailio:1.1.7
+  - lain5g-lab/pyhss-secure:1.1.7
+  - lain5g-lab/ims-real-mysql:1.1.7
+  - lain5g-lab/ims-real-dns:1.1.7
+  - lain5g-lab/ims-real-rtpengine:1.1.7

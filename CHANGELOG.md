@@ -2,6 +2,22 @@
 
 All notable changes to OpenLain5G are recorded in this file.
 
+## [1.1.7] - 2026-10-24
+
+### Added
+
+- Added profile-aware IMS call and SIP message events to the web logs view.
+- Added synthetic SIP phone call, RTP packet-flow, teardown, and message checks
+  to IMS-enabled software and guarded profile validation.
+- Added a confirmation flow for switching profiles when another scenario is
+  active.
+
+### Changed
+
+- Simplified profile guidance, logs, and troubleshooting labels across the web
+  interface while keeping validation results and actionable diagnostics.
+- Aligned release, citation, container, and Real-IMS image metadata at 1.1.7.
+
 ## [1.1.6] - 2026-10-24
 
 ### Added

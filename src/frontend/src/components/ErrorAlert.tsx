@@ -14,7 +14,7 @@ export function ErrorAlert({ error, onRetry }: ErrorAlertProps) {
       <div className="error-alert-icon"><AlertTriangle size={19} /></div>
       <div className="error-alert-body"><strong>{errorTitle(error)}</strong>
       <p>{errorMessage(error)}</p>
-      <div className="error-diagnosis"><div><strong>Likely cause</strong><span>{diagnosis.cause}</span></div><div><strong>Suggested fix</strong><span>{diagnosis.fix}</span></div></div>
+      <div className="error-diagnosis"><div><strong>Cause</strong><span>{diagnosis.cause}</span></div><div><strong>Next step</strong><span>{diagnosis.fix}</span></div></div>
       <details>
         <summary>Technical details</summary>
         <pre>{technicalDetails(error)}</pre>

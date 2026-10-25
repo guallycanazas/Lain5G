@@ -20,9 +20,9 @@ describe('TroubleshooterPage', () => {
     renderWithClient(<TroubleshooterPage />, '/troubleshooter?scenario=5g-sa');
 
     expect(await screen.findByRole('heading', { name: 'Troubleshooter' })).toBeInTheDocument();
-    expect(await screen.findByText('Problems to resolve')).toBeInTheDocument();
-    expect(screen.getAllByText('Likely cause').length).toBeGreaterThan(0);
-    expect(screen.getAllByText('Suggested fix').length).toBeGreaterThan(0);
+    expect(await screen.findByText('Checks to review')).toBeInTheDocument();
+    expect(screen.getAllByText('Cause').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('Next step').length).toBeGreaterThan(0);
     expect(screen.getAllByRole('link', { name: /Inspect this profile’s logs/ })[0]).toHaveAttribute('href', '/logs?scenario=5g-sa');
     expect(screen.getByRole('button', { name: /Run full diagnosis/ })).toBeInTheDocument();
   });

@@ -31,6 +31,11 @@ for service in mme hss sgwc sgwu pgwc pgwu pcrf; do core_running "$service" || e
 ims_failed=0
 for service in ims-database pcscf icscf scscf dns; do core_running "$service" || ims_failed=1; done
 [ "$ims_failed" -eq 0 ] && add ims_services PASS "compact IMS services are running" || add ims_services FAIL "compact IMS services are incomplete"
+if "$scenario_dir/../shared/validate-ims-virtual-call.sh" deployments/4g-volte/x310 ../common/.env >"$run_dir/logs/ims-virtual-call.log" 2>&1; then
+  add virtual_call PASS "Shared VoLTE IMS completed virtual call setup, silent bidirectional RTP, teardown, and MESSAGE (no RF was started by this check)"
+else
+  add virtual_call FAIL "Shared IMS virtual call check failed; inspect ims-virtual-call.log"
+fi
 
 if "$script_dir/preflight.sh" >"$run_dir/logs/preflight.log" 2>&1; then
   add rf_preflight PASS "non-transmitting NSA preflight passed"

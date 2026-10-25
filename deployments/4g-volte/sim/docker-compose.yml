@@ -126,6 +126,11 @@ services:
     container_name: lain5g-lab-4g-volte-sim-scscf
     command: ["scscf_server.py"]
     env_file: [../common/.env]
+    environment:
+      VIRTUAL_PHONE_A_NUMBER: ${VIRTUAL_PHONE_A_NUMBER:-10004}
+      VIRTUAL_PHONE_A_PASSWORD: ${VIRTUAL_PHONE_A_PASSWORD:-virtual-phone-a-lab-only}
+      VIRTUAL_PHONE_B_NUMBER: ${VIRTUAL_PHONE_B_NUMBER:-10001}
+      VIRTUAL_PHONE_B_PASSWORD: ${VIRTUAL_PHONE_B_PASSWORD:-virtual-phone-b-lab-only}
     depends_on:
       ims-provisioner: { condition: service_completed_successfully }
     networks: { epc: { ipv4_address: 10.41.0.22 } }
@@ -159,6 +164,20 @@ services:
           'sip:$${SUBSCRIBER_MSISDN}@$${IMS_DOMAIN}',
           '$${IMS_DOMAIN}',
           MD5(CONCAT('$${SUBSCRIBER_IMSI}', '@', '$${IMS_DOMAIN}', ':', '$${IMS_DOMAIN}', ':', '$${IMS_AUTH_PASSWORD}'))
+        ), (
+          '$${VIRTUAL_PHONE_A_NUMBER}',
+          '$${VIRTUAL_PHONE_A_NUMBER}',
+          '$${VIRTUAL_PHONE_A_NUMBER}@$${IMS_DOMAIN}',
+          'sip:$${VIRTUAL_PHONE_A_NUMBER}@$${IMS_DOMAIN}',
+          '$${IMS_DOMAIN}',
+          MD5(CONCAT('$${VIRTUAL_PHONE_A_NUMBER}', '@', '$${IMS_DOMAIN}', ':', '$${IMS_DOMAIN}', ':', '$${VIRTUAL_PHONE_A_PASSWORD}'))
+        ), (
+          '$${VIRTUAL_PHONE_B_NUMBER}',
+          '$${VIRTUAL_PHONE_B_NUMBER}',
+          '$${VIRTUAL_PHONE_B_NUMBER}@$${IMS_DOMAIN}',
+          'sip:$${VIRTUAL_PHONE_B_NUMBER}@$${IMS_DOMAIN}',
+          '$${IMS_DOMAIN}',
+          MD5(CONCAT('$${VIRTUAL_PHONE_B_NUMBER}', '@', '$${IMS_DOMAIN}', ':', '$${IMS_DOMAIN}', ':', '$${VIRTUAL_PHONE_B_PASSWORD}'))
         )
         ON DUPLICATE KEY UPDATE
           msisdn = VALUES(msisdn),
@@ -167,6 +186,11 @@ services:
           domain_name = VALUES(domain_name),
           auth_ha1 = VALUES(auth_ha1);
         SQL
+    environment:
+      VIRTUAL_PHONE_A_NUMBER: ${VIRTUAL_PHONE_A_NUMBER:-10004}
+      VIRTUAL_PHONE_A_PASSWORD: ${VIRTUAL_PHONE_A_PASSWORD:-virtual-phone-a-lab-only}
+      VIRTUAL_PHONE_B_NUMBER: ${VIRTUAL_PHONE_B_NUMBER:-10001}
+      VIRTUAL_PHONE_B_PASSWORD: ${VIRTUAL_PHONE_B_PASSWORD:-virtual-phone-b-lab-only}
     networks: { epc: { ipv4_address: 10.41.0.31 } }
     restart: "no"
 
@@ -179,6 +203,25 @@ services:
     dns: [10.41.0.30]
     depends_on: [dns, pcscf, icscf, scscf]
     networks: { epc: { ipv4_address: 10.41.0.32 } }
+    restart: "no"
+
+  virtual-phones:
+    image: lain5g-lab/ims-sip:local
+    container_name: lain5g-lab-4g-volte-sim-virtual-phones
+    profiles: ["sip"]
+    command: ["sip_virtual_phones.py"]
+    env_file: [../common/.env]
+    environment:
+      VIRTUAL_PHONE_A_NUMBER: ${VIRTUAL_PHONE_A_NUMBER:-10004}
+      VIRTUAL_PHONE_A_PASSWORD: ${VIRTUAL_PHONE_A_PASSWORD:-virtual-phone-a-lab-only}
+      VIRTUAL_PHONE_B_NUMBER: ${VIRTUAL_PHONE_B_NUMBER:-10001}
+      VIRTUAL_PHONE_B_PASSWORD: ${VIRTUAL_PHONE_B_PASSWORD:-virtual-phone-b-lab-only}
+      SIP_PHONE_BIND_IP: 10.41.0.33
+      SIP_PCSCF_IP: 10.41.0.20
+      SIP_PCSCF_DOMAIN: pcscf.ims.mnc001.mcc001.3gppnetwork.org
+    dns: [10.41.0.30]
+    depends_on: [dns, pcscf, icscf, scscf]
+    networks: { epc: { ipv4_address: 10.41.0.33 } }
     restart: "no"
 
   enb:

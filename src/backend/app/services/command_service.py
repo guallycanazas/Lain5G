@@ -156,6 +156,9 @@ class CommandService:
                     self._resolve_command_path(command[index + 1], cwd_path)
                 index += 2
                 continue
+            if argument == "--timestamps":
+                index += 1
+                continue
             if argument.startswith("-"):
                 raise CommandSecurityError("Docker Compose option is not allowlisted")
             if argument not in ALLOWED_COMPOSE_ACTIONS:
