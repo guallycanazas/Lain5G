@@ -6,15 +6,17 @@ type: software
 version: "1.1.7"
 date-released: "2026-10-24"
 authors:
+  - family-names: "Tamo Calla"
+    given-names: "Alberth Ronal"
+    affiliation: "National University of San Agustin of Arequipa"
   - family-names: "Canazas Rosas"
     given-names: "Willian Roy"
     affiliation: "National University of San Agustin of Arequipa"
   - family-names: "Prieto Tito"
     given-names: "Manuel Ismael"
     affiliation: "National University of San Agustin of Arequipa"
-  - family-names: "Tamo Calla"
-    given-names: "Alberth Ronal"
-    affiliation: "National University of San Agustin of Arequipa"
+  - family-names: "Tacuri"
+    given-names: "Alexander Beremiz Hilario"
 abstract: >-
   OpenLain5G is a modular framework for reproducible 4G LTE, 5G SA, and guarded
   5G NSA mobile

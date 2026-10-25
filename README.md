@@ -254,12 +254,12 @@ separately by the scenario validators.
 
 ## Authors
 
+- **Alberth Ronal Tamo Calla**
 - **Willian Roy Canazas Rosas**
 - **Manuel Ismael Prieto Tito**
-- **Alberth Ronal Tamo Calla**
+- **Alexander Beremiz Hilario Tacuri**
 
-Software-release affiliation for all authors: **National University of San Agustin of
-Arequipa**. See [`AUTHORS.md`](AUTHORS.md).
+See [`AUTHORS.md`](AUTHORS.md) and the citation metadata for affiliations.
 
 ## Citation
 

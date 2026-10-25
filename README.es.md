@@ -239,12 +239,12 @@ validadores de escenario.
 
 ## Autores
 
+- **Alberth Ronal Tamo Calla**
 - **Willian Roy Canazas Rosas**
 - **Manuel Ismael Prieto Tito**
-- **Alberth Ronal Tamo Calla**
+- **Alexander Beremiz Hilario Tacuri**
 
-Afiliación de todos los autores: **Universidad Nacional de San Agustín de Arequipa**.
-Consulte [`AUTHORS.md`](AUTHORS.md).
+Consulte [`AUTHORS.md`](AUTHORS.md) y los metadatos de citación para ver las afiliaciones.
 
 ## Citación
 

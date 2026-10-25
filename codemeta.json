@@ -11,6 +11,15 @@
   "author": [
     {
       "@type": "Person",
+      "givenName": "Alberth Ronal",
+      "familyName": "Tamo Calla",
+      "affiliation": {
+        "@type": "Organization",
+        "name": "National University of San Agustin of Arequipa"
+      }
+    },
+    {
+      "@type": "Person",
       "givenName": "Willian Roy",
       "familyName": "Canazas Rosas",
       "affiliation": {
@@ -29,12 +38,8 @@
     },
     {
       "@type": "Person",
-      "givenName": "Alberth Ronal",
-      "familyName": "Tamo Calla",
-      "affiliation": {
-        "@type": "Organization",
-        "name": "National University of San Agustin of Arequipa"
-      }
+      "givenName": "Alexander Beremiz Hilario",
+      "familyName": "Tacuri"
     }
   ],
   "programmingLanguage": [
