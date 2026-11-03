@@ -12,6 +12,7 @@ logs_have(){ local output; output="$(compose logs --no-color "$1" 2>/dev/null ||
 container_file_have(){ compose exec -T "$1" sh -lc 'grep -Eiq "$1" "$2"' sh "$3" "$2" 2>/dev/null; }
 ims_subscriber_provisioned(){ compose exec -T ims-database mariadb --skip-ssl -uroot -N -B ims -e "SELECT COUNT(*) FROM subscribers WHERE imsi = '$SUBSCRIBER_IMSI' AND impi = '$SUBSCRIBER_IMSI@$IMS_DOMAIN' AND impu = 'sip:$SUBSCRIBER_MSISDN@$IMS_DOMAIN' AND domain_name = '$IMS_DOMAIN' AND auth_ha1 REGEXP '^[0-9a-f]{32}$';" 2>/dev/null | grep -qx 1; }
 ims_dns_resolves(){ compose run --rm --no-deps --entrypoint python3 sip-register -c 'import socket, sys; expected={"ims.mnc001.mcc001.3gppnetwork.org":"10.41.0.20","pcscf.ims.mnc001.mcc001.3gppnetwork.org":"10.41.0.20","icscf.ims.mnc001.mcc001.3gppnetwork.org":"10.41.0.21","scscf.ims.mnc001.mcc001.3gppnetwork.org":"10.41.0.22"}; sys.exit(0 if all(socket.gethostbyname(name) == ip for name, ip in expected.items()) else 1)' >/dev/null 2>&1; }
+ue_ipv4(){ compose exec -T ue ip -o -4 addr show dev tun_srsue 2>/dev/null | awk '{split($4, address, "/"); if (address[1] != "") {print address[1]; exit}}' || true; }
 
 if [ -f "$env_file" ]; then
   set -a
@@ -31,9 +32,15 @@ else
   { container_file_have mme /var/log/open5gs/mme.log 'eNB-S1 accepted|Number of eNBs is now 1' || logs_have enb 'S1 Setup|S1AP.*Setup|MME connection|S1 connection'; } && { add_check s1_setup PASS "eNB/MME S1 evidence found"; claims+=("eNB connected to MME"); } || add_check s1_setup WARNING "S1 evidence not found"
   { container_file_have mme /var/log/open5gs/mme.log 'Attach complete' || logs_have ue 'Attach.*complete|RRC Connected|Network attach successful|Received Attach Accept'; } && { add_check ue_registration PASS "UE registration evidence found"; claims+=("LTE UE registered"); } || add_check ue_registration WARNING "UE registration evidence not found"
   { container_file_have mme /var/log/open5gs/mme.log 'Number of MME-Sessions|Attach complete' || logs_have ue 'Registered EPS bearer|Default EPS bearer|bearer.*established|Network attach successful' || logs_have enb 'InitialContextSetupResponse|New tunnel created|DRB1|User .*connected'; } && { add_check default_bearer PASS "default bearer evidence found"; claims+=("Default bearer established"); } || add_check default_bearer WARNING "bearer evidence not found"
-  compose exec -T ue ip addr 2>/dev/null | grep -Eq 'tun|172\.|10\.' && { add_check ue_ip PASS "UE IP evidence found"; claims+=("UE IP assigned"); } || add_check ue_ip WARNING "UE IP evidence not found"
-  compose exec -T ue ip link 2>/dev/null | grep -Eq 'tun|srs' && add_check ue_tun PASS "UE network interface evidence found" || add_check ue_tun WARNING "UE network interface evidence not found"
-  compose exec -T ue ping -c 1 -W 2 10.55.0.1 >/dev/null 2>&1 && { add_check data_ping PASS "UE ping succeeded"; claims+=("Data ping succeeded"); } || add_check data_ping WARNING "UE ping not validated"
+  ue_ip=""
+  for _ in {1..10}; do
+    ue_ip="$(ue_ipv4)"
+    [ -n "$ue_ip" ] && break
+    sleep 2
+  done
+  [ -n "$ue_ip" ] && { add_check ue_ip PASS "UE IP assigned on tun_srsue: $ue_ip"; claims+=("UE IP assigned"); } || add_check ue_ip WARNING "UE IPv4 address not found on tun_srsue"
+  compose exec -T ue ip link show dev tun_srsue >/dev/null 2>&1 && add_check ue_tun PASS "tun_srsue exists in UE container" || add_check ue_tun WARNING "tun_srsue not found in UE container"
+  compose exec -T ue ping -I tun_srsue -c 1 -W 2 10.55.0.1 >/dev/null 2>&1 && { add_check data_ping PASS "Ping to 10.55.0.1 succeeded through tun_srsue"; claims+=("Data ping succeeded"); } || add_check data_ping WARNING "Ping through tun_srsue was not validated"
   running ims-database && add_check ims_database PASS "IMS database running" || add_check ims_database FAIL "IMS database not running"
   ims_subscriber_provisioned && add_check ims_subscriber PASS "IMS subscriber provisioned" || add_check ims_subscriber FAIL "IMS subscriber not provisioned"
   for svc in pcscf icscf scscf; do running "$svc" && add_check "$svc" PASS "container is running" || add_check "$svc" FAIL "container is not running"; done

@@ -164,7 +164,7 @@ jobs:
             ue_ready=false
             for attempt in $(seq 1 45); do
               if "${compose[@]}" exec -T ue sh -lc \
-                'ip -brief link | grep -Eiq "(^|[[:space:]])tun|srs" && ping -c 1 -W 1 10.55.0.1 >/dev/null 2>&1'; then
+                'ip -o -4 addr show dev tun_srsue | grep -Eq "inet 10\\." && ping -I tun_srsue -c 1 -W 1 10.55.0.1 >/dev/null 2>&1'; then
                 ue_ready=true
                 break
               fi

@@ -47,6 +47,17 @@ def test_volte_sim_run_metadata_is_unique_and_closed_on_stop():
     assert "down -v" not in stop
 
 
+def test_volte_sim_checks_user_plane_on_the_ue_tunnel():
+    validate = (DEPLOY / "sim" / "scripts" / "validate.sh").read_text(encoding="utf-8")
+    workflow = (ROOT / ".github" / "workflows" / "e2e-clean-clone.yml").read_text(encoding="utf-8")
+
+    assert "ip -o -4 addr show dev tun_srsue" in validate
+    assert "ping -I tun_srsue" in validate
+    assert "UE IPv4 address not found on tun_srsue" in validate
+    assert 'ip -o -4 addr show dev tun_srsue' in workflow
+    assert 'ping -I tun_srsue' in workflow
+
+
 def test_x310_rf_profile_is_explicit_and_safe_by_default():
     compose = (DEPLOY / "x310" / "docker-compose.yml").read_text(encoding="utf-8")
     manifest = (DEPLOY / "x310" / "rf" / "safety-manifest.example.yaml").read_text(encoding="utf-8")
