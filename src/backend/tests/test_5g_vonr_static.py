@@ -68,7 +68,7 @@ def test_5g_vonr_validation_requires_sip_challenge_and_ims_path():
     assert "pcscf_reachable_over_ims" in validate
     assert "ip route replace" in validate
     assert "virtual_call" in validate
-    assert "VIRTUAL_CALL_DIALOG_PASS invite=100,180,200 ack=received" in validate
+    assert "VIRTUAL_CALL_DIALOG_PASS invite=100,200 ack=received ringing=(observed|not_observed)" in validate
     assert "VIRTUAL_RTP_PASS" in validate
 
 

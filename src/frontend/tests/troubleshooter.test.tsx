@@ -14,7 +14,7 @@ describe('TroubleshooterPage', () => {
   it('turns failed and untested profile checks into prioritized repair steps', async () => {
     vi.stubGlobal('fetch', vi.fn((url: string) => {
       if (url === '/api/deployments') return jsonResponse([deployment]);
-      if (url === '/api/validation/latest') return jsonResponse(validationReport);
+      if (url.startsWith('/api/validation/latest')) return jsonResponse(validationReport);
       return jsonResponse({});
     }));
     renderWithClient(<TroubleshooterPage />, '/troubleshooter?scenario=5g-sa');

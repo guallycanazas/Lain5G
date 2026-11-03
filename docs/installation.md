@@ -13,7 +13,8 @@ The installer supports package-manager families based on `apt-get`, `dnf`,
 `pacman`, or `zypper`. It installs missing Python, Node.js, Git, Make, Docker,
 Compose, and util-linux prerequisites; conditionally starts the Docker daemon or
 configures group access when that model applies; generates private
-configuration; and downloads the published images. Each privileged command is
+configuration; downloads published images and builds the SIP test tool locally.
+Each privileged command is
 displayed before `sudo` is used.
 
 At completion, the CLI prints an installation summary with the detected host
@@ -77,8 +78,10 @@ supported entry point is the guided interactive CLI:
 ./lain5g
 ```
 
-Use its menus to prepare the machine, manage downloads, select profiles, and
-operate software networks. Downloading images does not build or start services.
+Use its menus to prepare the machine, manage components, select profiles, and
+operate software networks. Preparation downloads pinned runtime images and
+builds the small SIP test tool from the checked-in `images/ims-sip/` Dockerfile;
+it does not start laboratory services.
 
 The CLI automatically prepares `.env.app` with the absolute repository path.
 To start the interface in safe observation mode:
@@ -118,7 +121,7 @@ A profile can also be prepared directly:
 ./lain5g scenario stop 4g-lte-sim
 ```
 
-To download all published components:
+To prepare all components:
 
 ```bash
 ./lain5g images pull all
@@ -129,7 +132,9 @@ remain available as an alternative automation interface.
 
 ## Alternative Builds
 
-Local builds are required only when developing or modifying components:
+The SIP virtual-phone test tool is built from the checked-in Dockerfile during
+Preparation so it matches the scripts in the clone. Other local component
+builds are needed only when developing or modifying components:
 
 ```bash
 make build-5g-sa

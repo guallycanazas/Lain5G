@@ -19,7 +19,7 @@ SOURCE_ROOT = Path(__file__).resolve().parent / "src"
 if str(SOURCE_ROOT) not in sys.path:
     sys.path.insert(0, str(SOURCE_ROOT))
 
-from backend.app.services.image_catalog import IMAGE_CATALOG, PROFILE_IMAGES, PUBLIC_PROFILE_IDS, RF_ACCESS_IMAGES, required_images
+from backend.app.services.image_catalog import IMAGE_CATALOG, LOCAL_BUILD_IMAGES, PROFILE_IMAGES, PUBLIC_PROFILE_IDS, RF_ACCESS_IMAGES, required_images
 from backend.app.services.profile_config_service import ProfileConfigError, ProfileConfigService
 from backend.app.services.scenario_environment import prepare_scenario_environment
 
@@ -266,10 +266,10 @@ def _print_help(file=sys.stdout) -> None:
     print("Consola del laboratorio Lain", file=file)
     print("", file=file)
     print("  lain5g                         Abrir la consola principal", file=file)
-    print("  lain5g bootstrap               Instalar dependencias y descargar todo", file=file)
+    print("  lain5g bootstrap               Instalar dependencias y preparar todo", file=file)
     print("  lain5g doctor [perfil]        Revisar equipo, Docker e imagenes", file=file)
     print("  lain5g images list [perfil]   Comprobar componentes instalados", file=file)
-    print("  lain5g images pull [perfil]   Descargar sin compilar", file=file)
+    print("  lain5g images pull [perfil]   Preparar componentes sin iniciar servicios", file=file)
     print("  lain5g app setup              Preparar la aplicacion web", file=file)
     print("  lain5g app start [--open]     Iniciar la app local segura", file=file)
     print("  lain5g app start --operations Iniciar la app con control Docker y RF protegido", file=file)
@@ -447,7 +447,7 @@ def _bootstrap_machine(service: ProfileConfigService, *, assume_yes: bool = Fals
     started_monotonic = time.monotonic()
     print("\nPreparacion completa de Lain5G-Lab")
     print("===================================")
-    print("Instala herramientas base, activa Docker, prepara archivos privados y descarga todos los componentes.")
+    print("Instala herramientas base, activa Docker y prepara configuraciones e imagenes del laboratorio.")
     if dry_run:
         print("MODO DRY-RUN: solo se mostraran los comandos.")
     if not assume_yes and not dry_run and not _confirm("Continuar con la preparacion del sistema?", default=True):
@@ -595,7 +595,7 @@ def _bootstrap_machine(service: ProfileConfigService, *, assume_yes: bool = Fals
         for profile_id in PUBLIC_PROFILE_IDS:
             print(f"$ ./lain5g scenario setup {profile_id}")
 
-    print("\nDescargando todos los componentes publicados")
+    print("\nPreparando los componentes del laboratorio")
     required_image_list = _required_images("all")
     existing_images = (
         {image for image in required_image_list if _image_exists(image, docker_command)}
@@ -604,11 +604,15 @@ def _bootstrap_machine(service: ProfileConfigService, *, assume_yes: bool = Fals
     )
     if dry_run:
         for local_image in _required_images("all"):
-            remote_image = IMAGE_CATALOG.get(local_image, (local_image, ""))[0]
-            print(f"$ docker pull {shlex.quote(remote_image)}")
-            if remote_image != local_image:
-                print(f"$ docker tag {shlex.quote(remote_image)} {shlex.quote(local_image)}")
-    elif not _download_images("all", docker_command=docker_command):
+            context = LOCAL_BUILD_IMAGES.get(local_image)
+            if context:
+                print(f"$ docker build -t {shlex.quote(local_image)} {shlex.quote(str(service.root / context))}")
+            else:
+                remote_image = IMAGE_CATALOG.get(local_image, (local_image, ""))[0]
+                print(f"$ docker pull {shlex.quote(remote_image)}")
+                if remote_image != local_image:
+                    print(f"$ docker tag {shlex.quote(remote_image)} {shlex.quote(local_image)}")
+    elif not _download_images("all", docker_command=docker_command, project_root=service.root):
         return 1
 
     print("\nPLAN DE PREPARACION" if dry_run else "\nMAQUINA PREPARADA")
@@ -620,13 +624,13 @@ def _bootstrap_machine(service: ProfileConfigService, *, assume_yes: bool = Fals
     print(f"Configuracion privada: {'planificada para ' if dry_run else 'preparada para '}{len(PUBLIC_PROFILE_IDS)} perfiles y la aplicacion web")
     if dry_run:
         print(f"Dependencias: planificado {', '.join(ensured_dependencies) if ensured_dependencies else 'sin cambios'} (dry-run; no instalado)")
-        print(f"Imagenes: planificada la descarga de {len(required_image_list)} componentes (dry-run; no descargadas)")
+        print(f"Imagenes: planificada la preparacion de {len(required_image_list)} componentes (dry-run; no preparados)")
     else:
         if os.environ.get("LAIN5G_BOOTSTRAP_PYTHON_INSTALLED", "").lower() == "true":
             ensured_dependencies.insert(0, "Python 3.10+ (bootstrap)")
         print(f"Dependencias: {', '.join(ensured_dependencies) if ensured_dependencies else 'todas ya estaban disponibles'}")
-        downloaded_count = max(0, len(required_image_list) - len(existing_images))
-        print(f"Imagenes Docker: {len(required_image_list)} listas ({downloaded_count} descargadas, {len(existing_images)} ya estaban presentes)")
+        prepared_count = max(0, len(required_image_list) - len(existing_images))
+        print(f"Imagenes Docker: {len(required_image_list)} listas ({prepared_count} preparadas ahora, {len(existing_images)} ya estaban presentes)")
         print(f"Docker accesible para esta sesion: {'si' if normal_access else 'requiere activar permisos'}")
     print(f"Duracion: {_bootstrap_elapsed_seconds(started_monotonic)} s")
     install_log = os.environ.get("LAIN5G_INSTALL_LOG", "").strip()
@@ -896,18 +900,18 @@ def _images_menu(service: ProfileConfigService) -> None:
         _clear_screen()
         print("\nImagenes y componentes")
         print("=======================")
-        print("Descarga componentes compatibles desde Docker Hub; no compila ni inicia servicios.\n")
-        print("  [1] Descargar todo el laboratorio")
+        print("Descarga componentes publicados y construye herramientas locales; no inicia servicios.\n")
+        print("  [1] Preparar todo el laboratorio")
         print("  [2] Comprobar todas las imagenes")
         print("  [3] Comprobar un perfil")
-        print("  [4] Descargar lo necesario para un perfil")
+        print("  [4] Preparar lo necesario para un perfil")
         print("  [0] Volver")
         choice = _input("\nElige una opcion: ").strip()
         if choice in {"", "0", "q", "volver"}:
             return
         if choice == "1":
-            if _confirm("Descargar todas las imagenes que falten?", default=True):
-                _download_images("all")
+            if _confirm("Preparar todos los componentes que falten?", default=True):
+                _download_images("all", project_root=service.root)
         elif choice == "2":
             _print_image_status("all")
         elif choice in {"3", "4"}:
@@ -916,7 +920,7 @@ def _images_menu(service: ProfileConfigService) -> None:
                 if choice == "3":
                     _print_image_status(profile_id)
                 else:
-                    _download_images(profile_id)
+                    _download_images(profile_id, project_root=service.root)
         else:
             print("Opcion invalida.")
         _pause()
@@ -931,7 +935,7 @@ def _images_command(service: ProfileConfigService, argv: list[str]) -> int:
     if action in {"list", "check", "status"}:
         return 0 if _print_image_status(scope) else 1
     if action in {"pull", "download"}:
-        return 0 if _download_images(scope) else 1
+        return 0 if _download_images(scope, project_root=service.root) else 1
     print("Uso: lain5g images list|pull [perfil|all]", file=sys.stderr)
     return 2
 
@@ -1036,14 +1040,20 @@ def _print_image_status(scope: str, core_only: bool = False) -> bool:
     if not docker_available:
         print("\nDocker no esta instalado o no se encuentra en PATH.")
     elif missing:
-        print(f"\nFaltan {missing} componentes. Puedes descargarlos sin compilar.")
+        print(f"\nFaltan {missing} componentes. Puedes prepararlos ahora.")
     else:
         print("\nTodos los componentes necesarios estan instalados.")
     return docker_available and missing == 0
 
 
-def _download_images(scope: str, core_only: bool = False, docker_command: list[str] | None = None) -> bool:
+def _download_images(
+    scope: str,
+    core_only: bool = False,
+    docker_command: list[str] | None = None,
+    project_root: Path | None = None,
+) -> bool:
     docker = docker_command or ["docker"]
+    project_root = (project_root or Path(__file__).resolve().parent).resolve()
     if shutil.which(docker[0]) is None:
         print("Docker no esta instalado. Ejecuta './lain5g doctor' para ver la ayuda.")
         return False
@@ -1055,8 +1065,22 @@ def _download_images(scope: str, core_only: bool = False, docker_command: list[s
     if not missing:
         print("\nTodos los componentes necesarios ya estan instalados.")
         return True
-    print(f"\nSe descargaran {len(missing)} componentes. Esto puede usar varios GB.")
+    print(f"\nSe prepararan {len(missing)} componentes (descarga y compilacion local cuando corresponde).")
+    built_any = False
     for local_image in missing:
+        context = LOCAL_BUILD_IMAGES.get(local_image)
+        if context:
+            build_context = (project_root / context).resolve()
+            if not build_context.is_relative_to(project_root) or not (build_context / "Dockerfile").is_file():
+                print(f"ERROR: no se encontro el contexto local de {local_image}.")
+                return False
+            print(f"\nConstruyendo {local_image} desde {context}", flush=True)
+            built = subprocess.run([*docker, "build", "-t", local_image, str(build_context)], check=False)
+            if built.returncode != 0:
+                print(f"ERROR: no se pudo construir {local_image} desde el repositorio.")
+                return False
+            built_any = True
+            continue
         remote_image = IMAGE_CATALOG.get(local_image, (local_image, ""))[0]
         print(f"\nDescargando {remote_image}", flush=True)
         pulled = subprocess.run([*docker, "pull", remote_image], check=False)
@@ -1068,7 +1092,10 @@ def _download_images(scope: str, core_only: bool = False, docker_command: list[s
             if tagged.returncode != 0:
                 print(f"ERROR: no se pudo preparar la etiqueta local {local_image}.")
                 return False
-    print("\nPreparacion completada. No se compilo ninguna imagen.")
+    if built_any:
+        print("\nPreparacion completada. La herramienta local se construyo desde el repositorio; los servicios siguen detenidos.")
+    else:
+        print("\nPreparacion completada. No se inicio ningun servicio.")
     return True
 
 
@@ -1080,10 +1107,10 @@ def _ensure_profile_images(profile_id: str, core_only: bool = False) -> bool:
     for image in missing:
         source = IMAGE_CATALOG.get(image, (image, ""))[0]
         print(f"  - {source}")
-    if not _confirm("Descargarlos ahora sin compilar?", default=True):
+    if not _confirm("Prepararlos ahora?", default=True):
         print("Operacion cancelada; no se inicio ningun servicio.")
         return False
-    return _download_images(profile_id, core_only)
+    return _download_images(profile_id, core_only, project_root=service.root)
 
 
 def _doctor(service: ProfileConfigService, profile_id: str) -> int:

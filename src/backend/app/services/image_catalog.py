@@ -4,6 +4,10 @@ from __future__ import annotations
 MONGO_IMAGE = "mongo@sha256:8b6d8f5bbedb25cb73517b65cf99f13aeb75ad5b157a56c479287a840bbad3ac"
 MARIADB_IMAGE = "mariadb@sha256:efb4959ef2c835cd735dbc388eb9ad6aab0c78dd64febcd51bc17481111890c4"
 
+LOCAL_BUILD_IMAGES = {
+    "lain5g-lab/ims-sip:local": "images/ims-sip",
+}
+
 
 IMAGE_CATALOG = {
     "lain5g-lab/open5gs:local": ("gually/lain5g-open5gs:2.7.5-lain1@sha256:d25affe90c39adb35bfef312e725b27d2ef6b139ec1d8b2fe9f5d0da6d82753c", "Core Open5GS 4G/5G"),
@@ -13,7 +17,7 @@ IMAGE_CATALOG = {
     "lain5g-lab/srsranproject-uhd:local": ("gually/lain5g-srsranproject-uhd:24.10.1-uhd4.10-lain1@sha256:a7f08617cfdd5611c7988f58cd8463836e61610048aa29218c657730018f0711", "srsRAN Project with UHD/X-Series"),
     "lain5g-lab/kamailio:local": ("gually/lain5g-kamailio:5.8.8-lain1@sha256:a59ac70c28c9635944b4bbebbfd292e611b08b2b454bcb0f020afc3d4544ca0e", "SIP/IMS services"),
     "lain5g-lab/ims-dns:local": ("gually/lain5g-ims-dns:1.11.3-lain1@sha256:54663afe89d68dab67d5b0d98a70d6e2d2f7910ea9267622d8844a2ce9fdaed7", "DNS for IMS"),
-    "lain5g-lab/ims-sip:local": ("gually/lain5g-ims-sip:1.0-lain1@sha256:fa164401efcab1738c8b8e56ade75949ae50e25e2745a37053d7d3c8ebf295cf", "Laboratory SIP tools"),
+    "lain5g-lab/ims-sip:local": ("Local build: images/ims-sip", "Laboratory SIP tools"),
 }
 
 PROFILE_IMAGES = {

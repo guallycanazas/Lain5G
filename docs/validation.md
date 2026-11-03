@@ -82,16 +82,14 @@ signaling, teardown, silent bidirectional RTP packets, and SIP MESSAGE delivery;
 it does not validate audible speech or media through the srsUE. Its earlier
 public artifact uses the historical `4g-ims-sim` scope name.
 
-The X310 path separates hardware, UHD, FPGA, EPC, IMS infrastructure
-availability, RF preflight, auto-stop, and eNB log checks. Additional
-end-to-end evidence must be collected separately and correlated with the
-operator's `run-id`; it is not retained automatically. Dry-run mode does not
-start RF. For an X310 profile, validation also runs the two synthetic SIP
-phones against the compact IMS over its Docker bridge. This call check never
-starts an eNB/gNB or transmits RF; it tests the IMS signaling path and silent
-RTP only. The NSA profile uses the shared 4G IMS. The 5G SA X310 check reports
-`NOT_TESTED` without starting containers if the shared 5G SA network addresses
-are occupied by another active profile.
+The X310 path checks hardware, UHD, FPGA, EPC, IMS infrastructure availability,
+RF preflight, auto-stop, and eNB/gNB logs. It does not launch synthetic phones
+or claim that a real UE completed a VoLTE/VoNR call. Collect UE registration,
+call signaling, and media evidence separately and correlate it with the
+operator's `run-id`. Dry-run mode does not start RF. The NSA profile uses the
+shared 4G IMS. The 5G SA X310 check reports `NOT_TESTED` without starting
+containers if the shared 5G SA network addresses are occupied by another
+active profile.
 
 `5g-sa-x310` likewise records its local evidence and correlated logs in `runs/`.
 

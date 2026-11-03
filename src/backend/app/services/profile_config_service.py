@@ -85,8 +85,8 @@ class ProfileConfigService:
     def apply_profile(self, profile_id: str) -> dict[str, Any]:
         profile = self.get_profile(profile_id)
         validation = self.validate_profile(profile_id)
-        if profile_id == "5g-nsa-x310":
-            # Applying an NSA radio plan only writes configuration. It must
+        if profile_id in {"5g-nsa-x310", "5g-sa-x310"}:
+            # Applying an X310 radio plan only writes configuration. It must
             # remain possible while RF is unauthorized so operators can review
             # the profile; the guard and RF preflight still block transmission.
             safety = profile.get("safety") or {}
@@ -97,9 +97,9 @@ class ProfileConfigService:
                 apply_errors.append("maximum_duration_seconds must be 1..600")
             environment = str(safety.get("environment", "")).strip().lower()
             if environment not in {"cabled", "shielded"}:
-                apply_errors.append("5G NSA laboratory mode must be cabled or shielded")
+                apply_errors.append("5G X310 laboratory mode must be cabled or shielded")
             if not _is_int(safety.get("attenuation_db"), 30, 120):
-                apply_errors.append("5G NSA profile apply requires at least 30 dB attenuation")
+                apply_errors.append("5G X310 profile apply requires at least 30 dB attenuation")
             if safety.get("antenna_connected") is True and safety.get("shielded_environment") is not True:
                 apply_errors.append("antenna_connected=true requires shielded_environment=true")
             validation = {"valid": not apply_errors, "errors": apply_errors}
@@ -241,11 +241,14 @@ class ProfileConfigService:
             if not _valid_bandwidth_mhz(radio.get("bandwidth_mhz"), self.SRSRAN_4G_N_PRB_BY_BANDWIDTH):
                 errors.append("radio.bandwidth_mhz must be one of 1.4, 3, 5, 10, 15, 20 for srsRAN 4G")
         if profile["profile"] == "5g-sa-x310":
-            for key in ("band", "dl_arfcn", "tx_gain", "rx_gain"):
+            for key in ("band", "dl_arfcn", "subcarrier_spacing_khz", "tx_gain", "rx_gain"):
                 if radio.get(key) in (None, ""):
                     errors.append(f"radio.{key} is required for 5G RF profiles")
             if not _valid_bandwidth_mhz(radio.get("bandwidth_mhz"), {5.0: 0, 10.0: 0, 15.0: 0, 20.0: 0, 40.0: 0, 50.0: 0, 100.0: 0}):
                 errors.append("radio.bandwidth_mhz must be one of 5, 10, 15, 20, 40, 50, 100 for 5G RF profiles")
+            for key in ("tx_gain", "rx_gain"):
+                if not _is_finite_number(radio.get(key), 0, 100):
+                    errors.append(f"radio.{key} must be a finite value between 0 and 100")
         if profile["profile"] == "5g-nsa-x310":
             required = ("device", "usrp_addr", "lte_band", "earfcn", "bandwidth_mhz", "nr_band", "nr_dl_arfcn", "subcarrier_spacing_khz", "tx_gain", "rx_gain", "clock_source", "time_source")
             for key in required:
@@ -330,6 +333,24 @@ class ProfileConfigService:
                 errors.append("ran.enb_bind_addr must match the shared 4G LTE X310 profile")
             if profile.get("subscriber", {}).get("imsi") != lte_profile.get("subscriber", {}).get("imsi"):
                 errors.append("subscriber.imsi must match the shared 4G LTE X310 profile")
+        if profile_id == "5g-sa-x310":
+            if radio.get("device") != "x300":
+                errors.append("radio.device must be x300 for the current X310 SA runtime")
+            band = radio.get("band")
+            arfcn = radio.get("dl_arfcn")
+            scs = radio.get("subcarrier_spacing_khz")
+            if band not in (3, 78):
+                errors.append("radio.band must be 3 (n3) or 78 (n78) for this X310 SA profile")
+            if band == 3:
+                if scs != 15:
+                    errors.append("radio.subcarrier_spacing_khz must be 15 for NR band n3")
+                if _is_int(arfcn, 0, 1000000) and (not 361000 <= int(arfcn) <= 376000 or (int(arfcn) - 361000) % 20):
+                    errors.append("radio.dl_arfcn must use the n3 raster from 361000 to 376000 in steps of 20")
+            elif band == 78:
+                if scs != 30:
+                    errors.append("radio.subcarrier_spacing_khz must be 30 for NR band n78")
+                if _is_int(arfcn, 0, 1000000) and not 620000 <= int(arfcn) <= 653333:
+                    errors.append("radio.dl_arfcn must be within the n78 downlink range 620000..653333")
         return errors
 
     def _planned_changes(self, profile: dict[str, Any]) -> list[PlannedChange]:
@@ -394,27 +415,42 @@ class ProfileConfigService:
     def _changes_5g_sa_x310(self, profile: dict[str, Any]) -> list[PlannedChange]:
         n, c, r, safety = profile["network"], profile["core"], profile["radio"], profile["safety"]
         sl = n["slice"]
-        sample_rates = {5.0: 15.36, 10.0: 15.36, 15.0: 23.04, 20.0: 23.04, 40.0: 46.08, 50.0: 61.44, 100.0: 122.88}
-        sample_rate = sample_rates[float(r["bandwidth_mhz"])]
+        operator_note = str(safety.get("operator_note") or "").strip()
         env_path, env_current = self._read_environment("deployments/5g-sa-x310/.env")
         _, env_example = self._read_environment("deployments/5g-sa-x310/.env.example")
+        sample_rates = {
+            (3, 5.0, 15): 7.68, (3, 10.0, 15): 11.52, (3, 15.0, 15): 15.36,
+            (3, 20.0, 15): 23.04, (3, 40.0, 15): 46.08, (3, 50.0, 15): 61.44,
+            (3, 100.0, 15): 122.88,
+            (78, 5.0, 30): 15.36, (78, 10.0, 30): 15.36, (78, 15.0, 30): 23.04,
+            (78, 20.0, 30): 23.04, (78, 40.0, 30): 46.08, (78, 50.0, 30): 61.44,
+            (78, 100.0, 30): 122.88,
+        }
+        try:
+            sample_rate = sample_rates[(int(r["band"]), float(r["bandwidth_mhz"]), int(r["subcarrier_spacing_khz"]))]
+        except (KeyError, TypeError, ValueError) as exc:
+            raise ProfileConfigError(
+                422,
+                "PROFILE_VALIDATION_FAILED",
+                "The 5G SA X310 channel plan has an unsupported band, bandwidth, or SCS tuple.",
+            ) from exc
         env = _update_env(env_current or env_example, {
             "AMF_ADDR": c["amf_addr"], "GNB_BIND_ADDR": c["gnb_bind_addr"], "N3_BIND_ADDR": c["n3_bind_addr"],
             "USRP_ADDR": r["usrp_addr"], "USRP_TYPE": r["device"], "USRP_CLOCK_SOURCE": r["clock_source"], "USRP_TIME_SOURCE": r["time_source"],
             "MCC": n["mcc"], "MNC": n["mnc"], "TAC": n["tac"], "SST": sl["sst"], "SD": sl["sd"],
-            "CHANNEL_BANDWIDTH_MHZ": r["bandwidth_mhz"], "SAMPLE_RATE_MHZ": sample_rate, "DL_ARFCN": r["dl_arfcn"], "NR_BAND": r["band"], "TX_GAIN": r["tx_gain"], "RX_GAIN": r["rx_gain"],
+            "CHANNEL_BANDWIDTH_MHZ": r["bandwidth_mhz"], "SAMPLE_RATE_MHZ": sample_rate, "SUBCARRIER_SPACING_KHZ": r["subcarrier_spacing_khz"], "DL_ARFCN": r["dl_arfcn"], "NR_BAND": r["band"], "TX_GAIN": r["tx_gain"], "RX_GAIN": r["rx_gain"],
             "MAXIMUM_DURATION_SECONDS": safety["maximum_duration_seconds"], "LAIN5G_ALLOW_5G_RF_START": "false",
         })
         channel_rel = "deployments/5g-sa-x310/rf/channel-plan.yaml"
         channel_data = _loads_yaml(_read(self.root / channel_rel))
-        channel_data.update({"nr_band": r["band"], "dl_arfcn": r["dl_arfcn"], "channel_bandwidth_mhz": r["bandwidth_mhz"], "authorized_lab_frequency": safety["authorization_confirmed"], "operator_note": safety["operator_note"]})
+        channel_data.update({"nr_band": r["band"], "dl_arfcn": r["dl_arfcn"], "channel_bandwidth_mhz": r["bandwidth_mhz"], "common_scs": r["subcarrier_spacing_khz"], "duplex_mode": "FDD" if int(r["band"]) == 3 else "TDD", "authorized_lab_frequency": safety["authorization_confirmed"], "operator_note": operator_note})
         safety_rel = "deployments/5g-sa-x310/rf/safety-manifest.yaml"
         safety_data = _loads_yaml(_read(self.root / safety_rel))
         safety_data.update({
             "lab_mode": safety["environment"], "authorization_confirmed": safety["authorization_confirmed"],
             "antenna_connected": safety["antenna_connected"], "attenuation_db": safety["attenuation_db"],
             "shielded_environment": safety["shielded_environment"], "maximum_duration_seconds": safety["maximum_duration_seconds"],
-            "auto_stop": safety["auto_stop"], "capture_logs": True, "operator_note": safety["operator_note"],
+            "auto_stop": safety["auto_stop"], "capture_logs": True, "operator_note": operator_note,
         })
         return [
             PlannedChange(env_path, env_current, env),

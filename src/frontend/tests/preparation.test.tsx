@@ -57,7 +57,7 @@ describe('Preparation workspace', () => {
     renderRoute('/preparation', <PreparationPage />);
     expect(await screen.findByText('Docker Engine')).toBeInTheDocument();
     expect(screen.getByText('gually/lain5g-ueransim:3.2.6-lain1')).toBeInTheDocument();
-    await userEvent.click(screen.getByRole('button', { name: 'Download missing' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Prepare missing components' }));
     await waitFor(() => expect(fetch).toHaveBeenCalledWith('/api/preparation/profiles/5g-sa/pull', expect.objectContaining({ method: 'POST', body: '{"core_only":false}' })));
     expect(await screen.findByText('Components ready')).toBeInTheDocument();
     expect(vi.mocked(fetch).mock.calls.some(([url]) => String(url).includes('/api/deployments/') && String(url).endsWith('/start'))).toBe(false);
@@ -77,9 +77,9 @@ describe('Preparation workspace', () => {
     }));
 
     renderRoute('/preparation', <PreparationPage />);
-    await userEvent.click(await screen.findByRole('button', { name: 'Download all missing (1)' }));
+    await userEvent.click(await screen.findByRole('button', { name: 'Prepare missing components (1)' }));
     expect(fetch).not.toHaveBeenCalledWith('/api/preparation/profiles/all/pull', expect.anything());
-    await userEvent.click(screen.getByRole('button', { name: 'Download components' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Prepare components' }));
     await waitFor(() => expect(fetch).toHaveBeenCalledWith('/api/preparation/profiles/all/pull', expect.objectContaining({ method: 'POST' })));
     expect(await screen.findByText('Components ready')).toBeInTheDocument();
   });

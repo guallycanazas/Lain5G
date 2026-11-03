@@ -19,7 +19,7 @@ checks=()
 
 add(){ checks+=("$1|$2|$3"); printf '%-30s %s %s\n' "$1" "$2" "$3"; [ "$2" = FAIL ] && status=FAIL; return 0; }
 get_env(){ local key="$1" default="${2:-}"; local value="${!key:-}"; if [ -z "$value" ] && [ -f "$env_file" ]; then value="$(sed -n "s/^${key}=//p" "$env_file" | tail -n1)"; fi; if [ -z "$value" ] && [ -f "$env_example" ]; then value="$(sed -n "s/^${key}=//p" "$env_example" | tail -n1)"; fi; printf '%s' "${value:-$default}"; }
-field(){ local key="$1" file="$2"; sed -n "s/^${key}:[[:space:]]*//p" "$file" 2>/dev/null | tr -d '"' | head -n1; }
+field(){ local key="$1" file="$2" value; value="$(sed -n "s/^${key}:[[:space:]]*//p" "$file" 2>/dev/null | tr -d '"' | head -n1)"; case "$value" in null|NULL|~|\'\'|"") value="";; esac; printf '%s' "$value"; }
 
 active_manifest="$manifest_example"; [ -f "$manifest" ] && active_manifest="$manifest"
 active_channel="$channel_example"; [ -f "$channel" ] && active_channel="$channel"
@@ -83,12 +83,30 @@ dl_arfcn="$(get_env DL_ARFCN "$(field dl_arfcn "$active_channel")")"
 nr_band="$(get_env NR_BAND "$(field nr_band "$active_channel")")"
 bandwidth="$(get_env CHANNEL_BANDWIDTH_MHZ 10)"
 sample_rate="$(get_env SAMPLE_RATE_MHZ 15.36)"
+subcarrier_spacing="$(get_env SUBCARRIER_SPACING_KHZ "$(field common_scs "$active_channel")")"
 tx_gain="$(get_env TX_GAIN)"
 rx_gain="$(get_env RX_GAIN)"
-case "$bandwidth:$sample_rate" in
-  5:15.36|10:15.36|15:23.04|20:23.04|40:46.08|50:61.44|100:122.88) add sample_rate PASS "${bandwidth} MHz uses ${sample_rate} Msps" ;;
-  *) add sample_rate FAIL "unsupported bandwidth/sample-rate pair: ${bandwidth} MHz / ${sample_rate} Msps" ;;
+case "$bandwidth:$subcarrier_spacing:$sample_rate" in
+  5:30:15.36|10:30:15.36|15:30:23.04|20:30:23.04|40:30:46.08|50:30:61.44|100:30:122.88|5:15:7.68|10:15:11.52|15:15:15.36|20:15:23.04|40:15:46.08|50:15:61.44|100:15:122.88) add sample_rate PASS "${bandwidth} MHz / ${subcarrier_spacing} kHz uses ${sample_rate} Msps" ;;
+  *) add sample_rate FAIL "unsupported bandwidth/SCS/sample-rate tuple: ${bandwidth} MHz / ${subcarrier_spacing} kHz / ${sample_rate} Msps" ;;
 esac
+if [ "$require_rf" = true ]; then
+  case "$nr_band" in
+    3|n3)
+      if [[ "$dl_arfcn" =~ ^[0-9]+$ ]] && [ "$subcarrier_spacing" = 15 ] && [ "$dl_arfcn" -ge 361000 ] && [ "$dl_arfcn" -le 376000 ] && [ $(( (dl_arfcn - 361000) % 20 )) -eq 0 ]; then add channel_plan PASS "NR n3 / ARFCN ${dl_arfcn} / SCS 15 kHz"; else add channel_plan FAIL "n3 requires DL ARFCN 361000..376000 on the 20-step raster and SCS 15 kHz"; fi ;;
+    78|n78)
+      if [[ "$dl_arfcn" =~ ^[0-9]+$ ]] && [ "$subcarrier_spacing" = 30 ] && [ "$dl_arfcn" -ge 620000 ] && [ "$dl_arfcn" -le 653333 ]; then add channel_plan PASS "NR n78 / ARFCN ${dl_arfcn} / SCS 30 kHz"; else add channel_plan FAIL "n78 requires DL ARFCN 620000..653333 and SCS 30 kHz"; fi ;;
+    *) add channel_plan FAIL "unsupported NR band: ${nr_band}" ;;
+  esac
+elif [ -n "$dl_arfcn" ] && [ -n "$nr_band" ]; then
+  case "$nr_band" in
+    3|n3) [[ "$dl_arfcn" =~ ^[0-9]+$ ]] && [ "$subcarrier_spacing" = 15 ] && [ "$dl_arfcn" -ge 361000 ] && [ "$dl_arfcn" -le 376000 ] && [ $(( (dl_arfcn - 361000) % 20 )) -eq 0 ] && add channel_plan PASS "NR n3 plan / ARFCN ${dl_arfcn} / SCS 15 kHz" || add channel_plan FAIL "invalid n3 band/ARFCN/SCS tuple" ;;
+    78|n78) [[ "$dl_arfcn" =~ ^[0-9]+$ ]] && [ "$subcarrier_spacing" = 30 ] && [ "$dl_arfcn" -ge 620000 ] && [ "$dl_arfcn" -le 653333 ] && add channel_plan PASS "NR n78 plan / ARFCN ${dl_arfcn} / SCS 30 kHz" || add channel_plan FAIL "invalid n78 band/ARFCN/SCS tuple" ;;
+    *) add channel_plan FAIL "unsupported NR band: ${nr_band}" ;;
+  esac
+else
+  add channel_plan NOT_TESTED "set NR band and DL ARFCN before channel-plan validation"
+fi
 if [ "$require_rf" = true ]; then
   [[ "$dl_arfcn" =~ ^[0-9]+$ ]] && add dl_arfcn PASS "DL_ARFCN set" || add dl_arfcn FAIL "DL_ARFCN required"
   [[ "$nr_band" =~ ^n?[0-9]+$ ]] && add nr_band PASS "NR band set" || add nr_band FAIL "NR_BAND required"

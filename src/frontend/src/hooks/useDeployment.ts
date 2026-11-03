@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { deploymentsApi } from '../services/deploymentsApi';
 import type { RfStartPayload } from '../types/deployment';
+import { visibleFrontendScenarios } from '../utils/scenarioAvailability';
 
 export function useHealth() {
   return useQuery({ queryKey: ['health'], queryFn: deploymentsApi.health, refetchInterval: 10000 });
@@ -11,7 +12,7 @@ export function useDeploymentStatus() {
 }
 
 export function useDeployments() {
-  return useQuery({ queryKey: ['deployments'], queryFn: deploymentsApi.list, refetchInterval: 10000 });
+  return useQuery({ queryKey: ['deployments'], queryFn: async () => visibleFrontendScenarios(await deploymentsApi.list()), refetchInterval: 10000 });
 }
 
 export function useScenario(scenarioId: string) {

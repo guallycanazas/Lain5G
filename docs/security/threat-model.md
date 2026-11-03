@@ -71,8 +71,10 @@ read-only does not meaningfully restrict Docker API operations, so the project
 does not describe a read-only socket mount as a security boundary.
 
 The application allowlists reduce accidental command injection but cannot make
-the Docker socket safe against a compromised backend. Use the operations
-override only for the shortest necessary period on a dedicated trusted host.
+the Docker socket safe against a compromised backend or Alloy collector. Alloy
+only discovers and tails project-labeled containers in its configured pipeline,
+but a compromised process with socket access can call the wider Docker API.
+Use the operations override only on a dedicated trusted host.
 
 ## Out Of Scope
 

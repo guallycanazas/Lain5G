@@ -31,6 +31,22 @@ def test_4g_compose_projects_are_isolated():
     assert "lain5g-lab-5g-sa" not in x310
 
 
+def test_volte_sim_run_metadata_is_unique_and_closed_on_stop():
+    start = (DEPLOY / "sim" / "scripts" / "start.sh").read_text(encoding="utf-8")
+    stop = (DEPLOY / "sim" / "scripts" / "stop.sh").read_text(encoding="utf-8")
+
+    assert 'run_id="run-$(date -u +%Y%m%d-%H%M%S)"' in start
+    assert 'if mkdir "$run_dir" 2>/dev/null; then' in start
+    assert '"git_commit":"$git_commit"' in start
+    assert '"scenario"[[:space:]]*:[[:space:]]*"4g-volte-sim"' in stop
+    assert 'metadata["finished_at"]' in stop
+    assert 'metadata["status"] = "stopped"' in stop
+    assert 'compose logs --no-color --tail 1000 > "$latest_run/logs/docker-compose.log"' in stop
+    assert "compose stop" in stop
+    assert "volume rm" not in stop
+    assert "down -v" not in stop
+
+
 def test_x310_rf_profile_is_explicit_and_safe_by_default():
     compose = (DEPLOY / "x310" / "docker-compose.yml").read_text(encoding="utf-8")
     manifest = (DEPLOY / "x310" / "rf" / "safety-manifest.example.yaml").read_text(encoding="utf-8")
@@ -133,20 +149,25 @@ def test_x310_compact_ims_is_always_started():
     assert "ims_services PASS" in validate
 
 
-def test_x310_virtual_call_path_is_separate_from_rf():
+def test_x310_rf_profile_does_not_include_virtual_phones_or_call_check():
     compose = (DEPLOY / "x310" / "docker-compose.yml").read_text(encoding="utf-8")
-    pcscf = (DEPLOY / "x310" / "ims/pcscf/kamailio.cfg").read_text(encoding="utf-8")
-    icscf = (DEPLOY / "x310" / "ims/icscf/kamailio.cfg").read_text(encoding="utf-8")
     validate = (DEPLOY / "x310" / "scripts/validate.sh").read_text(encoding="utf-8")
-    helper = (ROOT / "deployments/shared/validate-ims-virtual-call.sh").read_text(encoding="utf-8")
+    simulation = (DEPLOY / "sim" / "docker-compose.yml").read_text(encoding="utf-8")
+    scscf = (ROOT / "images" / "ims-sip" / "scscf_server.py").read_text(encoding="utf-8")
+    registry = (ROOT / "src/backend/app/services/deployment_registry.py").read_text(encoding="utf-8")
 
-    assert "virtual-phones:" in compose
-    assert 'profiles: ["sip"]' in compose
-    assert 'is_method("REGISTER|INVITE|ACK|BYE|CANCEL|MESSAGE")' in pcscf
-    assert 'is_method("REGISTER|INVITE|ACK|BYE|CANCEL|MESSAGE")' in icscf
-    assert "validate-ims-virtual-call.sh" in validate
-    assert "--profile rf" not in helper
-    assert "enb-x310" not in helper
+    assert "virtual-phones:" not in compose
+    assert "VIRTUAL_PHONE_" not in compose
+    assert "validate-ims-virtual-call.sh" not in validate
+    assert "virtual_call" not in validate
+    assert 'os.environ.get(f"VIRTUAL_PHONE_{label}_NUMBER", "")' in scscf
+    assert 'os.environ.get(f"VIRTUAL_PHONE_{label}_PASSWORD", "")' in scscf
+    assert '"virtual-phone-a-lab-only"' not in scscf
+    assert "virtual-phones:" in simulation
+    assert "VIRTUAL_PHONE_A_NUMBER" in simulation
+    assert 'id="4g-lte-x310"' in registry
+    rf_definition = registry.split('id="4g-lte-x310"', 1)[1].split('id="5g-sa-x310"', 1)[0]
+    assert "virtual_call" not in rf_definition
 
 
 def test_secret_values_are_not_committed_in_env_example():

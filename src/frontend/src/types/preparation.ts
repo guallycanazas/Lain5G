@@ -64,10 +64,11 @@ export interface PreparationReport {
 export interface ComponentPullResponse {
   profile: ProfileComponentStatus;
   pulled: string[];
+  built?: string[];
   message: string;
 }
 
-export type ComponentPullImageState = 'pending' | 'pulling' | 'tagging' | 'succeeded' | 'failed';
+export type ComponentPullImageState = 'pending' | 'pulling' | 'building' | 'tagging' | 'succeeded' | 'failed';
 export type ComponentPullJobState = 'queued' | 'running' | 'succeeded' | 'failed';
 
 export interface ComponentPullImageProgress {
@@ -91,6 +92,7 @@ export interface ComponentPullJob {
   total_count: number;
   overall_percent: number;
   pulled: string[];
+  built?: string[];
   created_at: string;
   started_at: string | null;
   finished_at: string | null;

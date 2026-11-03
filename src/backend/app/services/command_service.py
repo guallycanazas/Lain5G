@@ -8,6 +8,7 @@ from pathlib import Path
 
 from ..models.deployment import CommandResult
 from ..settings import Settings
+from .image_catalog import LOCAL_BUILD_IMAGES
 
 
 SENSITIVE_KEYS = (
@@ -30,7 +31,7 @@ SUBSCRIBER_ID_RE = re.compile(r"(?<![\d.])\+?\d{5,20}(?![\d.])")
 ENV_ASSIGNMENT_RE = re.compile(r"[A-Za-z_][A-Za-z0-9_]*=.*", re.DOTALL)
 JSON_UNQUOTED_REDACTION_RE = re.compile(r"(?P<prefix>[:\[,]\s*)\[REDACTED\](?P<suffix>\s*[,\]}])")
 
-ALLOWED_DOCKER_SUBCOMMANDS = {"compose", "image", "info", "pull", "run", "tag"}
+ALLOWED_DOCKER_SUBCOMMANDS = {"build", "compose", "image", "info", "pull", "run", "tag"}
 ALLOWED_COMPOSE_ACTIONS = {"logs", "version"}
 ALLOWED_RUN_IMAGES = {"lain5g-lab/srsran4g-uhd:local"}
 DOCKER_PATH_OPTIONS = {"-f", "--file", "--env-file", "--project-directory"}
@@ -120,6 +121,8 @@ class CommandService:
                 raise CommandSecurityError("Docker subcommand is not allowlisted")
             if command[1] == "compose":
                 self._validate_compose_command(command, cwd_path)
+            elif command[1] == "build":
+                self._validate_docker_build(command, cwd_path)
             elif command[1] == "image":
                 if len(command) != 4 or command[2] != "inspect" or not IMAGE_REFERENCE_RE.fullmatch(command[3]):
                     raise CommandSecurityError("Docker image command is not allowlisted")
@@ -187,6 +190,26 @@ class CommandService:
                 raise CommandSecurityError("Docker run command is not allowlisted")
             return
         raise CommandSecurityError("Docker run image is required")
+
+    def _validate_docker_build(self, command: list[str], cwd_path: Path) -> None:
+        # Only build the checked-in SIP helper from its fixed repository context.
+        # This keeps Preparation from turning the Docker allowlist into an
+        # arbitrary build or host-path execution surface.
+        if len(command) != 5 or command[2] != "-t":
+            raise CommandSecurityError("Docker build command is not allowlisted")
+        target = command[3]
+        relative_context = LOCAL_BUILD_IMAGES.get(target)
+        if relative_context is None:
+            raise CommandSecurityError("Docker build target is not allowlisted")
+        expected_context = (self.project_root / relative_context).resolve()
+        context = self._resolve_command_path(command[4], cwd_path)
+        dockerfile = context / "Dockerfile"
+        if (
+            context != expected_context
+            or not dockerfile.is_file()
+            or not dockerfile.resolve().is_relative_to(context)
+        ):
+            raise CommandSecurityError("Docker build context is not allowlisted")
 
     @staticmethod
     def _validate_arguments(command: list[str]) -> None:

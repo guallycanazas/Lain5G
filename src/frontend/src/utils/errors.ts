@@ -4,8 +4,16 @@ function isNetworkConflict(error: unknown) {
   return error instanceof ApiError && /pool overlaps|network conflict|address space/i.test(`${error.message} ${JSON.stringify(error.details)}`);
 }
 
+function isDockerAccessUnavailable(error: unknown) {
+  if (!(error instanceof ApiError)) return false;
+  return /docker\.sock|failed to connect to (?:the )?docker api|docker daemon.*not running/i.test(
+    `${error.code || ''} ${error.message} ${JSON.stringify(error.details || '')}`,
+  );
+}
+
 export function errorTitle(error: unknown): string {
   if (isNetworkConflict(error)) return 'Docker network conflict';
+  if (isDockerAccessUnavailable(error)) return 'Docker access unavailable';
   if (error instanceof ApiError) {
     if (error.status === 0) return 'Backend unavailable';
     if (error.status === 409) return 'State conflict';
@@ -19,6 +27,7 @@ export function errorTitle(error: unknown): string {
 
 export function errorMessage(error: unknown): string {
   if (isNetworkConflict(error)) return 'The subnet requested by this deployment overlaps with another Docker network.';
+  if (isDockerAccessUnavailable(error)) return 'The backend cannot reach the local Docker Engine, so it cannot read profile logs.';
   if (error instanceof ApiError) return error.message;
   if (error instanceof TypeError) return 'Could not connect to the API.';
   if (error instanceof Error) return error.message;
@@ -42,6 +51,12 @@ export function diagnoseApplicationError(error: unknown): ErrorDiagnosis {
   const details = error instanceof ApiError ? JSON.stringify(error.details || '') : '';
   const evidence = `${code} ${message} ${details}`;
 
+  if (isDockerAccessUnavailable(error)) {
+    return {
+      cause: 'The app is running without the Docker socket, so the backend cannot query container logs.',
+      fix: 'For a trusted local lab, stop the app and start it with ./lain5g app start --operations. This grants the backend access to Docker on this host.',
+    };
+  }
   if (code === 'DEPLOYMENT_CONFLICT') {
     const activeScenario = error instanceof ApiError && error.details && typeof error.details === 'object'
       ? (error.details as { active_scenario?: unknown }).active_scenario

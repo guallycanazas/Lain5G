@@ -24,7 +24,8 @@ class Open5GSConnectionService:
         try:
             self._ensure_network_attachment()
             started = perf_counter()
-            with self.client() as client:
+            ping_timeout_ms = min(self.settings.subscriber_operation_timeout * 1000, 3000)
+            with self.client(timeout_ms=ping_timeout_ms) as client:
                 client.admin.command("ping")
             latency_ms = int((perf_counter() - started) * 1000)
             return self._status("connected", self._server_label(), latency_ms=latency_ms)
@@ -37,8 +38,8 @@ class Open5GSConnectionService:
         except (ConnectionFailure, OSError, PyMongoError):
             return self._status("disconnected", self._server_label(), message="MongoDB is not available")
 
-    def client(self) -> MongoClient:
-        timeout_ms = self.settings.subscriber_operation_timeout * 1000
+    def client(self, *, timeout_ms: int | None = None) -> MongoClient:
+        timeout_ms = timeout_ms or self.settings.subscriber_operation_timeout * 1000
         return MongoClient(
             self.settings.open5gs_mongo_uri,
             serverSelectionTimeoutMS=timeout_ms,

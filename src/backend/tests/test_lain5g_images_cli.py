@@ -79,7 +79,26 @@ def test_images_pull_downloads_and_tags_without_building_or_starting(tmp_path: P
     assert "tag gually/lain5g-srsran4g-sim:23.11-lain1@sha256:7ec771cf70e77f699283017b02bbe6311fd377047109dc952c2c18ebae1e2ced lain5g-lab/srsran4g-sim:local" in commands
     assert "pull mongo@sha256:8b6d8f5bbedb25cb73517b65cf99f13aeb75ad5b157a56c479287a840bbad3ac" in commands
     assert not any("build" in command or "push" in command or " up" in command for command in commands)
-    assert "No se compilo ninguna imagen" in result.stdout
+    assert "No se inicio ningun servicio" in result.stdout
+
+
+def test_images_pull_builds_sip_tool_from_the_checked_out_source(tmp_path: Path):
+    env, log_path = fake_docker(tmp_path)
+    result = subprocess.run(
+        [str(ROOT / "lain5g"), "images", "pull", "4g-lte-x310"],
+        cwd=ROOT,
+        env=env,
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+
+    assert result.returncode == 0
+    commands = log_path.read_text(encoding="utf-8").splitlines()
+    assert f"build -t lain5g-lab/ims-sip:local {ROOT / 'images' / 'ims-sip'}" in commands
+    assert not any("pull gually/lain5g-ims-sip" in command for command in commands)
+    assert "Construyendo lain5g-lab/ims-sip:local desde images/ims-sip" in result.stdout
+    assert "No se inicio ningun servicio" in result.stdout or "se construyo desde el repositorio" in result.stdout
 
 
 def test_images_command_rejects_unknown_profile_before_docker(tmp_path: Path):
@@ -161,10 +180,11 @@ def test_bootstrap_dry_run_installs_tools_and_downloads_everything():
     assert "./lain5g scenario setup 5g-sa-x310" in result.stdout
     assert "docker pull gually/lain5g-open5gs" in result.stdout
     assert "docker pull gually/lain5g-srsranproject-uhd" in result.stdout
+    assert f"docker build -t lain5g-lab/ims-sip:local {ROOT / 'images' / 'ims-sip'}" in result.stdout
     assert "PLAN DE PREPARACION" in result.stdout
     assert "RESUMEN DE INSTALACION" in result.stdout
     assert "dry-run; no instalado" in result.stdout
-    assert "dry-run; no descargadas" in result.stdout
+    assert "dry-run; no preparados" in result.stdout
 
 
 def test_shell_installer_writes_transcript_and_reports_result(tmp_path: Path):
@@ -182,11 +202,12 @@ def test_shell_installer_writes_transcript_and_reports_result(tmp_path: Path):
 
     assert result.returncode == 0
     assert "RESUMEN DE INSTALACION" in result.stdout
-    assert "RESULTADO DE INSTALACION: CORRECTO" in result.stdout
+    assert "RESULTADO DE PRUEBA EN SECO: OK" in result.stdout
+    assert "no se instalo ni descargo nada" in result.stdout
     logs = list((state_dir / "lain5g").glob("install-*.log"))
     assert len(logs) == 1
     assert "Registro completo de instalacion:" in result.stdout
-    assert "RESULTADO DE INSTALACION: CORRECTO" in logs[0].read_text(encoding="utf-8")
+    assert "RESULTADO DE PRUEBA EN SECO: OK" in logs[0].read_text(encoding="utf-8")
 
 
 def test_shell_installer_logs_failure_and_preserves_exit_code(tmp_path: Path):
@@ -208,7 +229,7 @@ def test_shell_installer_logs_failure_and_preserves_exit_code(tmp_path: Path):
     )
 
     assert result.returncode == 2
-    assert "RESULTADO DE INSTALACION: ERROR (codigo 2;" in result.stdout
+    assert "RESULTADO DE PRUEBA EN SECO: ERROR (codigo 2;" in result.stdout
     logs = list((state_dir / "lain5g").glob("install-*.log"))
     assert len(logs) == 1
     assert "gestor compatible no encontrado" in logs[0].read_text(encoding="utf-8")

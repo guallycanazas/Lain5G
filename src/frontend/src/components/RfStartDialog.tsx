@@ -151,7 +151,7 @@ export function RfStartDialog({ scenarioId, open, loading, missingImages, pullJo
       {profile.isLoading || diff.isLoading ? <div className="rf-config-state">Loading effective RF configuration...</div> : null}
       {profile.error || diff.error ? <div className="rf-config-state error">The RF configuration could not be verified. Start remains blocked.</div> : null}
       {pendingChanges ? <div className="rf-config-state warning"><strong>Configuration changes are pending.</strong><span>Validate and apply the RF authorization below, or use <Link to="/deployments" onClick={onCancel}>Deployments</Link> for advanced editing.</span></div> : null}
-      {missingImages.length ? <div className="warning-box"><strong>{missingImages.length} component{missingImages.length === 1 ? '' : 's'} missing</strong><ul>{missingImages.map((image) => <li key={image.local_image}>{image.description}</li>)}</ul><p>Download these components first. RF start requires a second explicit click with the current safety checks after the download completes.</p></div> : null}
+      {missingImages.length ? <div className="warning-box"><strong>{missingImages.length} component{missingImages.length === 1 ? '' : 's'} missing</strong><ul>{missingImages.map((image) => <li key={image.local_image}>{image.description}</li>)}</ul><p>Prepare these components first. RF start requires a second explicit click with the current safety checks after preparation completes.</p></div> : null}
       {pullJob ? <ComponentPullProgress job={pullJob} /> : null}
       <div className="rf-session-summary">
         <div><span>Radio</span><strong>{radioSummary}</strong></div>

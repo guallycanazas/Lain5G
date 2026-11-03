@@ -43,18 +43,20 @@ def test_connection_status_dry_run(dry_settings):
 def test_connection_status_connected(real_settings, monkeypatch):
     service = Open5GSConnectionService(real_settings)
     monkeypatch.setattr(service, "_ensure_network_attachment", lambda: None)
-    monkeypatch.setattr(service, "client", lambda: FakeClient())
+    timeout_values: list[int] = []
+    monkeypatch.setattr(service, "client", lambda *, timeout_ms=None: (timeout_values.append(timeout_ms), FakeClient())[1])
 
     status = service.status()
 
     assert status.status == "connected"
     assert status.latency_ms is not None
+    assert timeout_values == [3000]
 
 
 def test_connection_read_does_not_attach_docker_network_without_mutation_opt_in(real_settings, monkeypatch):
     settings = real_settings.model_copy(update={"mutating_operations_enabled": False})
     service = Open5GSConnectionService(settings)
-    monkeypatch.setattr(service, "client", lambda: FakeClient())
+    monkeypatch.setattr(service, "client", lambda *, timeout_ms=None: FakeClient())
 
     def unexpected_docker_call(*args, **kwargs):
         raise AssertionError("read endpoint attempted a Docker network mutation")
@@ -79,7 +81,7 @@ def test_connection_status_disconnected(real_settings, monkeypatch):
 
     service = Open5GSConnectionService(real_settings)
     monkeypatch.setattr(service, "_ensure_network_attachment", lambda: None)
-    monkeypatch.setattr(service, "client", lambda: FakeClient(ConnectionFailure("down")))
+    monkeypatch.setattr(service, "client", lambda *, timeout_ms=None: FakeClient(ConnectionFailure("down")))
 
     status = service.status()
 
@@ -91,7 +93,7 @@ def test_connection_status_timeout(real_settings, monkeypatch):
 
     service = Open5GSConnectionService(real_settings)
     monkeypatch.setattr(service, "_ensure_network_attachment", lambda: None)
-    monkeypatch.setattr(service, "client", lambda: FakeClient(ServerSelectionTimeoutError("timeout")))
+    monkeypatch.setattr(service, "client", lambda *, timeout_ms=None: FakeClient(ServerSelectionTimeoutError("timeout")))
 
     status = service.status()
 

@@ -1,0 +1,78 @@
+{
+  "annotations": { "list": [] },
+  "editable": false,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 1,
+  "id": null,
+  "links": [],
+  "panels": [
+    {
+      "datasource": { "type": "loki", "uid": "openlain5g-loki" },
+      "fieldConfig": { "defaults": { "unit": "short", "color": { "mode": "palette-classic" } }, "overrides": [] },
+      "gridPos": { "h": 5, "w": 12, "x": 0, "y": 0 },
+      "id": 1,
+      "options": { "legend": { "displayMode": "list", "placement": "bottom", "showLegend": false }, "tooltip": { "mode": "multi", "sort": "desc" } },
+      "targets": [{ "expr": "sum(count_over_time({job=\"openlain5g\",scenario=~\"$scenario\",service=~\"$service\"}[$__interval]))", "queryType": "range", "refId": "A" }],
+      "title": "Log volume",
+      "type": "timeseries"
+    },
+    {
+      "datasource": { "type": "loki", "uid": "openlain5g-loki" },
+      "fieldConfig": { "defaults": { "unit": "short", "color": { "mode": "thresholds", "steps": [{ "color": "green", "value": null }, { "color": "orange", "value": 1 }, { "color": "red", "value": 10 }] } }, "overrides": [] },
+      "gridPos": { "h": 5, "w": 12, "x": 12, "y": 0 },
+      "id": 2,
+      "options": { "legend": { "displayMode": "list", "placement": "bottom", "showLegend": false }, "tooltip": { "mode": "multi", "sort": "desc" } },
+      "targets": [{ "expr": "sum(count_over_time({job=\"openlain5g\",scenario=~\"$scenario\",service=~\"$service\"} |~ \"(?i)(error|fatal|critical)\"[$__interval]))", "queryType": "range", "refId": "A" }],
+      "title": "Errors and critical events",
+      "type": "timeseries"
+    },
+    {
+      "datasource": { "type": "loki", "uid": "openlain5g-loki" },
+      "gridPos": { "h": 15, "w": 24, "x": 0, "y": 5 },
+      "id": 3,
+      "options": { "dedupStrategy": "none", "enableLogDetails": true, "prettifyLogMessage": false, "showCommonLabels": true, "showLabels": true, "showTime": true, "sortOrder": "Descending", "wrapLogMessage": true },
+      "targets": [{ "direction": "backward", "expr": "{job=\"openlain5g\",scenario=~\"$scenario\",service=~\"$service\"}", "maxLines": 5000, "queryType": "range", "refId": "A" }],
+      "title": "Container log stream",
+      "type": "logs"
+    }
+  ],
+  "refresh": "15s",
+  "schemaVersion": 41,
+  "tags": ["OpenLain5G", "logs", "observability"],
+  "templating": {
+    "list": [
+      {
+        "current": { "selected": true, "text": "All", "value": "$__all" },
+        "datasource": { "type": "loki", "uid": "openlain5g-loki" },
+        "definition": "label_values({job=\"openlain5g\"}, scenario)",
+        "includeAll": true,
+        "allValue": ".*",
+        "label": "Profile",
+        "name": "scenario",
+        "options": [],
+        "query": "label_values({job=\"openlain5g\"}, scenario)",
+        "refresh": 1,
+        "type": "query"
+      },
+      {
+        "current": { "selected": true, "text": "All", "value": "$__all" },
+        "datasource": { "type": "loki", "uid": "openlain5g-loki" },
+        "definition": "label_values({job=\"openlain5g\",scenario=~\"$scenario\"}, service)",
+        "includeAll": true,
+        "allValue": ".*",
+        "label": "Service",
+        "name": "service",
+        "options": [],
+        "query": "label_values({job=\"openlain5g\",scenario=~\"$scenario\"}, service)",
+        "refresh": 1,
+        "type": "query"
+      }
+    ]
+  },
+  "time": { "from": "now-6h", "to": "now" },
+  "timepicker": { "refresh_intervals": ["5s", "15s", "30s", "1m", "5m", "15m"] },
+  "timezone": "browser",
+  "title": "OpenLain5G Central Logs",
+  "uid": "openlain5g-logs",
+  "version": 1
+}

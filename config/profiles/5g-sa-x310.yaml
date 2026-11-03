@@ -14,9 +14,10 @@ core:
 radio:
   device: x300
   usrp_addr: 192.168.10.2
-  band: 78
-  dl_arfcn: 632628
+  band: 3
+  dl_arfcn: 368500
   bandwidth_mhz: 10
+  subcarrier_spacing_khz: 15
   tx_gain: 20
   rx_gain: 30
   clock_source: internal
@@ -24,10 +25,10 @@ radio:
 safety:
   maximum_duration_seconds: 60
   rf_allowed: false
-  environment: cabled
+  environment: shielded
   attenuation_db: 60
-  antenna_connected: false
-  shielded_environment: false
+  antenna_connected: true
+  shielded_environment: true
   auto_stop: true
   authorization_confirmed: false
-  operator_note: ""
+  operator_note: No active operator authorization; RF start is blocked.

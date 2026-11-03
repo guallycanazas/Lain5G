@@ -6,12 +6,12 @@ export function useSubscriberConnection(profile: SubscriberProfile = '4g-lte-x31
   return useQuery({ queryKey: ['subscribers-connection', profile], queryFn: () => subscribersApi.connection(profile), refetchInterval: 10000 });
 }
 
-export function useSubscribers(params: { limit: number; offset: number; search?: string; profile?: SubscriberProfile }) {
-  return useQuery({ queryKey: ['subscribers', params], queryFn: () => subscribersApi.list(params) });
+export function useSubscribers(params: { limit: number; offset: number; search?: string; profile?: SubscriberProfile }, enabled = true) {
+  return useQuery({ queryKey: ['subscribers', params], queryFn: () => subscribersApi.list(params), enabled });
 }
 
-export function useSubscriberDetail(imsi: string | undefined, profile: SubscriberProfile = '4g-lte-x310') {
-  return useQuery({ queryKey: ['subscriber', imsi, profile], queryFn: () => subscribersApi.detail(imsi || '', profile), enabled: Boolean(imsi) });
+export function useSubscriberDetail(imsi: string | undefined, profile: SubscriberProfile = '4g-lte-x310', enabled = true) {
+  return useQuery({ queryKey: ['subscriber', imsi, profile], queryFn: () => subscribersApi.detail(imsi || '', profile), enabled: Boolean(imsi) && enabled });
 }
 
 export function useSubscriberActions(profile: SubscriberProfile = '4g-lte-x310') {

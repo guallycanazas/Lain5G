@@ -14,8 +14,16 @@ export function useRealImsStatus(mode: RealImsMode, imsi: string) {
   });
 }
 
-export function useRealImsSubscribers(mode: RealImsMode) {
-  return useQuery({ queryKey: ['real-ims', 'subscribers', mode], queryFn: () => realImsApi.subscribers(mode) });
+export function useRealImsRuntimeStatus(mode: RealImsMode) {
+  return useQuery({
+    queryKey: ['real-ims', 'runtime-status', mode],
+    queryFn: () => realImsApi.status(mode, ''),
+    refetchInterval: 10000,
+  });
+}
+
+export function useRealImsSubscribers(mode: RealImsMode, enabled = true) {
+  return useQuery({ queryKey: ['real-ims', 'subscribers', mode], queryFn: () => realImsApi.subscribers(mode), enabled });
 }
 
 export function useRealImsActions() {

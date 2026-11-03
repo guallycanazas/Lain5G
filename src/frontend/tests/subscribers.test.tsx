@@ -37,16 +37,34 @@ describe('Subscriber management', () => {
     expect(screen.getByRole('link', { name: 'Edit' })).toHaveAttribute('href', '/subscribers/001010000000001/edit?profile=5g-sa-x310');
   });
 
-  it('shows empty state and MongoDB errors', async () => {
-    vi.stubGlobal('fetch', vi.fn((url: string) => {
-      if (url.includes('/connection')) return jsonResponse({ ...subscriberConnection, status: 'disconnected', message: 'MongoDB is not available' });
-      if (url.includes('/api/subscribers?')) return jsonResponse({ detail: { code: 'SUBSCRIBER_MONGO_UNAVAILABLE', message: 'MongoDB is not available.' } }, 503);
-      return jsonResponse({});
-    }));
+  it('does not request subscriber data when the selected packet core is stopped', async () => {
+    const fetchMock = vi.fn((url: string) => {
+      if (url.includes('/connection')) return jsonResponse({ ...subscriberConnection, status: 'timeout', message: 'MongoDB did not respond before timeout' });
+      return jsonResponse({ detail: { code: 'SUBSCRIBER_MONGO_UNAVAILABLE', message: 'MongoDB is not available.' } }, 503);
+    });
+    vi.stubGlobal('fetch', fetchMock);
 
     renderWithClient(<SubscribersPage />);
 
-    expect(await screen.findByText('MongoDB is not available.')).toBeInTheDocument();
+    expect(await screen.findByText('Subscriber database unavailable')).toBeInTheDocument();
+    expect(screen.getByText(/profile database did not respond in time/i)).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /open profile status/i })).toHaveAttribute('href', '/scenarios/4g-lte-x310');
+    expect(screen.getByRole('button', { name: 'Add subscriber' })).toBeDisabled();
+    expect(fetchMock.mock.calls.some(([url]) => String(url).startsWith('/api/subscribers?'))).toBe(false);
+    expect(screen.queryByText('MongoDB is not available.')).not.toBeInTheDocument();
+  });
+
+  it('blocks direct subscriber creation until its profile database is connected', async () => {
+    vi.stubGlobal('fetch', vi.fn((url: string) => {
+      if (url.includes('/connection')) return jsonResponse({ ...subscriberConnection, status: 'disconnected', message: 'MongoDB is not available' });
+      return jsonResponse({});
+    }));
+
+    renderWithClient(<SubscriberCreatePage />, '/subscribers/new?profile=4g-lte-x310');
+
+    expect(await screen.findByText('Subscriber database unavailable')).toBeInTheDocument();
+    expect(screen.queryByLabelText('IMSI *')).not.toBeInTheDocument();
+    expect(fetch).not.toHaveBeenCalledWith(expect.stringContaining('/api/subscribers?profile='), expect.objectContaining({ method: 'POST' }));
   });
 
   it('searches subscribers', async () => {
@@ -61,9 +79,10 @@ describe('Subscriber management', () => {
   });
 
   it('validates form fields before creation', async () => {
-    vi.stubGlobal('fetch', vi.fn(() => jsonResponse({})));
+    vi.stubGlobal('fetch', vi.fn((url: string) => url.includes('/connection') ? jsonResponse(subscriberConnection) : jsonResponse({})));
     renderWithClient(<SubscriberCreatePage />);
 
+    await screen.findByRole('button', { name: 'Create subscriber' });
     await userEvent.click(screen.getByRole('button', { name: 'Create subscriber' }));
 
     expect(await screen.findByText('IMSI must contain 5 to 15 digits.')).toBeInTheDocument();
@@ -71,10 +90,12 @@ describe('Subscriber management', () => {
   });
 
   it('creates a valid subscriber and disables button while sending', async () => {
-    vi.stubGlobal('fetch', vi.fn(() => jsonResponse({ subscriber: subscriberDetail, dry_run: false, persisted: true, message: 'created' }, 201)));
+    vi.stubGlobal('fetch', vi.fn((url: string) => url.includes('/connection')
+      ? jsonResponse(subscriberConnection)
+      : jsonResponse({ subscriber: subscriberDetail, dry_run: false, persisted: true, message: 'created' }, 201)));
     renderWithClient(<SubscriberCreatePage />);
 
-    await userEvent.type(screen.getByLabelText('IMSI *'), '001010000000010');
+    await userEvent.type(await screen.findByLabelText('IMSI *'), '001010000000010');
     await userEvent.type(screen.getByLabelText('MSISDN'), '51999999991');
     await userEvent.type(screen.getByLabelText('Ki *'), '00112233445566778899aabbccddeeff');
     await userEvent.type(screen.getByLabelText('OPc'), 'ffeeddccbbaa99887766554433221100');
@@ -85,6 +106,7 @@ describe('Subscriber management', () => {
 
   it('edits while keeping secrets empty', async () => {
     vi.stubGlobal('fetch', vi.fn((url: string, init?: RequestInit) => {
+      if (url.includes('/connection')) return jsonResponse(subscriberConnection);
       if (init?.method === 'PATCH') return jsonResponse({ subscriber: { ...subscriberDetail, msisdn: '51888888888' }, dry_run: false, persisted: true, message: 'updated' });
       return jsonResponse(subscriberDetail);
     }));

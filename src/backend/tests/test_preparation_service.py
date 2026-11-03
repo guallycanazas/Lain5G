@@ -26,6 +26,8 @@ class FakeCommands:
             exit_code = 0 if command[3] in self.installed else 1
         elif command[:2] == ["docker", "pull"]:
             self.installed.add(command[2])
+        elif command[:2] == ["docker", "build"]:
+            self.installed.add(command[command.index("-t") + 1])
         elif command[:2] == ["docker", "tag"]:
             self.installed.add(command[3])
         now = datetime.now(UTC)
@@ -42,6 +44,9 @@ class FakeCommands:
 
 
 def service(tmp_path: Path, commands: FakeCommands) -> PreparationService:
+    context = tmp_path / "images" / "ims-sip"
+    context.mkdir(parents=True, exist_ok=True)
+    (context / "Dockerfile").write_text("FROM python:3.12-slim\n", encoding="utf-8")
     return PreparationService(Settings(project_root=tmp_path, image_pull_enabled=True), commands)  # type: ignore[arg-type]
 
 
@@ -76,6 +81,27 @@ def test_pull_uses_only_fixed_pull_and_tag_commands(tmp_path: Path):
     assert "docker pull gually/lain5g-open5gs:2.7.5-lain1@sha256:d25affe90c39adb35bfef312e725b27d2ef6b139ec1d8b2fe9f5d0da6d82753c" in executed
     assert "docker tag gually/lain5g-open5gs:2.7.5-lain1@sha256:d25affe90c39adb35bfef312e725b27d2ef6b139ec1d8b2fe9f5d0da6d82753c lain5g-lab/open5gs:local" in executed
     assert not any(token in command for command in executed for token in (" build ", " push ", " compose ", " prune "))
+
+
+def test_pull_builds_current_sip_test_tool_from_repository(tmp_path: Path):
+    commands = FakeCommands()
+    result = service(tmp_path, commands).pull("4g-volte-sim")
+
+    build_command = ["docker", "build", "-t", "lain5g-lab/ims-sip:local", str(tmp_path / "images" / "ims-sip")]
+    assert result.profile.ready is True
+    assert result.built == ["lain5g-lab/ims-sip:local"]
+    assert build_command in commands.commands
+    assert not any(command[:2] == ["docker", "pull"] and "lain5g-ims-sip" in command[2] for command in commands.commands)
+
+
+def test_async_pull_builds_sip_tool_and_tracks_it_separately(tmp_path: Path):
+    preparation = service(tmp_path, FakeCommands())
+    started = preparation.start_pull("4g-volte-sim")
+    completed = wait_for_pull(preparation, started.job_id)
+
+    assert completed.state == "succeeded"
+    assert completed.built == ["lain5g-lab/ims-sip:local"]
+    assert not any("ims-sip" in source for source in completed.pulled)
 
 
 def test_unknown_profile_is_rejected_before_docker(tmp_path: Path):

@@ -176,25 +176,6 @@ services:
       - ./ims/dns/ims.hosts:/etc/coredns/ims.hosts:ro
     networks: { core: { ipv4_address: 10.20.0.30 } }
 
-  virtual-phones:
-    image: lain5g-lab/ims-sip:local
-    container_name: lain5g-lab-5g-sa-x310-virtual-phones
-    profiles: ["sip"]
-    command: ["sip_virtual_phones.py"]
-    environment:
-      IMS_DOMAIN: ${IMS_DOMAIN:-ims.mnc001.mcc001.3gppnetwork.org}
-      VIRTUAL_PHONE_A_NUMBER: ${VIRTUAL_PHONE_A_NUMBER:-10004}
-      VIRTUAL_PHONE_A_PASSWORD: ${VIRTUAL_PHONE_A_PASSWORD:-virtual-phone-a-lab-only}
-      VIRTUAL_PHONE_B_NUMBER: ${VIRTUAL_PHONE_B_NUMBER:-10001}
-      VIRTUAL_PHONE_B_PASSWORD: ${VIRTUAL_PHONE_B_PASSWORD:-virtual-phone-b-lab-only}
-      SIP_PHONE_BIND_IP: 10.20.0.32
-      SIP_PCSCF_IP: 10.20.0.20
-      SIP_PCSCF_DOMAIN: pcscf.ims.mnc001.mcc001.3gppnetwork.org
-    dns: [10.20.0.30]
-    depends_on: [dns, pcscf, icscf, scscf]
-    networks: { core: { ipv4_address: 10.20.0.32 } }
-    restart: "no"
-
   gnb-x310:
     image: lain5g-lab/srsranproject-uhd:local
     container_name: lain5g-lab-5g-sa-x310-gnb
@@ -219,9 +200,10 @@ services:
       SST: ${SST:-1}
       SD: ${SD:-000001}
       CHANNEL_BANDWIDTH_MHZ: ${CHANNEL_BANDWIDTH_MHZ:-10}
-      SAMPLE_RATE_MHZ: ${SAMPLE_RATE_MHZ:-15.36}
-      DL_ARFCN: ${DL_ARFCN:-}
-      NR_BAND: ${NR_BAND:-}
+      SAMPLE_RATE_MHZ: ${SAMPLE_RATE_MHZ:-11.52}
+      SUBCARRIER_SPACING_KHZ: ${SUBCARRIER_SPACING_KHZ:-15}
+      DL_ARFCN: ${DL_ARFCN:-368500}
+      NR_BAND: ${NR_BAND:-3}
       TX_GAIN: ${TX_GAIN:-}
       RX_GAIN: ${RX_GAIN:-}
       RF_DURATION_SECONDS: ${LAIN5G_RF_DURATION_SECONDS:-60}

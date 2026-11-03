@@ -1,8 +1,8 @@
 # Copy to channel-plan.yaml and fill only with locally authorized lab values.
-nr_band:
-dl_arfcn:
+nr_band: 3
+dl_arfcn: 368500
 channel_bandwidth_mhz: 10
-common_scs: 30
-duplex_mode:
+common_scs: 15
+duplex_mode: FDD
 authorized_lab_frequency: false
 operator_note: ""

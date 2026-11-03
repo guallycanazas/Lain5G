@@ -1,7 +1,8 @@
 import { Link, useParams, useSearchParams } from 'react-router';
 import { ErrorAlert } from '../components/ErrorAlert';
 import { LoadingState } from '../components/LoadingState';
-import { useSubscriberDetail } from '../hooks/useSubscribers';
+import { SubscriberDatabaseUnavailable } from '../components/subscribers/SubscriberDatabaseUnavailable';
+import { useSubscriberConnection, useSubscriberDetail } from '../hooks/useSubscribers';
 import { formatDate } from '../utils/dates';
 import type { SubscriberProfile } from '../types/subscriber';
 
@@ -9,7 +10,9 @@ export function SubscriberDetailPage() {
   const { imsi } = useParams();
   const [searchParams] = useSearchParams();
   const profile = (searchParams.get('profile') || '4g-lte-x310') as SubscriberProfile;
-  const detail = useSubscriberDetail(imsi, profile);
+  const connection = useSubscriberConnection(profile);
+  const connectionOnline = connection.data?.status === 'connected';
+  const detail = useSubscriberDetail(imsi, profile, connectionOnline);
   const subscriber = detail.data;
   return (
     <section className="panel page-panel">
@@ -20,9 +23,12 @@ export function SubscriberDetailPage() {
           {subscriber ? <Link to={`/subscribers/${subscriber.imsi}/edit?profile=${profile}`}>Edit</Link> : null}
         </div>
       </div>
-      {detail.isLoading ? <LoadingState /> : null}
-      {detail.error ? <ErrorAlert error={detail.error} onRetry={() => detail.refetch()} /> : null}
-      {subscriber ? (
+      {connection.isLoading ? <LoadingState /> : null}
+      {connection.error ? <ErrorAlert error={connection.error} onRetry={() => connection.refetch()} /> : null}
+      {connection.data && !connectionOnline ? <SubscriberDatabaseUnavailable profile={profile} status={connection.data.status} onRetry={() => void connection.refetch()} retrying={connection.isFetching} /> : null}
+      {connectionOnline && detail.isLoading ? <LoadingState /> : null}
+      {connectionOnline && detail.error ? <ErrorAlert error={detail.error} onRetry={() => detail.refetch()} /> : null}
+      {connectionOnline && subscriber ? (
         <>
           <dl className="facts compact">
             <dt>IMSI</dt><dd>{subscriber.imsi}</dd>

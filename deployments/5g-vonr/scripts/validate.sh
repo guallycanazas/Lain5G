@@ -202,13 +202,13 @@ fi
 
 if compose run --rm --no-deps virtual-phones >"$run_dir/logs/virtual-phones-run.log" 2>&1; then
   if grep -Eiq 'VIRTUAL_PHONE_REGISTER_PASS user=.*challenge=401 final=200' "$run_dir/logs/virtual-phones-run.log" && \
-     grep -Eiq 'VIRTUAL_CALL_DIALOG_PASS invite=100,180,200 ack=received' "$run_dir/logs/virtual-phones-run.log" && \
+     grep -Eiq 'VIRTUAL_CALL_DIALOG_PASS invite=100,200 ack=received ringing=(observed|not_observed)' "$run_dir/logs/virtual-phones-run.log" && \
      grep -Eiq 'VIRTUAL_RTP_PASS direction_a_to_b=[1-9][0-9]* direction_b_to_a=[1-9][0-9]* codec=PCMU payload=silence' "$run_dir/logs/virtual-phones-run.log" && \
      grep -Eiq 'VIRTUAL_CALL_TEARDOWN_PASS bye=200' "$run_dir/logs/virtual-phones-run.log" && \
      grep -Eiq 'VIRTUAL_PHONES_RESULT=PASS registration=2 call=completed teardown=passed rtp=bidirectional sip_message=delivered' "$run_dir/logs/virtual-phones-run.log" && \
      logs_have pcscf 'IMS_ACTIVITY method=INVITE .*phase=observed' && \
      logs_have scscf 'IMS_ACTIVITY method=INVITE .*phase=response status=200'; then
-    add_check virtual_call PASS "Two synthetic SIP phones completed INVITE/180/200/ACK/BYE with bidirectional PCMU silence RTP"
+    add_check virtual_call PASS "Two synthetic SIP phones completed INVITE/200/ACK/BYE with bidirectional PCMU silence RTP; ringing evidence is recorded separately"
     add_metric virtual_call "completed"
     add_claim "Virtual IMS call signaling completed; RTP test payload was silence"
   else

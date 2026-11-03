@@ -6,6 +6,7 @@ from fastapi.responses import JSONResponse
 
 from .api import deployments, health, preparation, profiles, real_ims, runs, subscribers, validation
 from .models.deployment import ErrorDetail, ErrorResponse
+from .metrics import configure_metrics
 from .security import MutationDisabledError
 from .services.command_service import CommandSecurityError
 from .services.deployment_service import DeploymentCommandError, DeploymentConflictError, DeploymentNotFoundError
@@ -32,6 +33,7 @@ def create_app() -> FastAPI:
         allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE"],
         allow_headers=["*"],
     )
+    configure_metrics(app)
 
     app.include_router(health.router)
     app.include_router(deployments.router)

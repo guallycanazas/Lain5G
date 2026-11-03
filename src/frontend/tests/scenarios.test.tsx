@@ -49,13 +49,13 @@ describe('Scenario workspaces', () => {
     stubScenarioFetch(); renderWithClient(<ScenariosPage />);
     expect(await screen.findByText('5G - UERANSIM Simulation')).toBeInTheDocument();
     expect(screen.getByText('4G - srsRAN ZMQ Simulation')).toBeInTheDocument();
-    expect(screen.getByText('4G LTE + VoLTE Signaling')).toBeInTheDocument();
-    expect(screen.getByText('5G SA + VoNR Signaling')).toBeInTheDocument();
+    expect(screen.queryByText('4G LTE + VoLTE Signaling')).not.toBeInTheDocument();
+    expect(screen.queryByText('5G SA + VoNR Signaling')).not.toBeInTheDocument();
     expect(screen.getByText('4G - Guarded LTE RF')).toBeInTheDocument();
     expect(screen.getByText('5G - Guarded SA RF')).toBeInTheDocument();
     expect(screen.getByText('5G NSA - Guarded EN-DC RF')).toBeInTheDocument();
     expect(screen.getAllByText('Real hardware')).toHaveLength(3);
-    expect(screen.getAllByText(/^\d+ checks$/)).toHaveLength(7);
+    expect(screen.getAllByText(/^\d+ checks$/)).toHaveLength(5);
   });
   it('keeps scenario commands and workspace tabs reachable', async () => {
     stubScenarioFetch(); renderRoute('/scenarios/:scenarioId', <ScenarioDetailPage />, '/scenarios/5g-sa');
@@ -72,7 +72,8 @@ describe('Scenario workspaces', () => {
     expect(screen.getByRole('button', { name: 'Start X310 lab' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Emergency stop' })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Start' })).not.toBeInTheDocument();
-    expect(screen.getByText('Compact IMS and an isolated virtual SIP call check')).toBeInTheDocument();
+    expect(screen.getByText('Compact IMS services')).toBeInTheDocument();
+    expect(screen.queryByText(/virtual SIP call/i)).not.toBeInTheDocument();
     expect(screen.getByText('Validation evidence is saved per run')).toBeInTheDocument();
     expect(screen.getByText('Recommended 4G X310 run order')).toBeInTheDocument();
     expect(screen.getByText('Button guide')).toBeInTheDocument();

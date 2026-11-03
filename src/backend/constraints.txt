@@ -21,6 +21,7 @@ pydantic-settings==2.14.2
 pydantic_core==2.46.4
 Pygments==2.20.0
 pymongo==4.17.0
+prometheus-client==0.26.0
 pytest==9.1.1
 pytest-cov==7.1.0
 python-dotenv==1.2.2

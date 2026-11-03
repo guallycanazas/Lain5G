@@ -21,7 +21,11 @@ vi.mock('../src/services/realImsApi', () => ({
 const report = {
   mode: '4g' as const,
   status: 'PASS',
-  checks: [{ id: 'pcscf', status: 'PASS', message: 'P-CSCF is ready', evidence: 'pcscf:5060' }],
+  checks: [
+    { id: 'services', status: 'PASS', message: 'All required real IMS services are running', evidence: {} },
+    { id: 'pyhss_api', status: 'PASS', message: 'pyHSS is ready', evidence: {} },
+    { id: 'pcscf', status: 'PASS', message: 'P-CSCF is ready', evidence: 'pcscf:5060' },
+  ],
 };
 
 describe('Real IMS operator page', () => {
@@ -42,7 +46,7 @@ describe('Real IMS operator page', () => {
     renderWithClient(<RealImsPage />);
 
     expect(screen.getByRole('heading', { name: 'IMS synchronization' })).toBeInTheDocument();
-    expect(screen.getByText(/same IMSI as the packet-core record/i)).toBeInTheDocument();
+    expect(screen.getByText(/One IMS identity is synchronized into the selected IMS runtime/i)).toBeInTheDocument();
     await waitFor(() => expect(realImsApi.subscribers).toHaveBeenCalledWith('4g'));
 
     await user.click(screen.getByRole('button', { name: '5G' }));
@@ -97,6 +101,21 @@ describe('Real IMS operator page', () => {
     await waitFor(() => expect(vi.mocked(realImsApi.start).mock.calls[0]?.[0]).toEqual({ mode: '5g', execute: true, mcc: '001', mnc: '01' }));
   });
 
+  it('does not query or offer IMS subscriber provisioning while services are stopped', async () => {
+    vi.mocked(realImsApi.status).mockResolvedValue({
+      mode: '4g', status: 'FAIL', checks: [
+        { id: 'services', status: 'FAIL', message: 'Required real IMS services are not running', evidence: {} },
+        { id: 'pyhss_api', status: 'FAIL', message: 'pyHSS API is not ready', evidence: {} },
+      ],
+    });
+
+    renderWithClient(<RealImsPage />);
+
+    expect(await screen.findByText(/IMS services are stopped or incomplete/i)).toBeInTheDocument();
+    expect(screen.queryByLabelText('IMSI')).not.toBeInTheDocument();
+    expect(realImsApi.subscribers).not.toHaveBeenCalled();
+  });
+
   it('shows correlated IMS subscribers without authentication secrets', async () => {
     vi.mocked(realImsApi.subscribers).mockResolvedValue({
       mode: '4g', count: 1, secrets_redacted: true,
@@ -129,7 +148,7 @@ describe('Real IMS operator page', () => {
     await waitFor(() => expect(vi.mocked(realImsApi.syncSubscriber).mock.calls[0]?.[0]).toEqual({
       source_mode: '4g', target_mode: '5g', mcc: '001', mnc: '01', imsi: '001010000000001',
     }));
-    expect(await screen.findByRole('status')).toHaveTextContent(/synchronized from 4G IMS to 5G IMS/i);
+    expect(await screen.findByText(/synchronized from 4G IMS to 5G IMS/i)).toBeInTheDocument();
   });
 });
 

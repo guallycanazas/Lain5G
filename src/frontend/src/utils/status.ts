@@ -12,6 +12,7 @@ export function deploymentLabel(status: DeploymentState | string): string {
     validating: 'Validating',
     standby: 'Standby',
     unknown: 'Unknown',
+    inactive: 'Unavailable',
     dry_run: 'Dry-run',
   };
   return labels[status] || status;

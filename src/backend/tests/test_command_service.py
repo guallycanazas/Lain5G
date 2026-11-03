@@ -118,6 +118,33 @@ def test_rejects_unauthorized_docker_subcommand(real_settings):
         service.execute_command(["docker", "system", "prune"])
 
 
+def test_allows_docker_build_only_for_checked_in_sip_helper(project_root, real_settings):
+    context = project_root / "images" / "ims-sip"
+    context.mkdir(parents=True)
+    (context / "Dockerfile").write_text("FROM python:3.12-slim\n", encoding="utf-8")
+    service = CommandService(real_settings)
+
+    result = service.execute_command(
+        ["docker", "build", "-t", "lain5g-lab/ims-sip:local", str(context)],
+        dry_run=True,
+    )
+
+    assert result.dry_run is True
+    assert "docker build -t lain5g-lab/ims-sip:local" in result.stdout
+
+
+def test_rejects_arbitrary_docker_build_targets_and_contexts(project_root, real_settings):
+    context = project_root / "images" / "ims-sip"
+    context.mkdir(parents=True)
+    (context / "Dockerfile").write_text("FROM python:3.12-slim\n", encoding="utf-8")
+    service = CommandService(real_settings)
+
+    with pytest.raises(CommandSecurityError, match="target"):
+        service.execute_command(["docker", "build", "-t", "attacker/image:latest", str(context)])
+    with pytest.raises(CommandSecurityError, match="outside"):
+        service.execute_command(["docker", "build", "-t", "lain5g-lab/ims-sip:local", "/tmp"])
+
+
 def test_rejects_unauthorized_compose_action(real_settings):
     service = CommandService(real_settings)
 

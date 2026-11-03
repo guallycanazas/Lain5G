@@ -83,7 +83,7 @@ export function SimulationStartDialog({ deployment, open, loading, missingImages
             })}
           </div>
           <div className="simulation-launch-note"><strong>What happens next</strong><p>The backend creates or preserves private synthetic credentials for this profile, checks for another active scenario, starts the stack, and refreshes service status. Use <b>Validate</b> after startup to record registration, session and signaling evidence.</p></div>
-          {missingImages.length ? <div className="warning-box"><strong>{missingImages.length} component{missingImages.length === 1 ? '' : 's'} missing</strong><ul>{missingImages.map((image) => <li key={image.local_image}>{image.description}</li>)}</ul><p>Confirm to download these images first. The simulation starts only after every component is ready.</p></div> : null}
+          {missingImages.length ? <div className="warning-box"><strong>{missingImages.length} component{missingImages.length === 1 ? '' : 's'} missing</strong><ul>{missingImages.map((image) => <li key={image.local_image}>{image.description}</li>)}</ul><p>Confirm to prepare these components first. The simulation starts only after every component is ready.</p></div> : null}
           {pullJob ? <ComponentPullProgress job={pullJob} /> : null}
         </div>
         <footer><ActionButton variant="secondary" disabled={loading} onClick={onCancel}>Cancel</ActionButton><ActionButton loading={loading} onClick={onConfirm}>{missingImages.length ? <Download size={15} /> : <Boxes size={15} />}{missingImages.length ? `Download ${missingImages.length} and start` : 'Start full simulation'}</ActionButton></footer>

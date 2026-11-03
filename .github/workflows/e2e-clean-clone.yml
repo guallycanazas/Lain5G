@@ -144,6 +144,54 @@ jobs:
             "${compose[@]}" exec -T ue sh -lc 'ip -brief link; ip -brief -4 addr' 2>&1 || true
           } > e2e-artifacts/lte-restart-diagnostics.txt
 
+      - name: Exercise 4G VoLTE and IMS simulation twice
+        id: ims-e2e
+        shell: bash
+        run: |
+          set -euo pipefail
+          trap 'deployments/4g-volte/sim/scripts/stop.sh >/dev/null 2>&1 || true' EXIT
+          PYTHONPATH=src .venv/bin/python - <<'PY'
+          from pathlib import Path
+          from backend.app.services.scenario_environment import prepare_scenario_environment
+
+          path, _ = prepare_scenario_environment(Path.cwd(), "4g-volte-sim")
+          print(f"Prepared isolated synthetic IMS credentials in {path.relative_to(Path.cwd())}")
+          PY
+          compose=(docker compose --env-file deployments/4g-volte/common/.env \
+            -f deployments/4g-volte/sim/docker-compose.yml)
+          for iteration in 1 2; do
+            deployments/4g-volte/sim/scripts/start.sh
+            ue_ready=false
+            for attempt in $(seq 1 45); do
+              if "${compose[@]}" exec -T ue sh -lc \
+                'ip -brief link | grep -Eiq "(^|[[:space:]])tun|srs" && ping -c 1 -W 1 10.55.0.1 >/dev/null 2>&1'; then
+                ue_ready=true
+                break
+              fi
+              sleep 2
+            done
+            if [ "$ue_ready" != true ]; then
+              "${compose[@]}" logs --no-color --tail 120 ue enb mme
+              exit 1
+            fi
+            deployments/4g-volte/sim/scripts/validate.sh
+            deployments/4g-volte/sim/scripts/stop.sh
+            .venv/bin/python scripts/verify/profile_e2e_summary.py \
+              4g-volte-sim "$iteration" e2e-artifacts/profile-results.jsonl
+          done
+
+      - name: Capture redacted IMS restart diagnostics
+        if: failure() && steps.ims-e2e.outcome == 'failure'
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p e2e-artifacts
+          docker compose --env-file deployments/4g-volte/common/.env \
+            -f deployments/4g-volte/sim/docker-compose.yml logs --no-color --tail 160 2>&1 \
+            | sed -E -e 's/[0-9]{15}/[IMSI]/g' -e 's/[[:xdigit:]]{32}/[KEY]/g' \
+            | grep -Ei 'error|warn|register|invite|message|ims|attach|bearer|tunnel|s1ap|rrc|tun' \
+            | tail -n 160 > e2e-artifacts/ims-restart-diagnostics.txt || true
+
       - name: Exercise 5G SA simulation twice
         shell: bash
         run: |
@@ -165,6 +213,7 @@ jobs:
         shell: bash
         run: |
           ./lain5g scenario stop 4g-lte-sim >/dev/null 2>&1 || true
+          deployments/4g-volte/sim/scripts/stop.sh >/dev/null 2>&1 || true
           ./lain5g scenario stop 5g-sa >/dev/null 2>&1 || true
           docker stop openlain5g-e2e-mongo >/dev/null 2>&1 || true
 

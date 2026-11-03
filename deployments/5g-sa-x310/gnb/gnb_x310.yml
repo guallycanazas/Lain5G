@@ -32,7 +32,7 @@ cell_cfg:
   dl_arfcn: ${DL_ARFCN}
   band: ${NR_BAND}
   channel_bandwidth_MHz: ${CHANNEL_BANDWIDTH_MHZ}
-  common_scs: 30
+  common_scs: ${SUBCARRIER_SPACING_KHZ}
   plmn: "${MCC}${MNC}"
   tac: ${TAC}
   pci: 1

@@ -64,25 +64,28 @@ def test_compose_is_isolated_and_rf_profile_only():
     assert "lain5g-lab/ueransim" not in compose
     assert "./open5gs/amf.yaml" in compose
     assert "./open5gs/smf.yaml" in compose
-    assert 'profiles: ["sip"]' in compose
-    assert "virtual-phones:" in compose
-    assert "SIP_PHONE_BIND_IP: 10.20.0.32" in compose
+    assert "virtual-phones:" not in compose
+    assert "VIRTUAL_PHONE_" not in compose
 
 
-def test_x310_virtual_call_validation_does_not_start_rf():
+def test_x310_validation_does_not_run_synthetic_ims_call():
     validate = (DEPLOY / "scripts" / "validate.sh").read_text(encoding="utf-8")
-    helper = (ROOT / "deployments/shared/validate-ims-virtual-call.sh").read_text(encoding="utf-8")
 
-    assert "validate-ims-virtual-call.sh" in validate
-    assert 'docker compose --env-file "$env_file" -f docker-compose.yml --profile sip "$@"' in helper
-    assert "--profile rf" not in helper
-    assert "gnb-x310" not in helper
-    assert "IMS_VIRTUAL_CALL_NOT_TESTED" in helper
+    assert "validate-ims-virtual-call.sh" not in validate
+    assert "virtual_call" not in validate
 
 
 def test_env_example_does_not_commit_rf_values_or_secrets():
     env = (DEPLOY / ".env.example").read_text(encoding="utf-8")
-    for name in ["DL_ARFCN", "NR_BAND", "TX_GAIN", "RX_GAIN", "AMF_ADDR", "GNB_BIND_ADDR", "N3_BIND_ADDR"]:
+    # Keep the supported n3 tuple visible while leaving operator gain and
+    # network-specific settings unset in the example.
+    for name, value in {
+        "DL_ARFCN": "368500",
+        "NR_BAND": "3",
+        "SUBCARRIER_SPACING_KHZ": "15",
+    }.items():
+        assert f"{name}={value}\n" in env
+    for name in ["TX_GAIN", "RX_GAIN", "AMF_ADDR", "GNB_BIND_ADDR", "N3_BIND_ADDR"]:
         assert f"{name}=\n" in env
     forbidden = ["SUBSCRIBER_KEY", "SUBSCRIBER_OPC", "KI=", "K=", "OPC="]
     for item in forbidden:

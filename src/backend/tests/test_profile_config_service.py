@@ -76,7 +76,9 @@ def make_profile_project(tmp_path: Path) -> Path:
     profile_5g = root / "config/profiles/5g-sa-x310.yaml"
     profile_5g.write_text(
         profile_5g.read_text(encoding="utf-8")
+        .replace("band: 3", "band: null")
         .replace("band: 78", "band: null")
+        .replace("dl_arfcn: 368500", "dl_arfcn: null")
         .replace("band: 41", "band: null")
         .replace("dl_arfcn: 632628", "dl_arfcn: null")
         .replace("dl_arfcn: 520002", "dl_arfcn: null")
@@ -446,7 +448,7 @@ def test_5g_x310_apply_updates_effective_core_radio_and_safety_files(tmp_path: P
     profile = svc.get_profile("5g-sa-x310")
     profile["network"]["tac"] = 9
     profile["network"]["dnn"] = "x310net"
-    profile["radio"].update({"band": 78, "dl_arfcn": 632700, "bandwidth_mhz": 20, "tx_gain": 22, "rx_gain": 31})
+    profile["radio"].update({"band": 78, "dl_arfcn": 632700, "bandwidth_mhz": 20, "subcarrier_spacing_khz": 30, "tx_gain": 22, "rx_gain": 31})
     profile["safety"]["authorization_confirmed"] = True
     profile["safety"]["operator_note"] = "Authorized shielded 5G X310 test."
     profile["safety"]["maximum_duration_seconds"] = 120

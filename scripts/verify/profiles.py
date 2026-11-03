@@ -26,7 +26,6 @@ RF_GUARD_FAILURES = {
     },
     "5g-sa-x310": {
         "RF authorization must be confirmed before transmission",
-        "safety.operator_note must not be empty",
     },
     "5g-nsa-x310": {
         "RF authorization must be confirmed before transmission",

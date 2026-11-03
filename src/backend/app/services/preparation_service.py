@@ -9,7 +9,7 @@ from uuid import uuid4
 from ..models.preparation import ComponentImageStatus, ComponentPullImageProgress, ComponentPullJob, ComponentPullResponse, DockerHostInfo, PreparationCheck, PreparationReport, ProfileComponentStatus
 from ..settings import Settings
 from .command_service import DOCKER_HOST_INFO_FORMAT, CommandService
-from .image_catalog import IMAGE_CATALOG, PROFILE_IMAGES, PUBLIC_PROFILE_IDS, RF_ACCESS_IMAGES, required_images
+from .image_catalog import IMAGE_CATALOG, LOCAL_BUILD_IMAGES, PROFILE_IMAGES, PUBLIC_PROFILE_IDS, RF_ACCESS_IMAGES, required_images
 from .scenario_environment import prepare_scenario_environment
 
 
@@ -227,10 +227,24 @@ class PreparationService:
         if not self._pull_lock.acquire(blocking=False):
             raise PreparationError(409, "IMAGE_PULL_BUSY", "A component download is already in progress.")
         pulled: list[str] = []
+        built: list[str] = []
         try:
             current = self.profile_status(profile_id, core_only)
             for image in current.images:
                 if image.installed:
+                    continue
+                build_context = self._local_build_context(image.local_image)
+                if build_context is not None:
+                    result = self.command_service.execute_command(
+                        ["docker", "build", "-t", image.local_image, str(build_context)],
+                        dry_run=False,
+                        timeout=self.settings.image_pull_timeout,
+                    )
+                    if result.timed_out:
+                        raise PreparationError(504, "IMAGE_BUILD_TIMEOUT", f"The local image build exceeded the allowed time: {image.local_image}")
+                    if result.exit_code != 0:
+                        raise PreparationError(502, "IMAGE_BUILD_FAILED", f"Could not build {image.local_image} from the repository.")
+                    built.append(image.local_image)
                     continue
                 result = self.command_service.execute_command(
                     ["docker", "pull", image.source_image], dry_run=False, timeout=self.settings.image_pull_timeout
@@ -250,7 +264,8 @@ class PreparationService:
             return ComponentPullResponse(
                 profile=refreshed,
                 pulled=pulled,
-                message="Components prepared without building images or starting services.",
+                built=built,
+                message="Missing images were downloaded or built locally. Lab services remain stopped.",
             )
         finally:
             self._pull_lock.release()
@@ -323,21 +338,30 @@ class PreparationService:
                 with self._jobs_lock:
                     job = self._jobs[job_id]
                     image = job.images[index]
-                    image.state = "pulling"
+                    build_context = self._local_build_context(image.local_image)
+                    image.state = "building" if build_context is not None else "pulling"
                     job.current_image = image.local_image
                     job.current_index = index + 1
                     source_image = image.source_image
                     local_image = image.local_image
-                result = self.command_service.execute_command(
-                    ["docker", "pull", source_image], dry_run=False, timeout=self.settings.image_pull_timeout
+                build_context = self._local_build_context(local_image)
+                command = (
+                    ["docker", "build", "-t", local_image, str(build_context)]
+                    if build_context is not None
+                    else ["docker", "pull", source_image]
                 )
+                result = self.command_service.execute_command(command, dry_run=False, timeout=self.settings.image_pull_timeout)
                 if result.timed_out:
-                    self._fail_pull_job(job_id, index, "IMAGE_PULL_TIMEOUT", f"The download exceeded the allowed time: {source_image}")
+                    code = "IMAGE_BUILD_TIMEOUT" if build_context is not None else "IMAGE_PULL_TIMEOUT"
+                    detail = f"The local image build exceeded the allowed time: {local_image}" if build_context is not None else f"The download exceeded the allowed time: {source_image}"
+                    self._fail_pull_job(job_id, index, code, detail)
                     return
                 if result.exit_code != 0:
-                    self._fail_pull_job(job_id, index, "IMAGE_PULL_FAILED", f"Could not download {source_image}.")
+                    code = "IMAGE_BUILD_FAILED" if build_context is not None else "IMAGE_PULL_FAILED"
+                    detail = f"Could not build {local_image} from the repository." if build_context is not None else f"Could not download {source_image}."
+                    self._fail_pull_job(job_id, index, code, detail)
                     return
-                if source_image != local_image:
+                if build_context is None and source_image != local_image:
                     with self._jobs_lock:
                         self._jobs[job_id].images[index].state = "tagging"
                     tagged = self.command_service.execute_command(
@@ -349,7 +373,10 @@ class PreparationService:
                 with self._jobs_lock:
                     job = self._jobs[job_id]
                     job.images[index].state = "succeeded"
-                    job.pulled.append(source_image)
+                    if build_context is not None:
+                        job.built.append(local_image)
+                    else:
+                        job.pulled.append(source_image)
                     job.completed_count = index + 1
                     job.overall_percent = round(job.completed_count * 100 / job.total_count)
             with self._jobs_lock:
@@ -359,7 +386,7 @@ class PreparationService:
                 job.finished_at = datetime.now(UTC)
                 job.overall_percent = 100
         except Exception:
-            self._fail_pull_job(job_id, None, "IMAGE_PULL_FAILED", "The component download ended unexpectedly.")
+            self._fail_pull_job(job_id, None, "COMPONENT_PREPARATION_FAILED", "Component preparation ended unexpectedly.")
         finally:
             with self._jobs_lock:
                 if self._active_job_id == job_id:
@@ -404,3 +431,15 @@ class PreparationService:
             description=description,
             installed=result.exit_code == 0,
         )
+
+    def _local_build_context(self, local_image: str) -> Path | None:
+        relative_context = LOCAL_BUILD_IMAGES.get(local_image)
+        if relative_context is None:
+            return None
+        root = self.settings.project_root.resolve()
+        context = (root / relative_context).resolve()
+        if not context.is_relative_to(root):
+            raise PreparationError(500, "IMAGE_BUILD_CONTEXT_INVALID", "The local image build context is outside the project.")
+        if not (context / "Dockerfile").is_file():
+            raise PreparationError(500, "IMAGE_BUILD_CONTEXT_MISSING", f"The local image build context is missing: {relative_context}")
+        return context

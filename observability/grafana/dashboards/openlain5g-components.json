@@ -1,0 +1,117 @@
+{
+  "annotations": { "list": [] },
+  "description": "Architecture-oriented view of RAN, Open5GS packet core, IMS voice, and subscriber data. Component signals in this dashboard are derived from container logs.",
+  "editable": false,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 1,
+  "id": null,
+  "links": [
+    { "title": "Central log explorer", "url": "/grafana/d/openlain5g-logs/openlain5g-central-logs", "type": "link", "targetBlank": false },
+    { "title": "Application runtime", "url": "/grafana/d/openlain5g-runtime/openlain5g-runtime", "type": "link", "targetBlank": false }
+  ],
+  "panels": [
+    {
+      "datasource": { "type": "datasource", "uid": "-- Dashboard --" },
+      "gridPos": { "h": 4, "w": 24, "x": 0, "y": 0 },
+      "id": 1,
+      "options": {
+        "mode": "markdown",
+        "content": "### Network component view\n\nThe rows below group **container log activity** by the lab architecture: RAN (srsRAN / UERANSIM), Open5GS packet core, IMS voice (Kamailio and SIP services), and subscriber data. Prometheus currently measures the OpenLain5G backend and monitoring stack. Radio KPIs such as CQI, MCS, BLER, RF power, and per-subscriber throughput are not exported to Prometheus by the current profile images, so they are not represented here as live measurements."
+      },
+      "title": "How to read this dashboard",
+      "type": "text"
+    },
+    {
+      "datasource": { "type": "loki", "uid": "openlain5g-loki" },
+      "fieldConfig": { "defaults": { "unit": "short", "color": { "mode": "palette-classic" } }, "overrides": [] },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 4 },
+      "id": 2,
+      "options": { "legend": { "displayMode": "list", "placement": "bottom", "showLegend": true }, "tooltip": { "mode": "multi", "sort": "desc" } },
+      "targets": [
+        { "expr": "sum(count_over_time({job=\"openlain5g\",scenario=~\"$scenario\",service=~\".*(enb|gnb|ue|ueransim|srsran).*\"}[$__interval]))", "legendFormat": "RAN · srsRAN / UERANSIM", "queryType": "range", "refId": "A" },
+        { "expr": "sum(count_over_time({job=\"openlain5g\",scenario=~\"$scenario\",service=~\"(nrf|amf|smf|upf|ausf|udm|udr|pcf|mme|hss|sgwc|sgwu|pgwc|pgwu|pcrf)\"}[$__interval]))", "legendFormat": "Open5GS Core", "queryType": "range", "refId": "B" },
+        { "expr": "sum(count_over_time({job=\"openlain5g\",scenario=~\"$scenario\",service=~\"(pcscf|icscf|scscf|rtpengine|smsc|sip-register|virtual-phones)\"}[$__interval]))", "legendFormat": "IMS · Kamailio / SIP", "queryType": "range", "refId": "C" },
+        { "expr": "sum(count_over_time({job=\"openlain5g\",scenario=~\"$scenario\",service=~\".*(mongo|database|provisioner|mysql|mariadb).*\"}[$__interval]))", "legendFormat": "Subscriber / IMS data", "queryType": "range", "refId": "D" }
+      ],
+      "title": "Log activity by architecture layer",
+      "type": "timeseries"
+    },
+    {
+      "datasource": { "type": "loki", "uid": "openlain5g-loki" },
+      "fieldConfig": { "defaults": { "unit": "short", "color": { "mode": "thresholds", "steps": [{ "color": "green", "value": null }, { "color": "orange", "value": 1 }, { "color": "red", "value": 10 }] } }, "overrides": [] },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 4 },
+      "id": 3,
+      "options": { "legend": { "displayMode": "list", "placement": "bottom", "showLegend": true }, "tooltip": { "mode": "multi", "sort": "desc" } },
+      "targets": [
+        { "expr": "sum(count_over_time({job=\"openlain5g\",scenario=~\"$scenario\",service=~\".*(enb|gnb|ue|ueransim|srsran).*\"} |~ \"(?i)(error|fatal|critical)\"[$__interval]))", "legendFormat": "RAN", "queryType": "range", "refId": "A" },
+        { "expr": "sum(count_over_time({job=\"openlain5g\",scenario=~\"$scenario\",service=~\"(nrf|amf|smf|upf|ausf|udm|udr|pcf|mme|hss|sgwc|sgwu|pgwc|pgwu|pcrf)\"} |~ \"(?i)(error|fatal|critical)\"[$__interval]))", "legendFormat": "Open5GS Core", "queryType": "range", "refId": "B" },
+        { "expr": "sum(count_over_time({job=\"openlain5g\",scenario=~\"$scenario\",service=~\"(pcscf|icscf|scscf|rtpengine|smsc|sip-register|virtual-phones)\"} |~ \"(?i)(error|fatal|critical)\"[$__interval]))", "legendFormat": "IMS voice", "queryType": "range", "refId": "C" },
+        { "expr": "sum(count_over_time({job=\"openlain5g\",scenario=~\"$scenario\",service=~\".*(mongo|database|provisioner|mysql|mariadb).*\"} |~ \"(?i)(error|fatal|critical)\"[$__interval]))", "legendFormat": "Subscriber / IMS data", "queryType": "range", "refId": "D" }
+      ],
+      "title": "Error and critical log events by layer",
+      "type": "timeseries"
+    },
+    {
+      "datasource": { "type": "loki", "uid": "openlain5g-loki" },
+      "gridPos": { "h": 10, "w": 12, "x": 0, "y": 12 },
+      "id": 4,
+      "options": { "dedupStrategy": "none", "enableLogDetails": true, "prettifyLogMessage": false, "showCommonLabels": true, "showLabels": true, "showTime": true, "sortOrder": "Descending", "wrapLogMessage": true },
+      "targets": [{ "direction": "backward", "expr": "{job=\"openlain5g\",scenario=~\"$scenario\",service=~\".*(enb|gnb|ue|ueransim|srsran).*\"}", "maxLines": 1000, "queryType": "range", "refId": "A" }],
+      "title": "RAN · srsRAN / UERANSIM",
+      "type": "logs"
+    },
+    {
+      "datasource": { "type": "loki", "uid": "openlain5g-loki" },
+      "gridPos": { "h": 10, "w": 12, "x": 12, "y": 12 },
+      "id": 5,
+      "options": { "dedupStrategy": "none", "enableLogDetails": true, "prettifyLogMessage": false, "showCommonLabels": true, "showLabels": true, "showTime": true, "sortOrder": "Descending", "wrapLogMessage": true },
+      "targets": [{ "direction": "backward", "expr": "{job=\"openlain5g\",scenario=~\"$scenario\",service=~\"(nrf|amf|smf|upf|ausf|udm|udr|pcf|mme|hss|sgwc|sgwu|pgwc|pgwu|pcrf)\"}", "maxLines": 1000, "queryType": "range", "refId": "A" }],
+      "title": "Packet core · Open5GS",
+      "type": "logs"
+    },
+    {
+      "datasource": { "type": "loki", "uid": "openlain5g-loki" },
+      "gridPos": { "h": 10, "w": 12, "x": 0, "y": 22 },
+      "id": 6,
+      "options": { "dedupStrategy": "none", "enableLogDetails": true, "prettifyLogMessage": false, "showCommonLabels": true, "showLabels": true, "showTime": true, "sortOrder": "Descending", "wrapLogMessage": true },
+      "targets": [{ "direction": "backward", "expr": "{job=\"openlain5g\",scenario=~\"$scenario\",service=~\"(pcscf|icscf|scscf|rtpengine|smsc|sip-register|virtual-phones)\"}", "maxLines": 1000, "queryType": "range", "refId": "A" }],
+      "title": "IMS voice · Kamailio / SIP / RTP",
+      "type": "logs"
+    },
+    {
+      "datasource": { "type": "loki", "uid": "openlain5g-loki" },
+      "gridPos": { "h": 10, "w": 12, "x": 12, "y": 22 },
+      "id": 7,
+      "options": { "dedupStrategy": "none", "enableLogDetails": true, "prettifyLogMessage": false, "showCommonLabels": true, "showLabels": true, "showTime": true, "sortOrder": "Descending", "wrapLogMessage": true },
+      "targets": [{ "direction": "backward", "expr": "{job=\"openlain5g\",scenario=~\"$scenario\",service=~\".*(mongo|database|provisioner|mysql|mariadb).*\"}", "maxLines": 1000, "queryType": "range", "refId": "A" }],
+      "title": "Subscriber and IMS data services",
+      "type": "logs"
+    }
+  ],
+  "refresh": "15s",
+  "schemaVersion": 41,
+  "tags": ["OpenLain5G", "RAN", "Open5GS", "Kamailio", "components"],
+  "templating": {
+    "list": [
+      {
+        "current": { "selected": true, "text": "All", "value": "$__all" },
+        "datasource": { "type": "loki", "uid": "openlain5g-loki" },
+        "definition": "label_values({job=\"openlain5g\"}, scenario)",
+        "includeAll": true,
+        "allValue": ".*",
+        "label": "Profile",
+        "name": "scenario",
+        "options": [],
+        "query": "label_values({job=\"openlain5g\"}, scenario)",
+        "refresh": 1,
+        "type": "query"
+      }
+    ]
+  },
+  "time": { "from": "now-6h", "to": "now" },
+  "timepicker": { "refresh_intervals": ["5s", "15s", "30s", "1m", "5m", "15m"] },
+  "timezone": "browser",
+  "title": "OpenLain5G Network Components",
+  "uid": "openlain5g-components",
+  "version": 1
+}

@@ -7,6 +7,7 @@ import re
 import secrets
 import socket
 import sys
+import time
 
 
 def env(name: str) -> str:
@@ -22,6 +23,7 @@ SUBSCRIBER_IMSI = os.environ.get("SUBSCRIBER_IMSI", "")
 SUBSCRIBER_MSISDN = os.environ.get("SUBSCRIBER_MSISDN", "")
 IMS_AUTH_PASSWORD = os.environ.get("IMS_AUTH_PASSWORD", "")
 BIND_IP = os.environ.get("SCSCF_BIND_IP", "10.41.0.22")
+INVITE_RESPONSE_REORDER_GRACE_SECONDS = 5.0
 
 
 def configured_users() -> dict[str, dict[str, str]]:
@@ -32,15 +34,15 @@ def configured_users() -> dict[str, dict[str, str]]:
             "impu": f"sip:{SUBSCRIBER_MSISDN}@{IMS_DOMAIN}",
             "password": IMS_AUTH_PASSWORD,
         }
-    for label, default_number, default_password in (
-        ("A", "10004", "virtual-phone-a-lab-only"),
-        ("B", "10001", "virtual-phone-b-lab-only"),
-    ):
-        number = os.environ.get(f"VIRTUAL_PHONE_{label}_NUMBER", default_number)
+    for label in ("A", "B"):
+        number = os.environ.get(f"VIRTUAL_PHONE_{label}_NUMBER", "")
+        password = os.environ.get(f"VIRTUAL_PHONE_{label}_PASSWORD", "")
+        if not number or not password:
+            continue
         users[number] = {
             "impi": f"{number}@{IMS_DOMAIN}",
             "impu": f"sip:{number}@{IMS_DOMAIN}",
-            "password": os.environ.get(f"VIRTUAL_PHONE_{label}_PASSWORD", default_password),
+            "password": password,
         }
     return users
 
@@ -155,9 +157,15 @@ def main() -> None:
     nonces = {number: secrets.token_hex(16) for number in users}
     contacts: dict[str, tuple[str, int]] = {}
     transactions: dict[str, tuple[tuple[str, int], str, str, str, str]] = {}
+    transaction_expiry: dict[str, float] = {}
     print(f"SCSCF_READY users={len(users)}", flush=True)
     while True:
         data, address = sock.recvfrom(65535)
+        now = time.monotonic()
+        for expired_branch, expires_at in tuple(transaction_expiry.items()):
+            if now >= expires_at:
+                transactions.pop(expired_branch, None)
+                transaction_expiry.pop(expired_branch, None)
         message = data.decode("utf-8", errors="replace")
         if message.startswith("SIP/2.0 "):
             headers = parse_headers(message)
@@ -173,7 +181,14 @@ def main() -> None:
                     log_activity(method=method, from_user=from_user, to_user=to_user, flow_id=flow_id, phase="response", status=status_code)
                 sock.sendto(remove_top_via(message).encode("utf-8"), upstream)
                 if status_code >= 200:
-                    transactions.pop(branch, None)
+                    if method == "INVITE" and status_code == 200:
+                        # A UDP 200 can overtake an earlier 180 while in flight.
+                        # Keep the proxy transaction briefly so that delayed
+                        # provisional responses still reach the caller.
+                        transaction_expiry[branch] = now + INVITE_RESPONSE_REORDER_GRACE_SECONDS
+                    else:
+                        transactions.pop(branch, None)
+                        transaction_expiry.pop(branch, None)
             else:
                 print("SCSCF_UNMATCHED_RESPONSE", flush=True)
             continue

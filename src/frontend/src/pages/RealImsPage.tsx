@@ -6,7 +6,7 @@ import { ConfirmDialog } from '../components/ConfirmDialog';
 import { ErrorAlert } from '../components/ErrorAlert';
 import { LoadingState } from '../components/LoadingState';
 import { StatusBadge } from '../components/StatusBadge';
-import { useRealImsActions, useRealImsStatus, useRealImsSubscribers } from '../hooks/useRealIms';
+import { useRealImsActions, useRealImsRuntimeStatus, useRealImsStatus, useRealImsSubscribers } from '../hooks/useRealIms';
 import type { RealImsMode, RealImsProvisionPayload, RealImsReport } from '../types/realIms';
 
 type PendingExecution = { payload: RealImsProvisionPayload };
@@ -56,8 +56,11 @@ export function RealImsPage() {
   const [result, setResult] = useState('');
   const queryClient = useQueryClient();
   const formRef = useRef<HTMLFormElement>(null);
+  const runtimeStatus = useRealImsRuntimeStatus(mode);
   const status = useRealImsStatus(mode, statusImsi);
-  const imsSubscribers = useRealImsSubscribers(mode);
+  const servicesReady = runtimeStatus.data?.checks.some((check) => check.id === 'services' && check.status === 'PASS') === true
+    && runtimeStatus.data?.checks.some((check) => check.id === 'pyhss_api' && check.status === 'PASS') === true;
+  const imsSubscribers = useRealImsSubscribers(mode, servicesReady);
   const actions = useRealImsActions();
   const actionError = actions.provision.error || actions.deleteSubscriber.error || actions.start.error || actions.stop.error || actions.syncSubscriber.error;
 
@@ -169,7 +172,7 @@ export function RealImsPage() {
         <div>
           <span className="eyebrow">IMS service provisioning</span>
           <h2>IMS synchronization</h2>
-          <p className="page-subtitle">This is the same IMSI as the packet-core record. Open5GS and pyHSS each need their own technical record; the identity is synchronized, not a second user.</p>
+          <p className="page-subtitle">One IMS identity is synchronized into the selected IMS runtime: Open5GS stores its packet-core authentication record and pyHSS stores its AuC and IMS records.</p>
         </div>
         <div className="tab-list ims-mode-switch" aria-label="IMS network mode">
           <button type="button" className={mode === '4g' ? 'active' : ''} aria-pressed={mode === '4g'} onClick={() => setMode('4g')}>4G</button>
@@ -184,6 +187,12 @@ export function RealImsPage() {
 
       <section className="panel subscriber-ims-runtime">
         <div className="panel-heading"><div><h3>{mode.toUpperCase()} IMS services</h3><p className="muted-text">Start or stop the isolated Open5GS, Kamailio and pyHSS services for this mode. This does not start a RAN or transmit RF.</p></div><div className="inline-actions"><ActionButton variant="secondary" loading={actions.start.isPending} onClick={() => setPendingRuntimeAction('start')}>Start IMS services</ActionButton><ActionButton variant="secondary" loading={actions.stop.isPending} onClick={() => setPendingRuntimeAction('stop')}>Stop IMS services</ActionButton></div></div>
+        {runtimeStatus.error ? <ErrorAlert error={runtimeStatus.error} onRetry={() => runtimeStatus.refetch()} /> : null}
+        <div className={`ims-runtime-state ${servicesReady ? 'ready' : 'inactive'}`} role="status">
+          <StatusBadge status={runtimeStatus.isLoading ? 'unknown' : servicesReady ? 'running' : 'inactive'} />
+          <span>{runtimeStatus.isLoading ? 'Checking local IMS services…' : servicesReady ? 'Open5GS and pyHSS are ready for IMS provisioning.' : 'IMS services are stopped or incomplete. Start them above before viewing or provisioning IMS subscriber records. No subscriber request was sent.'}</span>
+          {!runtimeStatus.isLoading ? <button className="row-action" type="button" onClick={() => runtimeStatus.refetch()} disabled={runtimeStatus.isFetching}>Check services</button> : null}
+        </div>
       </section>
 
       {result ? <div className="ims-result" role="status">{result}</div> : null}
@@ -192,11 +201,11 @@ export function RealImsPage() {
       <section className="panel subscriber-ims-list">
         <div className="panel-heading">
           <div><h3>IMS synchronization status</h3><p className="muted-text">Shows whether the same IMSI exists in the IMS runtime’s Open5GS and pyHSS. Secrets stay hidden.</p></div>
-          <div className="inline-actions"><StatusBadge status={`${imsSubscribers.data?.count || 0} subscribers`} /><ActionButton variant="secondary" loading={imsSubscribers.isFetching} onClick={() => imsSubscribers.refetch()}>Refresh</ActionButton></div>
+          <div className="inline-actions"><StatusBadge status={servicesReady ? `${imsSubscribers.data?.count || 0} subscribers` : 'inactive'} /><ActionButton variant="secondary" loading={imsSubscribers.isFetching} disabled={!servicesReady} onClick={() => imsSubscribers.refetch()}>Refresh</ActionButton></div>
         </div>
-        {imsSubscribers.error ? <ErrorAlert error={imsSubscribers.error} onRetry={() => imsSubscribers.refetch()} /> : null}
-        {imsSubscribers.isLoading ? <LoadingState /> : null}
-        {imsSubscribers.data?.subscribers.length ? (
+        {servicesReady && imsSubscribers.error ? <ErrorAlert error={imsSubscribers.error} onRetry={() => imsSubscribers.refetch()} /> : null}
+        {servicesReady && imsSubscribers.isLoading ? <LoadingState /> : null}
+        {servicesReady && imsSubscribers.data?.subscribers.length ? (
           <div className="table-wrap">
             <table>
               <thead><tr><th>Subscriber</th><th>IMS address</th><th>APN profile</th><th>Sync</th><th>Action</th></tr></thead>
@@ -211,12 +220,12 @@ export function RealImsPage() {
               ))}</tbody>
             </table>
           </div>
-        ) : (!imsSubscribers.isLoading && !imsSubscribers.error ? <div className="empty-state">No IMS subscribers yet. Add one below.</div> : null)}
+        ) : (servicesReady && !imsSubscribers.isLoading && !imsSubscribers.error ? <div className="empty-state">No IMS subscribers yet. Add one below.</div> : null)}
       </section>
 
       <section className="panel subscriber-ims-create">
           <div className="panel-heading"><div><h3>{editing ? 'Update IMS credentials' : 'Enable IMS for an identity'}</h3><p className="muted-text">Required: IMSI, phone number, Ki and OPc. The preconfigured internet and ims APN profiles are synchronized automatically.</p></div>{editing ? <button type="button" className="secondary" onClick={() => { setEditing(false); setSubscriber(initialSubscriber); }}>Cancel edit</button> : null}</div>
-        <form ref={formRef} className="real-ims-form" onSubmit={submitProvision}>
+        {servicesReady ? <form ref={formRef} className="real-ims-form" onSubmit={submitProvision}>
           <div className="ims-field-grid">
             <label>IMSI<input required inputMode="numeric" pattern="\d{14,15}" value={subscriber.imsi} onChange={(event) => setSubscriber({ ...subscriber, imsi: event.target.value })} /></label>
             <label>MSISDN<input required inputMode="tel" pattern="\+?\d{5,15}" value={subscriber.msisdn} onChange={(event) => setSubscriber({ ...subscriber, msisdn: event.target.value })} /></label>
@@ -238,19 +247,19 @@ export function RealImsPage() {
             <ActionButton type="submit" name="provisionAction" value="dry-run" variant="secondary" loading={actions.provision.isPending}>Preview</ActionButton>
             <ActionButton type="submit" name="provisionAction" value="execute" disabled={actions.provision.isPending}>{editing ? 'Save and synchronize' : 'Add subscriber'}</ActionButton>
           </div>
-        </form>
+        </form> : <div className="ims-provisioning-inactive" role="status">Start the local IMS services above to enable this form. IMSI, phone number, Ki and OPc will not be sent while the IMS runtime is unavailable.</div>}
       </section>
 
       <details className="panel subscriber-technical-status">
         <summary>Service and subscriber checks</summary>
         <div className="subscriber-status-lookup">
           <label>Optional IMSI<input inputMode="numeric" pattern="\d{14,15}" value={statusImsi} onChange={(event) => setStatusImsi(event.target.value)} placeholder="Enter IMSI to inspect" /></label>
-          <ActionButton variant="secondary" loading={status.isFetching} onClick={() => status.refetch()}>Check status</ActionButton>
+          <ActionButton variant="secondary" loading={status.isFetching} disabled={!servicesReady} onClick={() => status.refetch()}>Check status</ActionButton>
         </div>
         {status.error ? <ErrorAlert error={status.error} onRetry={() => status.refetch()} /> : null}
         {status.isLoading ? <LoadingState /> : null}
-        <ReportPanel report={status.data} />
-        <p className="muted-text">Use the selected scenario workspace to start the RAN and check UE registration and calls.</p>
+        {servicesReady ? <ReportPanel report={status.data} /> : <p className="muted-text">Start IMS services before running subscriber checks. IMS health checks do not start a RAN or transmit RF.</p>}
+        {servicesReady ? <p className="muted-text">Use the selected scenario workspace to start the RAN and check UE registration and calls.</p> : null}
       </details>
 
       <ConfirmDialog open={Boolean(pending)} title={editing ? 'Save IMS subscriber changes?' : 'Add this IMS subscriber?'} message={`This synchronizes ${pending?.payload.imsi || 'the subscriber'} to Open5GS and pyHSS. Ki and OPc are sent to the selected local IMS runtime and are never shown in the list.`} confirmLabel={editing ? 'Save and synchronize' : 'Add subscriber'} onConfirm={confirmProvision} onCancel={() => setPending(null)} />

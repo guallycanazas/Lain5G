@@ -78,6 +78,7 @@ class ComponentPullRequest(BaseModel):
 class ComponentPullResponse(BaseModel):
     profile: ProfileComponentStatus
     pulled: list[str]
+    built: list[str] = Field(default_factory=list)
     message: str
 
 
@@ -85,7 +86,7 @@ class ComponentPullImageProgress(BaseModel):
     local_image: str
     source_image: str
     description: str
-    state: Literal["pending", "pulling", "tagging", "succeeded", "failed"] = "pending"
+    state: Literal["pending", "pulling", "building", "tagging", "succeeded", "failed"] = "pending"
     error_code: str | None = None
     error_message: str | None = None
 
@@ -102,6 +103,7 @@ class ComponentPullJob(BaseModel):
     total_count: int = 0
     overall_percent: int = 0
     pulled: list[str] = Field(default_factory=list)
+    built: list[str] = Field(default_factory=list)
     created_at: datetime
     started_at: datetime | None = None
     finished_at: datetime | None = None

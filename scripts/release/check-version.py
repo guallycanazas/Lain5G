@@ -247,7 +247,22 @@ def check(root: Path) -> list[str]:
                 errors.append(f"{rel}:{number}: third-party image {image!r} is not digest-pinned")
 
     catalog = _read(root / "src/backend/app/services/image_catalog.py", errors)
-    for source in re.findall(r'"lain5g-lab/[^\"]+:local": \("([^\"]+)"', catalog):
+    local_build_match = re.search(r"LOCAL_BUILD_IMAGES\s*=\s*\{(.*?)\}", catalog, re.DOTALL)
+    local_builds = (
+        dict(re.findall(r'"([^\"]+)"\s*:\s*"([^\"]+)"', local_build_match.group(1)))
+        if local_build_match
+        else {}
+    )
+    for local_image, source in re.findall(r'"(lain5g-lab/[^\"]+:local)": \("([^\"]+)"', catalog):
+        if source.startswith("Local build: "):
+            context = source.removeprefix("Local build: ")
+            expected_context = local_builds.get(local_image)
+            context_path = (root / context).resolve()
+            if expected_context != context or not context_path.is_relative_to(root.resolve()):
+                errors.append(f"image catalog local build {local_image!r} does not match its fixed repository context")
+            elif not (context_path / "Dockerfile").is_file():
+                errors.append(f"image catalog local build context {context!r} has no Dockerfile")
+            continue
         digest = SHA256.search(source)
         if not digest or digest.end() != len(source):
             errors.append(f"image catalog source {source!r} is not digest-pinned")

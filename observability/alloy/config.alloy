@@ -1,0 +1,95 @@
+discovery.docker "openlain5g" {
+  host             = "unix:///var/run/docker.sock"
+  refresh_interval = "5s"
+}
+
+discovery.relabel "openlain5g" {
+  targets = []
+
+  rule {
+    source_labels = ["__meta_docker_container_label_com_docker_compose_project"]
+    regex         = "lain5g-lab-.*"
+    action        = "keep"
+  }
+
+  rule {
+    source_labels = ["__meta_docker_container_label_com_docker_compose_service"]
+    regex         = "alloy"
+    action        = "drop"
+  }
+
+  rule {
+    source_labels = ["__meta_docker_container_label_com_docker_compose_project"]
+    regex         = "lain5g-lab-(.*)"
+    target_label  = "scenario"
+    replacement   = "$1"
+  }
+
+  rule {
+    source_labels = ["__meta_docker_container_label_com_docker_compose_service"]
+    target_label  = "service"
+  }
+
+  rule {
+    source_labels = ["__meta_docker_container_name"]
+    regex         = "/(.*)"
+    target_label  = "container"
+    replacement   = "$1"
+  }
+
+  rule {
+    source_labels = ["service"]
+    regex         = ".*"
+    target_label  = "component"
+    replacement   = "support"
+  }
+
+  rule {
+    source_labels = ["service"]
+    regex         = "^(frontend|backend|prometheus|grafana|loki|alloy)$"
+    target_label  = "component"
+    replacement   = "platform"
+  }
+
+  rule {
+    source_labels = ["service"]
+    regex         = ".*(enb|gnb|ueransim|srsran).*|(^|-)ue($|-).*"
+    target_label  = "component"
+    replacement   = "ran"
+  }
+
+  rule {
+    source_labels = ["service"]
+    regex         = "^(nrf|amf|smf|upf|ausf|udm|udr|pcf|mme|hss|sgwc|sgwu|pgwc|pgwu|pcrf)$"
+    target_label  = "component"
+    replacement   = "open5gs_core"
+  }
+
+  rule {
+    source_labels = ["service"]
+    regex         = "^(pcscf|icscf|scscf|rtpengine|smsc|sip-register|virtual-phones)$"
+    target_label  = "component"
+    replacement   = "ims_voice"
+  }
+
+  rule {
+    source_labels = ["service"]
+    regex         = ".*(mongo|database|provisioner|mysql|mariadb).*"
+    target_label  = "component"
+    replacement   = "subscriber_data"
+  }
+}
+
+loki.source.docker "openlain5g" {
+  host          = "unix:///var/run/docker.sock"
+  targets       = discovery.docker.openlain5g.targets
+  labels        = { job = "openlain5g" }
+  relabel_rules = discovery.relabel.openlain5g.rules
+  forward_to    = [loki.write.local.receiver]
+}
+
+loki.write "local" {
+  endpoint {
+    url = "http://loki:3100/loki/api/v1/push"
+  }
+}

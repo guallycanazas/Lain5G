@@ -1,0 +1,17 @@
+apiVersion: 1
+
+datasources:
+  - name: OpenLain5G Prometheus
+    uid: openlain5g-prometheus
+    type: prometheus
+    access: proxy
+    url: http://prometheus:9090
+    isDefault: true
+    editable: false
+  - name: OpenLain5G Loki
+    uid: openlain5g-loki
+    type: loki
+    access: proxy
+    url: http://loki:3100
+    isDefault: false
+    editable: false

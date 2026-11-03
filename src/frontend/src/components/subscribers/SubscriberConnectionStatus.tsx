@@ -3,9 +3,16 @@ import { Activity, Clock3, Database, HardDrive, Server } from 'lucide-react';
 import type { SubscriberConnectionStatus as Status } from '../../types/subscriber';
 
 export function SubscriberConnectionStatus({ status }: { status: Status }) {
+  const badgeStatus = status.status === 'connected'
+    ? 'running'
+    : status.status === 'dry_run'
+      ? 'dry_run'
+      : status.status === 'disconnected' || status.status === 'timeout'
+        ? 'inactive'
+        : 'error';
   return (
     <section className={`connection-card connection-${status.status}`}>
-      <div className="connection-card-head"><div className="connection-title"><span><Database size={19} /></span><div><small>DATA SOURCE</small><strong>Open5GS MongoDB</strong></div></div><StatusBadge status={status.status === 'connected' ? 'running' : status.status === 'dry_run' ? 'dry_run' : 'error'} /></div>
+      <div className="connection-card-head"><div className="connection-title"><span><Database size={19} /></span><div><small>DATA SOURCE</small><strong>Open5GS MongoDB</strong></div></div><StatusBadge status={badgeStatus} /></div>
       <dl className="connection-metrics">
         <div><dt><HardDrive size={14} />Database</dt><dd>{status.database}</dd></div>
         <div><dt><Database size={14} />Collection</dt><dd>{status.collection}</dd></div>

@@ -28,7 +28,13 @@ finish_install() {
   status=$?
   trap - EXIT
   elapsed=$(( $(date +%s) - install_started_at ))
-  if [ "$status" -eq 0 ]; then
+  if [ "$dry_run" = true ]; then
+    if [ "$status" -eq 0 ]; then
+      echo "RESULTADO DE PRUEBA EN SECO: OK (plan revisado; no se instalo ni descargo nada; ${elapsed} s)"
+    else
+      echo "RESULTADO DE PRUEBA EN SECO: ERROR (codigo $status; ${elapsed} s)" >&2
+    fi
+  elif [ "$status" -eq 0 ]; then
     echo "RESULTADO DE INSTALACION: CORRECTO (codigo 0; ${elapsed} s)"
   else
     echo "RESULTADO DE INSTALACION: ERROR (codigo $status; ${elapsed} s)" >&2

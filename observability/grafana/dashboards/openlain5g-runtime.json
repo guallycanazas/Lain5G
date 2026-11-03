@@ -1,0 +1,103 @@
+{
+  "annotations": { "list": [] },
+  "editable": false,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "id": null,
+  "links": [
+    { "title": "Network components", "url": "/grafana/d/openlain5g-components/openlain5g-components", "type": "link", "targetBlank": false }
+  ],
+  "panels": [
+    {
+      "datasource": { "type": "prometheus", "uid": "openlain5g-prometheus" },
+      "fieldConfig": { "defaults": { "color": { "mode": "thresholds" }, "mappings": [], "thresholds": { "mode": "absolute", "steps": [{ "color": "red", "value": null }, { "color": "green", "value": 1 }] } }, "overrides": [] },
+      "gridPos": { "h": 5, "w": 6, "x": 0, "y": 0 },
+      "id": 1,
+      "options": { "colorMode": "background", "graphMode": "area", "justifyMode": "center", "orientation": "auto", "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false }, "textMode": "auto" },
+      "targets": [{ "expr": "up{job=\"openlain5g-backend\"}", "legendFormat": "Backend", "refId": "A" }],
+      "title": "Backend scrape status",
+      "type": "stat"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "openlain5g-prometheus" },
+      "fieldConfig": { "defaults": { "color": { "mode": "thresholds" }, "mappings": [], "thresholds": { "mode": "absolute", "steps": [{ "color": "red", "value": null }, { "color": "green", "value": 1 }] } }, "overrides": [] },
+      "gridPos": { "h": 5, "w": 6, "x": 18, "y": 0 },
+      "id": 7,
+      "options": { "colorMode": "background", "graphMode": "area", "justifyMode": "center", "orientation": "auto", "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false }, "textMode": "auto" },
+      "targets": [{ "expr": "up{job=\"loki\"}", "legendFormat": "Loki", "refId": "A" }],
+      "title": "Loki scrape status",
+      "type": "stat"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "openlain5g-prometheus" },
+      "fieldConfig": { "defaults": { "unit": "reqps", "color": { "mode": "palette-classic" } }, "overrides": [] },
+      "gridPos": { "h": 8, "w": 12, "x": 6, "y": 0 },
+      "id": 2,
+      "options": { "legend": { "displayMode": "list", "placement": "bottom", "showLegend": true }, "tooltip": { "mode": "multi", "sort": "desc" } },
+      "targets": [{ "expr": "sum by (handler) (rate(openlain5g_http_requests_total[5m]))", "legendFormat": "{{handler}}", "refId": "A" }],
+      "title": "Backend request rate",
+      "type": "timeseries"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "openlain5g-prometheus" },
+      "fieldConfig": { "defaults": { "unit": "s", "color": { "mode": "palette-classic" } }, "overrides": [] },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 5 },
+      "id": 3,
+      "options": { "legend": { "displayMode": "list", "placement": "bottom", "showLegend": true }, "tooltip": { "mode": "multi", "sort": "desc" } },
+      "targets": [{ "expr": "histogram_quantile(0.95, sum by (le, handler) (rate(openlain5g_http_request_duration_seconds_bucket[5m])))", "legendFormat": "{{handler}} p95", "refId": "A" }],
+      "title": "API latency · p95",
+      "type": "timeseries"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "openlain5g-prometheus" },
+      "fieldConfig": { "defaults": { "unit": "short", "color": { "mode": "palette-classic" } }, "overrides": [] },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 5 },
+      "id": 4,
+      "options": { "legend": { "displayMode": "list", "placement": "bottom", "showLegend": true }, "tooltip": { "mode": "multi", "sort": "desc" } },
+      "targets": [{ "expr": "sum by (status) (rate(openlain5g_http_requests_total{status=~\"5..\"}[5m]))", "legendFormat": "HTTP {{status}}", "refId": "A" }],
+      "title": "Backend errors · 5xx rate",
+      "type": "timeseries"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "openlain5g-prometheus" },
+      "fieldConfig": { "defaults": { "unit": "bytes", "color": { "mode": "palette-classic" } }, "overrides": [] },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 13 },
+      "id": 5,
+      "options": { "legend": { "displayMode": "list", "placement": "bottom", "showLegend": true }, "tooltip": { "mode": "multi", "sort": "desc" } },
+      "targets": [{ "expr": "process_resident_memory_bytes", "legendFormat": "Backend RSS", "refId": "A" }],
+      "title": "Backend resident memory",
+      "type": "timeseries"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "openlain5g-prometheus" },
+      "fieldConfig": { "defaults": { "unit": "none", "color": { "mode": "palette-classic" } }, "overrides": [] },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 13 },
+      "id": 6,
+      "options": { "legend": { "displayMode": "list", "placement": "bottom", "showLegend": true }, "tooltip": { "mode": "multi", "sort": "desc" } },
+      "targets": [{ "expr": "rate(process_cpu_seconds_total[5m])", "legendFormat": "Backend CPU cores", "refId": "A" }],
+      "title": "Backend CPU usage",
+      "type": "timeseries"
+    },
+    {
+      "datasource": { "type": "datasource", "uid": "-- Dashboard --" },
+      "gridPos": { "h": 3, "w": 24, "x": 0, "y": 21 },
+      "id": 8,
+      "options": {
+        "mode": "markdown",
+        "content": "This dashboard measures the OpenLain5G backend and observability services. It does not currently export radio KPIs or protocol counters from srsRAN, Open5GS, or Kamailio. Use **Network Components** for those services' container log activity grouped by architecture layer."
+      },
+      "title": "Dashboard scope",
+      "type": "text"
+    }
+  ],
+  "refresh": "15s",
+  "schemaVersion": 41,
+  "tags": ["OpenLain5G", "backend", "observability"],
+  "templating": { "list": [] },
+  "time": { "from": "now-1h", "to": "now" },
+  "timepicker": { "refresh_intervals": ["5s", "10s", "15s", "30s", "1m", "5m", "15m"] },
+  "timezone": "browser",
+  "title": "OpenLain5G Application Runtime",
+  "uid": "openlain5g-runtime",
+  "version": 1
+}

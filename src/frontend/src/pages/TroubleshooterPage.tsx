@@ -14,7 +14,7 @@ export function TroubleshooterPage() {
   const [searchParams] = useSearchParams();
   const [scenario, setScenario] = useState(searchParams.get('scenario') || '5g-sa');
   const deployments = useDeployments();
-  const latest = useLatestValidation();
+  const latest = useLatestValidation(scenario);
   const actions = useScenarioActions(scenario);
   const deployment = deployments.data?.find((item) => item.id === scenario);
   const report = actions.validate.data || (latest.data?.scenario === scenario ? latest.data : undefined);

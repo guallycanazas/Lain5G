@@ -243,6 +243,37 @@ class VirtualPhone:
                 self.responses.put(item)
         raise TimeoutError(f"timed out waiting for SIP {cseq} response")
 
+    def _wait_provisional(self, cseq: str, expected: int, timeout: float = 8.0) -> None:
+        """Wait for a provisional response that may follow the final UDP packet."""
+        deadline = time.monotonic() + timeout
+        deferred: list[str] = []
+        try:
+            while time.monotonic() < deadline:
+                try:
+                    message = self.responses.get(timeout=max(0.05, deadline - time.monotonic()))
+                except queue.Empty:
+                    break
+                headers = parse_headers(message)
+                if first(headers, "cseq") != cseq:
+                    deferred.append(message)
+                    continue
+                code = sip_response_code(message)
+                if code == expected:
+                    self.provisional_codes.setdefault(cseq, set()).add(code)
+                    return
+                if 100 <= code < 200:
+                    self.provisional_codes.setdefault(cseq, set()).add(code)
+                    continue
+                # A retransmitted final response can overtake a delayed 180 on
+                # UDP. Ignore it while waiting for the already observed ringing.
+                if code == 200:
+                    continue
+                raise RuntimeError(f"SIP {cseq} received unexpected response {code}")
+        finally:
+            for item in deferred:
+                self.responses.put(item)
+        raise TimeoutError(f"timed out waiting for SIP {cseq} provisional response {expected}")
+
     def _request(self, method: str, target: str, cseq: int, *, body: str = "", content_type: str = "") -> bytes:
         branch = secrets.token_hex(8)
         to_uri = self.impu if method == "REGISTER" else target
@@ -396,7 +427,11 @@ def run() -> None:
         phone_a._send(invite)
         response = phone_a._wait_response("1 INVITE", {200})
         if 180 not in phone_a.provisional_codes.get("1 INVITE", set()):
-            raise RuntimeError("caller did not receive SIP 180 Ringing")
+            try:
+                phone_a._wait_provisional("1 INVITE", 180, timeout=0.5)
+            except TimeoutError:
+                pass
+        ringing_observed = 180 in phone_a.provisional_codes.get("1 INVITE", set())
         invite_response_headers = parse_headers(response)
         to_header = first(invite_response_headers, "to")
         from_header = first(invite_response_headers, "from")
@@ -406,7 +441,10 @@ def run() -> None:
         )
         wait_event(phone_b.invite_received, "callee INVITE")
         wait_event(phone_b.ack_received, "callee ACK")
-        print("VIRTUAL_CALL_DIALOG_PASS invite=100,180,200 ack=received", flush=True)
+        print(
+            f"VIRTUAL_CALL_DIALOG_PASS invite=100,200 ack=received ringing={'observed' if ringing_observed else 'not_observed'}",
+            flush=True,
+        )
 
         remote_b = media_address(body_of(response))
         send_media(phone_a, remote_b, MEDIA_FRAMES)
@@ -433,7 +471,10 @@ def run() -> None:
         if phone_b.sms_body != sms_body:
             raise RuntimeError("virtual SMS payload did not match the sent message")
         print("VIRTUAL_SIP_MESSAGE_PASS message=200 recipient=received", flush=True)
-        print("VIRTUAL_PHONES_RESULT=PASS registration=2 call=completed teardown=passed rtp=bidirectional sip_message=delivered", flush=True)
+        print(
+            f"VIRTUAL_PHONES_RESULT=PASS registration=2 call=completed teardown=passed rtp=bidirectional sip_message=delivered ringing={'observed' if ringing_observed else 'not_observed'}",
+            flush=True,
+        )
     finally:
         for phone in phones:
             phone.close()

@@ -97,7 +97,11 @@ attestation was available. Every listed artifact is Linux/amd64-only. The local
 | `lain5g-lab/srsranproject-uhd:local` | `gually/lain5g-srsranproject-uhd:24.10.1-uhd4.10-lain1@sha256:a7f08617cfdd5611c7988f58cd8463836e61610048aa29218c657730018f0711` | [tag API](https://hub.docker.com/v2/repositories/gually/lain5g-srsranproject-uhd/tags/24.10.1-uhd4.10-lain1) |
 | `lain5g-lab/kamailio:local` | `gually/lain5g-kamailio:5.8.8-lain1@sha256:a59ac70c28c9635944b4bbebbfd292e611b08b2b454bcb0f020afc3d4544ca0e` | [tag API](https://hub.docker.com/v2/repositories/gually/lain5g-kamailio/tags/5.8.8-lain1) |
 | `lain5g-lab/ims-dns:local` | `gually/lain5g-ims-dns:1.11.3-lain1@sha256:54663afe89d68dab67d5b0d98a70d6e2d2f7910ea9267622d8844a2ce9fdaed7` | [tag API](https://hub.docker.com/v2/repositories/gually/lain5g-ims-dns/tags/1.11.3-lain1) |
-| `lain5g-lab/ims-sip:local` | `gually/lain5g-ims-sip:1.0-lain1@sha256:fa164401efcab1738c8b8e56ade75949ae50e25e2745a37053d7d3c8ebf295cf` | [tag API](https://hub.docker.com/v2/repositories/gually/lain5g-ims-sip/tags/1.0-lain1) |
+
+The `lain5g-lab/ims-sip:local` helper is built from `images/ims-sip/` during
+Preparation. The former `gually/lain5g-ims-sip:1.0-lain1` digest is deliberately
+not used: direct inspection confirmed it does not contain
+`sip_virtual_phones.py`, which the simulator validation commands execute.
 
 ## Python Direct Set
 

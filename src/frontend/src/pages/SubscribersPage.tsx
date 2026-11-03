@@ -7,6 +7,7 @@ import { ErrorAlert } from '../components/ErrorAlert';
 import { LoadingState } from '../components/LoadingState';
 import { SubscriberCloneDialog } from '../components/subscribers/SubscriberCloneDialog';
 import { SubscriberConnectionStatus } from '../components/subscribers/SubscriberConnectionStatus';
+import { SubscriberDatabaseUnavailable } from '../components/subscribers/SubscriberDatabaseUnavailable';
 import { SubscriberDeleteDialog } from '../components/subscribers/SubscriberDeleteDialog';
 import { SubscriberTable } from '../components/subscribers/SubscriberTable';
 import { RealImsPage } from './RealImsPage';
@@ -32,11 +33,11 @@ export function SubscribersPage() {
   const [cloneTarget, setCloneTarget] = useState<SubscriberSummary | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<SubscriberSummary | null>(null);
   const connection = useSubscriberConnection(profile);
-  const subscribers = useSubscribers({ limit: pageSize, offset, search, profile });
+  const connectionOnline = connection.data?.status === 'connected';
+  const subscribers = useSubscribers({ limit: pageSize, offset, search, profile }, connectionOnline);
   const actions = useSubscriberActions(profile);
   const mutationError = actions.clone.error || actions.delete.error;
-  const subscriberCount = subscribers.data?.total || 0;
-  const connectionOnline = connection.data?.status === 'connected';
+  const subscriberCount = subscribers.data?.total ?? 0;
 
   const exportVisible = () => {
     const rows = subscribers.data?.items || [];
@@ -48,13 +49,13 @@ export function SubscribersPage() {
   return (
     <section className="subscribers-workspace">
       <header className="subscribers-page-heading">
-        <div><span className="eyebrow">Identity management</span><h1>Subscribers</h1><p>Manage each SIM identity once. Packet-core and IMS views show the same IMSI in the systems that need it.</p></div>
+        <div><span className="eyebrow">Identity management</span><h1>Subscribers</h1><p>Provision packet-core subscribers per profile, or synchronize an IMS identity across Open5GS and pyHSS.</p></div>
         {activeView === 'open5gs' ? <div className="subscriber-health-chip"><i className={connectionOnline ? 'online' : 'offline'} />{connectionOnline ? 'Packet core connected' : 'Packet core unavailable'}</div> : null}
       </header>
 
       <nav className="tab-list subscriber-workspace-tabs" aria-label="Subscriber records">
         <button type="button" className={activeView === 'open5gs' ? 'active' : ''} aria-pressed={activeView === 'open5gs'} onClick={() => setSearchParams({ profile })}>
-          Packet core <span>{subscribers.isLoading ? '…' : subscriberCount}</span>
+          Packet core <span>{connection.isLoading ? '…' : connectionOnline ? (subscribers.data?.total ?? '…') : '—'}</span>
         </button>
         <button type="button" className={activeView === 'ims' ? 'active' : ''} aria-pressed={activeView === 'ims'} onClick={() => setSearchParams({ view: 'ims', profile })}>IMS provisioning</button>
       </nav>
@@ -63,8 +64,8 @@ export function SubscribersPage() {
         <div className="subscriber-intro-row">
           <div><h2>Packet-core identities</h2><p>Create, edit, clone, or remove identities in the selected profile’s Open5GS database.</p></div>
           <div className="subscriber-primary-actions">
-            <button className="secondary" onClick={exportVisible} disabled={!subscribers.data?.items.length}><Download size={15} />Export</button>
-            <Link className="action-link" to={`/subscribers/new?profile=${profile}`}><Plus size={16} />Add subscriber</Link>
+            <button className="secondary" onClick={exportVisible} disabled={!connectionOnline || !subscribers.data?.items.length}><Download size={15} />Export</button>
+            {connectionOnline ? <Link className="action-link" to={`/subscribers/new?profile=${profile}`}><Plus size={16} />Add subscriber</Link> : <button className="secondary" type="button" disabled title="Connect the selected profile database first"><Plus size={16} />Add subscriber</button>}
           </div>
         </div>
 
@@ -76,17 +77,22 @@ export function SubscribersPage() {
         <section className="subscriber-registry panel">
           <div className="subscriber-toolbar">
             <label className="subscriber-profile-select">Network profile<select aria-label="Network profile" value={profile} onChange={(event) => setSearchParams({ profile: event.target.value })}>{subscriberProfiles.map((item) => <option key={item.id} value={item.id}>{item.label}</option>)}</select></label>
-            <label className="search-field"><Search size={17} /><span className="sr-only">Search IMSI / MSISDN</span><input aria-label="Search IMSI / MSISDN" placeholder="Search IMSI or phone number…" value={search} onChange={(event) => { setOffset(0); setSearch(event.target.value); }} /></label>
-            <ActionButton variant="secondary" onClick={() => subscribers.refetch()} loading={subscribers.isFetching}><RefreshCw size={15} />Refresh</ActionButton>
+            {connectionOnline ? <>
+              <label className="search-field"><Search size={17} /><span className="sr-only">Search IMSI / MSISDN</span><input aria-label="Search IMSI / MSISDN" placeholder="Search IMSI or phone number…" value={search} onChange={(event) => { setOffset(0); setSearch(event.target.value); }} /></label>
+              <ActionButton variant="secondary" onClick={() => subscribers.refetch()} loading={subscribers.isFetching}><RefreshCw size={15} />Refresh</ActionButton>
+            </> : <ActionButton variant="secondary" onClick={() => connection.refetch()} loading={connection.isFetching}><RefreshCw size={15} />Retry connection</ActionButton>}
             <span className="registry-source">{connection.data?.database || 'Open5GS'} · {connection.data?.collection || 'subscribers'}</span>
           </div>
 
-          {subscribers.isLoading ? <LoadingState /> : null}
-          {subscribers.error ? <ErrorAlert error={subscribers.error} onRetry={() => subscribers.refetch()} /> : null}
-          {subscribers.data && subscribers.data.items.length > 0 ? <SubscriberTable subscribers={subscribers.data.items} profile={profile} onClone={setCloneTarget} onDelete={setDeleteTarget} /> : null}
-          {subscribers.data && subscribers.data.items.length === 0 ? <EmptyState title="No subscribers found" message={connectionOnline ? 'Add a subscriber to start managing SIM identities.' : 'The configured Open5GS database is unavailable. Check the connection details above.'} /> : null}
+          {connection.isLoading ? <LoadingState /> : null}
+          {connection.error ? <ErrorAlert error={connection.error} onRetry={() => connection.refetch()} /> : null}
+          {!connection.isLoading && !connection.error && !connectionOnline ? <SubscriberDatabaseUnavailable profile={profile} status={connection.data?.status} onRetry={() => void connection.refetch()} retrying={connection.isFetching} /> : null}
+          {connectionOnline && subscribers.isLoading ? <LoadingState /> : null}
+          {connectionOnline && subscribers.error ? <ErrorAlert error={subscribers.error} onRetry={() => subscribers.refetch()} /> : null}
+          {connectionOnline && subscribers.data && subscribers.data.items.length > 0 ? <SubscriberTable subscribers={subscribers.data.items} profile={profile} onClone={setCloneTarget} onDelete={setDeleteTarget} /> : null}
+          {connectionOnline && subscribers.data && subscribers.data.items.length === 0 ? <EmptyState title="No subscribers found" message="Add a subscriber to start managing SIM identities." /> : null}
 
-          {subscribers.data ? (
+          {connectionOnline && subscribers.data ? (
             <div className="pagination-row">
               <button className="secondary" disabled={offset === 0} onClick={() => setOffset(Math.max(0, offset - pageSize))}>Previous</button>
               <span>{subscriberCount === 0 ? '0' : `${offset + 1}–${Math.min(offset + pageSize, subscriberCount)}`} of {subscriberCount}</span>
