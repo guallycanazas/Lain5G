@@ -1,10 +1,14 @@
 {
   "upload_type": "software",
   "title": "OpenLain5G",
-  "version": "1.1.7",
-  "publication_date": "2026-10-24",
+  "version": "1.1.8",
+  "publication_date": "2026-11-06",
   "description": "OpenLain5G is an open-source framework for preparing, operating, and validating reproducible 4G LTE and 5G laboratory scenarios. It integrates open-source radio access, mobile core, IMS, and UE simulation components through Docker Compose, a command-line interface, and a web interface. Software-only validation and guarded X-Series USRP workflows are provided. Hardware-dependent RF behavior must be evaluated on the specific authorized laboratory equipment and is not established by cloud-runner tests.",
   "creators": [
+    {
+      "name": "Tamo Calla, Alberth Ronal",
+      "affiliation": "National University of San Agustin of Arequipa"
+    },
     {
       "name": "Canazas Rosas, Willian Roy",
       "affiliation": "National University of San Agustin of Arequipa"
@@ -14,8 +18,7 @@
       "affiliation": "National University of San Agustin of Arequipa"
     },
     {
-      "name": "Tamo Calla, Alberth Ronal",
-      "affiliation": "National University of San Agustin of Arequipa"
+      "name": "Hilario Tacuri, Alexander Beremiz"
     }
   ],
   "license": "MIT",
