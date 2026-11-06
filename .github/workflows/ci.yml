@@ -144,5 +144,5 @@ jobs:
               output="$(LAIN5G_BOOTSTRAP_PACKAGE_MANAGER="$EXPECTED_PACKAGE_MANAGER" ./install.sh --dry-run)"
               printf "%s\n" "$output"
               grep -F "${EXPECTED_PACKAGE_MANAGER}" <<<"$output"
-              grep -F "RESULTADO DE INSTALACION: CORRECTO" <<<"$output"
+              grep -F "RESULTADO DE PRUEBA EN SECO: OK" <<<"$output"
             '

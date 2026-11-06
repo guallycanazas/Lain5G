@@ -11,7 +11,7 @@ import { useDeploymentActions, useDeploymentStatus, useHealth } from '../hooks/u
 import { useRuns } from '../hooks/useRuns';
 import { useLatestValidation } from '../hooks/useValidation';
 import { useProfileComponents } from '../hooks/usePreparation';
-import { usePreferences } from '../preferences/PreferencesProvider';
+import { PINNABLE_SCENARIOS, usePreferences } from '../preferences/PreferencesProvider';
 import { formatDate } from '../utils/dates';
 import { ApiError } from '../types/api';
 import { deploymentsApi } from '../services/deploymentsApi';
@@ -30,7 +30,7 @@ export function DashboardPage() {
   const deployments = useDeployments();
   const queryClient = useQueryClient();
   const components = useProfileComponents('5g-sa');
-  const { t } = usePreferences();
+  const { t, dashboardCards, hiddenDashboardCards, hiddenDashboardSections, pinnedScenarios } = usePreferences();
   const [confirm, setConfirm] = useState<'stop' | 'restart' | null>(null);
   const [activeConflict, setActiveConflict] = useState<string | null>(null);
   const [conflictError, setConflictError] = useState<unknown>(null);
@@ -106,12 +106,17 @@ export function DashboardPage() {
         <figure className="dashboard-hero-visual"><img src="/images/lain5g/control-plane-topology.webp" width="1672" height="941" alt="Isometric private mobile network with radio access, core services, IMS, and a UE" decoding="async" /><figcaption><span>🛰️ Software first</span><strong>Move to guarded RF only when the laboratory is ready.</strong></figcaption></figure>
       </section>
 
-      <section className="summary-grid wide" aria-label="Operations overview">
-        <article className="summary-card"><div className="summary-label">{t('dashboard.activeServices')}</div><div className="summary-value">{activeServices}</div><div className="summary-note">{status.data?.containers.length || 0} {t('dashboard.reportedByApi')}</div></article>
-        <article className="summary-card"><div className="summary-label">{t('dashboard.registeredUes')}</div><div className="summary-value">{checkState(checks, 'ue_registration') ? '1+' : '0'}</div><div className="summary-note">{t('dashboard.validationEvidence')}</div></article>
-        <article className="summary-card"><div className="summary-label">{t('dashboard.dataSessions')}</div><div className="summary-value">{checkState(checks, 'pdu_session') ? '1+' : '0'}</div><div className="summary-note">{t('dashboard.pduEvidence')}</div></article>
-        <article className="summary-card"><div className="summary-label">{t('dashboard.passRate')}</div><div className="summary-value">{passRate === null ? '--' : `${passRate}%`}</div><div className="summary-note">{report ? formatDate(report.checked_at) : t('dashboard.noValidation')}</div></article>
-      </section>
+      {pinnedScenarios.length ? <section className="pinned-workspaces wide" aria-label="Pinned workspaces"><div><span className="eyebrow">Quick access</span><h2>Pinned workspaces</h2><p className="muted-text">Open a workspace to review its profile. Services start only after a separate action.</p></div><div className="pinned-workspace-links">{pinnedScenarios.map((scenarioId) => {
+        const scenario = PINNABLE_SCENARIOS.find((item) => item.id === scenarioId);
+        return scenario ? <Link className="action-button secondary" key={scenario.id} to={`/scenarios/${scenario.id}`}>{scenario.label}</Link> : null;
+      })}</div></section> : null}
+
+      {dashboardCards.some((card) => !hiddenDashboardCards.includes(card)) ? <section className="summary-grid wide" aria-label="Operations overview">{dashboardCards.filter((card) => !hiddenDashboardCards.includes(card)).map((card) => {
+        if (card === 'activeServices') return <article className="summary-card" key={card}><div className="summary-label">{t('dashboard.activeServices')}</div><div className="summary-value">{activeServices}</div><div className="summary-note">{status.data?.containers.length || 0} {t('dashboard.reportedByApi')}</div></article>;
+        if (card === 'registeredUes') return <article className="summary-card" key={card}><div className="summary-label">{t('dashboard.registeredUes')}</div><div className="summary-value">{checkState(checks, 'ue_registration') ? '1+' : '0'}</div><div className="summary-note">{t('dashboard.validationEvidence')}</div></article>;
+        if (card === 'dataSessions') return <article className="summary-card" key={card}><div className="summary-label">{t('dashboard.dataSessions')}</div><div className="summary-value">{checkState(checks, 'pdu_session') ? '1+' : '0'}</div><div className="summary-note">{t('dashboard.pduEvidence')}</div></article>;
+        return <article className="summary-card" key={card}><div className="summary-label">{t('dashboard.passRate')}</div><div className="summary-value">{passRate === null ? '--' : `${passRate}%`}</div><div className="summary-note">{report ? formatDate(report.checked_at) : t('dashboard.noValidation')}</div></article>;
+      })}</section> : null}
 
       {health.error ? <ErrorAlert error={health.error} onRetry={() => health.refetch()} /> : null}
       {status.error ? <ErrorAlert error={status.error} onRetry={() => status.refetch()} /> : null}
@@ -119,35 +124,35 @@ export function DashboardPage() {
       {actionError ? <ErrorAlert error={actionError} /> : null}{conflictError ? <ErrorAlert error={conflictError} /> : null}
       {status.isLoading ? <LoadingState /> : null}
 
-      <section className="panel wide"><TopologyPanel containers={status.data?.containers || []} checks={checks} checkedAt={status.data?.checked_at} title="5G SA service topology" /></section>
+      {!hiddenDashboardSections.includes('topology') ? <section className="panel wide"><TopologyPanel containers={status.data?.containers || []} checks={checks} checkedAt={status.data?.checked_at} title="5G SA service topology" /></section> : null}
 
-      <section className="panel">
+      {!hiddenDashboardSections.includes('backend') ? <section className="panel">
         <div className="panel-heading"><div><span className="eyebrow">API</span><h3>Backend service</h3></div><StatusBadge status={health.data?.dry_run ? 'dry_run' : 'running'} /></div>
         <dl className="facts"><dt>Backend</dt><dd>{health.data?.status || 'Unavailable'}</dd><dt>Mode</dt><dd>{health.data?.dry_run ? 'Dry-run' : 'Real'}</dd><dt>Last sync</dt><dd>{status.data ? formatDate(status.data.checked_at) : 'No telemetry'}</dd><dt>Action</dt><dd>{busy ? 'Operation in progress' : 'Ready'}</dd></dl>
         <div className="actions-row" style={{ marginTop: 18 }}><ActionButton variant="secondary" disabled={busy || components.data?.ready !== true} onClick={() => setConfirm('restart')}>Restart</ActionButton><Link className="action-link" to="/scenarios/5g-sa">Open workspace</Link></div>
-      </section>
+      </section> : null}
 
-      <section className="panel">
+      {!hiddenDashboardSections.includes('preparation') ? <section className="panel">
         <div className="panel-heading"><div><span className="eyebrow">{t('nav.preparation')}</span><h3>{t('dashboard.requiredComponents')}</h3></div><StatusBadge status={components.data?.ready ? 'PASS' : 'FAIL'} kind="validation" /></div>
         <p className="muted-text">{components.data ? `${components.data.installed_count}/${components.data.total_count} images installed for 5G SA.` : 'Checking published images...'}</p>
         <Link className="action-link" to="/preparation">{t('dashboard.openPreparation')}</Link>
-      </section>
+      </section> : null}
 
-      <section className="panel">
+      {!hiddenDashboardSections.includes('rfSafety') ? <section className="panel">
         <div className="panel-heading"><div><span className="eyebrow">RF safety</span><h3>Operator guardrails</h3></div><Link to="/rf-safety">Review</Link></div>
         <p className="muted-text">RF actions remain guarded by backend scripts and local manifests. This console does not treat container state as authorization.</p>
         <div className="warning-box">Emergency stop is available only through the guarded X310 backend action. Review authorization before any RF operation.</div>
-      </section>
+      </section> : null}
 
-      <section className="panel">
+      {!hiddenDashboardSections.includes('validation') ? <section className="panel">
         <div className="panel-heading"><div><span className="eyebrow">Validation</span><h3>Layer summary</h3></div><Link to="/validation">Open validation</Link></div>
         {report ? <ul className="claims-list">{checks.slice(0, 8).map((check) => <li key={check.id}>{check.id}: {check.status}</li>)}</ul> : <div className="empty-state"><h3>No validation evidence</h3><p>Run validation to populate protocol and user-plane evidence.</p></div>}
-      </section>
+      </section> : null}
 
-      <section className="panel">
+      {!hiddenDashboardSections.includes('recentRuns') ? <section className="panel">
         <div className="panel-heading"><div><span className="eyebrow">Recent runs</span><h3>Execution history</h3></div><Link to="/runs">All runs</Link></div>
         {runs.data?.length ? <div className="run-timeline">{runs.data.slice(0, 3).map((run) => <Link className={`run-card ${String(run.status || '').toLowerCase()}`} to={`/runs/${run.run_id}`} key={run.run_id}><span className="run-marker" /><div><div className="run-title">{run.run_id}</div><div className="run-meta">{run.scenario || 'Unknown scenario'} · {formatDate(run.finished_at || run.started_at)}</div></div><StatusBadge status={String(run.status || 'unknown')} kind="validation" /></Link>)}</div> : <div className="empty-state"><h3>No runs recorded</h3><p>Validation artifacts will appear here after an execution.</p></div>}
-      </section>
+      </section> : null}
 
       <ConfirmDialog open={confirm !== null} title={confirm === 'stop' ? 'Stop 5G SA deployment' : 'Restart 5G SA deployment'} message="The backend will execute the configured operational script. Review the run and logs after completion." confirmLabel={confirm === 'stop' ? 'Stop deployment' : 'Restart deployment'} onConfirm={runConfirmed} onCancel={() => setConfirm(null)} />
       <ConfirmDialog open={Boolean(activeConflict)} title="Another profile is active" message={`The backend detected ${activeConflictName} running. Stop that profile and its services, then start ${deploymentList.find((item) => item.id === '5g-sa')?.name || '5G SA simulation'}? If it is transmitting RF, this will stop its radio service.`} confirmLabel="Stop profile and continue" onConfirm={() => void stopActiveAndStartDefault()} onCancel={() => { setActiveConflict(null); actions.start.reset(); }} />

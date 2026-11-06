@@ -3,12 +3,14 @@ import { useQuery } from '@tanstack/react-query';
 import { useSearchParams } from 'react-router';
 import { Activity, AlertTriangle, CircleAlert, Search, X } from 'lucide-react';
 import { ActionButton } from '../components/ActionButton';
+import { ConfirmDialog } from '../components/ConfirmDialog';
 import { ErrorAlert } from '../components/ErrorAlert';
 import { LogsViewer } from '../components/LogsViewer';
 import { deploymentsApi } from '../services/deploymentsApi';
 import { useDeployments, useScenarioStatus } from '../hooks/useDeployment';
 import { formatDate } from '../utils/dates';
 import type { ImsActivityEvent } from '../types/deployment';
+import { usePreferences } from '../preferences/PreferencesProvider';
 
 function activityLabel(event: ImsActivityEvent): string {
   if (event.phase === 'observed') return 'Observed at P-CSCF';
@@ -40,6 +42,7 @@ function activityStatusClass(event: ImsActivityEvent): string {
 }
 
 export function LogsPage() {
+  const preferences = usePreferences();
   const deployments = useDeployments();
   const [searchParams] = useSearchParams();
   const [scenario, setScenario] = useState(searchParams.get('scenario') || '5g-sa');
@@ -48,6 +51,9 @@ export function LogsPage() {
   const [paused, setPaused] = useState(false);
   const [severity, setSeverity] = useState('all');
   const [search, setSearch] = useState('');
+  const [viewName, setViewName] = useState('');
+  const [selectedViewId, setSelectedViewId] = useState('');
+  const [confirmDeleteView, setConfirmDeleteView] = useState(false);
   const status = useScenarioStatus(scenario);
   const logStore = useQuery({
     queryKey: ['log-store-ready'],
@@ -66,8 +72,8 @@ export function LogsPage() {
     ...(status.data?.containers || []).map((item) => item.service || item.name),
   ])];
   const supportsImsActivity = Boolean(currentDeployment?.components.some((component) => component === 'pcscf' || component === 'scscf'));
-  const logs = useQuery({ queryKey: ['logs', scenario, container, tail], queryFn: () => deploymentsApi.logs(container === 'all' ? null : container, tail, scenario), refetchInterval: paused ? false : 5000 });
-  const activity = useQuery({ queryKey: ['ims-activity', scenario, tail], queryFn: () => deploymentsApi.imsActivity(tail, scenario), enabled: supportsImsActivity, refetchInterval: paused ? false : 5000 });
+  const logs = useQuery({ queryKey: ['logs', scenario, container, tail], queryFn: () => deploymentsApi.logs(container === 'all' ? null : container, tail, scenario), refetchInterval: paused ? false : preferences.pollingMilliseconds });
+  const activity = useQuery({ queryKey: ['ims-activity', scenario, tail], queryFn: () => deploymentsApi.imsActivity(tail, scenario), enabled: supportsImsActivity, refetchInterval: paused ? false : preferences.pollingMilliseconds });
   const raw = logs.data?.command.stdout || '';
   const allLines = useMemo(() => raw.split('\n').filter(Boolean), [raw]);
   const classify = (line: string) => /\b(fatal|critical|error|err)\b/i.test(line) ? 'error' : /\b(warn|warning)\b/i.test(line) ? 'warn' : /\b(info|notice)\b/i.test(line) ? 'info' : /\b(debug|trace)\b/i.test(line) ? 'debug' : 'other';
@@ -76,12 +82,40 @@ export function LogsPage() {
   const errorCount = allLines.filter((line) => classify(line) === 'error').length;
   const warningCount = allLines.filter((line) => classify(line) === 'warn').length;
 
+  const applySavedView = (viewId: string) => {
+    setSelectedViewId(viewId);
+    const view = preferences.savedLogViews.find((item) => item.id === viewId);
+    if (!view) return;
+    setScenario(view.scenario);
+    setContainer(view.service);
+    setTail(view.tail);
+    setSeverity(view.severity);
+    setSearch(view.search);
+  };
+  const saveCurrentView = () => {
+    const name = viewName.trim();
+    if (!name) return;
+    const id = preferences.saveLogView({ name, scenario, service: container, tail, severity, search });
+    setSelectedViewId(id);
+    setViewName('');
+  };
+
   const centralLogsUrl = `${window.location.origin}/grafana/d/openlain5g-logs/openlain5g-logs?orgId=1&refresh=15s`;
 
-  return <section className="page-panel logs-page"><header className="console-page-hero logs-hero"><div className="console-page-hero-copy"><span className="eyebrow"><Activity size={14} /> Observability</span><h1>Logs</h1><p className="page-subtitle">Live service output and searchable container history.</p><div className="inline-actions"><a className="action-link" href={centralLogsUrl} target="_blank" rel="noreferrer">Open central log explorer</a></div><div className="log-state"><span className={`live-indicator ${logStore.isError ? 'paused' : ''}`} />{logStore.isSuccess ? 'Central collection ready · 7-day retention' : logStore.isError ? 'Central collector unavailable' : 'Checking central collector'}</div><div className="log-state"><span className={`live-indicator ${paused ? 'paused' : ''}`} />{paused ? 'Auto refresh paused' : 'Live output refreshes every 5 seconds'}</div></div><figure><img src="/images/lain5g/logs-investigation-v2.webp" width="1672" height="941" alt="Service log viewer tracing an error to the affected container" loading="lazy" decoding="async" /><figcaption><span>Service investigation</span><strong>Find · correlate · export</strong></figcaption></figure></header>
-    <div className="panel logs-toolbar"><label>Scenario<select value={scenario} onChange={(event) => { setScenario(event.target.value); setContainer('all'); }}>{deploymentList.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</select></label><label>Service<select value={container} onChange={(event) => setContainer(event.target.value)}><option value="all">All services</option>{serviceOptions.map((service) => <option key={service} value={service}>{service}</option>)}</select></label><label>Latest<select value={tail} onChange={(event) => setTail(Number(event.target.value))}>{[100, 300, 500, 1000, 5000].map((item) => <option key={item} value={item}>{item} lines</option>)}</select></label><label>Level<select value={severity} onChange={(event) => setSeverity(event.target.value)}><option value="all">All levels</option><option value="error">Errors</option><option value="warn">Warnings</option><option value="info">Info</option><option value="debug">Debug</option></select></label><label className="log-search"><span><Search size={14} /> Search logs</span><div><input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Text, service, or message" />{search ? <button type="button" aria-label="Clear search" onClick={() => setSearch('')}><X size={14} /></button> : null}</div></label><ActionButton variant="secondary" onClick={() => setPaused((value) => !value)}>{paused ? 'Resume' : 'Pause'}</ActionButton><ActionButton variant="secondary" onClick={() => { void logs.refetch(); if (supportsImsActivity) void activity.refetch(); }} loading={logs.isFetching || activity.isFetching}>Refresh</ActionButton></div>
+  return <section className="page-panel logs-page"><header className="console-page-hero logs-hero"><div className="console-page-hero-copy"><span className="eyebrow"><Activity size={14} /> Observability</span><h1>Logs</h1><p className="page-subtitle">Live service output and searchable container history.</p><div className="inline-actions"><a className="action-link" href={centralLogsUrl} target="_blank" rel="noreferrer">Open central log explorer</a></div><div className="log-state"><span className={`live-indicator ${logStore.isError ? 'paused' : ''}`} />{logStore.isSuccess ? 'Central collection ready · 7-day retention' : logStore.isError ? 'Central collector unavailable' : 'Checking central collector'}</div><div className="log-state"><span className={`live-indicator ${paused ? 'paused' : ''}`} />{paused ? 'Auto refresh paused' : `Live output refreshes every ${preferences.pollingSeconds} seconds`}</div></div><figure><img src="/images/lain5g/logs-investigation-v2.webp" width="1672" height="941" alt="Service log viewer tracing an error to the affected container" loading="lazy" decoding="async" /><figcaption><span>Service investigation</span><strong>Find · correlate · export</strong></figcaption></figure></header>
+    <div className="panel logs-toolbar">
+      <label>Scenario<select value={scenario} onChange={(event) => { setScenario(event.target.value); setContainer('all'); setSelectedViewId(''); }}>{deploymentList.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</select></label>
+      <label>Service<select value={container} onChange={(event) => { setContainer(event.target.value); setSelectedViewId(''); }}><option value="all">All services</option>{serviceOptions.map((service) => <option key={service} value={service}>{service}</option>)}</select></label>
+      <label>Latest<select value={tail} onChange={(event) => { setTail(Number(event.target.value)); setSelectedViewId(''); }}>{[100, 300, 500, 1000, 5000].map((item) => <option key={item} value={item}>{item} lines</option>)}</select></label>
+      <label>Level<select value={severity} onChange={(event) => { setSeverity(event.target.value); setSelectedViewId(''); }}><option value="all">All levels</option><option value="error">Errors</option><option value="warn">Warnings</option><option value="info">Info</option><option value="debug">Debug</option></select></label>
+      <label className="log-search"><span><Search size={14} /> Search logs</span><div><input value={search} onChange={(event) => { setSearch(event.target.value); setSelectedViewId(''); }} placeholder="Text, service, or message" />{search ? <button type="button" aria-label="Clear search" onClick={() => { setSearch(''); setSelectedViewId(''); }}><X size={14} /></button> : null}</div></label>
+      <div className="saved-log-controls"><label>Saved view<select value={selectedViewId} onChange={(event) => applySavedView(event.target.value)}><option value="">Choose a view</option>{preferences.savedLogViews.map((view) => <option key={view.id} value={view.id}>{view.name}</option>)}</select></label><label>Save current filters<input value={viewName} onChange={(event) => setViewName(event.target.value)} placeholder="Name this view" maxLength={48} /></label><ActionButton variant="secondary" disabled={!viewName.trim()} onClick={saveCurrentView}>Save view</ActionButton>{selectedViewId ? <button className="secondary row-action" type="button" aria-label="Delete selected saved view" onClick={() => setConfirmDeleteView(true)}><X size={15} /></button> : null}</div>
+      <ActionButton variant="secondary" onClick={() => setPaused((value) => !value)}>{paused ? 'Resume' : 'Pause'}</ActionButton>
+      <ActionButton variant="secondary" onClick={() => { void logs.refetch(); if (supportsImsActivity) void activity.refetch(); }} loading={logs.isFetching || activity.isFetching}>Refresh</ActionButton>
+    </div>
     {supportsImsActivity ? <section className="panel ims-activity-panel"><div className="panel-heading"><div><span className="eyebrow">IMS signaling</span><h3>Calls and messages</h3></div></div><p className="ims-activity-note">SIP signaling events · message content hidden</p>{activity.error ? <ErrorAlert error={activity.error} onRetry={() => activity.refetch()} /> : null}{activity.isLoading ? <div className="ims-activity-empty">Loading IMS events…</div> : activity.data?.events.length ? <div className="table-wrap ims-activity-table-wrap"><table className="ims-activity-table"><thead><tr><th>Time</th><th>Type</th><th>From → To</th><th>Observed result</th><th>Service</th></tr></thead><tbody>{activity.data.events.map((event, index) => <tr key={`${event.flow_id}-${event.phase}-${event.status_code}-${index}`}><td>{event.timestamp ? formatDate(event.timestamp) : 'Time unavailable'}</td><td><span className="ims-method">{event.method}</span><small>{activityKind(event.method)}</small></td><td><code>{event.from_user}</code><span className="ims-activity-arrow">→</span><code>{event.to_user}</code></td><td><span className={`status-badge ${activityStatusClass(event)}`}>{activityLabel(event)}</span></td><td>{event.service}</td></tr>)}</tbody></table></div> : <div className="ims-activity-empty"><strong>No SIP events yet</strong><p>Start an IMS profile and place a call or send a SIP message.</p></div>}<small className="muted-text">{activity.data?.source === 'container_logs' ? 'Container logs' : 'IMS logs'} · {activity.data?.events.length ?? 0} events</small></section> : null}
     <div className="log-summary"><span>{visibleLines.length} shown / {allLines.length} lines</span><span className="log-count-error"><CircleAlert size={14} />{errorCount} errors</span><span className="log-count-warning"><AlertTriangle size={14} />{warningCount} warnings</span></div>
     {logs.error ? <ErrorAlert error={logs.error} onRetry={() => logs.refetch()} /> : null}<LogsViewer response={logs.data} text={visible || (raw ? 'No lines match the current filters.' : undefined)} title={`${currentDeployment?.name || scenario} · ${container === 'all' ? 'all services' : container}`} isLoading={logs.isLoading} /><p className="muted-text">Updated: {logs.data ? formatDate(logs.data.command.finished_at) : 'Not yet'}.</p>
+    <ConfirmDialog open={confirmDeleteView} title="Delete saved log view" message={`Remove ${preferences.savedLogViews.find((view) => view.id === selectedViewId)?.name || 'this saved view'} from this browser?`} confirmLabel="Delete view" onConfirm={() => { preferences.deleteLogView(selectedViewId); setSelectedViewId(''); setConfirmDeleteView(false); }} onCancel={() => setConfirmDeleteView(false)} />
   </section>;
 }

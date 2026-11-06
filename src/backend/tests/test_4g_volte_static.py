@@ -98,7 +98,9 @@ def test_x310_rf_start_requires_guardrails():
     assert "uhd_find_devices" in hardware_check
     assert 'ip -4 route get "$addr"' in hardware_check
     assert 'route_source="$(awk' in hardware_check
-    assert 'check ethernet_link PASS "route to $addr uses $route_device at $route_source"' in hardware_check
+    assert 'route_gateway="$(awk' in hardware_check
+    assert '"$interface_path/carrier"' in hardware_check
+    assert 'check ethernet_link PASS "direct route to $addr uses wired interface $route_device at $route_source; link carrier is up"' in hardware_check
 
 
 def test_x310_validation_uses_session_scoped_logs_and_marks_idle_standby():

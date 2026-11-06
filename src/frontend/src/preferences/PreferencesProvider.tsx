@@ -4,11 +4,58 @@ import { createContext, useContext, useEffect, useState, type ReactNode } from '
 export type ThemePreference = 'light' | 'dark' | 'system';
 export type TextSize = 'small' | 'medium' | 'large';
 export type FontStyle = 'sans' | 'technical';
+export type Density = 'comfortable' | 'compact';
+export type AlertLayout = 'detailed' | 'compact';
+export type DashboardCardId = 'activeServices' | 'registeredUes' | 'dataSessions' | 'passRate';
+export type DashboardSectionId = 'topology' | 'backend' | 'preparation' | 'rfSafety' | 'validation' | 'recentRuns';
+export interface SavedLogView {
+  id: string;
+  name: string;
+  scenario: string;
+  service: string;
+  tail: number;
+  severity: string;
+  search: string;
+}
+
+export const DASHBOARD_CARDS: { id: DashboardCardId; labelKey: string }[] = [
+  { id: 'activeServices', labelKey: 'dashboard.activeServices' },
+  { id: 'registeredUes', labelKey: 'dashboard.registeredUes' },
+  { id: 'dataSessions', labelKey: 'dashboard.dataSessions' },
+  { id: 'passRate', labelKey: 'dashboard.passRate' },
+];
+
+export const DASHBOARD_SECTIONS: { id: DashboardSectionId; label: string }[] = [
+  { id: 'topology', label: 'Service topology' },
+  { id: 'backend', label: 'Backend status' },
+  { id: 'preparation', label: 'Required components' },
+  { id: 'rfSafety', label: 'RF safety' },
+  { id: 'validation', label: 'Validation summary' },
+  { id: 'recentRuns', label: 'Recent runs' },
+];
+
+export const PINNABLE_SCENARIOS = [
+  { id: '4g-lte-sim', label: '4G LTE Simulation' },
+  { id: '4g-lte-x310', label: '4G Guarded LTE RF' },
+  { id: '5g-sa', label: '5G SA Simulation' },
+  { id: '5g-sa-x310', label: '5G SA Guarded RF' },
+  { id: '5g-nsa-x310', label: '5G NSA Guarded RF' },
+] as const;
 
 interface Preferences {
   theme: ThemePreference;
   textSize: TextSize;
   fontStyle: FontStyle;
+  density: Density;
+  highContrast: boolean;
+  reduceMotion: boolean;
+  alertLayout: AlertLayout;
+  pollingSeconds: 5 | 10 | 15 | 30;
+  dashboardCards: DashboardCardId[];
+  hiddenDashboardCards: DashboardCardId[];
+  hiddenDashboardSections: DashboardSectionId[];
+  pinnedScenarios: string[];
+  savedLogViews: SavedLogView[];
 }
 
 interface PreferencesContextValue extends Preferences {
@@ -16,11 +63,26 @@ interface PreferencesContextValue extends Preferences {
   setTheme: (theme: ThemePreference) => void;
   setTextSize: (textSize: TextSize) => void;
   setFontStyle: (fontStyle: FontStyle) => void;
+  setDensity: (density: Density) => void;
+  setHighContrast: (enabled: boolean) => void;
+  setReduceMotion: (enabled: boolean) => void;
+  setAlertLayout: (layout: AlertLayout) => void;
+  setPollingSeconds: (seconds: 5 | 10 | 15 | 30) => void;
+  setDashboardCards: (cards: DashboardCardId[]) => void;
+  setHiddenDashboardCards: (cards: DashboardCardId[]) => void;
+  setHiddenDashboardSections: (sections: DashboardSectionId[]) => void;
+  setPinnedScenarios: (scenarios: string[]) => void;
+  saveLogView: (view: Omit<SavedLogView, 'id'>) => string;
+  deleteLogView: (id: string) => void;
+  pollingMilliseconds: number;
   reset: () => void;
   t: (key: string) => string;
 }
 
-const STORAGE_KEY = 'lain5g.preferences.v1';
+const STORAGE_KEY = 'lain5g.preferences.v2';
+const LEGACY_STORAGE_KEY = 'lain5g.preferences.v1';
+const DEFAULT_DASHBOARD_CARDS: DashboardCardId[] = DASHBOARD_CARDS.map((card) => card.id);
+const DEFAULT_PINNED_SCENARIOS = ['4g-lte-sim', '5g-sa'];
 
 const messages: Record<string, string> = {
   'nav.operation': 'Operation',
@@ -48,7 +110,7 @@ const messages: Record<string, string> = {
   'shell.realModeShort': 'REAL MODE',
   'shell.emergencyStop': 'Emergency stop',
   'shell.controlPlane': 'CONTROL PLANE',
-  'shell.activeScenario': 'Active scenario',
+  'shell.activeScenario': 'Selected scenario',
   'shell.quickSearch': 'Quick search',
   'shell.notifications': 'Notifications',
   'shell.expandNavigation': 'Expand navigation',
@@ -56,13 +118,40 @@ const messages: Record<string, string> = {
   'shell.noEvents': 'No unread backend events. Follow active operations in runs and logs.',
   'settings.eyebrow': 'Local administration',
   'settings.title': 'Settings',
-  'settings.subtitle': 'Customize appearance and text size. Changes are stored only in this browser.',
+  'settings.subtitle': 'Personalize the console, dashboard, log views, and live refresh. Preferences stay in this browser.',
   'settings.appearance': 'Appearance',
   'settings.appearanceHelp': 'Use light, dark, or follow the operating system.',
   'settings.textSize': 'Text size',
   'settings.textSizeHelp': 'Adjust readability without changing laboratory data.',
   'settings.fontStyle': 'Font style',
   'settings.fontStyleHelp': 'Choose a modern interface or technical monospaced reading.',
+  'settings.density': 'Interface density',
+  'settings.densityHelp': 'Choose more room between controls or fit more information on screen.',
+  'settings.comfortable': 'Comfortable',
+  'settings.compact': 'Compact',
+  'settings.accessibility': 'Accessibility',
+  'settings.highContrast': 'Higher contrast',
+  'settings.highContrastHelp': 'Strengthen text and borders while keeping status colors distinct.',
+  'settings.reduceMotion': 'Reduce motion',
+  'settings.reduceMotionHelp': 'Limit animated transitions and scrolling effects.',
+  'settings.alertLayout': 'Alert layout',
+  'settings.alertLayoutHelp': 'Warnings and failures stay visible; choose their spacing.',
+  'settings.detailed': 'Detailed',
+  'settings.polling': 'Live refresh interval',
+  'settings.pollingHelp': 'Set how often live status panels request updates.',
+  'settings.dashboardCards': 'Dashboard cards',
+  'settings.dashboardCardsHelp': 'Choose the summary cards and arrange their order.',
+  'settings.dashboardPanels': 'Dashboard panels',
+  'settings.dashboardPanelsHelp': 'Show only the operational sections you use most.',
+  'settings.showCard': 'Show',
+  'settings.moveUp': 'Move up',
+  'settings.moveDown': 'Move down',
+  'settings.pinnedScenarios': 'Pinned workspaces',
+  'settings.pinnedScenariosHelp': 'Add scenario links to the dashboard. Opening a link never starts services.',
+  'settings.savedLogViews': 'Saved log views',
+  'settings.savedLogViewsHelp': 'Save your scenario, service, severity, and search filters in this browser.',
+  'settings.resetDashboard': 'Reset dashboard cards',
+  'settings.seconds': 'seconds',
   'settings.sans': 'Modern',
   'settings.technical': 'Technical',
   'settings.light': 'Light',
@@ -80,7 +169,6 @@ const messages: Record<string, string> = {
   'settings.status': 'Status',
   'settings.mode': 'Mode',
   'settings.updates': 'Updates',
-  'settings.polling': 'Every 10 seconds',
   'settings.streaming': 'Data updates',
   'settings.streamingBody': 'Logs and service state use controlled polling; WebSocket and SSE are not enabled.',
   'preparation.eyebrow': 'Host preparation',
@@ -123,17 +211,52 @@ const messages: Record<string, string> = {
 };
 
 function defaultPreferences(): Preferences {
-  return { theme: 'light', textSize: 'medium', fontStyle: 'sans' };
+  return {
+    theme: 'light', textSize: 'medium', fontStyle: 'sans', density: 'comfortable',
+    highContrast: false, reduceMotion: false, alertLayout: 'detailed', pollingSeconds: 10,
+    dashboardCards: [...DEFAULT_DASHBOARD_CARDS], hiddenDashboardCards: [], hiddenDashboardSections: [], pinnedScenarios: [...DEFAULT_PINNED_SCENARIOS], savedLogViews: [],
+  };
 }
 
 function loadPreferences(): Preferences {
   const defaults = defaultPreferences();
   try {
-    const stored = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}') as Partial<Preferences>;
+    const stored = JSON.parse(localStorage.getItem(STORAGE_KEY) || localStorage.getItem(LEGACY_STORAGE_KEY) || '{}') as Partial<Preferences>;
+    const validCards = new Set(DASHBOARD_CARDS.map((card) => card.id));
+    const storedCards = Array.isArray(stored.dashboardCards)
+      ? stored.dashboardCards.filter((card): card is DashboardCardId => validCards.has(card as DashboardCardId))
+      : [];
+    const dashboardCards = [...new Set([...storedCards, ...DEFAULT_DASHBOARD_CARDS.filter((card) => !storedCards.includes(card))])];
+    const hiddenDashboardCards = Array.isArray(stored.hiddenDashboardCards)
+      ? stored.hiddenDashboardCards.filter((card): card is DashboardCardId => validCards.has(card as DashboardCardId))
+      : [];
+    const validSections = new Set(DASHBOARD_SECTIONS.map((section) => section.id));
+    const hiddenDashboardSections = Array.isArray(stored.hiddenDashboardSections)
+      ? stored.hiddenDashboardSections.filter((section): section is DashboardSectionId => validSections.has(section as DashboardSectionId))
+      : [];
+    const validScenarios = new Set(PINNABLE_SCENARIOS.map((scenario) => scenario.id));
+    const pinnedScenarios = Array.isArray(stored.pinnedScenarios)
+      ? stored.pinnedScenarios
+        .map((scenario) => scenario === '4g-volte-sim' ? '4g-lte-sim' : scenario)
+        .filter((scenario): scenario is string => typeof scenario === 'string' && validScenarios.has(scenario as (typeof PINNABLE_SCENARIOS)[number]['id']))
+      : [...DEFAULT_PINNED_SCENARIOS];
+    const savedLogViews = Array.isArray(stored.savedLogViews)
+      ? stored.savedLogViews.filter((view): view is SavedLogView => Boolean(view && typeof view.id === 'string' && typeof view.name === 'string' && typeof view.scenario === 'string' && typeof view.service === 'string' && typeof view.tail === 'number' && typeof view.severity === 'string' && typeof view.search === 'string'))
+      : [];
     return {
       theme: stored.theme === 'light' || stored.theme === 'dark' || stored.theme === 'system' ? stored.theme : defaults.theme,
       textSize: stored.textSize === 'small' || stored.textSize === 'medium' || stored.textSize === 'large' ? stored.textSize : defaults.textSize,
       fontStyle: stored.fontStyle === 'sans' || stored.fontStyle === 'technical' ? stored.fontStyle : defaults.fontStyle,
+      density: stored.density === 'compact' || stored.density === 'comfortable' ? stored.density : defaults.density,
+      highContrast: stored.highContrast === true,
+      reduceMotion: stored.reduceMotion === true,
+      alertLayout: stored.alertLayout === 'compact' || stored.alertLayout === 'detailed' ? stored.alertLayout : defaults.alertLayout,
+      pollingSeconds: stored.pollingSeconds === 5 || stored.pollingSeconds === 10 || stored.pollingSeconds === 15 || stored.pollingSeconds === 30 ? stored.pollingSeconds : defaults.pollingSeconds,
+      dashboardCards,
+      hiddenDashboardCards,
+      hiddenDashboardSections,
+      pinnedScenarios,
+      savedLogViews,
     };
   } catch {
     return defaults;
@@ -162,18 +285,41 @@ export function PreferencesProvider({ children }: { children: ReactNode }) {
     root.dataset.themePreference = preferences.theme;
     root.dataset.textSize = preferences.textSize;
     root.dataset.fontStyle = preferences.fontStyle;
+    root.dataset.density = preferences.density;
+    root.dataset.highContrast = String(preferences.highContrast);
+    root.dataset.reduceMotion = String(preferences.reduceMotion);
+    root.dataset.alertLayout = preferences.alertLayout;
     root.style.colorScheme = resolvedTheme;
-    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(preferences)); } catch { /* Browser storage may be disabled. */ }
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(preferences));
+      localStorage.removeItem(LEGACY_STORAGE_KEY);
+    } catch { /* Browser storage may be disabled. */ }
   }, [preferences, resolvedTheme]);
 
   const update = (next: Partial<Preferences>) => setPreferences((current) => ({ ...current, ...next }));
   const value: PreferencesContextValue = {
     ...preferences,
     resolvedTheme,
+    pollingMilliseconds: preferences.pollingSeconds * 1000,
     setTheme: (theme) => update({ theme }),
     setTextSize: (textSize) => update({ textSize }),
     setFontStyle: (fontStyle) => update({ fontStyle }),
-    reset: () => setPreferences(defaultPreferences()),
+    setDensity: (density) => update({ density }),
+    setHighContrast: (highContrast) => update({ highContrast }),
+    setReduceMotion: (reduceMotion) => update({ reduceMotion }),
+    setAlertLayout: (alertLayout) => update({ alertLayout }),
+    setPollingSeconds: (pollingSeconds) => update({ pollingSeconds }),
+    setDashboardCards: (dashboardCards) => update({ dashboardCards }),
+    setHiddenDashboardCards: (hiddenDashboardCards) => update({ hiddenDashboardCards }),
+    setHiddenDashboardSections: (hiddenDashboardSections) => update({ hiddenDashboardSections }),
+    setPinnedScenarios: (pinnedScenarios) => update({ pinnedScenarios }),
+    saveLogView: (view) => {
+      const id = `log-view-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`;
+      setPreferences((current) => ({ ...current, savedLogViews: [...current.savedLogViews, { ...view, id }] }));
+      return id;
+    },
+    deleteLogView: (id) => update({ savedLogViews: preferences.savedLogViews.filter((view) => view.id !== id) }),
+    reset: () => setPreferences((current) => ({ ...defaultPreferences(), savedLogViews: current.savedLogViews })),
     t: (key) => messages[key] || key,
   };
   return <PreferencesContext.Provider value={value}>{children}</PreferencesContext.Provider>;

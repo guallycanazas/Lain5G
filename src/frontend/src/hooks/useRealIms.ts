@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { realImsApi } from '../services/realImsApi';
 import type { RealImsMode } from '../types/realIms';
+import { usePreferences } from '../preferences/PreferencesProvider';
 
 export function useRealImsPreflight(mode: RealImsMode) {
   return useQuery({ queryKey: ['real-ims', 'preflight', mode], queryFn: () => realImsApi.preflight(mode) });
@@ -15,10 +16,11 @@ export function useRealImsStatus(mode: RealImsMode, imsi: string) {
 }
 
 export function useRealImsRuntimeStatus(mode: RealImsMode) {
+  const { pollingMilliseconds } = usePreferences();
   return useQuery({
     queryKey: ['real-ims', 'runtime-status', mode],
     queryFn: () => realImsApi.status(mode, ''),
-    refetchInterval: 10000,
+    refetchInterval: pollingMilliseconds,
   });
 }
 

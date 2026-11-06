@@ -1,9 +1,11 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { subscribersApi } from '../services/subscribersApi';
 import type { SubscriberClonePayload, SubscriberFormPayload, SubscriberProfile } from '../types/subscriber';
+import { usePreferences } from '../preferences/PreferencesProvider';
 
 export function useSubscriberConnection(profile: SubscriberProfile = '4g-lte-x310') {
-  return useQuery({ queryKey: ['subscribers-connection', profile], queryFn: () => subscribersApi.connection(profile), refetchInterval: 10000 });
+  const { pollingMilliseconds } = usePreferences();
+  return useQuery({ queryKey: ['subscribers-connection', profile], queryFn: () => subscribersApi.connection(profile), refetchInterval: pollingMilliseconds });
 }
 
 export function useSubscribers(params: { limit: number; offset: number; search?: string; profile?: SubscriberProfile }, enabled = true) {

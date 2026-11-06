@@ -6,12 +6,15 @@ import getpass
 import json
 import os
 import pwd
+import re
 import shlex
 import shutil
 import subprocess
 import sys
 import tempfile
 import time
+from collections.abc import Iterator
+from contextlib import contextmanager
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -167,6 +170,26 @@ RF_ACTIONS = {
     },
 }
 
+SCENARIO_STOP_SCRIPTS = {
+    # Stop NSA first because it may own the shared LTE EPC/IMS stack.
+    "5g-nsa-x310": "deployments/5g-nsa-x310/scripts/stop.sh",
+    "4g-lte-x310": "deployments/4g-volte/x310/scripts/stop.sh",
+    "5g-sa-x310": "deployments/5g-sa-x310/scripts/stop.sh",
+    "4g-lte-sim": "deployments/4g-lte-sim/scripts/stop.sh",
+    "5g-sa": "deployments/5g-sa/scripts/stop.sh",
+    "4g-volte-sim": "deployments/4g-volte/sim/scripts/stop.sh",
+    "5g-vonr": "deployments/5g-vonr/scripts/stop.sh",
+}
+
+IMS_REAL_PROJECTS = ("lain5g-lab-ims-real-4g", "lain5g-lab-ims-real-5g")
+COMPOSE_PROJECTS = tuple(dict.fromkeys(
+    project for projects in DOCKER_PROJECTS.values() for project in projects
+)) + ("lain5g-lab-app", *IMS_REAL_PROJECTS)
+UNINSTALL_SCOPES = ("app", "all", "ims-real", *DOCKER_PROJECTS.keys())
+STABLE_VERSION_RE = re.compile(r"^v?(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$")
+DATA_PURGE_CONFIRMATION = "DELETE OPENLAIN5G DATA"
+PURGE_ALL_CONFIRMATION = "BORRAR OPENLAIN5G COMPLETAMENTE"
+
 
 def main(argv: list[str]) -> int:
     project_root = Path(os.environ.get("LAIN5G_PROJECT_ROOT", Path(__file__).resolve().parent))
@@ -176,6 +199,20 @@ def main(argv: list[str]) -> int:
     if argv[0] in {"-h", "--help", "help"}:
         _print_help()
         return 0
+    if argv[0] in {"--status", "status"}:
+        if len(argv) != 1:
+            print("Uso: lain5g status", file=sys.stderr)
+            return 2
+        return _installation_status(service)
+    if argv[0] in {"version", "versions"}:
+        return _version_command(service, argv[1:])
+    if argv[0] == "uninstall":
+        return _uninstall_command(service, argv[1:])
+    if argv[0] in {"manager", "maintenance"}:
+        if len(argv) != 1:
+            print("Uso: lain5g manager", file=sys.stderr)
+            return 2
+        return _manager_menu(service)
     if argv[0] in {"bootstrap", "install", "prepare"}:
         flags = set(argv[1:])
         if not flags <= {"--yes", "--dry-run"}:
@@ -266,6 +303,14 @@ def _print_help(file=sys.stdout) -> None:
     print("Consola del laboratorio Lain", file=file)
     print("", file=file)
     print("  lain5g                         Abrir la consola principal", file=file)
+    print("  lain5g status                  Ver version, Docker y contenedores activos", file=file)
+    print("  lain5g version [check|list]    Consultar versiones estables disponibles", file=file)
+    print("  lain5g version use TAG         Cambiar a un tag con respaldo local", file=file)
+    print("  lain5g version rollback        Volver al respaldo de version anterior", file=file)
+    print("  lain5g uninstall --scope SCOPE Detener app, IMS, perfil o todo", file=file)
+    print("  lain5g uninstall --scope all --purge-data  Borrar volumenes con confirmacion", file=file)
+    print("  lain5g uninstall --scope all --purge-all  Borrar OpenLain5G completamente", file=file)
+    print("  lain5g manager                 Abrir el menu de mantenimiento", file=file)
     print("  lain5g bootstrap               Instalar dependencias y preparar todo", file=file)
     print("  lain5g doctor [perfil]        Revisar equipo, Docker e imagenes", file=file)
     print("  lain5g images list [perfil]   Comprobar componentes instalados", file=file)
@@ -289,6 +334,840 @@ def _print_help(file=sys.stdout) -> None:
     print("  lain5g profile restore ID     Restaurar el ultimo respaldo", file=file)
 
 
+def _installation_status(service: ProfileConfigService) -> int:
+    root = service.root
+    version_path = root / "VERSION"
+    try:
+        version = version_path.read_text(encoding="utf-8").strip()
+    except (OSError, UnicodeError):
+        version = "desconocida"
+
+    git_ref = "archivo de codigo fuente"
+    git_tree = "no disponible"
+    if shutil.which("git"):
+        tag = subprocess.run(
+            ["git", "-C", str(root), "describe", "--tags", "--exact-match"],
+            text=True,
+            capture_output=True,
+            check=False,
+        )
+        branch = subprocess.run(
+            ["git", "-C", str(root), "rev-parse", "--abbrev-ref", "HEAD"],
+            text=True,
+            capture_output=True,
+            check=False,
+        )
+        if tag.returncode == 0 and tag.stdout.strip():
+            git_ref = tag.stdout.strip()
+        elif branch.returncode == 0 and branch.stdout.strip():
+            git_ref = branch.stdout.strip()
+        tree = subprocess.run(
+            ["git", "-C", str(root), "status", "--porcelain"],
+            text=True,
+            capture_output=True,
+            check=False,
+        )
+        if tree.returncode == 0:
+            git_tree = "modified" if tree.stdout.strip() else "clean"
+
+    print("Estado de OpenLain5G")
+    print("====================")
+    print(f"Proyecto:      {root}")
+    print(f"Version:       {version}")
+    print(f"Referencia:    {git_ref}")
+    print(f"Arbol de Git:  {git_tree}")
+
+    if not shutil.which("docker"):
+        print("Docker:        CLI no instalado")
+        return 1
+
+    try:
+        containers = subprocess.run(
+            [
+                "docker",
+                "ps",
+                "--format",
+                '{{.Label "com.docker.compose.project"}}\t{{.Status}}\t{{.Names}}',
+            ],
+            text=True,
+            capture_output=True,
+            check=False,
+        )
+    except (OSError, PermissionError) as exc:
+        print(f"Docker:        no disponible ({exc})")
+        return 1
+    if containers.returncode != 0:
+        detail = containers.stderr.strip().splitlines()
+        message = detail[-1] if detail else "servicio detenido o sin permisos"
+        print(f"Docker:        no disponible ({message})")
+        return 1
+
+    project_rows: dict[str, list[tuple[str, str]]] = {}
+    for line in containers.stdout.splitlines():
+        project, separator, remainder = line.partition("\t")
+        if not separator or not project.startswith("lain5g-lab"):
+            continue
+        status, separator, name = remainder.partition("\t")
+        if not separator or not name:
+            continue
+        project_rows.setdefault(project, []).append((status, name))
+
+    print("Docker:        servicio accesible")
+    if not project_rows:
+        print("Contenedores:  no hay contenedores OpenLain5G activos")
+        return 0
+
+    print("Contenedores activos:")
+    for project, rows in sorted(project_rows.items()):
+        print(f"  {project}: {len(rows)} activos")
+        for status, name in sorted(rows, key=lambda row: row[1]):
+            print(f"    {name}: {status}")
+    return 0
+
+
+def _safe_run(command: list[str], **kwargs) -> subprocess.CompletedProcess[str]:
+    try:
+        return subprocess.run(command, check=False, **kwargs)
+    except (FileNotFoundError, PermissionError, OSError) as exc:
+        return subprocess.CompletedProcess(command, 127, "", str(exc))
+
+
+@contextmanager
+def _project_operation_lock(root: Path) -> Iterator[bool]:
+    lock_fd = os.open(root, os.O_RDONLY)
+    try:
+        try:
+            fcntl.flock(lock_fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except BlockingIOError:
+            yield False
+            return
+        yield True
+    finally:
+        os.close(lock_fd)
+
+
+def _run_project_locked(root: Path, command: list[str], **kwargs) -> subprocess.CompletedProcess[str]:
+    with _project_operation_lock(root) as locked:
+        if not locked:
+            print("Hay un inicio RF u otra operacion en curso; no se modifico el escenario.", file=sys.stderr)
+            return subprocess.CompletedProcess(command, 1, "", "operacion bloqueada")
+        return _safe_run(command, cwd=root, **kwargs)
+
+
+def _git_result(root: Path, *args: str) -> subprocess.CompletedProcess[str]:
+    return _safe_run(["git", "-C", str(root), *args], text=True, capture_output=True)
+
+
+def _read_local_version(root: Path) -> str:
+    try:
+        return (root / "VERSION").read_text(encoding="utf-8").strip()
+    except (OSError, UnicodeError):
+        return "desconocida"
+
+
+def _version_tuple(tag: str) -> tuple[int, int, int] | None:
+    match = STABLE_VERSION_RE.fullmatch(tag)
+    if not match:
+        return None
+    return tuple(int(part) for part in match.groups())
+
+
+def _remote_stable_tags(root: Path) -> tuple[list[str], str | None]:
+    result = _git_result(root, "ls-remote", "--refs", "--tags", "origin")
+    if result.returncode != 0:
+        detail = result.stderr.strip().splitlines()
+        return [], detail[-1] if detail else "No se pudo consultar origin."
+    tags: set[str] = set()
+    for line in result.stdout.splitlines():
+        _, separator, ref = line.partition("\t")
+        if not separator or not ref.startswith("refs/tags/"):
+            continue
+        tag = ref.removeprefix("refs/tags/")
+        if _version_tuple(tag) is not None:
+            tags.add(tag)
+    return sorted(tags, key=lambda item: _version_tuple(item) or (0, 0, 0), reverse=True), None
+
+
+def _managed_running_containers(root: Path) -> tuple[list[tuple[str, str]], str | None]:
+    if not shutil.which("docker"):
+        return [], None
+    result = _safe_run(
+        ["docker", "ps", "--format", '{{.Label "com.docker.compose.project"}}\t{{.Names}}'],
+        cwd=root,
+        text=True,
+        capture_output=True,
+    )
+    if result.returncode != 0:
+        detail = result.stderr.strip().splitlines()
+        return [], detail[-1] if detail else "No se pudo consultar Docker."
+    rows: list[tuple[str, str]] = []
+    for line in result.stdout.splitlines():
+        project, separator, name = line.partition("\t")
+        if separator and project in COMPOSE_PROJECTS and name:
+            rows.append((project, name))
+    return rows, None
+
+
+def _version_switch_preflight(root: Path) -> bool:
+    inside_worktree = _git_result(root, "rev-parse", "--is-inside-work-tree")
+    if inside_worktree.returncode != 0 or inside_worktree.stdout.strip() != "true":
+        print("Cambiar de version requiere una clonacion Git completa.", file=sys.stderr)
+        return False
+    status = _git_result(root, "status", "--porcelain", "--untracked-files=normal")
+    if status.returncode != 0:
+        print("No se pudo comprobar el estado de Git.", file=sys.stderr)
+        return False
+    if status.stdout.strip():
+        print(
+            "No se cambio de version: hay cambios locales o archivos sin seguimiento. "
+            "Guardalos o trasladalos y vuelve a intentarlo.",
+            file=sys.stderr,
+        )
+        return False
+    active_markers = [path for path in RF_ACTIVE_MARKERS if (root / path).is_file()]
+    if active_markers:
+        print("No se cambio de version mientras exista una sesion RF marcada como activa.", file=sys.stderr)
+        return False
+    running, error = _managed_running_containers(root)
+    if error:
+        print(f"No se pudo verificar el estado de Docker: {error}", file=sys.stderr)
+        return False
+    if running:
+        print("Deten primero los contenedores OpenLain5G antes de cambiar de version:", file=sys.stderr)
+        for project, name in running:
+            print(f"  {project}: {name}", file=sys.stderr)
+        return False
+    return True
+
+
+def _backup_branch_name() -> str:
+    return f"lain5g-backup-{time.strftime('%Y%m%d-%H%M%S', time.gmtime())}-{os.getpid()}"
+
+
+def _switch_version_tag(root: Path, tag: str, *, dry_run: bool) -> int:
+    with _project_operation_lock(root) as locked:
+        if not locked:
+            print("Hay una operacion o inicio RF en curso; no se cambio de version.", file=sys.stderr)
+            return 1
+        if not _version_switch_preflight(root):
+            return 1
+        if dry_run:
+            print(f"Plan: guardar HEAD como respaldo y cambiar el checkout a {tag}.")
+            print("No se instalaran paquetes ni se iniciaran contenedores.")
+            return 0
+        fetch = _git_result(root, "fetch", "--no-tags", "origin", f"+refs/tags/{tag}:refs/tags/{tag}")
+        if fetch.returncode != 0:
+            print(fetch.stderr.strip() or f"No se pudo descargar {tag}.", file=sys.stderr)
+            return 1
+        backup = _backup_branch_name()
+        saved = _git_result(root, "branch", backup, "HEAD")
+        if saved.returncode != 0:
+            print(saved.stderr.strip() or "No se pudo crear el respaldo local.", file=sys.stderr)
+            return 1
+        switched = _git_result(root, "switch", "--detach", f"refs/tags/{tag}")
+        if switched.returncode != 0:
+            print(switched.stderr.strip() or "No se pudo cambiar al tag seleccionado.", file=sys.stderr)
+            print(f"El codigo anterior sigue guardado en la rama {backup}.", file=sys.stderr)
+            print(f"Recuperacion manual: git -C {root} switch {backup}.", file=sys.stderr)
+            return 1
+        print(f"Checkout cambiado a {tag}.")
+        print(f"Respaldo anterior: {backup}; vuelve con ./lain5g version rollback.")
+        print(f"Recuperacion manual: git -C {root} switch {backup}.")
+        print("Para usar esta version, revisa sus instrucciones e inicia o reconstruye la app de forma explicita.")
+        return 0
+
+
+def _rollback_version(root: Path, *, dry_run: bool) -> int:
+    with _project_operation_lock(root) as locked:
+        if not locked:
+            print("Hay una operacion o inicio RF en curso; no se cambio de version.", file=sys.stderr)
+            return 1
+        backups = _git_result(
+            root,
+            "for-each-ref",
+            "--sort=-refname",
+            "--format=%(refname:short)",
+            "refs/heads/lain5g-backup-",
+        )
+        if backups.returncode != 0 or not backups.stdout.splitlines():
+            print("No hay un respaldo de version creado por lain5g.", file=sys.stderr)
+            return 1
+        target = backups.stdout.splitlines()[0].strip()
+        if not _version_switch_preflight(root):
+            return 1
+        if dry_run:
+            print(f"Plan: guardar HEAD como respaldo y volver a {target}.")
+            return 0
+        backup = _backup_branch_name()
+        saved = _git_result(root, "branch", backup, "HEAD")
+        if saved.returncode != 0:
+            print(saved.stderr.strip() or "No se pudo crear el respaldo de la version actual.", file=sys.stderr)
+            return 1
+        switched = _git_result(root, "switch", target)
+        if switched.returncode != 0:
+            print(switched.stderr.strip() or f"No se pudo volver a {target}.", file=sys.stderr)
+            return 1
+        print(f"Checkout restaurado a {target}.")
+        print(f"La version anterior sigue guardada en {backup}.")
+        return 0
+
+
+def _version_command(service: ProfileConfigService, argv: list[str]) -> int:
+    root = service.root
+    if not argv:
+        local = _read_local_version(root)
+        ref = _git_result(root, "describe", "--tags", "--exact-match")
+        if ref.returncode != 0:
+            ref = _git_result(root, "rev-parse", "--abbrev-ref", "HEAD")
+        print(f"Version local: {local}")
+        print(f"Referencia Git: {ref.stdout.strip() if ref.returncode == 0 else 'no disponible'}")
+        print("Consulta ./lain5g version check para buscar una version estable en origin.")
+        return 0
+
+    action = argv[0]
+    if action in {"check", "list"} and len(argv) == 1:
+        tags, error = _remote_stable_tags(root)
+        if error:
+            print(f"No se pudieron consultar las versiones remotas: {error}", file=sys.stderr)
+            return 1
+        if not tags:
+            print("origin no publica tags estables con formato vX.Y.Z.")
+            return 0
+        current = _read_local_version(root)
+        if action == "list":
+            print(f"Version local: {current}")
+            print("Tags estables disponibles en origin:")
+            for tag in tags[:20]:
+                marker = "  <- instalada" if tag.lstrip("v") == current else ""
+                print(f"  {tag}{marker}")
+            return 0
+        latest = tags[0]
+        print(f"Version local: {current}")
+        print(f"Version estable mas reciente: {latest}")
+        current_tuple = _version_tuple(current)
+        latest_tuple = _version_tuple(latest)
+        if current_tuple is None:
+            print("La version local no sigue el formato semantico X.Y.Z; revisa antes de actualizar.")
+        elif current_tuple < (latest_tuple or current_tuple):
+            print(f"Hay una version disponible. Revisa cambios con: ./lain5g version use {latest} --dry-run")
+        elif current_tuple == latest_tuple:
+            print("La version local coincide con la ultima version estable.")
+        else:
+            print("La version local es posterior a la ultima estable publicada en origin.")
+        return 0
+
+    if action == "use" and len(argv) in {2, 3}:
+        target = argv[1]
+        dry_run = len(argv) == 3 and argv[2] == "--dry-run"
+        if len(argv) == 3 and not dry_run:
+            print("Uso: lain5g version use TAG [--dry-run]", file=sys.stderr)
+            return 2
+        version = _version_tuple(target)
+        if version is None:
+            print("Usa un tag estable con formato vX.Y.Z.", file=sys.stderr)
+            return 2
+        tags, error = _remote_stable_tags(root)
+        if error:
+            print(f"No se pudieron consultar las versiones remotas: {error}", file=sys.stderr)
+            return 1
+        normalized = next((tag for tag in tags if _version_tuple(tag) == version), None)
+        if normalized is None:
+            print(f"El tag {target} no esta disponible en origin.", file=sys.stderr)
+            return 1
+        return _switch_version_tag(root, normalized, dry_run=dry_run)
+
+    if action == "rollback" and len(argv) in {1, 2}:
+        dry_run = len(argv) == 2 and argv[1] == "--dry-run"
+        if len(argv) == 2 and not dry_run:
+            print("Uso: lain5g version rollback [--dry-run]", file=sys.stderr)
+            return 2
+        return _rollback_version(root, dry_run=dry_run)
+
+    print(
+        "Uso: lain5g version [check|list|use TAG [--dry-run]|rollback [--dry-run]]",
+        file=sys.stderr,
+    )
+    return 2
+
+
+def _container_ids(project: str, *, all_states: bool = True) -> tuple[list[str], str | None]:
+    command = ["docker", "ps"]
+    if all_states:
+        command.append("-a")
+    command.extend(["--filter", f"label=com.docker.compose.project={project}", "-q"])
+    result = _safe_run(command, text=True, capture_output=True)
+    if result.returncode != 0:
+        detail = result.stderr.strip().splitlines()
+        return [], detail[-1] if detail else f"No se pudo consultar el proyecto {project}."
+    return [value.strip() for value in result.stdout.splitlines() if value.strip()], None
+
+
+def _project_volumes(projects: tuple[str, ...]) -> tuple[list[str], str | None]:
+    volumes: set[str] = set()
+    for project in projects:
+        result = _safe_run(
+            ["docker", "volume", "ls", "--filter", f"label=com.docker.compose.project={project}", "--format", "{{.Name}}"],
+            text=True,
+            capture_output=True,
+        )
+        if result.returncode != 0:
+            detail = result.stderr.strip().splitlines()
+            return [], detail[-1] if detail else f"No se pudieron consultar los volumenes de {project}."
+        volumes.update(value.strip() for value in result.stdout.splitlines() if value.strip())
+    return sorted(volumes), None
+
+
+def _project_images() -> tuple[list[str], str | None]:
+    result = _safe_run(["docker", "image", "ls", "--format", "{{.Repository}}:{{.Tag}}"], text=True, capture_output=True)
+    if result.returncode != 0:
+        detail = result.stderr.strip().splitlines()
+        return [], detail[-1] if detail else "No se pudieron consultar las imagenes locales."
+    images = set()
+    for value in result.stdout.splitlines():
+        image = value.strip()
+        repository, separator, _tag = image.rpartition(":")
+        if not separator:
+            continue
+        if repository.startswith("lain5g-lab/") or repository == "lain5g/open5gs-webui":
+            images.add(image)
+    return sorted(images), None
+
+
+def _complete_uninstall_paths(root: Path) -> tuple[Path | None, Path | None, str | None]:
+    if root.is_symlink():
+        return None, None, "La ruta del checkout es un enlace simbolico; no se borrara."
+    try:
+        checkout = root.resolve(strict=True)
+        home = Path.home().resolve()
+    except OSError as exc:
+        return None, None, f"No se pudo validar la ruta del checkout: {exc}"
+    if (
+        not checkout.is_dir()
+        or checkout == Path(checkout.anchor)
+        or checkout == home
+        or not (checkout / ".git").is_dir()
+        or (checkout / ".git").is_symlink()
+        or not (checkout / "lain5g").is_file()
+        or not (checkout / "VERSION").is_file()
+        or not (checkout / "docker-compose.app.yml").is_file()
+    ):
+        return None, None, "La ruta no parece un checkout completo de OpenLain5G; no se borrara."
+
+    state_root = Path(os.environ.get("XDG_STATE_HOME", Path.home() / ".local/state")).expanduser()
+    state_dir = state_root / "lain5g"
+    if state_dir.is_symlink():
+        return None, None, "El directorio de estado es un enlace simbolico; no se borrara."
+    try:
+        resolved_state = state_dir.resolve(strict=False)
+    except OSError as exc:
+        return None, None, f"No se pudo validar el directorio de estado: {exc}"
+    if (
+        resolved_state == Path(resolved_state.anchor)
+        or resolved_state == checkout
+        or resolved_state in checkout.parents
+    ):
+        return None, None, "El directorio de estado apunta a una ruta demasiado amplia; no se borrara."
+    if resolved_state.exists() and not resolved_state.is_dir():
+        return None, None, "La ruta de estado existe y no es un directorio; no se borrara."
+    return checkout, resolved_state, None
+
+
+def _remove_stopped_project_resources(projects: tuple[str, ...]) -> bool:
+    for project in projects:
+        ids, error = _container_ids(project)
+        if error:
+            print(error, file=sys.stderr)
+            return False
+        if ids:
+            running, error = _container_ids(project, all_states=False)
+            if error:
+                print(error, file=sys.stderr)
+                return False
+            if running:
+                stopped = _safe_run(["docker", "stop", *running])
+                if stopped.returncode != 0:
+                    print(f"No se pudieron detener todos los contenedores de {project}.", file=sys.stderr)
+                    return False
+            removed = _safe_run(["docker", "rm", *ids])
+            if removed.returncode != 0:
+                print(f"No se pudieron retirar los contenedores detenidos de {project}.", file=sys.stderr)
+                return False
+        networks = _safe_run(
+            ["docker", "network", "ls", "--filter", f"label=com.docker.compose.project={project}", "-q"],
+            text=True,
+            capture_output=True,
+        )
+        if networks.returncode != 0:
+            print(f"No se pudieron consultar las redes de {project}.", file=sys.stderr)
+            return False
+        network_ids = [value.strip() for value in networks.stdout.splitlines() if value.strip()]
+        if network_ids:
+            removed = _safe_run(["docker", "network", "rm", *network_ids])
+            if removed.returncode != 0:
+                print(f"No se pudieron retirar todas las redes de {project}.", file=sys.stderr)
+                return False
+    return True
+
+
+def _uninstall_projects(scope: str) -> tuple[str, ...]:
+    if scope == "app":
+        return ("lain5g-lab-app",)
+    if scope == "all":
+        return COMPOSE_PROJECTS
+    if scope == "ims-real":
+        return IMS_REAL_PROJECTS
+    if scope == "5g-nsa-x310":
+        # The LTE EPC may be shared with a separately running 4G X310 profile.
+        return ("lain5g-lab-5g-nsa-x310",)
+    if scope in DOCKER_PROJECTS:
+        return tuple(DOCKER_PROJECTS[scope])
+    return ()
+
+
+def _uninstall_command(service: ProfileConfigService, argv: list[str]) -> int:
+    if not argv:
+        return _uninstall_menu(service)
+    scope = ""
+    dry_run = False
+    assume_yes = False
+    purge_data = False
+    purge_all = False
+    index = 0
+    while index < len(argv):
+        token = argv[index]
+        if token == "--scope" and index + 1 < len(argv):
+            scope = argv[index + 1]
+            index += 2
+        elif token == "--dry-run":
+            dry_run = True
+            index += 1
+        elif token == "--yes":
+            assume_yes = True
+            index += 1
+        elif token == "--purge-data":
+            purge_data = True
+            index += 1
+        elif token == "--purge-all":
+            purge_all = True
+            index += 1
+        elif token in UNINSTALL_SCOPES and not scope:
+            scope = token
+            index += 1
+        else:
+            print("Uso: lain5g uninstall [app|all|ims-real|PERFIL] [--dry-run] [--yes] [--purge-data|--purge-all]", file=sys.stderr)
+            return 2
+    if scope not in UNINSTALL_SCOPES:
+        print("El alcance debe ser app, all, ims-real o el ID de un perfil.", file=sys.stderr)
+        return 2
+    if purge_all and scope != "all":
+        print("--purge-all requiere el alcance all.", file=sys.stderr)
+        return 2
+    if purge_all and purge_data:
+        print("Usa --purge-all sin --purge-data; el borrado completo ya incluye los volumenes.", file=sys.stderr)
+        return 2
+    projects = _uninstall_projects(scope)
+    volumes_to_purge: list[str] = []
+    images_to_purge: list[str] = []
+    complete_checkout: Path | None = None
+    complete_state_dir: Path | None = None
+    markers = [path for path in RF_ACTIVE_MARKERS if (service.root / path).is_file()]
+    if markers and scope in {"app", "all", "4g-lte-x310", "5g-sa-x310", "5g-nsa-x310"}:
+        print(
+            "Desinstalacion cancelada: hay una sesion RF marcada como activa. "
+            "Deten la transmision con Emergency Stop y vuelve a intentarlo.",
+            file=sys.stderr,
+        )
+        return 1
+
+    print(f"Alcance: {scope}")
+    if purge_all:
+        complete_checkout, complete_state_dir, path_error = _complete_uninstall_paths(service.root)
+        if path_error:
+            print(path_error, file=sys.stderr)
+            return 1
+        print("BORRADO COMPLETO: se eliminaran los recursos y datos propios de OpenLain5G.")
+        print(f"Checkout completo, incluidos cambios locales: {complete_checkout}")
+        if complete_state_dir and complete_state_dir.exists():
+            print(f"Registro local de instalacion: {complete_state_dir}")
+        else:
+            print("Registro local de instalacion: no existe")
+        print("Se borraran contenedores, redes y volumenes con etiquetas Compose de OpenLain5G.")
+        print("Se borraran las imagenes locales con prefijo lain5g-lab/ y lain5g/open5gs-webui.")
+        print("Docker, imagenes base compartidas y paquetes del sistema se conservaran.")
+        volumes_to_purge, volume_error = _project_volumes(projects)
+        images_to_purge, image_error = _project_images()
+        if volume_error or image_error:
+            if not dry_run:
+                print(volume_error or image_error, file=sys.stderr)
+                return 1
+            print("Inventario Docker no disponible en esta prueba en seco; se mostraran los alcances por etiquetas.")
+        print("Volumenes OpenLain5G detectados:" if volumes_to_purge else "Volumenes OpenLain5G detectados: ninguno")
+        for volume in volumes_to_purge:
+            print(f"  {volume}")
+        print("Imagenes OpenLain5G detectadas:" if images_to_purge else "Imagenes OpenLain5G detectadas: ninguna")
+        for image in images_to_purge:
+            print(f"  {image}")
+        if not dry_run:
+            if not sys.stdin.isatty():
+                print("El borrado completo requiere una terminal interactiva; --yes no omite esta proteccion.", file=sys.stderr)
+                return 2
+            confirmation = _input(
+                f"Escribe exactamente '{PURGE_ALL_CONFIRMATION}' para borrar todo el checkout y los datos: "
+            ).strip()
+            if confirmation != PURGE_ALL_CONFIRMATION:
+                print("Borrado completo cancelado; no se borro el codigo ni los datos.")
+                return 1
+    else:
+        print("Se retiraran contenedores y redes de Compose de OpenLain5G.")
+        print("Se conservaran imagenes, configuraciones locales, informes, codigo fuente y Docker.")
+    if purge_data and not purge_all:
+        volumes_to_purge, error = _project_volumes(projects)
+        if error:
+            print(error, file=sys.stderr)
+            return 1
+        print("Volumenes etiquetados que se borrarian:" if volumes_to_purge else "No hay volumenes etiquetados para borrar.")
+        for volume in volumes_to_purge:
+            print(f"  {volume}")
+        if not dry_run and volumes_to_purge:
+            if not sys.stdin.isatty():
+                print("La eliminacion de datos requiere una terminal interactiva.", file=sys.stderr)
+                return 2
+            confirmation = _input(f"Escribe exactamente '{DATA_PURGE_CONFIRMATION}' para borrar esos datos: ").strip()
+            if confirmation != DATA_PURGE_CONFIRMATION:
+                print("No se borraron volumenes.")
+                return 1
+    if dry_run:
+        if scope == "app":
+            print("Plan: detener el stack web/monitorizacion y retirar sus contenedores/redes.")
+        elif scope == "all":
+            for profile_id in SCENARIO_STOP_SCRIPTS:
+                print(f"Plan: detener de forma ordenada el perfil {profile_id}.")
+            print("Plan: detener IMS real 4G/5G si esta desplegado.")
+            print("Plan: detener el stack web/monitorizacion.")
+            if purge_all:
+                print("Plan: borrar todos los volumenes OpenLain5G, las imagenes locales propias, el registro de instalacion y el checkout.")
+        elif scope == "ims-real":
+            print("Plan: detener IMS real 4G y 5G si estan desplegados.")
+        else:
+            print(f"Plan: detener de forma ordenada el perfil {scope}.")
+        print("No se hicieron cambios.")
+        return 0
+
+    if not assume_yes and not purge_all:
+        if not sys.stdin.isatty():
+            print("En una ejecucion no interactiva, agrega --yes para confirmar la parada.", file=sys.stderr)
+            return 2
+        prompt_scope = "todos los perfiles y la aplicacion" if scope == "all" else scope
+        if not _confirm(f"Detener y retirar los contenedores de {prompt_scope}?", default=False):
+            print("Desinstalacion cancelada; no se modifico ningun servicio.")
+            return 1
+
+    if shutil.which("docker") is None:
+        if purge_all:
+            print("Docker CLI no esta instalado; se cancelo el borrado completo para evitar dejar recursos sin verificar.", file=sys.stderr)
+            return 1
+        print("Docker CLI no esta instalado; no hay contenedores que desinstalar.")
+        return 0
+    docker_info = _safe_run(["docker", "info"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    if docker_info.returncode != 0:
+        print("Docker no esta accesible. No se modifico ningun servicio.", file=sys.stderr)
+        return 1
+
+    with _project_operation_lock(service.root) as locked:
+        if not locked:
+            print("Hay un inicio RF u otra operacion en curso. No se desinstalo nada.", file=sys.stderr)
+            return 1
+        active_markers = [path for path in RF_ACTIVE_MARKERS if (service.root / path).is_file()]
+        if active_markers and scope in {"app", "all", "4g-lte-x310", "5g-sa-x310", "5g-nsa-x310"}:
+            print("Una sesion RF empezo durante la confirmacion. Emergency Stop antes de desinstalar.", file=sys.stderr)
+            return 1
+        if purge_all:
+            current_volumes, volume_error = _project_volumes(projects)
+            current_images, image_error = _project_images()
+            if volume_error or image_error:
+                print(volume_error or image_error, file=sys.stderr)
+                return 1
+            if current_volumes != volumes_to_purge or current_images != images_to_purge:
+                print("El inventario Docker cambio despues de la confirmacion. No se borro nada; vuelve a revisar el plan.", file=sys.stderr)
+                return 1
+        return _execute_uninstall_locked(
+            service,
+            scope,
+            projects,
+            purge_data,
+            volumes_to_purge,
+            purge_all=purge_all,
+            images_to_purge=images_to_purge,
+            complete_checkout=complete_checkout,
+            complete_state_dir=complete_state_dir,
+        )
+
+
+def _execute_uninstall_locked(
+    service: ProfileConfigService,
+    scope: str,
+    projects: tuple[str, ...],
+    purge_data: bool,
+    volumes_to_purge: list[str],
+    *,
+    purge_all: bool = False,
+    images_to_purge: list[str] | None = None,
+    complete_checkout: Path | None = None,
+    complete_state_dir: Path | None = None,
+) -> int:
+
+    if scope == "app":
+        if (service.root / ".env.app").is_file():
+            stopped = _run_app_command(service, "stop", {"--operations"}, operations=True)
+            if stopped != 0:
+                return stopped
+        else:
+            print("No existe .env.app; se omitio la parada del stack web.")
+    else:
+        profile_ids = list(SCENARIO_STOP_SCRIPTS) if scope == "all" else [scope]
+        if scope == "all" and (service.root / ".env.app").is_file():
+            stopped = _run_app_command(service, "stop", {"--operations"}, operations=True)
+            if stopped != 0:
+                return stopped
+        for profile_id in profile_ids:
+            profile_projects = DOCKER_PROJECTS.get(profile_id, ())
+            present = False
+            for project in profile_projects:
+                ids, error = _container_ids(project)
+                if error:
+                    print(error, file=sys.stderr)
+                    return 1
+                present = present or bool(ids)
+            if not present:
+                continue
+            script = service.root / SCENARIO_STOP_SCRIPTS[profile_id]
+            if not script.is_file():
+                print(f"Falta el procedimiento de parada de {profile_id}: {script}", file=sys.stderr)
+                return 1
+            print(f"Deteniendo {profile_id}...")
+            stopped = subprocess.run(["bash", str(script)], cwd=service.root, check=False)
+            if stopped.returncode != 0:
+                print(f"No se completo la parada de {profile_id}; se detuvo la desinstalacion.", file=sys.stderr)
+                return stopped.returncode
+
+    # Scope containers and networks to exact Compose project labels.
+    if not _remove_stopped_project_resources(projects):
+        return 1
+    if purge_all:
+        current_volumes, volume_error = _project_volumes(projects)
+        current_images, image_error = _project_images()
+        if volume_error or image_error:
+            print(volume_error or image_error, file=sys.stderr)
+            return 1
+        if current_volumes != volumes_to_purge or current_images != (images_to_purge or []):
+            print("El inventario Docker cambio durante la parada. No se borraron datos restantes ni el checkout.", file=sys.stderr)
+            return 1
+    if purge_data or purge_all:
+        if volumes_to_purge:
+            removed = _safe_run(["docker", "volume", "rm", *volumes_to_purge])
+            if removed.returncode != 0:
+                print("No se pudieron borrar todos los volumenes etiquetados.", file=sys.stderr)
+                return 1
+    if purge_all and images_to_purge:
+        removed = _safe_run(["docker", "image", "rm", *images_to_purge])
+        if removed.returncode != 0:
+            print("No se pudieron retirar todas las imagenes locales de OpenLain5G.", file=sys.stderr)
+            return 1
+    if purge_all:
+        if complete_checkout is None or complete_state_dir is None:
+            print("Faltan las rutas validadas del borrado completo; se conservaron los archivos locales.", file=sys.stderr)
+            return 1
+        if complete_state_dir.exists() and complete_state_dir != complete_checkout and complete_checkout not in complete_state_dir.parents:
+            try:
+                shutil.rmtree(complete_state_dir)
+            except OSError as exc:
+                print(f"No se pudo borrar el registro de instalacion {complete_state_dir}: {exc}", file=sys.stderr)
+                return 1
+        try:
+            os.chdir(Path(complete_checkout.anchor))
+            shutil.rmtree(complete_checkout)
+        except OSError as exc:
+            print(f"Los recursos Docker se borraron, pero no se pudo quitar el checkout {complete_checkout}: {exc}", file=sys.stderr)
+            return 1
+        print("Desinstalacion completa: se retiraron Docker resources, datos, imagenes propias, registros y checkout.")
+        print("Docker, imagenes base compartidas y paquetes del sistema se conservaron.")
+        return 0
+    print("Desinstalacion completada. Docker, codigo, imagenes y configuraciones se conservaron.")
+    if purge_data:
+        print(f"Se borraron unicamente los volumenes listados: {', '.join(volumes_to_purge) or 'ninguno'}.")
+    else:
+        print("Los volumenes con datos se conservaron; usa --purge-data solo si deseas borrarlos.")
+    return 0
+
+
+def _manager_menu(service: ProfileConfigService) -> int:
+    while True:
+        _clear_screen()
+        print("\n+---------------- MANTENIMIENTO OPENLAIN5G ----------------+")
+        print("  [1] Estado y version instalada")
+        print("  [2] Buscar actualizaciones")
+        print("  [3] Listar versiones disponibles")
+        print("  [4] Cambiar a un tag estable")
+        print("  [5] Volver a la version anterior")
+        print("  [6] Desinstalar solo la aplicacion web")
+        print("  [7] Detener y retirar perfiles y app (conserva datos)")
+        print("  [8] BORRAR OpenLain5G completo (checkout, datos e imagenes propias)")
+        print("  [0] Volver")
+        choice = _input("\nElige una opcion: ").strip()
+        if choice in {"", "0", "q", "volver"}:
+            return 0
+        if choice == "1":
+            _version_command(service, [])
+        elif choice == "2":
+            _version_command(service, ["check"])
+        elif choice == "3":
+            _version_command(service, ["list"])
+        elif choice == "4":
+            _version_command(service, ["list"])
+            tag = _input("\nTag exacto (por ejemplo v1.1.8; Enter cancela): ").strip()
+            if tag:
+                _version_command(service, ["use", tag])
+        elif choice == "5":
+            _version_command(service, ["rollback"])
+        elif choice == "6":
+            _uninstall_command(service, ["--scope", "app"])
+        elif choice == "7":
+            _uninstall_command(service, ["--scope", "all"])
+        elif choice == "8":
+            return _uninstall_command(service, ["--scope", "all", "--purge-all"])
+        else:
+            print("Opcion invalida.")
+        _pause()
+
+
+def _uninstall_menu(service: ProfileConfigService) -> int:
+    print("Desinstalar OpenLain5G")
+    print("  [1] Solo la aplicacion web y monitorizacion (conserva datos)")
+    print("  [2] Todos los perfiles y la aplicacion (conserva datos)")
+    print("  [3] Solo un perfil")
+    print("  [4] IMS real 4G/5G")
+    print("  [5] BORRAR OpenLain5G completo (checkout, datos e imagenes propias)")
+    print("  [0] Cancelar")
+    choice = _input("Elige una opcion: ").strip()
+    if choice == "1":
+        return _uninstall_command(service, ["--scope", "app"])
+    if choice == "2":
+        return _uninstall_command(service, ["--scope", "all"])
+    if choice == "3":
+        _print_profiles(service)
+        profile_id = _input("ID del perfil (Enter cancela): ").strip()
+        if profile_id in DOCKER_PROJECTS:
+            return _uninstall_command(service, ["--scope", profile_id])
+        if profile_id:
+            print("ID de perfil no reconocido.")
+            return 2
+    if choice == "4":
+        return _uninstall_command(service, ["--scope", "ims-real"])
+    if choice == "5":
+        return _uninstall_command(service, ["--scope", "all", "--purge-all"])
+    return 0
+
+
 def _main_menu(service: ProfileConfigService) -> int:
     while True:
         _clear_screen()
@@ -300,6 +1179,7 @@ def _main_menu(service: ProfileConfigService) -> int:
         print("  [3] Imagenes y componentes")
         print("  [4] Aplicacion web")
         print("  [5] Revisar equipo y dependencias")
+        print("  [6] Versiones y mantenimiento")
         print("  [0] Salir")
         choice = _input("\nElige una opcion: ").strip()
         if choice in {"", "0", "q", "salir"}:
@@ -316,6 +1196,8 @@ def _main_menu(service: ProfileConfigService) -> int:
         elif choice == "5":
             _doctor(service, "")
             _pause()
+        elif choice == "6":
+            _manager_menu(service)
         else:
             print("Opcion invalida.")
             _pause()
@@ -970,6 +1852,8 @@ def _scenario_command(service: ProfileConfigService, argv: list[str]) -> int:
             return 1
         if os.environ.get("LAIN5G_DRY_RUN", "false").lower() != "true" and not _prepare_scenario_environment(service, profile_id):
             return 1
+    if action in {"start", "stop"}:
+        return _run_project_locked(service.root, command).returncode
     return subprocess.run(command, cwd=service.root, check=False).returncode
 
 
@@ -1276,7 +2160,10 @@ def _operator_console(service: ProfileConfigService, profile_id: str) -> int:
         env = None
         if profile_id == "5g-nsa-x310" and choice == "1":
             env = {**os.environ, "LAIN5G_DRY_RUN": "true"}
-        completed = subprocess.run(command, cwd=service.root, env=env, check=False)
+        if not rf_capable and choice in {"1", "6"}:
+            completed = _run_project_locked(service.root, command, env=env)
+        else:
+            completed = subprocess.run(command, cwd=service.root, env=env, check=False)
         print(f"\nResultado: {'OK' if completed.returncode == 0 else f'ERROR ({completed.returncode})'}")
         _pause()
 

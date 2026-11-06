@@ -4,7 +4,7 @@
 
 | Item | Exact value | Authority |
 | --- | --- | --- |
-| OpenLain5G | `1.1.7` | Root `VERSION` |
+| OpenLain5G | `1.1.8` | Root `VERSION` |
 | Status | Stable source release | `CHANGELOG.md` |
 | Operational evidence baseline | `v1.1.0` | Immutable clean-VM scenario results |
 | Operational evidence captured | `2026-07-30T02:20:51Z` | Clean-VM UTC clock after scenario verification |
@@ -22,6 +22,11 @@ Version `1.1.7` adds IMS call and SIP message event visibility, synthetic
 SIP phone checks for IMS-capable profiles, and a guided profile-switch flow.
 The tagged clean-clone workflow runs five independent Ubuntu 24.04 reproductions
 and uploads runner environment and profile-result artifacts with the release.
+
+Version `1.1.8` adds customizable web-console preferences, clearer LTE X310
+wired-network diagnostics, and a read-only CLI status summary. The web catalog
+continues to show 4G/5G simulations and guarded RF profiles while keeping the
+VoLTE/VoNR signaling-only profiles out of the frontend list.
 
 Version `1.1.6` includes the subscriber and IMS workflow, profile diagnostics,
 host inventory, and guarded RF lifecycle updates. The five-run cloud results
@@ -112,7 +117,7 @@ not used: direct inspection confirmed it does not contain
 | Full closure | Every package and version is listed in `src/backend/constraints.txt`; source was `.venv/bin/pip freeze --all` before release tests |
 
 The npm transitive closure and registry integrity values remain authoritative in
-`src/frontend/package-lock.json`; the root package version is `1.1.7`.
+`src/frontend/package-lock.json`; the root package version is `1.1.8`.
 As checked on 2026-10-24, `npm audit` reports no production dependency findings
 and three moderate findings in the development-only Tailwind/PostCSS selector
 parser chain. The available automatic fix upgrades Tailwind across a major

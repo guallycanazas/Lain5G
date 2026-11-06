@@ -5,7 +5,7 @@
 **Evidence-oriented orchestration for software 4G/5G networks and guarded X-Series USRP laboratory workflows**
 
 [![CI](https://github.com/guallycanazas/Lain5G/actions/workflows/ci.yml/badge.svg)](https://github.com/guallycanazas/Lain5G/actions/workflows/ci.yml)
-[![Release](https://img.shields.io/badge/release-v1.1.7-4051b5.svg)](https://github.com/guallycanazas/Lain5G/releases/tag/v1.1.7)
+[![Release](https://img.shields.io/badge/release-v1.1.8-4051b5.svg)](https://github.com/guallycanazas/Lain5G/releases/tag/v1.1.8)
 [![Project source: MIT](https://img.shields.io/badge/project_source-MIT-d9a441.svg)](LICENSE.txt)
 [![Platform](https://img.shields.io/badge/platform-GNU%2FLinux_x86__64-2f6f62.svg)](docs/installation.md)
 [![Python](https://img.shields.io/badge/Python-%E2%89%A53.10-3776ab.svg)](src/backend/requirements.txt)
@@ -22,8 +22,8 @@ customizable environment with software-only scenarios, guarded X-Series USRP
 workflows, declarative configuration, automated validation, and traceable run
 evidence.
 
-> **Release status:** [`v1.1.7`](https://github.com/guallycanazas/Lain5G/tree/v1.1.7)
-> is the latest immutable source release.
+> **Release status:** [`v1.1.8`](https://github.com/guallycanazas/Lain5G/tree/v1.1.8)
+> is the current source release.
 
 > **Naming:** OpenLain5G is the current project name. The repository URL, `lain5g`
 > CLI, `LAIN5G_*` environment variables, profile IDs, and image names retain their
@@ -108,6 +108,20 @@ configure, start, inspect, validate, or stop a software network. RF-capable
 profiles retain their authorization, preflight, finite-duration, and emergency
 stop controls. Direct automation commands remain documented under
 [Installation](docs/installation.md) and the scenario-specific guides.
+
+Run `./lain5g status` for a read-only snapshot of the project version and Git
+checkout, Docker availability, and currently running OpenLain5G containers.
+Use `./lain5g manager` to check stable tags, switch to a release with a local
+rollback point, or remove app/profile Compose resources. The normal uninstall
+keeps data and the checkout. For a full removal, run:
+
+```bash
+./lain5g uninstall --scope all --purge-all
+```
+
+It shows its targets and requires typing an exact confirmation; it removes
+OpenLain5G data, its local images, and the checkout. Docker and shared host
+dependencies are retained.
 
 ## 3. Evidence, Not Green Containers
 
@@ -213,7 +227,7 @@ separately by the scenario validators.
 
 | Item | Repository value |
 | --- | --- |
-| Current immutable release | [`v1.1.7`](https://github.com/guallycanazas/Lain5G/releases/tag/v1.1.7) |
+| Current immutable release | [`v1.1.8`](https://github.com/guallycanazas/Lain5G/releases/tag/v1.1.8) |
 | Version control | Git and GitHub |
 | Project-source license | [MIT](LICENSE.txt), with separate upstream terms |
 | Languages | Python, TypeScript, and Shell |

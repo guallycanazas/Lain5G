@@ -112,14 +112,14 @@ describe('profile troubleshooter', () => {
     renderRoute('/scenarios/:scenarioId', <ScenarioDetailPage />, `/scenarios/${profile.id}`);
     await user.click(await screen.findByRole('tab', { name: 'troubleshooter' }));
 
-    expect(await screen.findByText('The host-to-radio Ethernet path is missing or on an unexpected subnet.')).toBeInTheDocument();
-    expect(screen.getByText('Check the cable/NIC, configure the documented radio subnet, and verify that no competing route uses the X310 address.')).toBeInTheDocument();
+    expect(await screen.findByText('The X310 address is not using a direct, wired host route with link carrier up.')).toBeInTheDocument();
+    expect(screen.getByText('Check the Ethernet cable and NIC, confirm the wired interface has link, and make sure the X310 address is directly routed through that interface rather than Wi-Fi or a gateway.')).toBeInTheDocument();
     await user.click(within(screen.getByLabelText('Profile troubleshooter')).getByRole('button', { name: 'Hardware check' }));
     await waitFor(() => expect(requests).toContainEqual({ url: `/api/deployments/${profile.id}/hardware-check`, method: 'POST' }));
 
     await user.click(screen.getByRole('button', { name: 'Run diagnosis' }));
     expect(await screen.findByText('No Ethernet link detected on X310 management path')).toBeInTheDocument();
-    expect(screen.getByText('Check the cable/NIC, configure the documented radio subnet, and verify that no competing route uses the X310 address.')).toBeInTheDocument();
+    expect(screen.getByText('Check the Ethernet cable and NIC, confirm the wired interface has link, and make sure the X310 address is directly routed through that interface rather than Wi-Fi or a gateway.')).toBeInTheDocument();
     expect(requests.some((request) => request.url.includes('/start-rf'))).toBe(false);
   });
 });

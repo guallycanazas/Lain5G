@@ -23,7 +23,7 @@ export function Header() {
   const deployments = useDeployments();
   const health = useHealth();
   const profiles = useProfiles();
-  const { t } = usePreferences();
+  const { t, pollingSeconds } = usePreferences();
   const navigate = useNavigate();
   const location = useLocation();
   const activeId = location.pathname.startsWith('/scenarios/') ? location.pathname.split('/')[2] : '5g-sa';
@@ -40,7 +40,7 @@ export function Header() {
       </div>
       <div className="topbar-statuses">
         <span className={`mode-indicator ${health.data?.dry_run ? 'dry-run' : 'real-mode'}`}><Radio size={13} />{health.data?.dry_run ? t('shell.dryRunShort') : t('shell.realModeShort')}</span>
-        <span className="poll-indicator"><i />10s</span>
+        <span className="poll-indicator"><i />{pollingSeconds}s</span>
       </div>
       <div className="topbar-actions">
         <button className="topbar-search" type="button" aria-label={t('shell.quickSearch')} onClick={() => setPaletteOpen((value) => !value)}><Search size={16} /><span>{t('shell.quickSearch')}</span><kbd><Command size={11} />K</kbd></button>

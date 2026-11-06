@@ -5,7 +5,7 @@ if [ "${LAIN5G_DRY_RUN:-false}" = true ]; then
   exit 0
 fi
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-env_file="$script_dir/../../common/.env"
+env_file="${LAIN5G_COMMON_ENV_FILE:-$script_dir/../../common/.env}"
 [ -f "$env_file" ] && set -a && source "$env_file" && set +a
 addr="${USRP_ADDR:-192.168.10.2}"
 image="${LAIN5G_UHD_IMAGE:-lain5g-lab/srsran4g-uhd:local}"
@@ -14,14 +14,24 @@ check(){ printf '%-22s %s %s\n' "$1" "$2" "$3"; [ "$2" = FAIL ] && status=FAIL; 
 route="$(ip -4 route get "$addr" 2>/dev/null | head -n1 || true)"
 route_source="$(awk '{for (i=1; i<=NF; i++) if ($i == "src") {print $(i+1); exit}}' <<< "$route")"
 route_device="$(awk '{for (i=1; i<=NF; i++) if ($i == "dev") {print $(i+1); exit}}' <<< "$route")"
-case "$route_source" in
-  192.168.10.*|192.168.30.*)
-    check ethernet_link PASS "route to $addr uses $route_device at $route_source"
-    ;;
-  *)
-    check ethernet_link WARNING "route to $addr uses ${route_device:-no interface} at ${route_source:-no local IPv4}, outside typical X310 subnets"
-    ;;
-esac
+route_gateway="$(awk '{for (i=1; i<=NF; i++) if ($i == "via") {print $(i+1); exit}}' <<< "$route")"
+sys_class_net="${LAIN5G_SYS_CLASS_NET:-/sys/class/net}"
+interface_path="$sys_class_net/${route_device:-missing}"
+if [ -z "$route_device" ] || [ -z "$route_source" ]; then
+  check ethernet_link WARNING "no usable IPv4 route to $addr was found"
+elif [ -n "$route_gateway" ]; then
+  check ethernet_link WARNING "route to $addr uses gateway $route_gateway via $route_device; X310 should be directly reachable on its wired interface"
+elif [ -d "$interface_path/wireless" ]; then
+  check ethernet_link WARNING "route to $addr uses wireless interface $route_device at $route_source"
+elif [ ! -e "$interface_path/device" ]; then
+  check ethernet_link WARNING "route to $addr uses $route_device at $route_source, but the host does not report it as a hardware network interface"
+elif [ ! -r "$interface_path/carrier" ]; then
+  check ethernet_link WARNING "route to $addr uses wired interface $route_device at $route_source, but link carrier could not be read"
+elif [ "$(cat "$interface_path/carrier" 2>/dev/null || true)" != 1 ]; then
+  check ethernet_link WARNING "wired interface $route_device has no active link carrier for route to $addr"
+else
+  check ethernet_link PASS "direct route to $addr uses wired interface $route_device at $route_source; link carrier is up"
+fi
 ping -c 1 -W 1 "$addr" >/dev/null 2>&1 && check x310_ping PASS "X310 responds at $addr" || { check x310_ping FAIL "X310 did not respond at $addr"; }
 if command -v uhd_find_devices >/dev/null 2>&1; then
   out="$(uhd_find_devices --args "addr=$addr" 2>&1 || true)"
@@ -32,7 +42,8 @@ else
   check uhd_find_devices FAIL "uhd_find_devices missing and image $image not found"
 fi
 if [ -n "$out" ]; then
-  printf '%s\n' "$out" > /tmp/lain5g-uhd-find-devices.log
+  uhd_log="${LAIN5G_UHD_DISCOVERY_LOG:-/tmp/lain5g-uhd-find-devices.log}"
+  printf '%s\n' "$out" > "$uhd_log"
   if printf '%s\n' "$out" | grep -Eiq 'product: X300|type: x300|addr:'; then
     check uhd_find_devices PASS "X310/X300 family device found"
   else

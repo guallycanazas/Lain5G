@@ -1,6 +1,7 @@
 import { diagnoseApplicationError, errorMessage, errorTitle, technicalDetails } from '../utils/errors';
 import { Link } from 'react-router';
 import { AlertTriangle, ExternalLink, RotateCcw, ScrollText } from 'lucide-react';
+import { usePreferences } from '../preferences/PreferencesProvider';
 
 interface ErrorAlertProps {
   error: unknown;
@@ -8,9 +9,10 @@ interface ErrorAlertProps {
 }
 
 export function ErrorAlert({ error, onRetry }: ErrorAlertProps) {
+  const { alertLayout } = usePreferences();
   const diagnosis = diagnoseApplicationError(error);
   return (
-    <div className="error-alert" role="alert">
+    <div className={`error-alert ${alertLayout === 'compact' ? 'compact' : ''}`} role="alert">
       <div className="error-alert-icon"><AlertTriangle size={19} /></div>
       <div className="error-alert-body"><strong>{errorTitle(error)}</strong>
       <p>{errorMessage(error)}</p>

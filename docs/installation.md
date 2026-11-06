@@ -83,6 +83,71 @@ operate software networks. Preparation downloads pinned runtime images and
 builds the small SIP test tool from the checked-in `images/ims-sip/` Dockerfile;
 it does not start laboratory services.
 
+Use `./lain5g status` for a read-only summary of the checkout, Docker daemon,
+and currently running OpenLain5G containers.
+
+The maintenance menu (`./lain5g manager`) can check stable tags and manage the
+checkout version. Version changes require a clean Git worktree and stopped
+OpenLain5G containers. The CLI creates a local backup branch before switching
+to an exact stable tag; it does not install packages, pull profile images, or
+start services automatically:
+
+```bash
+./lain5g version
+./lain5g version check
+./lain5g version list
+./lain5g version use v1.1.8 --dry-run
+./lain5g version use v1.1.8
+./lain5g version rollback
+```
+
+`version use` leaves Git on the selected release tag (detached HEAD) and prints
+the backup branch name. If you switch to an older release that does not include
+the CLI rollback command, return with `git -C /path/to/Lain5G switch <backup>`.
+
+To stop or remove the web application and laboratory profiles, use the staged
+uninstaller. Its normal scopes remove only the selected Compose containers and
+networks; they keep named volumes, images, local configuration, run reports,
+the source checkout, and Docker. An active RF marker blocks removal until the
+operator stops the transmission with Emergency Stop.
+
+```bash
+./lain5g uninstall --scope app --dry-run
+./lain5g uninstall --scope app
+./lain5g uninstall --scope 5g-sa --dry-run
+./lain5g uninstall --scope ims-real --dry-run
+./lain5g uninstall --scope all --dry-run
+./lain5g uninstall --scope all
+./lain5g uninstall --scope all --purge-all --dry-run
+```
+
+The scope can be `app`, `ims-real`, a profile ID, or `all`. For unattended
+container stops, add `--yes`; this does not enable volume deletion.
+
+To erase subscriber and monitoring data without deleting the checkout, add
+`--purge-data`. The CLI lists only volumes labeled with the selected
+OpenLain5G Compose project and requires the exact interactive confirmation
+`DELETE OPENLAIN5G DATA`.
+
+For a complete OpenLain5G removal, run:
+
+```bash
+./lain5g uninstall --scope all --purge-all
+```
+
+It previews the paths and project-labeled Docker volumes, then requires an
+interactive terminal and the exact phrase `BORRAR OPENLAIN5G COMPLETAMENTE`;
+`--yes` cannot bypass this confirmation. It removes all
+OpenLain5G Compose containers, networks, labeled volumes, locally tagged
+`lain5g-lab/*` and `lain5g/open5gs-webui` images, the standard installation
+log directory, and the entire checkout, including local changes. Docker itself,
+shared base images, host packages, unrelated containers, networks, volumes,
+and images are retained. A dry run lists the plan without deleting anything.
+Back up any configuration or experiment data you need first.
+
+Use `--yes` only to approve a normal container stop in a non-interactive
+session; it never bypasses either data-deletion confirmation.
+
 The CLI automatically prepares `.env.app` with the absolute repository path.
 To start the interface in safe observation mode:
 

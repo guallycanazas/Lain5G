@@ -2,6 +2,30 @@
 
 All notable changes to OpenLain5G are recorded in this file.
 
+## [1.1.8] - 2026-11-06
+
+### Added
+
+- Added a read-only CLI status summary for the project version, Git checkout,
+  Docker availability, and running OpenLain5G containers.
+- Added stable-version listing, update checks, guarded tag switching, and local
+  rollback through the CLI maintenance menu.
+- Added staged CLI decommissioning for the application, individual profiles, or
+  the full lab, with project-scoped cleanup and opt-in volume deletion.
+- Added a separately confirmed full uninstall that removes OpenLain5G data,
+  project images, installation logs, and the source checkout while retaining
+  Docker and shared host dependencies.
+- Added local dashboard, accessibility, refresh interval, pinned workspace,
+  and saved log-view preferences.
+
+### Changed
+
+- Kept software simulation and guarded RF profiles in the web catalog while
+  hiding the VoLTE/VoNR signaling profiles from the frontend.
+- Improved the LTE X310 hardware check to distinguish wired link state,
+  wireless interfaces, gateway routes, and missing direct routes.
+- Updated installation bootstrap checks and profile/operator guidance.
+
 ## [1.1.7] - 2026-10-24
 
 ### Added

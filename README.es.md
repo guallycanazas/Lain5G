@@ -5,7 +5,7 @@
 **Orquestación basada en evidencia para redes software 4G/5G y laboratorios USRP X-Series protegidos**
 
 [![CI](https://github.com/guallycanazas/Lain5G/actions/workflows/ci.yml/badge.svg)](https://github.com/guallycanazas/Lain5G/actions/workflows/ci.yml)
-[![Release](https://img.shields.io/badge/release-v1.1.7-4051b5.svg)](https://github.com/guallycanazas/Lain5G/releases/tag/v1.1.7)
+[![Release](https://img.shields.io/badge/release-v1.1.8-4051b5.svg)](https://github.com/guallycanazas/Lain5G/releases/tag/v1.1.8)
 [![Código propio: MIT](https://img.shields.io/badge/c%C3%B3digo_propio-MIT-d9a441.svg)](LICENSE.txt)
 [![Plataforma](https://img.shields.io/badge/plataforma-GNU%2FLinux_x86__64-2f6f62.svg)](docs/installation.md)
 [![Python](https://img.shields.io/badge/Python-%E2%89%A53.10-3776ab.svg)](src/backend/requirements.txt)
@@ -22,8 +22,8 @@ ofrece un entorno personalizable con escenarios completamente software, flujos
 USRP X-Series protegidos, configuración declarativa, validación automatizada y
 evidencia trazable de cada ejecución.
 
-> **Estado de publicación:** [`v1.1.7`](https://github.com/guallycanazas/Lain5G/tree/v1.1.7)
-> es la última release inmutable.
+> **Estado de publicación:** [`v1.1.8`](https://github.com/guallycanazas/Lain5G/tree/v1.1.8)
+> es la release actual.
 
 > **Nombres:** OpenLain5G es el nombre actual del proyecto. La URL del
 > repositorio, la CLI `lain5g`, las variables `LAIN5G_*`, los IDs de perfiles y
@@ -103,6 +103,18 @@ y configurar, iniciar, inspeccionar, validar o detener una red software. Los
 perfiles RF conservan sus controles de autorización, preflight, duración finita
 y parada de emergencia. Los comandos de automatización directa permanecen en
 [Instalación](docs/installation.md) y en las guías de cada escenario.
+
+El menú `./lain5g manager` permite consultar versiones estables, cambiar a un
+tag con respaldo y volver a la versión anterior. La desinstalación normal
+conserva datos y código. Para borrar OpenLain5G completo, ejecute:
+
+```bash
+./lain5g uninstall --scope all --purge-all
+```
+
+Muestra los objetivos y exige escribir una frase de confirmación exacta;
+elimina datos, imágenes propias y todo el checkout. Docker y las dependencias
+compartidas del equipo se conservan.
 
 ## 3. Evidencia, no solo Contenedores Verdes
 
@@ -199,7 +211,7 @@ validadores de escenario.
 
 | Elemento | Valor del repositorio |
 | --- | --- |
-| Release inmutable | [`v1.1.7`](https://github.com/guallycanazas/Lain5G/releases/tag/v1.1.7) |
+| Release inmutable | [`v1.1.8`](https://github.com/guallycanazas/Lain5G/releases/tag/v1.1.8) |
 | Control de versiones | Git y GitHub |
 | Licencia de código propio | [MIT](LICENSE.txt), con términos upstream separados |
 | Lenguajes | Python, TypeScript y Shell |

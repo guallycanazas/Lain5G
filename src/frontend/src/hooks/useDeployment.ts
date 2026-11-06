@@ -2,17 +2,21 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { deploymentsApi } from '../services/deploymentsApi';
 import type { RfStartPayload } from '../types/deployment';
 import { visibleFrontendScenarios } from '../utils/scenarioAvailability';
+import { usePreferences } from '../preferences/PreferencesProvider';
 
 export function useHealth() {
-  return useQuery({ queryKey: ['health'], queryFn: deploymentsApi.health, refetchInterval: 10000 });
+  const { pollingMilliseconds } = usePreferences();
+  return useQuery({ queryKey: ['health'], queryFn: deploymentsApi.health, refetchInterval: pollingMilliseconds });
 }
 
 export function useDeploymentStatus() {
-  return useQuery({ queryKey: ['deployment-status'], queryFn: () => deploymentsApi.status(), refetchInterval: 10000 });
+  const { pollingMilliseconds } = usePreferences();
+  return useQuery({ queryKey: ['deployment-status'], queryFn: () => deploymentsApi.status(), refetchInterval: pollingMilliseconds });
 }
 
 export function useDeployments() {
-  return useQuery({ queryKey: ['deployments'], queryFn: async () => visibleFrontendScenarios(await deploymentsApi.list()), refetchInterval: 10000 });
+  const { pollingMilliseconds } = usePreferences();
+  return useQuery({ queryKey: ['deployments'], queryFn: async () => visibleFrontendScenarios(await deploymentsApi.list()), refetchInterval: pollingMilliseconds });
 }
 
 export function useScenario(scenarioId: string) {
@@ -20,7 +24,8 @@ export function useScenario(scenarioId: string) {
 }
 
 export function useScenarioStatus(scenarioId: string) {
-  return useQuery({ queryKey: ['deployment-status', scenarioId], queryFn: () => deploymentsApi.status(scenarioId), enabled: Boolean(scenarioId), refetchInterval: 10000 });
+  const { pollingMilliseconds } = usePreferences();
+  return useQuery({ queryKey: ['deployment-status', scenarioId], queryFn: () => deploymentsApi.status(scenarioId), enabled: Boolean(scenarioId), refetchInterval: pollingMilliseconds });
 }
 
 export function useDeploymentActions() {

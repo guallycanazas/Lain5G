@@ -38,7 +38,7 @@ describe('Frontend preferences', () => {
       expect(document.documentElement).toHaveAttribute('data-text-size', 'large');
       expect(document.documentElement).toHaveAttribute('data-font-style', 'technical');
     });
-    const stored = JSON.parse(localStorage.getItem('lain5g.preferences.v1') || '{}');
+    const stored = JSON.parse(localStorage.getItem('lain5g.preferences.v2') || '{}');
     expect(stored).not.toHaveProperty('language');
     expect(stored).toMatchObject({ theme: 'dark', textSize: 'large', fontStyle: 'technical' });
   });
