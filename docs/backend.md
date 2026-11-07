@@ -75,6 +75,9 @@ The backend does not start Docker during startup.
 - `PATCH /api/subscribers/{imsi}`
 - `POST /api/subscribers/{imsi}/clone`
 - `DELETE /api/subscribers/{imsi}`
+- `GET /api/sim-programmer/status`
+- `POST /api/sim-programmer/inspect`
+- `POST /api/sim-programmer/program` (local mutation gate required)
 - `GET /api/ims-real/preflight?mode=4g|5g`
 - `GET /api/ims-real/status?mode=4g|5g`
 - `GET /api/ims-real/subscribers?mode=4g|5g`

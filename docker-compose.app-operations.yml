@@ -1,5 +1,8 @@
 services:
   backend:
+    depends_on:
+      sim-programmer:
+        condition: service_healthy
     volumes:
       - type: bind
         source: ${LAIN5G_PROJECT_ROOT:?Set LAIN5G_PROJECT_ROOT in .env.app}
@@ -8,6 +11,39 @@ services:
       - type: bind
         source: /var/run/docker.sock
         target: /var/run/docker.sock
+  sim-programmer:
+    image: lain5g-lab/sim-programmer:local
+    build:
+      context: ./images/sim-programmer
+      dockerfile: Dockerfile
+    container_name: lain5g-lab-sim-programmer
+    environment:
+      SIM_PROGRAMMER_TOKEN: ${LAIN5G_SIM_PROGRAMMER_TOKEN:-}
+      PCSCLITE_CSOCK_NAME: /run/pcscd/${LAIN5G_PCSC_SOCKET_NAME:-pcscd.comm}
+    volumes:
+      - type: bind
+        source: ${LAIN5G_PCSC_SOCKET_DIR:-/run/pcscd}
+        target: /run/pcscd
+        read_only: true
+        bind:
+          create_host_path: true
+    expose:
+      - "8123"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8123/health', timeout=3).read()"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+    read_only: true
+    tmpfs:
+      - /tmp
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    restart: unless-stopped
+    networks:
+      - app
   alloy:
     image: grafana/alloy:v1.21.2@sha256:89a5a320168387336b9ac3c850609c3ba7757eadd4ae5f1d819deb35e9854b18
     container_name: lain5g-lab-app-alloy

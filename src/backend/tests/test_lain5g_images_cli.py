@@ -1,15 +1,23 @@
 from __future__ import annotations
 
 import fcntl
+from importlib.machinery import SourceFileLoader
+from importlib.util import module_from_spec, spec_from_loader
 import os
 import subprocess
 import sys
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 
 
 ROOT = Path(__file__).resolve().parents[3]
+LOADER = SourceFileLoader("lain5g_images_cli", str(ROOT / "lain5g"))
+SPEC = spec_from_loader("lain5g_images_cli", LOADER)
+assert SPEC is not None and SPEC.loader is not None
+CLI = module_from_spec(SPEC)
+SPEC.loader.exec_module(CLI)
 
 
 def fake_docker(tmp_path: Path) -> tuple[dict[str, str], Path]:
@@ -101,6 +109,39 @@ def test_images_pull_builds_sip_tool_from_the_checked_out_source(tmp_path: Path)
     assert "No se inicio ningun servicio" in result.stdout or "se construyo desde el repositorio" in result.stdout
 
 
+def test_bootstrap_builds_only_missing_local_real_ims_images(tmp_path: Path, monkeypatch):
+    image_contexts = CLI.REAL_IMS_LOCAL_BUILD_IMAGES
+    for relative_context in image_contexts.values():
+        context = tmp_path / relative_context
+        context.mkdir(parents=True)
+        (context / "Dockerfile").write_text("FROM scratch\n", encoding="utf-8")
+
+    already_present = next(iter(image_contexts))
+    inspected = []
+    commands = []
+
+    def image_exists(image: str, _docker: list[str]) -> bool:
+        inspected.append(image)
+        return image == already_present
+
+    monkeypatch.setattr(CLI, "_image_exists", image_exists)
+    monkeypatch.setattr(
+        CLI.subprocess,
+        "run",
+        lambda command, **_kwargs: commands.append(command) or SimpleNamespace(returncode=0),
+    )
+
+    built, reused = CLI._prepare_real_ims_images(docker_command=["docker"], project_root=tmp_path)
+
+    assert reused == [already_present]
+    assert built == [image for image in image_contexts if image != already_present]
+    assert inspected == list(image_contexts)
+    assert commands == [
+        ["docker", "build", "-t", image, str(tmp_path / image_contexts[image])]
+        for image in built
+    ]
+
+
 def test_images_command_rejects_unknown_profile_before_docker(tmp_path: Path):
     env, log_path = fake_docker(tmp_path)
     result = subprocess.run(
@@ -158,6 +199,7 @@ def test_main_menu_exposes_preparation_without_publishing():
 
 def test_bootstrap_dry_run_installs_tools_and_downloads_everything():
     venv_package = f"python{sys.version_info.major}.{sys.version_info.minor}-venv"
+    version = (ROOT / "VERSION").read_text(encoding="utf-8").strip()
     env = {
         **os.environ,
         "LAIN5G_BOOTSTRAP_FORCE_MISSING": "venv,node,npm,git,make,docker,util-linux,compose",
@@ -181,10 +223,19 @@ def test_bootstrap_dry_run_installs_tools_and_downloads_everything():
     assert "docker pull gually/lain5g-open5gs" in result.stdout
     assert "docker pull gually/lain5g-srsranproject-uhd" in result.stdout
     assert f"docker build -t lain5g-lab/ims-sip:local {ROOT / 'images' / 'ims-sip'}" in result.stdout
+    for image, context in (
+        (f"lain5g-lab/ims-real-open5gs:{version}", "ims-real-open5gs"),
+        (f"lain5g-lab/ims-real-kamailio:{version}", "ims-real-kamailio"),
+        (f"lain5g-lab/pyhss-secure:{version}", "pyhss-secure"),
+        (f"lain5g-lab/ims-real-mysql:{version}", "ims-real-mysql"),
+        (f"lain5g-lab/ims-real-dns:{version}", "ims-real-dns"),
+        (f"lain5g-lab/ims-real-rtpengine:{version}", "ims-real-rtpengine"),
+    ):
+        assert f"docker build -t {image} {ROOT / 'images' / context}" in result.stdout
     assert "PLAN DE PREPARACION" in result.stdout
     assert "RESUMEN DE INSTALACION" in result.stdout
     assert "dry-run; no instalado" in result.stdout
-    assert "dry-run; no preparados" in result.stdout
+    assert "6 imágenes IMS locales (dry-run; no preparadas)" in result.stdout
 
 
 def test_shell_installer_writes_transcript_and_reports_result(tmp_path: Path):

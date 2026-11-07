@@ -1,8 +1,9 @@
 # Versions and traceability
 
-The authoritative OpenLain5G version is stored in `VERSION`. The current stable
-release is `1.1.8`. The API, frontend, OCI tags, derived images, and changelog
-are checked against that source with:
+The authoritative OpenLain5G source candidate is stored in `VERSION` and is
+`1.1.9`. It is prepared locally and has not been published; the latest published
+stable release is `1.1.8`. The API, frontend, OCI tags, derived images, and
+changelog are checked against the source version with:
 
 ```bash
 make version-check

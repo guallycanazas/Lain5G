@@ -5,7 +5,7 @@
 **Orquestación basada en evidencia para redes software 4G/5G y laboratorios USRP X-Series protegidos**
 
 [![CI](https://github.com/guallycanazas/Lain5G/actions/workflows/ci.yml/badge.svg)](https://github.com/guallycanazas/Lain5G/actions/workflows/ci.yml)
-[![Release](https://img.shields.io/badge/release-v1.1.8-4051b5.svg)](https://github.com/guallycanazas/Lain5G/releases/tag/v1.1.8)
+[![Candidata de release](https://img.shields.io/badge/candidata_release-v1.1.9-4051b5.svg)](docs/release/v1.1.9.md)
 [![Código propio: MIT](https://img.shields.io/badge/c%C3%B3digo_propio-MIT-d9a441.svg)](LICENSE.txt)
 [![Plataforma](https://img.shields.io/badge/plataforma-GNU%2FLinux_x86__64-2f6f62.svg)](docs/installation.md)
 [![Python](https://img.shields.io/badge/Python-%E2%89%A53.10-3776ab.svg)](src/backend/requirements.txt)
@@ -22,8 +22,8 @@ ofrece un entorno personalizable con escenarios completamente software, flujos
 USRP X-Series protegidos, configuración declarativa, validación automatizada y
 evidencia trazable de cada ejecución.
 
-> **Estado de publicación:** [`v1.1.8`](https://github.com/guallycanazas/Lain5G/tree/v1.1.8)
-> es la release actual.
+> **Candidata de release:** `v1.1.9` está preparada localmente y aún no se ha
+> publicado. La última versión publicada sigue siendo `v1.1.8`.
 
 > **Nombres:** OpenLain5G es el nombre actual del proyecto. La URL del
 > repositorio, la CLI `lain5g`, las variables `LAIN5G_*`, los IDs de perfiles y
@@ -54,10 +54,11 @@ de inicio no estándar deben satisfacer los requisitos documentados manualmente.
 | Etapa | Resultado |
 | --- | --- |
 | Herramientas | Python 3 con `venv`, Node.js, npm, Git, GNU Make y util-linux |
+| Lector SIM | Daemon PC/SC y controlador CCID instalados; el instalador prepara el servicio y la app inicia el puente en modo de operaciones |
 | Contenedores | Docker Engine y Docker Compose v2 instalados; el daemon se inicia cuando el sistema lo permite |
 | Acceso | Membresía del grupo Docker configurada solo si el equipo usa ese modelo |
 | Estado privado | Perfiles y configuración local ignorados, con permisos restrictivos |
-| Componentes | Todas las imágenes únicas de los cinco perfiles públicos descargadas |
+| Componentes | Imágenes de los perfiles públicos descargadas; seis imágenes IMS real y la herramienta SIP construidas localmente |
 | RF | Ninguna transmisión; la operación de hardware sigue separada, autorizada y bloqueada por defecto |
 
 Si la instalación cambió la membresía del grupo Docker y la sesión actual aún no
@@ -197,7 +198,7 @@ Después del instalador, ejecute el gate seguro del repositorio:
 make softwarex-check
 ```
 
-El gate actual aprueba **350 pruebas backend**, **107 pruebas frontend** y **79%
+El gate actual aprueba **389 pruebas backend**, **112 pruebas frontend** y **78%
 de cobertura backend**, además de TypeScript, build de producción, render seguro
 de Compose, perfiles, versión y metadatos de citación, enlaces internos,
 resultados públicos, artefactos de release y archivos sensibles.
@@ -211,7 +212,7 @@ validadores de escenario.
 
 | Elemento | Valor del repositorio |
 | --- | --- |
-| Release inmutable | [`v1.1.8`](https://github.com/guallycanazas/Lain5G/releases/tag/v1.1.8) |
+| Candidata preparada | [`v1.1.9`](docs/release/v1.1.9.md), aún no publicada |
 | Control de versiones | Git y GitHub |
 | Licencia de código propio | [MIT](LICENSE.txt), con términos upstream separados |
 | Lenguajes | Python, TypeScript y Shell |
@@ -236,6 +237,7 @@ validadores de escenario.
 
 ## Documentación
 
+- [Manual de uso](docs/user-manual.md) (English)
 - [Índice de documentación](docs/README.md)
 - [Instalación](docs/installation.md)
 - [Simulación 4G](docs/4g_simulation.md)

@@ -7,6 +7,7 @@ import json
 import os
 import pwd
 import re
+import secrets
 import shlex
 import shutil
 import subprocess
@@ -22,7 +23,7 @@ SOURCE_ROOT = Path(__file__).resolve().parent / "src"
 if str(SOURCE_ROOT) not in sys.path:
     sys.path.insert(0, str(SOURCE_ROOT))
 
-from backend.app.services.image_catalog import IMAGE_CATALOG, LOCAL_BUILD_IMAGES, PROFILE_IMAGES, PUBLIC_PROFILE_IDS, RF_ACCESS_IMAGES, required_images
+from backend.app.services.image_catalog import IMAGE_CATALOG, LOCAL_BUILD_IMAGES, PROFILE_IMAGES, PUBLIC_PROFILE_IDS, REAL_IMS_LOCAL_BUILD_IMAGES, RF_ACCESS_IMAGES, required_images
 from backend.app.services.profile_config_service import ProfileConfigError, ProfileConfigService
 from backend.app.services.scenario_environment import prepare_scenario_environment
 
@@ -1124,7 +1125,7 @@ def _manager_menu(service: ProfileConfigService) -> int:
             _version_command(service, ["list"])
         elif choice == "4":
             _version_command(service, ["list"])
-            tag = _input("\nTag exacto (por ejemplo v1.1.8; Enter cancela): ").strip()
+            tag = _input("\nTag exacto (por ejemplo v1.1.9; Enter cancela): ").strip()
             if tag:
                 _version_command(service, ["use", tag])
         elif choice == "5":
@@ -1209,6 +1210,9 @@ def _run_bootstrap_step(command: list[str], *, dry_run: bool) -> bool:
         return True
     try:
         return subprocess.run(command, check=False).returncode == 0
+    except KeyboardInterrupt:
+        print("\nComando interrumpido.", file=sys.stderr)
+        return False
     except (FileNotFoundError, PermissionError, OSError) as exc:
         print(f"ERROR: no se pudo ejecutar {command[0]}: {exc}", file=sys.stderr)
         return False
@@ -1280,6 +1284,8 @@ def _bootstrap_install_commands(manager: str, features: set[str], privileged: li
             packages.append("util-linux")
         if "compose" in features:
             packages.append(_apt_compose_package(dry_run=dry_run))
+        if "pcsc" in features:
+            packages.extend(_pcsc_packages(manager))
         return [[*privileged, "apt-get", "update"], [*privileged, "apt-get", "install", "-y", *packages]]
     mappings = {
         "dnf": {"python": "python3", "venv": "python3", "node": "nodejs", "npm": "npm", "git": "git", "make": "make", "docker": "moby-engine", "util-linux": "util-linux", "compose": "docker-compose-plugin"},
@@ -1288,6 +1294,8 @@ def _bootstrap_install_commands(manager: str, features: set[str], privileged: li
     }
     ordered_features = ("python", "venv", "node", "npm", "git", "make", "docker", "util-linux", "compose")
     packages = list(dict.fromkeys(mappings.get(manager, {}).get(feature, feature) for feature in ordered_features if feature in features))
+    if "pcsc" in features:
+        packages.extend(_pcsc_packages(manager))
     if manager == "dnf":
         return [[*privileged, "dnf", "install", "-y", *packages]]
     if manager == "pacman":
@@ -1295,6 +1303,84 @@ def _bootstrap_install_commands(manager: str, features: set[str], privileged: li
     if manager == "zypper":
         return [[*privileged, "zypper", "--non-interactive", "install", *packages]]
     return []
+
+
+def _pcsc_packages(manager: str) -> list[str]:
+    packages = {
+        "apt-get": ["pcscd", "libccid"],
+        "dnf": ["pcsc-lite", "pcsc-lite-ccid"],
+        "pacman": ["pcsclite", "ccid"],
+        "zypper": ["pcsc-lite", "pcsc-ccid"],
+    }
+    return packages.get(manager, [])
+
+
+def _host_package_installed(manager: str, package: str) -> bool:
+    if manager == "apt-get":
+        command = ["dpkg-query", "-W", "-f=${db:Status-Status}", package]
+    elif manager == "pacman":
+        command = ["pacman", "-Q", package]
+    else:
+        command = ["rpm", "-q", package]
+    try:
+        result = subprocess.run(command, text=True, capture_output=True, check=False, timeout=10)
+    except (OSError, subprocess.TimeoutExpired):
+        return False
+    return result.returncode == 0 and (manager != "apt-get" or result.stdout.strip() == "installed")
+
+
+def _ensure_pcsc_host(socket_path: str) -> bool:
+    if Path(socket_path).is_socket():
+        print(f"PC/SC host socket ready: {socket_path}")
+        return True
+
+    manager = _bootstrap_package_manager()
+    packages = _pcsc_packages(manager)
+    if not manager or not packages:
+        print("AVISO: gestor no compatible para instalar PC/SC (apt-get, dnf, pacman o zypper).", file=sys.stderr)
+        return False
+
+    missing = [package for package in packages if not _host_package_installed(manager, package)]
+    if missing:
+        print(
+            f"AVISO: faltan dependencias PC/SC ({', '.join(missing)}). Ejecuta ./install.sh para habilitar el lector SIM.",
+            file=sys.stderr,
+        )
+        return False
+    privileged: list[str] = []
+    if os.geteuid() != 0:
+        if shutil.which("sudo") is None:
+            print("AVISO: sudo es necesario para activar el servicio PC/SC.", file=sys.stderr)
+            return False
+        privileged = ["sudo"]
+
+    print("Dependencias PC/SC del host: OK")
+
+    service_started = False
+    if shutil.which("systemctl"):
+        for command in (
+            [*privileged, "systemctl", "enable", "--now", "pcscd.socket"],
+            [*privileged, "systemctl", "start", "pcscd.service"],
+        ):
+            if _run_bootstrap_step(command, dry_run=False):
+                service_started = True
+                break
+    elif shutil.which("service"):
+        service_started = _run_bootstrap_step([*privileged, "service", "pcscd", "start"], dry_run=False)
+    else:
+        print("AVISO: no se encontro systemctl ni service para iniciar pcscd.", file=sys.stderr)
+        return False
+
+    if service_started:
+        deadline = time.monotonic() + 5
+        while time.monotonic() < deadline:
+            if Path(socket_path).is_socket():
+                print(f"PC/SC listo: {socket_path}")
+                return True
+            time.sleep(0.25)
+
+    print(f"AVISO: pcscd no creo el socket {socket_path}. Comprueba el lector y la configuracion PC/SC.", file=sys.stderr)
+    return False
 
 
 def _bootstrap_host_type() -> str:
@@ -1329,7 +1415,7 @@ def _bootstrap_machine(service: ProfileConfigService, *, assume_yes: bool = Fals
     started_monotonic = time.monotonic()
     print("\nPreparacion completa de Lain5G-Lab")
     print("===================================")
-    print("Instala herramientas base, activa Docker y prepara configuraciones e imagenes del laboratorio.")
+    print("Instala herramientas base, soporte PC/SC para SIM, activa Docker y prepara configuraciones e imagenes del laboratorio.")
     if dry_run:
         print("MODO DRY-RUN: solo se mostraran los comandos.")
     if not assume_yes and not dry_run and not _confirm("Continuar con la preparacion del sistema?", default=True):
@@ -1376,6 +1462,14 @@ def _bootstrap_machine(service: ProfileConfigService, *, assume_yes: bool = Fals
     if not compose_present:
         features.add("compose")
 
+    manager = _bootstrap_package_manager()
+    pcsc_packages = _pcsc_packages(manager)
+    if pcsc_packages and (
+        "pcsc" in forced_missing
+        or any(not _host_package_installed(manager, package) for package in pcsc_packages)
+    ):
+        features.add("pcsc")
+
     privileged: list[str] = []
     if os.geteuid() != 0:
         if shutil.which("sudo") is None and not dry_run and (features or not docker_accessible):
@@ -1383,10 +1477,8 @@ def _bootstrap_machine(service: ProfileConfigService, *, assume_yes: bool = Fals
             return 2
         privileged = ["sudo"]
 
-    manager = "no requerido"
     ensured_dependencies: list[str] = []
     if features:
-        manager = _bootstrap_package_manager()
         if not manager:
             print("ERROR: gestor compatible no encontrado (apt-get, dnf, pacman o zypper).", file=sys.stderr)
             return 2
@@ -1401,6 +1493,7 @@ def _bootstrap_machine(service: ProfileConfigService, *, assume_yes: bool = Fals
             "docker": "Docker Engine",
             "util-linux": "flock (util-linux)",
             "compose": "Docker Compose v2",
+            "pcsc": "PC/SC daemon y controlador CCID para SIM",
         }
         ensured_dependencies = [dependency_labels.get(feature, feature) for feature in sorted(features)]
         for command in _bootstrap_install_commands(manager, features, privileged, dry_run=dry_run):
@@ -1420,6 +1513,7 @@ def _bootstrap_machine(service: ProfileConfigService, *, assume_yes: bool = Fals
                 print("ERROR: Node.js o npm siguen ausentes despues de instalar dependencias.", file=sys.stderr)
                 return 1
     else:
+        manager = "no requerido"
         print("\nDependencias base: OK")
 
     if not docker_accessible and (dry_run or shutil.which("docker") is not None):
@@ -1473,6 +1567,11 @@ def _bootstrap_machine(service: ProfileConfigService, *, assume_yes: bool = Fals
                 return 1
         if not _prepare_app_environment(service, operations=True):
             return 1
+        app_values = _app_environment_values(service)
+        pcsc_socket = app_values.get("LAIN5G_PCSC_SOCKET", "/run/pcscd/pcscd.comm")
+        print("Preparando el servicio PC/SC del lector SIM")
+        if not _ensure_pcsc_host(pcsc_socket):
+            print("AVISO: la app y los perfiles seguiran disponibles; el programador SIM necesita un servicio PC/SC activo.")
     else:
         for profile_id in PUBLIC_PROFILE_IDS:
             print(f"$ ./lain5g scenario setup {profile_id}")
@@ -1494,8 +1593,18 @@ def _bootstrap_machine(service: ProfileConfigService, *, assume_yes: bool = Fals
                 print(f"$ docker pull {shlex.quote(remote_image)}")
                 if remote_image != local_image:
                     print(f"$ docker tag {shlex.quote(remote_image)} {shlex.quote(local_image)}")
+        print("\nPreparando las imágenes del IMS real desde el código del repositorio")
+        for image, context in REAL_IMS_LOCAL_BUILD_IMAGES.items():
+            print(f"$ docker build -t {shlex.quote(image)} {shlex.quote(str(service.root / context))}")
     elif not _download_images("all", docker_command=docker_command, project_root=service.root):
         return 1
+    else:
+        ims_image_result = _prepare_real_ims_images(
+            docker_command=docker_command,
+            project_root=service.root,
+        )
+        if ims_image_result is None:
+            return 1
 
     print("\nPLAN DE PREPARACION" if dry_run else "\nMAQUINA PREPARADA")
     print("\nRESUMEN DE INSTALACION")
@@ -1506,13 +1615,15 @@ def _bootstrap_machine(service: ProfileConfigService, *, assume_yes: bool = Fals
     print(f"Configuracion privada: {'planificada para ' if dry_run else 'preparada para '}{len(PUBLIC_PROFILE_IDS)} perfiles y la aplicacion web")
     if dry_run:
         print(f"Dependencias: planificado {', '.join(ensured_dependencies) if ensured_dependencies else 'sin cambios'} (dry-run; no instalado)")
-        print(f"Imagenes: planificada la preparacion de {len(required_image_list)} componentes (dry-run; no preparados)")
+        print(f"Imagenes: planificadas {len(required_image_list)} imágenes de perfiles y {len(REAL_IMS_LOCAL_BUILD_IMAGES)} imágenes IMS locales (dry-run; no preparadas)")
     else:
         if os.environ.get("LAIN5G_BOOTSTRAP_PYTHON_INSTALLED", "").lower() == "true":
             ensured_dependencies.insert(0, "Python 3.10+ (bootstrap)")
         print(f"Dependencias: {', '.join(ensured_dependencies) if ensured_dependencies else 'todas ya estaban disponibles'}")
         prepared_count = max(0, len(required_image_list) - len(existing_images))
-        print(f"Imagenes Docker: {len(required_image_list)} listas ({prepared_count} preparadas ahora, {len(existing_images)} ya estaban presentes)")
+        ims_built, ims_reused = ims_image_result
+        print(f"Imagenes Docker de perfiles: {len(required_image_list)} listas ({prepared_count} preparadas ahora, {len(existing_images)} ya estaban presentes)")
+        print(f"Imagenes Docker de IMS real: {len(REAL_IMS_LOCAL_BUILD_IMAGES)} listas ({len(ims_built)} preparadas ahora, {len(ims_reused)} ya estaban presentes); comparten Open5GS con los perfiles")
         print(f"Docker accesible para esta sesion: {'si' if normal_access else 'requiere activar permisos'}")
     print(f"Duracion: {_bootstrap_elapsed_seconds(started_monotonic)} s")
     install_log = os.environ.get("LAIN5G_INSTALL_LOG", "").strip()
@@ -1683,11 +1794,25 @@ def _prepare_app_environment(service: ProfileConfigService, *, operations: bool)
     except (OSError, UnicodeError) as exc:
         print(f"No se pudo preparar .env.app: {exc}", file=sys.stderr)
         return False
+    existing_values: dict[str, str] = {}
+    for raw in text.splitlines():
+        line = raw.strip()
+        if line and not line.startswith("#") and "=" in line:
+            key, value = line.split("=", 1)
+            existing_values[key.strip()] = value.strip().strip("\"'")
+    sim_programmer_token = existing_values.get("LAIN5G_SIM_PROGRAMMER_TOKEN", "") or secrets.token_urlsafe(32)
+    pcsc_socket = existing_values.get("LAIN5G_PCSC_SOCKET", "/run/pcscd/pcscd.comm")
+    pcsc_socket_path = Path(pcsc_socket)
     values = {
         "LAIN5G_PROJECT_ROOT": str(service.root.resolve()),
         "LAIN5G_MUTATING_OPERATIONS_ENABLED": "false",
         "LAIN5G_IMAGE_PULL_ENABLED": "false",
         "LAIN5G_RF_WEB_CONTROL_ENABLED": "false",
+        "LAIN5G_SIM_PROGRAMMER_URL": "http://sim-programmer:8123",
+        "LAIN5G_SIM_PROGRAMMER_TOKEN": sim_programmer_token,
+        "LAIN5G_PCSC_SOCKET": pcsc_socket,
+        "LAIN5G_PCSC_SOCKET_DIR": str(pcsc_socket_path.parent),
+        "LAIN5G_PCSC_SOCKET_NAME": pcsc_socket_path.name,
     }
     if operations:
         values.update(
@@ -1905,6 +2030,42 @@ def _image_exists(image: str, docker_command: list[str] | None = None) -> bool:
     except (FileNotFoundError, PermissionError, OSError):
         return False
     return completed.returncode == 0
+
+
+def _prepare_real_ims_images(
+    *,
+    docker_command: list[str],
+    project_root: Path,
+) -> tuple[list[str], list[str]] | None:
+    """Build the versioned first-party IMS images needed for a clean install."""
+    root = project_root.resolve()
+    built: list[str] = []
+    reused: list[str] = []
+    print("\nPreparando las imágenes del IMS real desde el código del repositorio")
+    for image, relative_context in REAL_IMS_LOCAL_BUILD_IMAGES.items():
+        context = (root / relative_context).resolve()
+        if not context.is_relative_to(root) or not (context / "Dockerfile").is_file():
+            print(f"ERROR: falta el Dockerfile local para {image}: {relative_context}", file=sys.stderr)
+            return None
+        if _image_exists(image, docker_command):
+            reused.append(image)
+            print(f"\nImagen ya preparada: {image}")
+            continue
+        command = [*docker_command, "build", "-t", image, str(context)]
+        print(f"\nConstruyendo {image} desde {relative_context}", flush=True)
+        try:
+            result = subprocess.run(command, cwd=root, check=False)
+        except KeyboardInterrupt:
+            print("\nERROR: compilación IMS interrumpida.", file=sys.stderr)
+            return None
+        except (FileNotFoundError, PermissionError, OSError) as exc:
+            print(f"ERROR: no se pudo construir {image}: {exc}", file=sys.stderr)
+            return None
+        if result.returncode != 0:
+            print(f"ERROR: no se pudo construir {image} desde {relative_context}.", file=sys.stderr)
+            return None
+        built.append(image)
+    return built, reused
 
 
 def _print_image_status(scope: str, core_only: bool = False) -> bool:

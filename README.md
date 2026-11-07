@@ -5,7 +5,7 @@
 **Evidence-oriented orchestration for software 4G/5G networks and guarded X-Series USRP laboratory workflows**
 
 [![CI](https://github.com/guallycanazas/Lain5G/actions/workflows/ci.yml/badge.svg)](https://github.com/guallycanazas/Lain5G/actions/workflows/ci.yml)
-[![Release](https://img.shields.io/badge/release-v1.1.8-4051b5.svg)](https://github.com/guallycanazas/Lain5G/releases/tag/v1.1.8)
+[![Release candidate](https://img.shields.io/badge/release_candidate-v1.1.9-4051b5.svg)](docs/release/v1.1.9.md)
 [![Project source: MIT](https://img.shields.io/badge/project_source-MIT-d9a441.svg)](LICENSE.txt)
 [![Platform](https://img.shields.io/badge/platform-GNU%2FLinux_x86__64-2f6f62.svg)](docs/installation.md)
 [![Python](https://img.shields.io/badge/Python-%E2%89%A53.10-3776ab.svg)](src/backend/requirements.txt)
@@ -22,8 +22,8 @@ customizable environment with software-only scenarios, guarded X-Series USRP
 workflows, declarative configuration, automated validation, and traceable run
 evidence.
 
-> **Release status:** [`v1.1.8`](https://github.com/guallycanazas/Lain5G/tree/v1.1.8)
-> is the current source release.
+> **Release candidate:** `v1.1.9` is prepared locally and has not been
+> published. The latest published version remains `v1.1.8`.
 
 > **Naming:** OpenLain5G is the current project name. The repository URL, `lain5g`
 > CLI, `LAIN5G_*` environment variables, profile IDs, and image names retain their
@@ -54,10 +54,11 @@ prerequisites manually.
 | Installer step | Result |
 | --- | --- |
 | Development tools | Python 3 with `venv`, Node.js, npm, Git, GNU Make, and util-linux |
+| SIM reader support | PC/SC daemon and CCID driver installed; installation prepares the host service and operations mode starts the bridge with the application |
 | Container runtime | Docker Engine and Docker Compose v2 installed; daemon startup attempted where supported |
 | User access | Docker group membership configured only when the host uses that access model |
 | Private state | Ignored profile and application files created with restrictive permissions |
-| Components | All unique images required by the public profiles downloaded |
+| Components | Public-profile images downloaded; six versioned Real IMS service images and the SIP test tool built locally |
 | RF behavior | No RF transmission; hardware operation remains separately authorized and fail-closed |
 
 If setup changed Docker-group membership and the current shell still lacks
@@ -212,7 +213,7 @@ After running the installer, execute the repository-wide safe gate:
 make softwarex-check
 ```
 
-The current gate passes **350 backend tests**, **107 frontend tests**, and **79%
+The current gate passes **389 backend tests**, **112 frontend tests**, and **78%
 backend line coverage**, followed by TypeScript checking, a production frontend
 build, safe Compose rendering, profile validation, version and citation metadata
 checks, internal-link validation, public-result schema checks, release-artifact
@@ -227,7 +228,7 @@ separately by the scenario validators.
 
 | Item | Repository value |
 | --- | --- |
-| Current immutable release | [`v1.1.8`](https://github.com/guallycanazas/Lain5G/releases/tag/v1.1.8) |
+| Prepared release candidate | [`v1.1.9`](docs/release/v1.1.9.md), not yet published |
 | Version control | Git and GitHub |
 | Project-source license | [MIT](LICENSE.txt), with separate upstream terms |
 | Languages | Python, TypeScript, and Shell |
@@ -253,6 +254,8 @@ separately by the scenario validators.
 
 ## Documentation
 
+- [User manual PDF — v1.1.9 candidate](docs/manual/v1.1.9/OpenLain5G-User-Manual-v1.1.9.pdf)
+- [Markdown user guide](docs/user-manual.md)
 - [Documentation index](docs/README.md)
 - [Installation](docs/installation.md)
 - [4G software simulation](docs/4g_simulation.md)
@@ -260,6 +263,7 @@ separately by the scenario validators.
 - [Configuration](docs/configuration.md)
 - [Architecture](docs/architecture.md)
 - [Validation and evidence semantics](docs/validation.md)
+- [Physical SIM programming](docs/sim_programmer.md)
 - [Public results](results/public/README.md)
 - [RF safety](docs/rf_safety.md)
 - [Secure local deployment](docs/security/local-deployment.md)

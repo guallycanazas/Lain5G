@@ -119,4 +119,10 @@ __pycache__/
 runs/*
 !runs/.gitkeep
 .backups/*
+output/pdf/main.*
+output/pdf/*.pdf
 src/frontend/dist/
+
+# Local review and QA artifacts (keep on this workstation, never release)
+/tmp/pdfs/
+/work/qa-artifacts/

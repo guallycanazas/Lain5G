@@ -92,6 +92,7 @@ const messages: Record<string, string> = {
   'nav.scenarios': 'Scenarios',
   'nav.topology': 'Topology',
   'nav.subscribers': 'Subscribers',
+  'nav.simProgrammer': 'SIM programmer',
   'nav.validation': 'Validation',
   'nav.troubleshooter': 'Troubleshooter',
   'nav.metrics': 'Metrics',

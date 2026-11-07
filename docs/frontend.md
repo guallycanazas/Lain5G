@@ -52,6 +52,10 @@ npm test
 - `/scenarios`: scenario catalog and guarded workspaces.
 - `/deployments`: profile editing, validation, comparison, and application.
 - `/subscribers`: Open5GS subscriber administration.
+- `/sim-programmer`: physical test SIM programming page. In operations mode,
+  the CLI starts PC/SC and the protected bridge with the application. The page
+  detects sysmoUSIM-SJS1, sysmoISIM-SJA2, and sysmoISIM-SJA5 profiles; writing
+  is currently enabled only for sysmoUSIM-SJS1.
 - `/ims`: isolated Open5GS, Kamailio, and pyHSS runtime with dual-stack
   subscriber provisioning. Runtime actions remain confirmation-gated and do not
   start RF.

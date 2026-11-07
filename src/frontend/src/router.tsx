@@ -39,6 +39,7 @@ export const router = createBrowserRouter([
       { path: 'scenarios', element: <ScenariosPage /> },
       { path: 'scenarios/:scenarioId', element: <ScenarioDetailPage /> },
       { path: 'subscribers', element: <SubscribersPage /> },
+      { path: 'sim-programmer', lazy: async () => ({ Component: (await import('./pages/SimProgrammerPage')).SimProgrammerPage }) },
       { path: 'subscribers/new', element: <SubscriberCreatePage /> },
       { path: 'subscribers/:imsi', element: <SubscriberDetailPage /> },
       { path: 'subscribers/:imsi/edit', element: <SubscriberEditPage /> },

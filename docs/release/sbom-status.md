@@ -2,26 +2,26 @@
 
 ## Result
 
-A safe, partial application source-manifest SBOM was generated. A complete
-release SBOM was not generated because no final application, telecom, IMS, or
-database image filesystem was inspected, and the ignored local Python
-environment was deliberately excluded.
+A safe, partial application source-manifest SBOM was generated for the local
+v1.1.9 release candidate. A complete release SBOM was not generated because no
+final application, telecom, IMS, or database image filesystem was inspected,
+and the ignored local Python environment was deliberately excluded.
 
 Artifact:
 
 - Path: `sbom/lain5g-lab-application.cdx.json`
 - Format: CycloneDX JSON 1.7
-- Subject: `OpenLain5G` version `1.1.3`
-- Generated: `2026-08-06T17:30:59Z`
-- Components: 340 libraries, comprising 331 npm package/version entries and 9
+- Subject: `OpenLain5G` version `1.1.9`
+- Generated: `2026-11-07T20:57:51Z`
+- Components: 341 libraries, comprising 331 npm package/version entries and 10
   direct PyPI package/version entries
 - Dependency graph entries: 125
 - SHA-256:
-  `825998853b365c7e6a944fde4e69bf7ea59c64c0dcfa10649c271c7446753cc9`
+  `36f2cbcd4ebd237971b6dd8608ed1ae39624603b032ba3f16b374976aa3d9059`
 
-This artifact was regenerated for OpenLain5G `1.1.3` after the source-layout
-change. Its timestamp and hash identify the `v1.1.3` source-manifest SBOM and do
-not replace the SBOM asset preserved with the immutable `v1.1.2` tag.
+This artifact describes the local v1.1.9 candidate source manifests. It is not
+a published release asset and does not replace SBOM assets preserved with
+previous immutable tags.
 
 ## Generator
 
@@ -45,7 +45,7 @@ from:
 
 - `src/frontend/package-lock.json`, including production, development, optional,
   and platform-specific lock entries; and
-- the nine exact direct entries in `src/backend/requirements.txt` and
+- the ten exact direct entries in `src/backend/requirements.txt` and
   `src/backend/requirements-dev.txt`.
 
 The SBOM intentionally contains no scanner-enriched license assertions because
@@ -56,14 +56,15 @@ license fields. Verified direct-package licenses are documented separately in
 ## Excluded Scope
 
 The scan explicitly excluded version-control and CI internals, generated SBOMs,
-ignored dependency environments, runtime directories, environment files,
-private RF overlays, subscriber input, key/certificate/credential patterns,
-databases, dumps, backups, run output, logs, and packet captures.
+ignored dependency environments, local temporary and QA work directories,
+runtime directories, environment files, private RF overlays, subscriber input,
+key/certificate/credential patterns, databases, dumps, backups, run output,
+logs, and packet captures.
 
 The artifact does not cover:
 
 - the 29-entry Python tested closure in `src/backend/constraints.txt` beyond its
-  nine direct requirements;
+  ten direct requirements;
 - packages installed in final Python, nginx, Ubuntu, Debian, Alpine, MongoDB,
   MariaDB, MySQL, CoreDNS, or GHCR image filesystems;
 - source-built Open5GS, UERANSIM, srsRAN 4G, srsRAN Project, UHD, Kamailio, or
@@ -78,7 +79,7 @@ release, deployment, or container SBOM.
 
 The generated BOM does not encode that partiality through a CycloneDX
 `composition` declaration. Its dependency graph contains 125 entries and leaves
-64 components disconnected, including all nine direct PyPI entries. The
+216 components disconnected, including all ten direct PyPI entries. The
 sidecar status in this document is therefore required to interpret its scope;
 the artifact must not be used as a complete dependency graph.
 
@@ -97,7 +98,7 @@ docker run --rm --network none \
   --mount type=bind,source="$PWD",target=/workspace,readonly \
   anchore/syft:v1.49.0@sha256:13b53ebabe3d215268c90cf8fb9b875f0183908245f376fd4b3a2cb69d21d484 \
   scan dir:/workspace --base-path /workspace \
-  --source-name OpenLain5G --source-version 1.1.3 \
+  --source-name OpenLain5G --source-version 1.1.9 \
   --exclude './.git' --exclude './.git/**' \
   --exclude './.github' --exclude './.github/**' \
   --exclude './.venv' --exclude './.venv/**' \
@@ -108,6 +109,8 @@ docker run --rm --network none \
   --exclude './.backups' --exclude './.backups/**' \
   --exclude './.direnv' --exclude './.direnv/**' \
   --exclude './sbom' --exclude './sbom/**' \
+  --exclude './tmp' --exclude './tmp/**' \
+  --exclude './work' --exclude './work/**' \
   --exclude '**/.runtime' --exclude '**/.runtime/**' \
   --exclude './.env' --exclude './.env.*' \
   --exclude '**/.env' --exclude '**/.env.*' \
@@ -148,6 +151,9 @@ Validation performed after generation established that:
 - no string matches password, credential, private-key, API-key, access-token,
   or bearer-token indicators; and
 - no string records run, backup, or environment-file paths.
+
+The local `tmp/` and `work/` directories were explicitly excluded from this
+candidate scan; their contents are not part of the release artifact.
 
 The validation checks inspect generated strings, not the excluded source data.
 No secret values or private paths are reproduced in this document.

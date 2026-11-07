@@ -38,10 +38,11 @@ port is published to the host, but untrusted containers must not join it.
 ## Operating Boundary
 
 The local IMS console and `/api/ims-real` endpoints operate this package. The
-manifests publish no host ports, and no action starts RF. Prepare missing
-first-party images from the Preparation page; runtime start only checks that
-they are present and starts services. Image building, runtime start/stop, and
-subscriber provisioning require an explicit in-page confirmation and the
+manifests publish no host ports, and no action starts RF. `./install.sh` builds
+the versioned first-party images locally during initial preparation; the
+Preparation page can build any missing images later. Runtime start checks that
+the images are present and starts services. Image building, runtime start/stop,
+and subscriber provisioning require an explicit in-page confirmation and the
 backend mutation gate. This runtime remains separate from the integrated IMS
 services included in the VoLTE/VoNR deployment scenarios.
 

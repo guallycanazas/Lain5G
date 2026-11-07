@@ -1,6 +1,21 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+if [ "${1:-}" = "-h" ] || [ "${1:-}" = "--help" ] || [ "${1:-}" = "help" ]; then
+  cat <<'USAGE'
+Uso: ./install.sh [--yes] [--dry-run]
+
+Prepara las dependencias del host, Docker Compose, soporte PC/SC y las imagenes
+necesarias para ejecutar OpenLain5G.
+
+Opciones:
+  --yes       Aceptar la confirmacion de instalacion.
+  --dry-run   Mostrar el plan sin instalar paquetes ni descargar imagenes.
+  -h, --help  Mostrar esta ayuda.
+USAGE
+  exit 0
+fi
+
 root="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 dry_run=false
 install_started_at="$(date +%s)"
@@ -53,6 +68,7 @@ for argument in "$@"; do
 done
 
 if command -v python3 >/dev/null 2>&1 && python3 -c 'import sys; raise SystemExit(sys.version_info < (3, 10))'; then
+  # The existing bootstrap owns host packages, including PC/SC and CCID support for SIMs.
   python3 "$root/lain5g" bootstrap "$@"
   exit $?
 fi
@@ -87,4 +103,5 @@ python3 -c 'import sys; raise SystemExit(sys.version_info < (3, 10))' || {
   exit 2
 }
 export LAIN5G_BOOTSTRAP_PYTHON_INSTALLED=true
+# Keep the complete host dependency plan in the existing bootstrap CLI.
 python3 "$root/lain5g" bootstrap "$@"

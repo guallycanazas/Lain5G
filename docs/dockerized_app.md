@@ -24,6 +24,10 @@ It does not replace the network deployments selected by the user.
 `app start` creates `.env.app`, automatically records the repository's absolute
 path, and restricts the file to `0600` permissions. `--operations` enables
 downloads and operations for software and RF scenarios from the interface.
+Operations mode also starts the local SIM programmer bridge in the same Compose
+stack. `./install.sh` prepares the host PC/SC service and CCID driver. Stopping
+the application stops the bridge. The read-only application mode does not mount
+the host reader or start the bridge.
 
 The operational opt-in enables `LAIN5G_MUTATING_OPERATIONS_ENABLED` and
 `LAIN5G_IMAGE_PULL_ENABLED`, uses `docker-compose.app-operations.yml`, and keeps

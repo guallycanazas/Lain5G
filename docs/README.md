@@ -5,6 +5,9 @@ the maintained Spanish project overview.
 
 ## Start Here
 
+- [User manual PDF — v1.1.9 candidate](manual/v1.1.9/OpenLain5G-User-Manual-v1.1.9.pdf)
+- [User manual TeX source](manual/v1.1.9/OpenLain5G-User-Manual-v1.1.9.tex)
+- [Markdown user guide](user-manual.md)
 - [Installation](installation.md)
 - [Configuration](configuration.md)
 - [Architecture](architecture.md)
@@ -17,6 +20,7 @@ the maintained Spanish project overview.
 - [5G SA simulation](5g_sa.md)
 - [Validation and evidence](validation.md)
 - [Subscriber management](subscribers.md)
+- [Physical SIM programming](sim_programmer.md)
 
 ## Guarded RF Workflows
 

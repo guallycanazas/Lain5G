@@ -4,7 +4,7 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
-from .api import deployments, health, preparation, profiles, real_ims, runs, subscribers, validation
+from .api import deployments, health, preparation, profiles, real_ims, runs, sim_programmer, subscribers, validation
 from .models.deployment import ErrorDetail, ErrorResponse
 from .metrics import configure_metrics
 from .security import MutationDisabledError
@@ -14,6 +14,7 @@ from .services.preparation_service import PreparationError
 from .services.run_service import RunSecurityError
 from .services.real_ims_service import RealIMSError
 from .services.subscriber_service import SubscriberServiceError
+from .services.sim_programmer_service import SimProgrammerError
 from .settings import get_settings
 from .version import VERSION
 
@@ -39,6 +40,7 @@ def create_app() -> FastAPI:
     app.include_router(deployments.router)
     app.include_router(runs.router)
     app.include_router(subscribers.router)
+    app.include_router(sim_programmer.router)
     app.include_router(real_ims.router)
     app.include_router(profiles.router)
     app.include_router(validation.router)
@@ -87,6 +89,10 @@ def register_exception_handlers(app: FastAPI) -> None:
     async def subscriber_error_handler(request: Request, exc: SubscriberServiceError) -> JSONResponse:
         return error_response(exc.status_code, exc.code, exc.message)
 
+    @app.exception_handler(SimProgrammerError)
+    async def sim_programmer_error_handler(request: Request, exc: SimProgrammerError) -> JSONResponse:
+        return error_response(exc.status_code, exc.code, exc.message)
+
     @app.exception_handler(RealIMSError)
     async def real_ims_error_handler(request: Request, exc: RealIMSError) -> JSONResponse:
         return error_response(409, "REAL_IMS_CONFLICT", str(exc))
@@ -111,6 +117,7 @@ app = create_app()
 
 SENSITIVE_API_FIELDS = {
     "authorization",
+    "adm",
     "imsi",
     "impi",
     "impu",

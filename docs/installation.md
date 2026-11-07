@@ -11,11 +11,18 @@ prerequisite when using `git clone`. From the repository root, run:
 
 The installer supports package-manager families based on `apt-get`, `dnf`,
 `pacman`, or `zypper`. It installs missing Python, Node.js, Git, Make, Docker,
-Compose, and util-linux prerequisites; conditionally starts the Docker daemon or
-configures group access when that model applies; generates private
-configuration; downloads published images and builds the SIP test tool locally.
-Each privileged command is
-displayed before `sudo` is used.
+Compose, util-linux, and PC/SC/CCID reader support; conditionally starts the
+Docker daemon or configures group access when that model applies; generates
+private configuration; downloads the pinned public-profile images; and builds
+the SIP test tool plus six versioned Real IMS service images from the checked-out
+source. The IMS images are prepared locally and are not published to a registry.
+Each privileged command is displayed before `sudo` is used.
+
+PC/SC packages are included so the physical SIM programmer is ready without a
+separate dependency-install step. The installer activates the host PC/SC service;
+starting the application in operations mode starts the local bridge alongside
+the rest of the app. Run `./install.sh` before the first operations start so the
+PC/SC packages and service are prepared.
 
 At completion, the CLI prints an installation summary with the detected host
 type, package manager, dependencies ensured, Docker image counts, Docker access,
@@ -79,9 +86,10 @@ supported entry point is the guided interactive CLI:
 ```
 
 Use its menus to prepare the machine, manage components, select profiles, and
-operate software networks. Preparation downloads pinned runtime images and
-builds the small SIP test tool from the checked-in `images/ims-sip/` Dockerfile;
-it does not start laboratory services.
+operate software networks. Preparation downloads pinned profile images and
+builds first-party SIP and Real IMS images from the checked-in Dockerfiles. The
+initial image build needs internet access and can take several minutes; it does
+not start laboratory services.
 
 Use `./lain5g status` for a read-only summary of the checkout, Docker daemon,
 and currently running OpenLain5G containers.
@@ -96,8 +104,8 @@ start services automatically:
 ./lain5g version
 ./lain5g version check
 ./lain5g version list
-./lain5g version use v1.1.8 --dry-run
-./lain5g version use v1.1.8
+./lain5g version use v1.1.9 --dry-run
+./lain5g version use v1.1.9
 ./lain5g version rollback
 ```
 
@@ -197,9 +205,10 @@ remain available as an alternative automation interface.
 
 ## Alternative Builds
 
-The SIP virtual-phone test tool is built from the checked-in Dockerfile during
-Preparation so it matches the scripts in the clone. Other local component
-builds are needed only when developing or modifying components:
+The SIP virtual-phone test tool and Real IMS service images are built from the
+checked-in Dockerfiles during installation and Preparation so they match the
+source in the clone. These optional development builds produce the RAN/core
+images from their pinned upstream revisions:
 
 ```bash
 make build-5g-sa

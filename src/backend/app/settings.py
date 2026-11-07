@@ -34,6 +34,8 @@ class Settings(BaseSettings):
     open5gs_docker_ip: str = Field(default="10.20.0.250", alias="LAIN5G_OPEN5GS_DOCKER_IP")
     rf_web_control_enabled: bool = Field(default=False, alias="LAIN5G_RF_WEB_CONTROL_ENABLED")
     image_pull_enabled: bool = Field(default=False, alias="LAIN5G_IMAGE_PULL_ENABLED")
+    sim_programmer_url: str = Field(default="http://sim-programmer:8123", alias="LAIN5G_SIM_PROGRAMMER_URL")
+    sim_programmer_token: str = Field(default="", alias="LAIN5G_SIM_PROGRAMMER_TOKEN")
 
     model_config = SettingsConfigDict(
         env_file="src/backend/.env",

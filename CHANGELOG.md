@@ -1,5 +1,27 @@
 # Changelog
 
+## [1.1.9] - 2026-11-07
+
+### Added
+
+- Added a local SIM Programmer page and isolated PC/SC bridge for compatible
+  sysmoUSIM cards. This release enables writes only for sysmoUSIM-SJS1, verifies
+  written values by reading them back, and keeps credential backup encryption
+  in the browser. SIM programming does not create a subscriber record.
+- Added host PC/SC/CCID preparation and an operations-mode bridge container for
+  the physical SIM reader.
+- Added an end-user manual for installation, software scenarios, subscriber
+  setup, SIM programming, observability, RF prerequisites, and shutdown.
+
+### Changed
+
+- Build the six first-party Real IMS service images locally from the checked-out
+  source during initial preparation, and reuse the same image catalog in the
+  CLI installer and web Preparation page.
+- Include the operations Compose overlay in application shutdown so optional
+  operations services are stopped with the rest of the application.
+
+
 All notable changes to OpenLain5G are recorded in this file.
 
 ## [1.1.8] - 2026-11-06

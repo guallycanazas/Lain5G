@@ -46,6 +46,10 @@ Compose files through:
 make app-up-operations
 ```
 
+This single operations stack also starts the local PC/SC service bridge used by
+the SIM programmer; it is stopped with the application. The read-only mode does
+not mount the PC/SC socket.
+
 The override changes the project mount to writable and adds the host Docker
 socket. The override alone does not open mutation routes; the independent
 environment setting is also required. Conversely, enabling the setting without

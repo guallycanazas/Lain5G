@@ -1,11 +1,25 @@
 from __future__ import annotations
 
+from ..version import VERSION
+
 
 MONGO_IMAGE = "mongo@sha256:8b6d8f5bbedb25cb73517b65cf99f13aeb75ad5b157a56c479287a840bbad3ac"
 MARIADB_IMAGE = "mariadb@sha256:efb4959ef2c835cd735dbc388eb9ad6aab0c78dd64febcd51bc17481111890c4"
 
 LOCAL_BUILD_IMAGES = {
     "lain5g-lab/ims-sip:local": "images/ims-sip",
+}
+
+# Real IMS service images are built from the checked-out source and tagged with
+# the application version. Keep this catalog shared by the CLI installer and
+# the web Preparation page so a clean install is ready for either workflow.
+REAL_IMS_LOCAL_BUILD_IMAGES = {
+    f"lain5g-lab/ims-real-open5gs:{VERSION}": "images/ims-real-open5gs",
+    f"lain5g-lab/ims-real-kamailio:{VERSION}": "images/ims-real-kamailio",
+    f"lain5g-lab/pyhss-secure:{VERSION}": "images/pyhss-secure",
+    f"lain5g-lab/ims-real-mysql:{VERSION}": "images/ims-real-mysql",
+    f"lain5g-lab/ims-real-dns:{VERSION}": "images/ims-real-dns",
+    f"lain5g-lab/ims-real-rtpengine:{VERSION}": "images/ims-real-rtpengine",
 }
 
 

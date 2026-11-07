@@ -22,6 +22,7 @@ from ..models.real_ims import (
 )
 from ..settings import Settings
 from ..version import VERSION
+from .image_catalog import REAL_IMS_LOCAL_BUILD_IMAGES
 from .pyhss_service import PyHSSError, PyHSSService
 
 
@@ -29,12 +30,10 @@ PYHSS_IMAGE = f"lain5g-lab/pyhss-secure:{VERSION}"
 FIRST_PARTY_IMAGES = {
     # Real IMS Open5GS roles extend the user's own source-built OpenLain5G image.
     "lain5g-lab/open5gs:local": "open5gs",
-    f"lain5g-lab/ims-real-open5gs:{VERSION}": "ims-real-open5gs",
-    f"lain5g-lab/ims-real-kamailio:{VERSION}": "ims-real-kamailio",
-    PYHSS_IMAGE: "pyhss-secure",
-    f"lain5g-lab/ims-real-mysql:{VERSION}": "ims-real-mysql",
-    f"lain5g-lab/ims-real-dns:{VERSION}": "ims-real-dns",
-    f"lain5g-lab/ims-real-rtpengine:{VERSION}": "ims-real-rtpengine",
+    **{
+        image: Path(context).relative_to("images").as_posix()
+        for image, context in REAL_IMS_LOCAL_BUILD_IMAGES.items()
+    },
 }
 ALLOWED_DOCKER_SUBCOMMANDS = {"build", "compose", "image"}
 ALLOWED_COMPOSE_ACTIONS = {"down", "exec", "logs", "ps", "up", "version", "ls"}

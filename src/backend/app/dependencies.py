@@ -12,6 +12,7 @@ from .services.preparation_service import PreparationService
 from .services.real_ims_service import RealIMSService
 from .services.run_service import RunService
 from .services.subscriber_service import SubscriberService
+from .services.sim_programmer_service import SimProgrammerService
 from .services.validation_service import ValidationService
 from .settings import Settings, get_settings
 
@@ -41,6 +42,11 @@ def get_deployment_service() -> DeploymentService:
 @lru_cache
 def get_open5gs_connection_service() -> Open5GSConnectionService:
     return Open5GSConnectionService(get_settings())
+
+
+@lru_cache
+def get_sim_programmer_service() -> SimProgrammerService:
+    return SimProgrammerService(get_settings())
 
 
 SubscriberProfile = Literal["4g-lte-x310", "5g-sa-x310", "5g-nsa-x310"]

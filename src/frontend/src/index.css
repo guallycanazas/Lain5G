@@ -1566,3 +1566,81 @@ html[data-reduce-motion="true"] *, html[data-reduce-motion="true"] *::before, ht
   .saved-log-controls { align-items: stretch; }
   .saved-log-controls label, .saved-log-controls input, .saved-log-controls select { width: 100%; }
 }
+
+.sim-programmer-page { display: grid; gap: 18px; }
+.sim-programmer-page .page-heading { margin: 0; }
+.sim-programmer-grid { display: grid; grid-template-columns: minmax(280px, .75fr) minmax(420px, 1.25fr); gap: 16px; }
+.sim-programmer-page .panel { min-width: 0; }
+.sim-programmer-page .panel-heading > svg { flex: 0 0 auto; color: var(--teal); }
+.sim-programmer-page label { display: grid; gap: 6px; color: var(--ink-800); font-size: .82rem; font-weight: 700; }
+.sim-programmer-page input:not([type="checkbox"]), .sim-programmer-page select { width: 100%; min-width: 0; padding: 10px 12px; color: var(--ink-900); background: var(--paper); border: 1px solid var(--line); border-radius: 10px; }
+.sim-programmer-page input::placeholder { color: var(--muted); opacity: .8; }
+.sim-bridge-status { display: flex; align-items: center; gap: 13px; padding: 15px 17px; color: var(--ink-800); background: #f7f5ff; border: 1px solid #ddd6fe; border-radius: 15px; }
+.sim-bridge-status.ready { background: #eefaf3; border-color: #b8e8c8; }
+.sim-bridge-status > div { flex: 1; min-width: 0; }
+.sim-bridge-status strong { display: block; color: var(--ink-900); }
+.sim-bridge-status p { margin: 4px 0 0; color: var(--muted); font-size: .84rem; }
+.sim-bridge-icon { display: grid; width: 40px; height: 40px; flex: 0 0 auto; place-items: center; color: #6047d8; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; }
+.sim-programmer-page .muted-text { line-height: 1.55; }
+.sim-inline-note, .sim-error, .sim-write-warning { display: flex; align-items: flex-start; gap: 10px; padding: 13px 15px; border: 1px solid #e8d9ae; border-radius: 12px; }
+.sim-inline-note { color: #624b18; background: #fff9e8; }
+.sim-inline-note > svg, .sim-error > svg, .sim-write-warning > svg { flex: 0 0 auto; margin-top: 2px; }
+.sim-inline-note p, .sim-write-warning p { margin: 0; line-height: 1.55; }
+.sim-inline-note code { font-size: .8rem; }
+.sim-error { color: #8c2525; background: #fff0ef; border-color: #f3c0bd; }
+.sim-card-detection { display: grid; gap: 5px; padding: 12px 13px; margin-top: 13px; color: var(--ink-800); background: #f4f6fb; border: 1px solid var(--line); border-radius: 12px; }
+.sim-card-detection.ready { background: #eefaf3; border-color: #b8e8c8; }
+.sim-card-detection.recognized { background: #fff9e8; border-color: #ead69c; }
+.sim-card-detection.unsupported { background: #fff5e8; border-color: #efd0a0; }
+.sim-card-detection span, .sim-card-detection p { color: var(--muted); font-size: .8rem; }
+.sim-card-detection p { margin: 2px 0 0; }
+.sim-program-fields > .muted-text { margin-top: 0; }
+.sim-fields-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 13px; }
+.sim-fields-grid .wide { grid-column: 1 / -1; }
+.sim-generate-actions { margin: 14px 0; }
+.sim-adm-field { padding-top: 13px; border-top: 1px solid var(--line); }
+.sim-adm-field small { color: var(--muted); font-size: .73rem; font-weight: 500; }
+.sim-write-panel { display: grid; gap: 12px; }
+.sim-write-panel .panel-heading { margin-bottom: 0; }
+.sim-write-warning { color: #765316; background: #fff8e8; border-color: #efdaaa; }
+.sim-confirm-check { display: flex !important; grid-template-columns: 18px 1fr; align-items: center; gap: 10px !important; }
+.sim-confirm-check input { width: 17px; height: 17px; accent-color: var(--teal); }
+.sim-success-panel { border-color: #b8e8c8; }
+.sim-result-identities { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin: 14px 0; }
+.sim-result-identities > div { min-width: 0; padding: 11px 12px; background: var(--paper); border: 1px solid var(--line); border-radius: 10px; }
+.sim-result-identities dt { color: var(--muted); font-size: .72rem; font-weight: 700; text-transform: uppercase; }
+.sim-result-identities dd { overflow-wrap: anywhere; margin: 5px 0 0; color: var(--ink-900); font-family: "SFMono-Regular", Consolas, monospace; font-size: .83rem; }
+.sim-backup-controls { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 11px; }
+.sim-backup-controls label { width: min(100%, 340px); }
+.sim-programmer-steps { padding: 16px 18px; background: var(--surface); border: 1px solid var(--line); border-radius: 15px; }
+.sim-programmer-steps ol { display: grid; gap: 8px; padding-left: 21px; margin: 10px 0 0; color: var(--muted); line-height: 1.5; }
+html[data-theme="dark"] .sim-bridge-status { color: var(--ink-800); background: #17193b; border-color: var(--line); }
+html[data-theme="dark"] .sim-bridge-status.ready, html[data-theme="dark"] .sim-card-detection.ready, html[data-theme="dark"] .sim-success-panel { background: #123021; border-color: #285b3a; }
+html[data-theme="dark"] .sim-bridge-icon { color: #c7bbff; background: #151a39; border-color: var(--line); }
+html[data-theme="dark"] .sim-inline-note { color: #f2d78f; background: #2a2414; border-color: #594a20; }
+html[data-theme="dark"] .sim-error { color: #ffb5ae; background: #321b22; border-color: #684047; }
+html[data-theme="dark"] .sim-card-detection { color: var(--ink-800); background: #151a39; }
+html[data-theme="dark"] .sim-card-detection.unsupported { background: #2a2414; border-color: #594a20; }
+html[data-theme="dark"] .sim-card-detection.recognized { background: #2a2414; border-color: #594a20; }
+html[data-theme="dark"] .sim-write-warning { color: #f2d78f; background: #2a2414; border-color: #594a20; }
+html[data-theme="dark"] .sim-result-identities > div { background: #11183b; border-color: var(--line); }
+html[data-theme="dark"] .sim-programmer-steps { background: var(--surface); border-color: var(--line); }
+@media (max-width: 900px) { .sim-programmer-grid { grid-template-columns: 1fr; } }
+@media (max-width: 620px) {
+  .sim-programmer-page .page-heading { align-items: flex-start; flex-direction: column; }
+  .sim-bridge-status { align-items: flex-start; flex-wrap: wrap; }
+  .sim-bridge-status .status-badge { margin-left: 52px; }
+  .sim-fields-grid { grid-template-columns: 1fr; }
+  .sim-fields-grid .wide { grid-column: auto; }
+  .sim-result-identities { grid-template-columns: 1fr; }
+  .sim-backup-controls, .sim-backup-controls label { width: 100%; }
+}
+.sim-validation-list { display: grid; gap: 5px; padding: 10px 12px 10px 28px; margin: 12px 0 0; color: #8c2525; background: #fff0ef; border: 1px solid #f3c0bd; border-radius: 10px; font-size: .78rem; }
+html[data-theme="dark"] .sim-validation-list { color: #ffb5ae; background: #321b22; border-color: #684047; }
+.sim-write-gate { padding: 10px 12px; margin: 0; color: var(--ink-800); background: var(--paper); border: 1px solid var(--line); border-radius: 10px; font-size: .82rem; font-weight: 650; }
+.sim-reveal-check { padding-top: 5px; font-size: .77rem !important; }
+.sim-backup-controls input[type="file"] { padding: 8px; }
+.sim-backup-controls input[type="file"]::file-selector-button { padding: 7px 9px; margin-right: 8px; color: var(--ink-800); background: var(--surface); border: 1px solid var(--line); border-radius: 7px; cursor: pointer; }
+.sim-restore-success { padding: 10px 12px; margin: 13px 0 0; color: #17613c; background: #eefaf3; border: 1px solid #b8e8c8; border-radius: 10px; font-size: .82rem; }
+html[data-theme="dark"] .sim-backup-controls input[type="file"]::file-selector-button { color: var(--ink-800); background: #151a39; border-color: var(--line); }
+html[data-theme="dark"] .sim-restore-success { color: #91e3ba; background: #123021; border-color: #285b42; }
